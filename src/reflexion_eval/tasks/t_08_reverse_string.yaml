@@ -1,0 +1,9 @@
+id: t_08_reverse_string
+description: "Reverse the string 'hello world' character by character."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["result", "Outputs 'dlrow olleh'"]
+    - ["method", "Mentions iterating from the end"]
+max_iterations: 3

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reflexion-eval"
+version = "1.0.0"
+description = "Reflexion-style self-improving agent harness with benchmark runner"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [{name = "Prem Kumar"}]
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[project.scripts]
+reflexion-eval = "reflexion_eval.bench:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reflexion_eval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

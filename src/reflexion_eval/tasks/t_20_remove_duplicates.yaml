@@ -1,0 +1,9 @@
+id: t_20_remove_duplicates
+description: "Remove duplicates from the list [1, 2, 2, 3, 4, 4, 4, 5] while preserving order."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["result", "Outputs [1, 2, 3, 4, 5]"]
+    - ["order", "Preserves original element ordering"]
+max_iterations: 3

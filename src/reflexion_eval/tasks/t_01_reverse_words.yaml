@@ -1,0 +1,9 @@
+id: t_01_reverse_words
+description: "Reverse the order of words in the sentence: 'The quick brown fox jumps over the lazy dog'"
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["reversal", "Words are in fully reversed order, preserving internal word spelling"]
+    - ["punctuation", "Original punctuation is preserved or appropriately handled"]
+max_iterations: 3

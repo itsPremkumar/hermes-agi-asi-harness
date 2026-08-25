@@ -1,0 +1,9 @@
+id: t_06_factorial
+description: "Compute the factorial of 6 (6! = ?). Output only the number."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Correctly computes 6! = 720"]
+    - ["conciseness", "Outputs only the number"]
+max_iterations: 3

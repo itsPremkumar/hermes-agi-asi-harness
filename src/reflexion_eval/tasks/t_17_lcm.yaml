@@ -1,0 +1,9 @@
+id: t_17_lcm
+description: "What is the least common multiple of 4 and 6?"
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Outputs 12"]
+    - ["explanation", "Notes multiples of 4: 4,8,12 and 6: 6,12 — first common is 12"]
+max_iterations: 3

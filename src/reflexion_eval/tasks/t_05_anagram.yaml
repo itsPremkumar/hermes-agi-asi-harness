@@ -1,0 +1,9 @@
+id: t_05_anagram
+description: "Check if 'listen' and 'silent' are anagrams. Output True or False, then briefly explain."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["answer", "Outputs True (they are anagrams)"]
+    - ["explanation", "Mentions sorting or character counting"]
+max_iterations: 3
