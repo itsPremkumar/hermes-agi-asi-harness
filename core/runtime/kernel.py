@@ -86,6 +86,12 @@ class HermesKernel:
         self.jit_harness: Optional[Any] = None
         self.self_healing: Optional[Any] = None
         
+        # Phase 1: Executive Foundation
+        self.goal_contract: Optional[Any] = None
+        self.context_os: Optional[Any] = None
+        self.safety_gates: Optional[Any] = None
+        self.completion_proof: Optional[Any] = None
+        
         # Runtime state
         self._active_tasks: Dict[str, asyncio.Task] = {}
         self._plugins: Dict[str, Any] = {}
@@ -122,6 +128,14 @@ class HermesKernel:
         self.self_healing = self._plugins.get("self_healing")
         if self.self_healing and hasattr(self.self_healing, 'engine'):
             self.self_healing = self.self_healing.engine
+        
+        # Phase 1: Executive Foundation
+        self.goal_contract = self._plugins.get("goal_contract")
+        self.context_os = self._plugins.get("context_os")
+        if self.context_os and hasattr(self.context_os, 'set_kernel'):
+            self.context_os.set_kernel(self)
+        self.safety_gates = self._plugins.get("safety_gates")
+        self.completion_proof = self._plugins.get("completion_proof")
         
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
@@ -211,6 +225,8 @@ class HermesKernel:
             "world_model", "jit_harness", "self_healing", "knowledge_graph",
             "benchmarks", "sandbox_plugin", "metacognition", "goal_engine",
             "supervisor",
+            # Phase 1: Executive Foundation
+            "goal_contract", "context_os", "safety_gates", "completion_proof",
         ]
 
         loaded_count = 0
