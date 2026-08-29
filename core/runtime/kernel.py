@@ -81,6 +81,10 @@ class HermesKernel:
         self.recovery_engine: Optional[Any] = None
         self.evolution_engine: Optional[Any] = None
         self.ecosystem_intel: Optional[Any] = None
+        self.supervisor: Optional[Any] = None
+        self.world_model: Optional[Any] = None
+        self.jit_harness: Optional[Any] = None
+        self.self_healing: Optional[Any] = None
         
         # Runtime state
         self._active_tasks: Dict[str, asyncio.Task] = {}
@@ -104,8 +108,20 @@ class HermesKernel:
         if self.state_manager:
             await self.state_manager.start()
         
-        # Discover and load tool/utility plugins from plugins/ directory
+        # Discover and load additional plugins (tools + cognitive)
         await self._load_tool_plugins()
+        
+        # Wire cognitive plugins to kernel attributes
+        self.supervisor = self._plugins.get("supervisor")
+        self.world_model = self._plugins.get("world_model")
+        if self.world_model and hasattr(self.world_model, 'world_model'):
+            self.world_model = self.world_model.world_model
+        self.jit_harness = self._plugins.get("jit_harness")
+        if self.jit_harness and hasattr(self.jit_harness, 'generator'):
+            self.jit_harness = self.jit_harness.generator
+        self.self_healing = self._plugins.get("self_healing")
+        if self.self_healing and hasattr(self.self_healing, 'engine'):
+            self.self_healing = self.self_healing.engine
         
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
@@ -191,6 +207,10 @@ class HermesKernel:
             "streaming_output", "config_manager", "permission_system",
             "skill_learner", "swarm_intelligence", "debate_engine",
             "multi_agent_orchestrator", "mcp_client",
+            # Advanced cognitive plugins
+            "world_model", "jit_harness", "self_healing", "knowledge_graph",
+            "benchmarks", "sandbox_plugin", "metacognition", "goal_engine",
+            "supervisor",
         ]
 
         loaded_count = 0
@@ -200,7 +220,14 @@ class HermesKernel:
             try:
                 import importlib
                 module = importlib.import_module(f"plugins.{name}")
-                if hasattr(module, "Plugin"):
+                # Try create() factory first (kernel-managed plugins)
+                if hasattr(module, "create"):
+                    plugin = await module.create(self)
+                    self._plugins[name] = plugin
+                    loaded_count += 1
+                    logger.info("Loaded plugin (create): %s", name)
+                # Fall back to Plugin class (legacy pattern)
+                elif hasattr(module, "Plugin"):
                     plugin = module.Plugin()
                     await plugin.load()
                     await plugin.start()
@@ -231,6 +258,10 @@ class HermesKernel:
             "evolution": ("evolve", "evolve"),
             "rag_search": ("rag_search", "search"),
             "vision_analyze": ("vision", "analyze"),
+            "world_model": ("world_query", "get_world_summary"),
+            "knowledge_graph": ("kg_search", "search_entities"),
+            "benchmark": ("benchmark_run", "run_suite"),
+            "task_profiling": ("task_profile", "analyze_task"),
         }
         
         registered = 0
@@ -271,7 +302,28 @@ class HermesKernel:
 
     async def submit_task(self, task: "Task") -> str:
         """Submit a task for execution."""
-        task_id = str(uuid.uuid4())
+        
+        # Persist task to state_manager if available, use its ID
+        if self.state_manager and self.state_manager.manager:
+            try:
+                session_id = getattr(self.state_manager.manager, 'session_id', None)
+                sm_task_id = self.state_manager.manager.create_task(
+                    title=task.goal,
+                    description=getattr(task, 'description', ''),
+                    session_id=session_id or None,
+                )
+                task.task_id = sm_task_id
+            except Exception as e:
+                logger.debug("Failed to create task in state_manager: %s", e)
+        
+        task_id = task.task_id
+        
+        # Update task status to running
+        if self.state_manager and self.state_manager.manager:
+            try:
+                self.state_manager.manager.update_task(task_id, status="running")
+            except Exception:
+                pass
         
         if self.execution_engine:
             asyncio_task = asyncio.create_task(
