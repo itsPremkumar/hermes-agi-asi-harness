@@ -256,6 +256,8 @@ class HermesKernel:
             "watchdog", "economic_ledger",
             # Phase 4: Multi-Agent
             "independent_critic", "debate_protocol",
+            # Phase 5: Learning
+            "self_evaluation", "skill_forge", "curriculum_engine", "sleep_cycle",
         ]
 
         loaded_count = 0
