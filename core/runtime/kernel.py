@@ -262,6 +262,8 @@ class HermesKernel:
             "evolution_safety_loop", "benchmark_db", "self_improvement_boundary", "world_sync",
             # Phase 7: Advanced
             "computer_use", "engineering_factory", "operating_modes",
+            # Phase 8: Deployment
+            "observability_dashboard",
         ]
 
         loaded_count = 0
