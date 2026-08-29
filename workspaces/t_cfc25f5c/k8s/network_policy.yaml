@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: contextvault-netpol
+  namespace: contextvault
+  labels:
+    app: contextvault
+    component: memory-store
+spec:
+  podSelector:
+    matchLabels:
+      app: contextvault
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: contextvault
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 50051
+  egress:
+  - to:
+    - namespaceSelector: {}

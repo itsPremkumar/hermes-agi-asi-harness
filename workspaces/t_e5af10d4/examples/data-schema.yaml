@@ -1,0 +1,24 @@
+# Example Synthetic Data Schema
+properties:
+  id:
+    type: integer
+    minimum: 1
+    maximum: 99999
+  name:
+    type: string
+  email:
+    type: string
+    format: email
+  role:
+    type: string
+    enum: [admin, user, moderator, guest]
+  is_active:
+    type: boolean
+  created_at:
+    type: string
+    format: date-time
+  score:
+    type: number
+    minimum: 0
+    maximum: 100
+    precision: 2
