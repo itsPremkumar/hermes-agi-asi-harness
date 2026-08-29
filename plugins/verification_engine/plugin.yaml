@@ -1,0 +1,22 @@
+name: verification_engine
+version: 1.0.0
+description: "Verification engine — multi-layer verification, linting, testing, cross-check"
+license: MIT
+source: internal
+capabilities:
+  - verification
+  - linting
+  - testing
+  - cross_check
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,21 @@
+name: rag
+version: 1.0.0
+description: "Memory-augmented generation with semantic search"
+license: MIT
+source: internal
+capabilities:
+  - semantic_search
+  - hybrid_search
+  - knowledge_graph
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,21 @@
+name: sandbox
+version: 1.0.0
+description: "Sandboxed execution environment — terminal, filesystem, browser"
+license: MIT
+source: internal
+capabilities:
+  - sandbox
+  - terminal
+  - filesystem_isolation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

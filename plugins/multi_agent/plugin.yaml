@@ -1,0 +1,21 @@
+name: multi_agent
+version: 1.0.0
+description: "Multi-agent orchestration — sequential, parallel, hierarchical, debate"
+license: MIT
+source: internal
+capabilities:
+  - multi_agent
+  - orchestration
+  - delegation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

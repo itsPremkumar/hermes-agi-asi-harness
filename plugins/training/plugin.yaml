@@ -1,0 +1,21 @@
+name: training
+version: 1.0.0
+description: "Agent training — trajectory collection, RL integration"
+license: MIT
+source: internal
+capabilities:
+  - training
+  - rl
+  - trajectory_collection
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,22 @@
+name: evolution_engine
+version: 1.0.0
+description: "Evolution engine — JIT harness, prompt optimization, evidence-gated promotion"
+license: MIT
+source: internal
+capabilities:
+  - evolution
+  - jit_harness
+  - prompt_optimization
+  - self_improvement
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,24 @@
+name: execution_engine
+version: 1.0.0
+description: "Execution engine — ReAct loop, tool dispatch, state management"
+license: MIT
+source: internal
+capabilities:
+  - execution
+  - tool_dispatch
+  - react_loop
+  - plan_execute
+cost:
+  default: free
+dependencies:
+  - security_core
+permissions:
+  filesystem:
+    read: workspace
+    write: project
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

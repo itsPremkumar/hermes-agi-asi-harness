@@ -1,0 +1,22 @@
+name: recovery_engine
+version: 1.0.0
+description: "Recovery engine — checkpointing, rollback, retry, resume, failure classification"
+license: MIT
+source: internal
+capabilities:
+  - recovery
+  - checkpoint
+  - rollback
+  - retry
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

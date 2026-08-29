@@ -1,0 +1,24 @@
+name: state_manager
+version: 1.0.0
+description: "Persistent state management with SQLite + FTS5, checkpoint/restore, state versioning with rollback"
+license: MIT
+source: internal
+capabilities:
+  - state_persistence
+  - checkpoint
+  - restore
+  - state_versioning
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none
+  max_memory_mb: 512
+  max_cpu_percent: 20

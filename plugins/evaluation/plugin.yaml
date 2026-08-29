@@ -1,0 +1,21 @@
+name: evaluation
+version: 1.0.0
+description: "Evaluation engine — benchmarks, regression testing, scoring"
+license: MIT
+source: internal
+capabilities:
+  - evaluation
+  - benchmarks
+  - regression_testing
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,23 @@
+name: security_core
+version: 1.0.0
+description: "Security core — permission boundaries, sandboxing, secret management"
+license: MIT
+source: internal
+capabilities:
+  - permissions
+  - sandbox
+  - secrets
+  - audit
+  - injection_defense
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: project
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: scoped

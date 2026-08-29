@@ -1,0 +1,21 @@
+name: debate
+version: 1.0.0
+description: "Self-play and debate mechanisms"
+license: MIT
+source: internal
+capabilities:
+  - debate_facilitation
+  - fallacy_detection
+  - argument_synthesis
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

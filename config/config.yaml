@@ -1,0 +1,85 @@
+# Hermes AGI/ASI Harness Configuration
+# Free-first, modular, model-agnostic
+
+profile: default
+
+# Free-first mode: only use free/local models
+zero_cost: true
+
+# Offline mode: no network access
+offline: false
+
+# Maximum parallel tasks
+max_parallel_tasks: 4
+
+# Maximum subagents
+max_subagents: 8
+
+# Maximum retries
+max_retries: 3
+
+# Maximum agent loop iterations
+max_iterations: 25
+
+# Checkpoint interval (seconds)
+checkpoint_interval: 30
+
+# Plugin directories
+plugins:
+  - plugins/memory
+  - plugins/model_router
+  - plugins/plugin_manager
+  - plugins/security_core
+  - plugins/execution_engine
+  - plugins/verification_engine
+  - plugins/recovery_engine
+  - plugins/evolution
+  - plugins/ecosystem_intelligence
+  - plugins/browser
+  - plugins/coding
+  - plugins/research
+  - plugins/multi_agent
+  - plugins/scheduler
+  - plugins/sandbox
+  - plugins/evaluation
+  - plugins/training
+  - plugins/observability
+  - plugins/notifications
+
+# Model routing
+model:
+  preferred: llama3.2:3b
+  fallback: qwen2.5-coder:3b
+  allow_paid: false
+
+# Memory
+memory:
+  db_path: state/memory.db
+  max_entries: 10000
+  consolidation_interval: 300
+
+# Security
+security:
+  trust_level: medium
+  audit_log: true
+  injection_defense: true
+
+# Evaluation
+evaluation:
+  auto_evaluate: true
+  regression_gate: true
+
+# Evolution
+evolution:
+  auto_evolve: false
+  evidence_gate: true
+  min_improvement: 0.05
+
+# Ecosystem intelligence
+ecosystem:
+  auto_scan: false
+  scan_interval: 3600
+  sources:
+    - github
+    - arxiv
+    - huggingface

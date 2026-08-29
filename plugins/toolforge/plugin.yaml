@@ -1,0 +1,21 @@
+name: toolforge
+version: 1.0.0
+description: "Tool creation and self-extension"
+license: MIT
+source: internal
+capabilities:
+  - tool_creation
+  - tool_composition
+  - tool_deprecation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none
