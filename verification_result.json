@@ -3,9 +3,9 @@
   "rounds": [
     {
       "round": 1,
-      "start_time": 1788024880.3512468,
-      "end_time": 1788024897.3856277,
-      "duration_seconds": 17.03438091278076,
+      "start_time": 1788026218.0152898,
+      "end_time": 1788026234.6114087,
+      "duration_seconds": 16.596118927001953,
       "passed": true,
       "error": null,
       "details": {
@@ -54,9 +54,9 @@
     },
     {
       "round": 2,
-      "start_time": 1788024897.3856277,
-      "end_time": 1788024914.1988683,
-      "duration_seconds": 16.81324052810669,
+      "start_time": 1788026234.6114087,
+      "end_time": 1788026250.9112628,
+      "duration_seconds": 16.299854040145874,
       "passed": true,
       "error": null,
       "details": {
@@ -105,9 +105,9 @@
     },
     {
       "round": 3,
-      "start_time": 1788024914.1988683,
-      "end_time": 1788024930.8341255,
-      "duration_seconds": 16.635257244110107,
+      "start_time": 1788026250.9112628,
+      "end_time": 1788026268.1999109,
+      "duration_seconds": 17.28864812850952,
       "passed": true,
       "error": null,
       "details": {
@@ -159,16 +159,16 @@
     "consensus_score": 1.0,
     "all_rounds_agree": true,
     "per_test_agreement": {
-      "test_phase6": 1.0,
       "test_runtime": 1.0,
-      "test_phase1": 1.0,
-      "test_phase2": 1.0,
-      "test_phase3_4": 1.0,
       "test_phase7": 1.0,
-      "test_phase8": 1.0,
+      "test_phase3_4": 1.0,
       "test_kernel_integration": 1.0,
+      "test_phase2": 1.0,
+      "test_phase6": 1.0,
+      "test_working_plugins": 1.0,
       "test_phase5": 1.0,
-      "test_working_plugins": 1.0
+      "test_phase1": 1.0,
+      "test_phase8": 1.0
     }
   },
   "brier_score": 0.25

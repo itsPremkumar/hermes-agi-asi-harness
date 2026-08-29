@@ -268,6 +268,8 @@ class HermesKernel:
             "computer_use", "engineering_factory", "operating_modes",
             # Phase 8: Deployment
             "observability_dashboard",
+            # Phase 9: Cognitive Extensions
+            "causal_model", "capability_graph", "self_model",
         ]
 
         loaded_count = 0
