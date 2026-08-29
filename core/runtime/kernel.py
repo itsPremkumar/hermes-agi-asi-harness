@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -91,6 +92,15 @@ class HermesKernel:
         self.context_os: Optional[Any] = None
         self.safety_gates: Optional[Any] = None
         self.completion_proof: Optional[Any] = None
+
+        # Phase 2: Persistent Intelligence
+        self.persistent_state: Optional[Any] = None
+        self.mission_queue: Optional[Any] = None
+        self.belief_engine: Optional[Any] = None
+        self.capability_registry: Optional[Any] = None
+
+        # Store HERMES_HOME for state directory
+        self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
         
         # Runtime state
         self._active_tasks: Dict[str, asyncio.Task] = {}
@@ -136,6 +146,18 @@ class HermesKernel:
             self.context_os.set_kernel(self)
         self.safety_gates = self._plugins.get("safety_gates")
         self.completion_proof = self._plugins.get("completion_proof")
+
+        # Phase 2: Persistent Intelligence
+        self.persistent_state = self._plugins.get("persistent_state")
+        self.mission_queue = self._plugins.get("mission_queue")
+        if self.mission_queue and hasattr(self.mission_queue, 'queue'):
+            self.mission_queue = self.mission_queue.queue
+        self.belief_engine = self._plugins.get("belief_engine")
+        if self.belief_engine and hasattr(self.belief_engine, 'engine'):
+            self.belief_engine = self.belief_engine.engine
+        self.capability_registry = self._plugins.get("capability_registry")
+        if self.capability_registry and hasattr(self.capability_registry, 'registry'):
+            self.capability_registry = self.capability_registry.registry
         
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
@@ -185,6 +207,7 @@ class HermesKernel:
             ("recovery_engine", "plugins.recovery_engine"),
             ("evolution_engine", "plugins.evolution_engine"),
             ("ecosystem_intel", "plugins.ecosystem_intelligence"),
+            ("persistent_state", "core.persistent_state"),
         ]
         
         for attr_name, module_path in core_plugins:
@@ -227,6 +250,8 @@ class HermesKernel:
             "supervisor",
             # Phase 1: Executive Foundation
             "goal_contract", "context_os", "safety_gates", "completion_proof",
+            # Phase 2: Persistent Intelligence
+            "belief_engine", "mission_queue", "capability_registry",
         ]
 
         loaded_count = 0
