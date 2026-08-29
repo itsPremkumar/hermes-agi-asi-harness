@@ -252,6 +252,10 @@ class HermesKernel:
             "goal_contract", "context_os", "safety_gates", "completion_proof",
             # Phase 2: Persistent Intelligence
             "belief_engine", "mission_queue", "capability_registry",
+            # Phase 3: Autonomous Execution
+            "watchdog", "economic_ledger",
+            # Phase 4: Multi-Agent
+            "independent_critic", "debate_protocol",
         ]
 
         loaded_count = 0
