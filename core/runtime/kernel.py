@@ -258,6 +258,8 @@ class HermesKernel:
             "independent_critic", "debate_protocol",
             # Phase 5: Learning
             "self_evaluation", "skill_forge", "curriculum_engine", "sleep_cycle",
+            # Phase 6: Evolution
+            "evolution_safety_loop", "benchmark_db", "self_improvement_boundary", "world_sync",
         ]
 
         loaded_count = 0
