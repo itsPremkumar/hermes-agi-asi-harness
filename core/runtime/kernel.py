@@ -270,6 +270,9 @@ class HermesKernel:
             "observability_dashboard",
             # Phase 9: Cognitive Extensions
             "causal_model", "capability_graph", "self_model",
+            # Phase 10: Infrastructure & Safety
+            "event_sourced_state", "rollback", "scenario_harness",
+            "agent_communication", "research_engine_v2", "sandbox_architecture",
         ]
 
         loaded_count = 0
