@@ -260,6 +260,8 @@ class HermesKernel:
             "self_evaluation", "skill_forge", "curriculum_engine", "sleep_cycle",
             # Phase 6: Evolution
             "evolution_safety_loop", "benchmark_db", "self_improvement_boundary", "world_sync",
+            # Phase 7: Advanced
+            "computer_use", "engineering_factory", "operating_modes",
         ]
 
         loaded_count = 0
