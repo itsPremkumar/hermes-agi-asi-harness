@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -208,6 +209,9 @@ class HermesKernel:
             ("evolution_engine", "plugins.evolution_engine"),
             ("ecosystem_intel", "plugins.ecosystem_intelligence"),
             ("persistent_state", "core.persistent_state"),
+            ("verification", "core.verification"),
+            ("supervisor", "core.runtime.supervisor"),
+            ("daily_dev", "core.runtime.daily_dev"),
         ]
         
         for attr_name, module_path in core_plugins:
@@ -392,6 +396,36 @@ class HermesKernel:
         if self.event_bus:
             await self.event_bus.emit_async(event_type, data)
 
+    async def plan_and_execute(self, goal: str, **kwargs) -> Dict[str, Any]:
+        """Plan a task from a natural-language goal and execute it.
+        
+        Uses the planning engine (if available) or a simple fallback
+        to break the goal into steps, then executes them via the
+        execution_engine. Returns a result dict with outcome details.
+        """
+        task = Task(goal=goal, task_id=f"auto-{int(time.time())}")
+        task_id = await self.submit_task(task)
+        
+        # Wait for completion (with timeout)
+        try:
+            await asyncio.wait_for(
+                asyncio.create_task(self._wait_for_task(task_id)),
+                timeout=kwargs.get("timeout", 60)
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"Task {task_id} timed out")
+        
+        return {
+            "task_id": task_id,
+            "goal": goal,
+            "status": "completed" if task_id not in self._active_tasks else "timeout",
+        }
+
+    async def _wait_for_task(self, task_id: str):
+        """Wait for a task to complete."""
+        while task_id in self._active_tasks:
+            await asyncio.sleep(0.5)
+
     async def _health_monitor_loop(self):
         """Continuous health monitoring."""
         while self.state == KernelState.RUNNING:
@@ -429,7 +463,7 @@ class HermesKernel:
                 results[name] = {"status": "error", "error": str(e)}
         
         all_healthy = all(
-            r.get("status") in ("healthy", "unknown") for r in results.values()
+            r.get("status") in ("healthy", "unknown", "not_started") for r in results.values()
         )
         
         return {

@@ -267,7 +267,6 @@ _FAILURE_PATTERNS: List[tuple] = [
 _DEFAULT_STRATEGY: Dict[FailureClass, RecoveryStrategy] = {
     FailureClass.TRANSIENT: RecoveryStrategy.RETRY,
     FailureClass.TOOL: RecoveryStrategy.SUBSTITUTE,
-    FailureClass.PLANKING: RecoveryStrategy.REPLAN,  # placeholder, overwritten below
     FailureClass.PLANNING: RecoveryStrategy.REPLAN,
     FailureClass.REASONING: RecoveryStrategy.REPLAN,
     FailureClass.ENVIRONMENT: RecoveryStrategy.ESCALATE,
@@ -275,8 +274,6 @@ _DEFAULT_STRATEGY: Dict[FailureClass, RecoveryStrategy] = {
     FailureClass.SAFETY: RecoveryStrategy.ESCALATE,
     FailureClass.UNKNOWN: RecoveryStrategy.ESCALATE,
 }
-# (clean up the placeholder entry above)
-_DEFAULT_STRATEGY.pop(FailureClass.PLANKING, None)
 
 
 # ===========================================================================
