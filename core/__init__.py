@@ -31,5 +31,5 @@ from .selfheal import RetryPolicy, self_heal
 # Soul and mission
 from .soul import Claim, CognitiveMode, EpistemicStatus, Mission, RiskTier
 from .state.state_manager import StateManager
-from .supervisor import Supervisor, Goal, SubGoal, GoalStatus
+from .supervisor import Supervisor, Goal, Task, SupervisorState, TaskType
 from .world_model import CausalModel, Confidence, Entity, WorldModel, WorldTransition
