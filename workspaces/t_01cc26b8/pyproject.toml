@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentforge-x"
+version = "1.0.0"
+description = "AgentForge-X — Kernel + Evolution Engine with conformance harness"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Prem Kumar", email = "agentforge-x@itsPremkumar.dev"},
+]
+keywords = ["agent", "llm", "chaos-engineering", "testing", "orchestration"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "pyyaml>=6.0",
+    "click>=8.0",
+    "rich>=13.0",
+    "jinja2>=3.0",
+    "httpx>=0.24",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+]
+
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --cov=src/agentforge_x --cov-report=term-missing --cov-fail-under=85"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.coverage.run]
+source = ["src/agentforge_x"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
