@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import os
 import sys
-import time
 
 import pytest
 
@@ -35,13 +34,11 @@ from safety.safety_enforcer import (
 from safety.incident_responder import (
     EscalationLevel,
     EscalationRule,
-    Incident,
     IncidentLevel,
     IncidentResponder,
     IncidentStatus,
 )
 from safety.safety_auditor import (
-    AuditReport,
     AuditSeverity,
     ComplianceStandard,
     SafetyAuditor,
@@ -653,7 +650,7 @@ class TestSafetyAuditor:
     def test_custom_check(self):
         enforcer, responder, auditor = self._full_setup()
         called = []
-        def custom_check(aud: "SafetyAuditor", std: ComplianceStandard):
+        def custom_check(aud: SafetyAuditor, std: ComplianceStandard):
             called.append(True)
             return None  # no findings -> pass
         auditor._checks[ComplianceStandard.SOC_2] = [custom_check]

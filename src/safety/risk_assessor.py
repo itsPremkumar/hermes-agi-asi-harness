@@ -22,10 +22,10 @@ from safety.threat_modeler import (
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "RiskLevel",
     "Risk",
-    "RiskProfile",
     "RiskAssessor",
+    "RiskLevel",
+    "RiskProfile",
 ]
 
 

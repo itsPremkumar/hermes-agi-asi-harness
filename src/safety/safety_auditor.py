@@ -13,17 +13,17 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable
 
-from safety.incident_responder import Incident, IncidentLevel, IncidentResponder
+from safety.incident_responder import IncidentLevel, IncidentResponder
 from safety.risk_assessor import RiskLevel, RiskProfile
-from safety.safety_enforcer import EnforcementResult, SafetyEnforcer
+from safety.safety_enforcer import SafetyEnforcer
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "AuditSeverity",
-    "ComplianceStandard",
     "AuditFinding",
     "AuditReport",
+    "AuditSeverity",
+    "ComplianceStandard",
     "SafetyAuditor",
 ]
 
@@ -175,7 +175,7 @@ class SafetyAuditor:
         findings: list[AuditFinding] = []
 
         # Standard: policy must be enforced on critical risks.
-        def _check_policy_enforcement(auditor: "SafetyAuditor", std: ComplianceStandard) -> AuditFinding | None:
+        def _check_policy_enforcement(auditor: SafetyAuditor, std: ComplianceStandard) -> AuditFinding | None:
             report.total_checks += 1
             if auditor._enforcer is None:
                 report.failed_checks += 1
@@ -192,7 +192,7 @@ class SafetyAuditor:
             return None
 
         # Standard: blocked incidents must exist for past blocks.
-        def _check_incident_coverage(auditor: "SafetyAuditor", std: ComplianceStandard) -> AuditFinding | None:
+        def _check_incident_coverage(auditor: SafetyAuditor, std: ComplianceStandard) -> AuditFinding | None:
             report.total_checks += 1
             if auditor._responder is None:
                 report.failed_checks += 1
@@ -209,7 +209,7 @@ class SafetyAuditor:
             return None
 
         # Standard: no unresolved critical incidents.
-        def _check_no_unresolved_critical(auditor: "SafetyAuditor", std: ComplianceStandard) -> AuditFinding | None:
+        def _check_no_unresolved_critical(auditor: SafetyAuditor, std: ComplianceStandard) -> AuditFinding | None:
             report.total_checks += 1
             if auditor._responder is None:
                 report.passed_checks += 1
@@ -234,7 +234,7 @@ class SafetyAuditor:
             return None
 
         # Standard: risk profile has no CRITICAL risks.
-        def _check_no_critical_risks(auditor: "SafetyAuditor", std: ComplianceStandard) -> AuditFinding | None:
+        def _check_no_critical_risks(auditor: SafetyAuditor, std: ComplianceStandard) -> AuditFinding | None:
             report.total_checks += 1
             if profile is None:
                 report.passed_checks += 1
@@ -274,9 +274,7 @@ class SafetyAuditor:
         report.updated_at = time.time()
 
         # Determine overall status.
-        if report.critical_count > 0:
-            report.overall_status = "fail"
-        elif report.total_checks > 0 and report.failed_checks == report.total_checks:
+        if report.critical_count > 0 or (report.total_checks > 0 and report.failed_checks == report.total_checks):
             report.overall_status = "fail"
         elif report.failed_checks > 0:
             report.overall_status = "warn"

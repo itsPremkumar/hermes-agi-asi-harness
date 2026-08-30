@@ -18,10 +18,10 @@ from safety.risk_assessor import Risk, RiskLevel, RiskProfile
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "PolicyAction",
     "EnforcementResult",
-    "SafetyPolicy",
+    "PolicyAction",
     "SafetyEnforcer",
+    "SafetyPolicy",
 ]
 
 

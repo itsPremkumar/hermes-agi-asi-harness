@@ -19,12 +19,12 @@ from safety.safety_enforcer import EnforcementResult, PolicyAction
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "IncidentLevel",
-    "IncidentStatus",
-    "Incident",
-    "IncidentResponder",
     "EscalationLevel",
     "EscalationRule",
+    "Incident",
+    "IncidentLevel",
+    "IncidentResponder",
+    "IncidentStatus",
 ]
 
 
@@ -63,7 +63,7 @@ class EscalationRule:
     """A rule mapping an incident to an escalation level + handler."""
 
     level: EscalationLevel
-    handler: Callable[["Incident"], Any] | None = None
+    handler: Callable[[Incident], Any] | None = None
     timeout_seconds: float = 300.0
     description: str = ""
 
@@ -281,7 +281,7 @@ class IncidentResponder:
             if rule.level == to_level and rule.handler is not None:
                 try:
                     rule.handler(incident)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     logger.error("Escalation handler failed: %s", exc)
                 break
 
