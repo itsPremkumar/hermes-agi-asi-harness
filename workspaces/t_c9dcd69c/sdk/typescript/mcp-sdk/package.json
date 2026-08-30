@@ -1,0 +1,17 @@
+{
+  "name": "@mcphub/sdk",
+  "version": "1.0.0",
+  "description": "MCPHub SDK for building MCP servers in TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": ["mcp", "model-context-protocol", "sdk"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
