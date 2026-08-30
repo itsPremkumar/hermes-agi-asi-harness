@@ -6,7 +6,7 @@ import threading
 import uuid
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 class PluginRegistry:

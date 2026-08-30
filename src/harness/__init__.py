@@ -4,13 +4,13 @@ from __future__ import annotations
 
 __version__ = "1.0.0"
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
-from harness.registry import PluginRegistry
-from harness.lifecycle import LifecycleManager, LifecycleEvent
-from harness.dependency_resolver import DependencyResolver, DependencyGraph
-from harness.config import PluginConfig, ConfigValidator
-from harness.health import HealthMonitor, HealthStatus, HealthCheckResult
-from harness.versioning import Version, VersionRange, Compatibility
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
+from .registry import PluginRegistry
+from .lifecycle import LifecycleManager, LifecycleEvent
+from .dependency_resolver import DependencyResolver, DependencyGraph
+from .config import PluginConfig, ConfigValidator
+from .health import HealthMonitor, HealthStatus, HealthCheckResult
+from .versioning import Version, VersionRange, Compatibility
 
 __all__ = [
     "Plugin",

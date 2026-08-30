@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Optional
 
-from harness.plugin_base import Plugin, PluginStatus
+from .plugin_base import Plugin, PluginStatus
 
 
 class LifecycleEvent(Enum):
