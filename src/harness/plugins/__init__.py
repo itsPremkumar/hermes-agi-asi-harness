@@ -21,7 +21,7 @@ class Hook:
     name: str
     func: HookFunc
     priority: int = 0
-    plugin_id: Optional[str] = None
+    plugin_id: str | None = None
 
 
 class HookRegistry:
@@ -31,7 +31,7 @@ class HookRegistry:
         self._hooks: dict[str, list[Hook]] = {}
         self._lock = threading.Lock()
 
-    def register(self, event: str, func: HookFunc, priority: int = 0, plugin_id: Optional[str] = None) -> Hook:
+    def register(self, event: str, func: HookFunc, priority: int = 0, plugin_id: str | None = None) -> Hook:
         hook = Hook(name=event, func=func, priority=priority, plugin_id=plugin_id)
         with self._lock:
             if event not in self._hooks:
@@ -173,7 +173,7 @@ class PluginManager:
         if plugin:
             plugin.on_stop()
 
-    def get(self, plugin_id: str) -> Optional[PluginBase]:
+    def get(self, plugin_id: str) -> PluginBase | None:
         return self._plugins.get(plugin_id)
 
     def list_plugins(self) -> list[dict[str, Any]]:
@@ -185,6 +185,6 @@ class PluginManager:
     def register_global_hook(self, event: str, func: HookFunc, priority: int = 0) -> Hook:
         return self._global_hooks.register(event, func, priority)
 
-    def unregister(self, plugin_id: str) -> Optional[PluginBase]:
+    def unregister(self, plugin_id: str) -> PluginBase | None:
         with self._lock:
             return self._plugins.pop(plugin_id, None)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any
 
 from .errors import HarnessError
 
@@ -20,8 +20,8 @@ class LLMConfig:
     temperature: float = 0.7
     max_tokens: int = 1024
     timeout: float = 30.0
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
+    api_key: str | None = None
+    base_url: str | None = None
 
 
 @dataclass
@@ -36,7 +36,7 @@ class ChatMessage:
 class LLMResponse:
     """Response from an LLM."""
 
-    def __init__(self, content: str, *, model: str = "", usage: Optional[dict[str, int]] = None, metadata: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, content: str, *, model: str = "", usage: dict[str, int] | None = None, metadata: dict[str, Any] | None = None) -> None:
         self.content = content
         self.model = model
         self.usage = usage or {}
@@ -50,12 +50,12 @@ class LLMResponse:
 class ChatModel:
     """LangChain-style chat model wrapper."""
 
-    def __init__(self, config: Optional[LLMConfig] = None) -> None:
+    def __init__(self, config: LLMConfig | None = None) -> None:
         self.config = config or LLMConfig()
         self._call_count = 0
         self._total_tokens = 0
 
-    def invoke(self, messages: Union[str, list[ChatMessage]]) -> LLMResponse:
+    def invoke(self, messages: str | list[ChatMessage]) -> LLMResponse:
         self._call_count += 1
         if isinstance(messages, str):
             messages = [ChatMessage(role="user", content=messages)]
@@ -64,7 +64,7 @@ class ChatModel:
         self._total_tokens += usage["total_tokens"]
         return LLMResponse(content=content, model=self.config.model_name, usage=usage)
 
-    async def ainvoke(self, messages: Union[str, list[ChatMessage]]) -> LLMResponse:
+    async def ainvoke(self, messages: str | list[ChatMessage]) -> LLMResponse:
         return self.invoke(messages)
 
     def generate(self, messages_list: list[list[ChatMessage]]) -> list[LLMResponse]:
@@ -121,7 +121,7 @@ class ToolDefinition:
     name: str
     description: str
     parameters: dict[str, Any]
-    func: Optional[callable] = None
+    func: callable | None = None
 
     def to_schema(self) -> dict[str, Any]:
         return {

@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
-from src.harness.errors import GraphError, NodeError, DeadLetterQueue, CircuitBreaker, make_retry_decorator
+from src.harness.errors import GraphError, NodeError, DeadLetterQueue, CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,10 @@ class Node:
     description: str = ""
     retry_count: int = 0
     max_retries: int = 3
-    circuit_breaker: Optional[CircuitBreaker] = None
+    circuit_breaker: CircuitBreaker | None = None
 
     def execute(self, state: State) -> State:
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             try:
                 if self.circuit_breaker and not self.circuit_breaker.allow_request():
@@ -79,10 +79,10 @@ class Edge:
 
     source: str
     target: str
-    condition: Optional[EdgeFunc] = None
+    condition: EdgeFunc | None = None
     description: str = ""
 
-    def resolve(self, state: State) -> Optional[str]:
+    def resolve(self, state: State) -> str | None:
         if self.condition is None:
             return self.target
         try:
@@ -105,7 +105,7 @@ class Graph:
         self.id = str(uuid.uuid4())[:8]
         self.nodes: dict[str, Node] = {}
         self.edges: list[Edge] = []
-        self.entry_point: Optional[str] = None
+        self.entry_point: str | None = None
         self._dead_letter_queue = DeadLetterQueue()
         self._circuit_breaker = CircuitBreaker()
 
@@ -116,7 +116,7 @@ class Graph:
             self.entry_point = node_id
         return node
 
-    def add_edge(self, source: str, target: str, condition: Optional[EdgeFunc] = None, description: str = "") -> Edge:
+    def add_edge(self, source: str, target: str, condition: EdgeFunc | None = None, description: str = "") -> Edge:
         edge = Edge(source=source, target=target, condition=condition, description=description)
         self.edges.append(edge)
         return edge
@@ -129,7 +129,7 @@ class Graph:
     def get_outgoing(self, node_id: str) -> list[Edge]:
         return [e for e in self.edges if e.source == node_id]
 
-    def execute(self, initial_state: Optional[State] = None, max_steps: int = 100) -> State:
+    def execute(self, initial_state: State | None = None, max_steps: int = 100) -> State:
         if initial_state is None:
             state = State()
         else:

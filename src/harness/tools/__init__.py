@@ -76,7 +76,7 @@ class Tool:
         description: str,
         func: Callable[..., Any],
         schema: ToolSchema,
-        rate_limiter: Optional[RateLimiter] = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> None:
         self.name = name
         self.description = description
@@ -126,9 +126,9 @@ class ToolRegistry:
         name: str,
         description: str,
         func: Callable[..., Any],
-        parameters: Optional[dict[str, Any]] = None,
-        required: Optional[list[str]] = None,
-        rate_limit: Optional[tuple[int, float]] = None,
+        parameters: dict[str, Any] | None = None,
+        required: list[str] | None = None,
+        rate_limit: tuple[int, float] | None = None,
     ) -> Tool:
         schema = ToolSchema(properties=parameters or {}, required=required or [])
         rate_limiter = RateLimiter(*rate_limit) if rate_limit else None
@@ -139,7 +139,7 @@ class ToolRegistry:
             self._tools[name] = tool
         return tool
 
-    def get(self, name: str) -> Optional[Tool]:
+    def get(self, name: str) -> Tool | None:
         return self._tools.get(name)
 
     def invoke(self, name: str, **kwargs: Any) -> Any:

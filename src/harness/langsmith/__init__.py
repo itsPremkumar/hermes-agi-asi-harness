@@ -18,14 +18,14 @@ class TraceSpan:
 
     name: str
     run_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     inputs: dict[str, Any] = field(default_factory=dict)
     outputs: dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     children: list[TraceSpan] = field(default_factory=list)
 
-    def end(self, outputs: Optional[dict[str, Any]] = None, error: Optional[str] = None) -> None:
+    def end(self, outputs: dict[str, Any] | None = None, error: str | None = None) -> None:
         if outputs:
             self.outputs = outputs
         if error:
@@ -41,7 +41,7 @@ class TracingClient:
         self._traces: list[TraceSpan] = []
         self._active_spans: dict[str, TraceSpan] = {}
 
-    def start_span(self, name: str, inputs: Optional[dict[str, Any]] = None, parent_id: Optional[str] = None) -> TraceSpan:
+    def start_span(self, name: str, inputs: dict[str, Any] | None = None, parent_id: str | None = None) -> TraceSpan:
         span = TraceSpan(name=name, inputs=inputs or {}, parent_id=parent_id)
         self._active_spans[span.run_id] = span
         if parent_id and parent_id in self._active_spans:
@@ -50,7 +50,7 @@ class TracingClient:
             self._traces.append(span)
         return span
 
-    def end_span(self, run_id: str, outputs: Optional[dict[str, Any]] = None, error: Optional[str] = None) -> Optional[TraceSpan]:
+    def end_span(self, run_id: str, outputs: dict[str, Any] | None = None, error: str | None = None) -> TraceSpan | None:
         span = self._active_spans.pop(run_id, None)
         if span:
             span.end(outputs, error)
@@ -70,7 +70,7 @@ class DatasetEntry:
     """A dataset entry for evaluation."""
 
     inputs: dict[str, Any]
-    expected_output: Optional[str] = None
+    expected_output: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     entry_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
 
@@ -83,7 +83,7 @@ class Dataset:
         self.description = description
         self.entries: list[DatasetEntry] = []
 
-    def add_entry(self, inputs: dict[str, Any], expected_output: Optional[str] = None, **metadata: Any) -> DatasetEntry:
+    def add_entry(self, inputs: dict[str, Any], expected_output: str | None = None, **metadata: Any) -> DatasetEntry:
         entry = DatasetEntry(inputs=inputs, expected_output=expected_output, metadata=metadata)
         self.entries.append(entry)
         return entry
@@ -99,7 +99,7 @@ class EvalResult:
 
     entry_id: str
     predicted: str
-    expected: Optional[str]
+    expected: str | None
     score: float
     feedback: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -108,14 +108,14 @@ class EvalResult:
 class EvalRunner:
     """LangSmith-style evaluation runner."""
 
-    def __init__(self, tracing: Optional[TracingClient] = None) -> None:
+    def __init__(self, tracing: TracingClient | None = None) -> None:
         self.tracing = tracing or TracingClient()
 
     def run_eval(
         self,
         dataset: Dataset,
         predict_fn: callable,
-        scoring_fn: Optional[callable] = None,
+        scoring_fn: callable | None = None,
     ) -> list[EvalResult]:
         results = []
         for entry in dataset.entries:
@@ -171,7 +171,7 @@ class ExperimentManager:
         self.experiments[exp.experiment_id] = exp
         return exp
 
-    def get(self, experiment_id: str) -> Optional[Experiment]:
+    def get(self, experiment_id: str) -> Experiment | None:
         return self.experiments.get(experiment_id)
 
     def list_experiments(self) -> list[Experiment]:

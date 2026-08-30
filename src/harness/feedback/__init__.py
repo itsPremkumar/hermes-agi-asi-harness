@@ -35,7 +35,7 @@ class CritiqueResult:
 class NodeValidator:
     """Validates node outputs."""
 
-    def __init__(self, rules: Optional[list[dict[str, Any]]] = None) -> None:
+    def __init__(self, rules: list[dict[str, Any]] | None = None) -> None:
         self.rules = rules or []
 
     def add_rule(self, name: str, check: callable, weight: float = 1.0) -> None:
@@ -96,7 +96,7 @@ class VerificationPipeline:
 class SelfCritique:
     """Self-critique mechanism."""
 
-    def __init__(self, critique_fn: Optional[callable] = None) -> None:
+    def __init__(self, critique_fn: callable | None = None) -> None:
         self.critique_fn = critique_fn or self._default_critique
 
     def _default_critique(self, text: str) -> CritiqueResult:

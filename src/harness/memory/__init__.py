@@ -19,7 +19,7 @@ class MemoryEntry:
     """A single memory entry."""
 
     content: str
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     importance: float = 1.0
@@ -86,7 +86,7 @@ class ShortTermMemory:
 class LongTermMemory:
     """Long-term memory with embedding-based retrieval."""
 
-    def __init__(self, embedding_model: Optional[EmbeddingModel] = None, max_entries: int = 1000) -> None:
+    def __init__(self, embedding_model: EmbeddingModel | None = None, max_entries: int = 1000) -> None:
         self.embedding_model = embedding_model or EmbeddingModel()
         self.max_entries = max_entries
         self._entries: list[MemoryEntry] = []

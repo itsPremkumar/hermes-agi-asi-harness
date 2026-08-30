@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
 
 from src.harness.langsmith import (
     TracingClient,
     TraceSpan,
     Dataset,
-    DatasetEntry,
     EvalRunner,
     EvalResult,
     Experiment,

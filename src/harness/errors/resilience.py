@@ -3,26 +3,22 @@
 from __future__ import annotations
 
 import logging
-import random
 import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
-    RetryCallState,
 )
 
 from . import (
     CircuitBreakerOpenError,
     HarnessError,
-    RateLimitError,
-    DeadLetterError,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,9 +62,7 @@ class CircuitBreaker:
         with self._lock:
             self._failure_count += 1
             self._last_failure_time = time.time()
-            if self._state == CircuitState.HALF_OPEN:
-                self._state = CircuitState.OPEN
-            elif self._failure_count >= self.failure_threshold:
+            if self._state == CircuitState.HALF_OPEN or self._failure_count >= self.failure_threshold:
                 self._state = CircuitState.OPEN
 
     def allow_request(self) -> bool:
@@ -128,7 +122,7 @@ class DeadLetterQueue:
     _queue: list[dict[str, Any]] = field(default_factory=list, init=False, repr=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
-    def enqueue(self, node_id: str, error: Exception, payload: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    def enqueue(self, node_id: str, error: Exception, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         entry = {
             "node_id": node_id,
             "error_type": type(error).__name__,
@@ -143,7 +137,7 @@ class DeadLetterQueue:
         logger.error(f"Node {node_id} sent to dead-letter queue: {error}")
         return entry
 
-    def dequeue(self) -> Optional[dict[str, Any]]:
+    def dequeue(self) -> dict[str, Any] | None:
         with self._lock:
             if self._queue:
                 return self._queue.pop(0)

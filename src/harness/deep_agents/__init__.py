@@ -40,8 +40,8 @@ class AgentTask:
     inputs: dict[str, Any] = field(default_factory=dict)
     outputs: dict[str, Any] = field(default_factory=dict)
     status: str = "pending"
-    assigned_to: Optional[str] = None
-    parent_task_id: Optional[str] = None
+    assigned_to: str | None = None
+    parent_task_id: str | None = None
     subtask_ids: list[str] = field(default_factory=list)
 
 
@@ -90,7 +90,7 @@ class Team:
         with self._lock:
             self.agents[agent.agent_id] = agent
 
-    def remove_agent(self, agent_id: str) -> Optional[Agent]:
+    def remove_agent(self, agent_id: str) -> Agent | None:
         with self._lock:
             return self.agents.pop(agent_id, None)
 
@@ -113,7 +113,7 @@ class SubAgentSpawner:
         self._active: dict[str, Agent] = {}
         self._lock = threading.Lock()
 
-    def spawn(self, name: str, role: AgentRole, capabilities: Optional[list[str]] = None) -> Agent:
+    def spawn(self, name: str, role: AgentRole, capabilities: list[str] | None = None) -> Agent:
         agent = Agent(name=name, role=role, capabilities=capabilities or [])
         with self._lock:
             self._active[agent.agent_id] = agent
