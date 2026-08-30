@@ -17,14 +17,14 @@ Memory types map to cognitive science:
 - Self-model: agent identity
 """
 
-import time
 import json
-import sqlite3
-import pathlib
 import logging
-from enum import Enum
-from typing import List, Dict, Any, Optional
+import pathlib
+import sqlite3
+import time
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +47,11 @@ class MemoryEntry:
     memory_type: MemoryType
     title: str
     content: str
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     confidence: float = 1.0
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class HybridMemoryStore:
@@ -67,7 +67,7 @@ class HybridMemoryStore:
     - Thread-safe operations
     """
     
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         if db_path is None:
             self.db_path = ":memory:"
         else:
@@ -140,9 +140,9 @@ class HybridMemoryStore:
         memory_type: MemoryType,
         title: str,
         content: str,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         confidence: float = 1.0,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ) -> MemoryEntry:
         """Create and persist a new memory entry."""
         entry_id = f"mem_{int(time.time() * 1000)}_{abs(hash(title)) % 10000}"
@@ -158,7 +158,7 @@ class HybridMemoryStore:
         self.store(entry)
         return entry
     
-    def retrieve_by_type(self, memory_type: MemoryType, limit: int = 50) -> List[MemoryEntry]:
+    def retrieve_by_type(self, memory_type: MemoryType, limit: int = 50) -> list[MemoryEntry]:
         """Retrieve memories by type."""
         cursor = self._conn.cursor()
         cursor.execute("""
@@ -168,7 +168,7 @@ class HybridMemoryStore:
         rows = cursor.fetchall()
         return [self._row_to_entry(r) for r in rows]
     
-    def search(self, query: str, memory_type: Optional[MemoryType] = None, limit: int = 10) -> List[MemoryEntry]:
+    def search(self, query: str, memory_type: MemoryType | None = None, limit: int = 10) -> list[MemoryEntry]:
         """Hybrid search: FTS5 when available, SQL LIKE fallback."""
         cursor = self._conn.cursor()
         results = []
@@ -211,7 +211,7 @@ class HybridMemoryStore:
             entries = [e for e in entries if e.memory_type == memory_type]
         return entries[:limit]
     
-    def get_by_id(self, memory_id: str) -> Optional[MemoryEntry]:
+    def get_by_id(self, memory_id: str) -> MemoryEntry | None:
         """Get a memory by ID."""
         cursor = self._conn.cursor()
         cursor.execute("""
@@ -240,7 +240,7 @@ class HybridMemoryStore:
             if self._has_fts:
                 self._conn.execute("DELETE FROM memories_fts WHERE id = ?", (memory_id,))
     
-    def count_by_type(self) -> Dict[str, int]:
+    def count_by_type(self) -> dict[str, int]:
         """Count memories by type."""
         cursor = self._conn.cursor()
         cursor.execute("SELECT memory_type, COUNT(*) FROM memories GROUP BY memory_type")
@@ -267,7 +267,7 @@ class HybridMemoryStore:
 class HybridMemoryPlugin:
     """Plugin wrapper for HybridMemoryStore."""
     
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         self.store = HybridMemoryStore(db_path)
         self.manifest = None
     
@@ -282,7 +282,7 @@ class HybridMemoryPlugin:
         self.store.close()
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "hybrid_memory",

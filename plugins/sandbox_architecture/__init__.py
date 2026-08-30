@@ -14,7 +14,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class SandboxResult:
     stderr: str = ""
     return_code: int = -1
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class Sandbox:
@@ -102,7 +102,7 @@ class Sandbox:
                 return_code=-1,
             )
 
-    async def static_check(self, code: str) -> Dict[str, Any]:
+    async def static_check(self, code: str) -> dict[str, Any]:
         """Perform static checks on code."""
         issues = []
         

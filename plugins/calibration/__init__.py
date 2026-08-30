@@ -8,7 +8,7 @@ import asyncio
 import logging
 import time
 from collections import defaultdict
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,8 @@ class CalibrationTracker:
     """Track prediction quality."""
 
     def __init__(self):
-        self._predictions: List[Dict[str, Any]] = []
-        self._by_capability: Dict[str, List[Dict]] = defaultdict(list)
+        self._predictions: list[dict[str, Any]] = []
+        self._by_capability: dict[str, list[dict]] = defaultdict(list)
 
     def record(self, capability: str, predicted_confidence: float, actual_success: bool):
         """Record a prediction and outcome."""
@@ -30,14 +30,14 @@ class CalibrationTracker:
         self._predictions.append(record)
         self._by_capability[capability].append(record)
 
-    def brier_score(self, capability: str = None) -> float:
+    def brier_score(self, capability: str | None = None) -> float:
         """Calculate Brier score (lower = better)."""
         records = self._by_capability.get(capability, self._predictions) if capability else self._predictions
         if not records:
             return 0.0
         return sum((r["predicted"] - r["actual"]) ** 2 for r in records) / len(records)
 
-    def calibration_curve(self, capability: str = None, n_bins: int = 10) -> List[Dict[str, Any]]:
+    def calibration_curve(self, capability: str | None = None, n_bins: int = 10) -> list[dict[str, Any]]:
         """Calculate calibration curve data."""
         records = self._by_capability.get(capability, self._predictions) if capability else self._predictions
         if not records:
@@ -61,7 +61,7 @@ class CalibrationTracker:
                 })
         return curve
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         total = len(self._predictions)
         if total == 0:
             return {"total": 0}
@@ -98,10 +98,10 @@ class CalibrationPlugin:
     async def record(self, capability: str, predicted_confidence: float, actual_success: bool):
         self.tracker.record(capability, predicted_confidence, actual_success)
 
-    async def get_brier_score(self, capability: str = None):
+    async def get_brier_score(self, capability: str | None = None):
         return self.tracker.brier_score(capability)
 
-    async def get_curve(self, capability: str = None):
+    async def get_curve(self, capability: str | None = None):
         return self.tracker.calibration_curve(capability)
 
 

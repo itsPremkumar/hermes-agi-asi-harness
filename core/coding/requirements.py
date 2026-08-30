@@ -2,10 +2,12 @@
 Requirement Engineering — Compile natural language into testable requirements.
 """
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class RequirementType(str, Enum):
     FUNCTIONAL = "functional"
@@ -28,27 +30,27 @@ class Requirement:
     type: RequirementType
     description: str
     priority: Priority = Priority.MEDIUM
-    acceptance_criteria: List[str] = field(default_factory=list)
+    acceptance_criteria: list[str] = field(default_factory=list)
     testable: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class CompiledRequirements:
     id: str
     source_text: str
-    functional: List[Requirement] = field(default_factory=list)
-    non_functional: List[Requirement] = field(default_factory=list)
-    constraints: List[Requirement] = field(default_factory=list)
-    assumptions: List[Requirement] = field(default_factory=list)
-    security: List[Requirement] = field(default_factory=list)
-    performance: List[Requirement] = field(default_factory=list)
-    migration: List[Requirement] = field(default_factory=list)
-    all_requirements: List[Requirement] = field(default_factory=list)
+    functional: list[Requirement] = field(default_factory=list)
+    non_functional: list[Requirement] = field(default_factory=list)
+    constraints: list[Requirement] = field(default_factory=list)
+    assumptions: list[Requirement] = field(default_factory=list)
+    security: list[Requirement] = field(default_factory=list)
+    performance: list[Requirement] = field(default_factory=list)
+    migration: list[Requirement] = field(default_factory=list)
+    all_requirements: list[Requirement] = field(default_factory=list)
     
-    def get_all(self) -> List[Requirement]:
+    def get_all(self) -> list[Requirement]:
         return self.all_requirements
     
-    def get_by_type(self, req_type: RequirementType) -> List[Requirement]:
+    def get_by_type(self, req_type: RequirementType) -> list[Requirement]:
         mapping = {
             RequirementType.FUNCTIONAL: self.functional,
             RequirementType.NON_FUNCTIONAL: self.non_functional,
@@ -60,13 +62,13 @@ class CompiledRequirements:
         }
         return mapping.get(req_type, [])
     
-    def get_by_priority(self, priority: Priority) -> List[Requirement]:
+    def get_by_priority(self, priority: Priority) -> list[Requirement]:
         return [r for r in self.all_requirements if r.priority == priority]
     
-    def get_testable(self) -> List[Requirement]:
+    def get_testable(self) -> list[Requirement]:
         return [r for r in self.all_requirements if r.testable]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total": len(self.all_requirements),
             "functional": len(self.functional),
@@ -114,7 +116,7 @@ class RequirementsCompiler:
         
         return result
     
-    def _parse_sentence(self, sentence: str) -> Optional[Requirement]:
+    def _parse_sentence(self, sentence: str) -> Requirement | None:
         """Parse a single sentence into a requirement."""
         sentence_lower = sentence.lower()
         
@@ -155,7 +157,7 @@ class RequirementsCompiler:
             testable=len(acceptance_criteria) > 0,
         )
     
-    def _generate_acceptance_criteria(self, sentence: str, req_type: RequirementType) -> List[str]:
+    def _generate_acceptance_criteria(self, sentence: str, req_type: RequirementType) -> list[str]:
         """Generate acceptance criteria for a requirement."""
         criteria = []
         
@@ -171,7 +173,7 @@ class RequirementsCompiler:
         
         return criteria
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "id": self.id,
         }

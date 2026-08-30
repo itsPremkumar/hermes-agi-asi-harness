@@ -17,9 +17,10 @@ import logging
 import random
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_models")
 
@@ -38,7 +39,7 @@ class ModelProfile:
     """Profile of a model."""
     model_id: str
     provider: str
-    capabilities: List[ModelCapability] = field(default_factory=list)
+    capabilities: list[ModelCapability] = field(default_factory=list)
     cost_per_1k_tokens: float = 0.0
     latency_p50_ms: float = 0.0
     latency_p95_ms: float = 0.0
@@ -59,7 +60,7 @@ class RoutingDecision:
     reason: str
     confidence: float
     timestamp: float
-    alternatives: List[str] = field(default_factory=list)
+    alternatives: list[str] = field(default_factory=list)
 
 
 class ModelOrchestrator:
@@ -77,9 +78,9 @@ class ModelOrchestrator:
     """
     
     def __init__(self):
-        self._models: Dict[str, ModelProfile] = {}
-        self._routing_history: List[RoutingDecision] = []
-        self._performance_history: List[Dict[str, Any]] = []
+        self._models: dict[str, ModelProfile] = {}
+        self._routing_history: list[RoutingDecision] = []
+        self._performance_history: list[dict[str, Any]] = []
         
         # Register default models
         self._register_defaults()
@@ -134,7 +135,7 @@ class ModelOrchestrator:
     def route(
         self,
         task_description: str,
-        required_capabilities: List[ModelCapability] = None,
+        required_capabilities: list[ModelCapability] | None = None,
         prefer_local: bool = True,
         max_cost: float = 0.01
     ) -> RoutingDecision:
@@ -224,7 +225,7 @@ class ModelOrchestrator:
         task_description: str,
         num_models: int = 3,
         brain: Any = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Query multiple models and combine results."""
         # Select top models
         candidates = sorted(
@@ -256,9 +257,9 @@ class ModelOrchestrator:
     async def chain(
         self,
         task_description: str,
-        model_chain: List[str] = None,
+        model_chain: list[str] | None = None,
         brain: Any = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Chain models: output of one → input of next."""
         if not model_chain:
             model_chain = ["llama3.2:3b", "gpt-4o-mini"]
@@ -293,7 +294,7 @@ class ModelOrchestrator:
                 model.successful_calls += 1
             model.success_rate = model.successful_calls / model.total_calls if model.total_calls > 0 else 0.5
     
-    def get_calibration_report(self) -> Dict[str, Any]:
+    def get_calibration_report(self) -> dict[str, Any]:
         """Get calibration report."""
         return {
             "models": len(self._models),
@@ -308,7 +309,7 @@ class ModelOrchestrator:
             }
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

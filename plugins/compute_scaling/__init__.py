@@ -9,7 +9,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ class ComputeScalingController:
     """Scale compute based on task value and difficulty."""
 
     def __init__(self):
-        self._budgets: Dict[str, ComputeBudget] = {}
-        self._active_usage: Dict[str, Dict[str, Any]] = {}
+        self._budgets: dict[str, ComputeBudget] = {}
+        self._active_usage: dict[str, dict[str, Any]] = {}
         
         # Default budgets per reasoning level
         self._defaults = {
@@ -107,7 +107,7 @@ class ComputeScalingController:
             and elapsed <= usage["budget"].timeout_seconds
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "custom_budgets": len(self._budgets),
             "active_tasks": len(self._active_usage),

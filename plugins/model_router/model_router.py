@@ -7,11 +7,11 @@ Free-first model routing with graceful degradation.
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,16 +27,16 @@ class ModelSpec:
     name: str
     provider: str
     kind: ProviderKind
-    base_url: Optional[str] = None
+    base_url: str | None = None
     cost: str = "free"
-    capabilities: List[str] = None
+    capabilities: list[str] = None
     
     def __post_init__(self):
         if self.capabilities is None:
             self.capabilities = []
 
 
-FREE_MODELS: List[ModelSpec] = [
+FREE_MODELS: list[ModelSpec] = [
     ModelSpec("llama3.2:3b", "ollama", ProviderKind.LOCAL, "http://localhost:11434/v1", "free", ["chat"]),
     ModelSpec("qwen2.5-coder:3b", "ollama", ProviderKind.LOCAL, "http://localhost:11434/v1", "free", ["coding"]),
     ModelSpec("SmolLM2-1.7B", "hf-local", ProviderKind.LOCAL, None, "free", ["chat"]),
@@ -45,7 +45,7 @@ FREE_MODELS: List[ModelSpec] = [
 ]
 
 
-PAID_MODELS: List[ModelSpec] = [
+PAID_MODELS: list[ModelSpec] = [
     ModelSpec("gpt-4o-mini", "openai", ProviderKind.REMOTE, None, "optional-paid", ["chat", "reasoning", "vision"]),
     ModelSpec("claude-sonnet-4", "anthropic", ProviderKind.REMOTE, None, "optional-paid", ["chat", "reasoning", "vision"]),
     ModelSpec("gemini-2.5-flash", "google", ProviderKind.REMOTE, None, "optional-paid", ["chat", "reasoning", "vision"]),
@@ -60,7 +60,7 @@ def _is_offline() -> bool:
     return _mode() in ("offline", "zero-cost")
 
 
-def list_models(allow_paid: bool = False) -> List[ModelSpec]:
+def list_models(allow_paid: bool = False) -> list[ModelSpec]:
     if _is_offline():
         return FREE_MODELS
     if allow_paid:
@@ -68,7 +68,7 @@ def list_models(allow_paid: bool = False) -> List[ModelSpec]:
     return FREE_MODELS
 
 
-def resolve_model(name: Optional[str] = None) -> ModelSpec:
+def resolve_model(name: str | None = None) -> ModelSpec:
     env_name = os.getenv("HARNESS_MODEL_NAME")
     target = name or env_name or FREE_MODELS[0].name
     
@@ -89,7 +89,7 @@ def guard_paid_access(model: ModelSpec) -> None:
         )
 
 
-def describe_router() -> Dict[str, Any]:
+def describe_router() -> dict[str, Any]:
     return {
         "mode": _mode(),
         "free_models": [m.name for m in FREE_MODELS],
@@ -119,10 +119,10 @@ class ModelRouterPlugin:
     def get_active_model(self) -> ModelSpec:
         return self._active_model
     
-    def list_models(self, allow_paid: bool = False) -> List[ModelSpec]:
+    def list_models(self, allow_paid: bool = False) -> list[ModelSpec]:
         return list_models(allow_paid)
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "type": "model_router", **describe_router()}
 
 

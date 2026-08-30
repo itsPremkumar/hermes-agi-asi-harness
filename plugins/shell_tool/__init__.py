@@ -43,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 50
@@ -56,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -94,7 +94,7 @@ class ShellResult:
     stderr: str
     duration_seconds: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class ShellTool:
@@ -106,7 +106,7 @@ class ShellTool:
         self.timeout = timeout
         self.cwd = Path(cwd)
     
-    def run(self, command: str, timeout: int = None, env: Dict[str, str] = None) -> ShellResult:
+    def run(self, command: str, timeout: int | None = None, env: dict[str, str] | None = None) -> ShellResult:
         """
         Run a shell command.
         
@@ -170,7 +170,7 @@ class ShellTool:
                 error_message=str(e),
             )
     
-    async def run_async(self, command: str, timeout: int = None) -> ShellResult:
+    async def run_async(self, command: str, timeout: int | None = None) -> ShellResult:
         """Run a shell command asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.run, command, timeout)
@@ -203,7 +203,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=50,
             ),
         )
-        self.tool: Optional[ShellTool] = None
+        self.tool: ShellTool | None = None
     
     async def load(self) -> bool:
         self.tool = ShellTool()
@@ -220,7 +220,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -231,7 +231,7 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def run(self, command: str, timeout: int = 60) -> Dict[str, Any]:
+    def run(self, command: str, timeout: int = 60) -> dict[str, Any]:
         """Run a shell command."""
         result = self.tool.run(command, timeout=timeout)
         return {
@@ -244,7 +244,7 @@ class Plugin(PluginBase):
             "error": result.error_message,
         }
     
-    async def run_async(self, command: str, timeout: int = 60) -> Dict[str, Any]:
+    async def run_async(self, command: str, timeout: int = 60) -> dict[str, Any]:
         """Run a shell command asynchronously."""
         result = await self.tool.run_async(command, timeout=timeout)
         return {
@@ -257,5 +257,5 @@ class Plugin(PluginBase):
             "error": result.error_message,
         }
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

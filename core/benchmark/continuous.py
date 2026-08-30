@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 class TestResult(str, Enum):
@@ -40,7 +41,7 @@ class BenchmarkCase:
     test_function: Callable
     expected_result: Any
     timeout_seconds: int = 30
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -51,7 +52,7 @@ class BenchmarkRun:
     actual_result: Any
     duration_ms: float
     timestamp: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -69,29 +70,29 @@ class Regression:
 class BenchmarkResult:
     id: str
     version: str
-    runs: List[BenchmarkRun]
-    regressions: List[Regression]
+    runs: list[BenchmarkRun]
+    regressions: list[Regression]
     total_score: float
     baseline_score: float
     improved: bool
     regressed: bool
     timestamp: float
-    summary: Dict[str, Any] = field(default_factory=dict)
+    summary: dict[str, Any] = field(default_factory=dict)
 
 
 class ContinuousBenchmark:
     """Continuous evaluation and regression detection."""
     
     def __init__(self):
-        self.cases: Dict[str, BenchmarkCase] = {}
-        self.baselines: Dict[str, float] = {}  # case_id → baseline score
-        self.results: List[BenchmarkResult] = []
-        self.regressions: List[Regression] = []
+        self.cases: dict[str, BenchmarkCase] = {}
+        self.baselines: dict[str, float] = {}  # case_id → baseline score
+        self.results: list[BenchmarkResult] = []
+        self.regressions: list[Regression] = []
     
     def register_case(self, name: str, description: str,
                       test_function: Callable, expected_result: Any,
                       timeout_seconds: int = 30,
-                      metadata: Dict[str, Any] = None) -> BenchmarkCase:
+                      metadata: dict[str, Any] | None = None) -> BenchmarkCase:
         """Register a benchmark test case."""
         case = BenchmarkCase(
             id=str(uuid.uuid4()),
@@ -110,9 +111,9 @@ class ContinuousBenchmark:
         self.baselines[case_id] = score
     
     def evaluate(self, version: str,
-                 test_functions: Dict[str, Callable] = None) -> BenchmarkResult:
+                 test_functions: dict[str, Callable] | None = None) -> BenchmarkResult:
         """Run a benchmark suite."""
-        runs: List[BenchmarkRun] = []
+        runs: list[BenchmarkRun] = []
         total_score = 0.0
         passed = 0
         failed = 0
@@ -195,7 +196,7 @@ class ContinuousBenchmark:
         self.results.append(result)
         return result
     
-    def _detect_regressions(self, runs: List[BenchmarkRun]) -> List[Regression]:
+    def _detect_regressions(self, runs: list[BenchmarkRun]) -> list[Regression]:
         """Detect regressions by comparing with baselines."""
         regressions = []
         
@@ -232,19 +233,19 @@ class ContinuousBenchmark:
         
         return regressions
     
-    def get_latest_result(self) -> Optional[BenchmarkResult]:
+    def get_latest_result(self) -> BenchmarkResult | None:
         """Get the most recent benchmark result."""
         if not self.results:
             return None
         return self.results[-1]
     
-    def get_regressions(self, severity: RegressionSeverity = None) -> List[Regression]:
+    def get_regressions(self, severity: RegressionSeverity = None) -> list[Regression]:
         """Get all regressions, optionally filtered by severity."""
         if severity:
             return [r for r in self.regressions if r.severity == severity]
         return self.regressions
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "cases": len(self.cases),
             "results": len(self.results),

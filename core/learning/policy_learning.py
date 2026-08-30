@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PolicySource(str, Enum):
@@ -26,14 +26,14 @@ class Policy:
     id: str
     name: str
     task_type: str
-    conditions: Dict[str, Any]
-    action_preferences: Dict[str, float]  # action → weight
+    conditions: dict[str, Any]
+    action_preferences: dict[str, float]  # action → weight
     source: PolicySource
     created_at: float
     success_rate: float = 0.5
     total_uses: int = 0
     successful_uses: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -44,15 +44,15 @@ class PolicyOutcome:
     success: bool
     reward: float
     timestamp: float
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 class PolicyLearner:
     """Learn and improve action policies from experience."""
 
     def __init__(self):
-        self.policies: Dict[str, Policy] = {}
-        self.outcomes: List[PolicyOutcome] = []
+        self.policies: dict[str, Policy] = {}
+        self.outcomes: list[PolicyOutcome] = []
         self._load_default_policies()
 
     def _load_default_policies(self):
@@ -89,7 +89,7 @@ class PolicyLearner:
         for policy in defaults:
             self.policies[policy.id] = policy
 
-    def select_action(self, task_type: str, context: Dict[str, Any]) -> Optional[str]:
+    def select_action(self, task_type: str, context: dict[str, Any]) -> str | None:
         """Select best action for a task type given context."""
         matching = self._find_matching_policies(task_type, context)
         if not matching:
@@ -105,7 +105,7 @@ class PolicyLearner:
 
     def record_outcome(self, policy_id: str, task_type: str, action_taken: str,
                        success: bool, reward: float = 0.0,
-                       context: Dict[str, Any] = None) -> PolicyOutcome:
+                       context: dict[str, Any] | None = None) -> PolicyOutcome:
         """Record the outcome of using a policy."""
         outcome = PolicyOutcome(
             policy_id=policy_id,
@@ -128,7 +128,7 @@ class PolicyLearner:
 
         return outcome
 
-    def learn_from_trajectories(self, trajectories: List[Any]):
+    def learn_from_trajectories(self, trajectories: list[Any]):
         """Learn policies from historical trajectories."""
         for traj in trajectories:
             if traj.outcome != "success":
@@ -144,7 +144,7 @@ class PolicyLearner:
                         policy.action_preferences[action] += 0.1
 
     def _find_matching_policies(self, task_type: str,
-                                 context: Dict[str, Any]) -> List[Policy]:
+                                 context: dict[str, Any]) -> list[Policy]:
         """Find policies matching task type and context."""
         matching = []
         for policy in self.policies.values():
@@ -170,14 +170,14 @@ class PolicyLearner:
         
         return matching
 
-    def get_best_policy(self, task_type: str) -> Optional[Policy]:
+    def get_best_policy(self, task_type: str) -> Policy | None:
         """Get the best-performing policy for a task type."""
         relevant = [p for p in self.policies.values() if p.task_type == task_type]
         if not relevant:
             return None
         return max(relevant, key=lambda p: p.success_rate * p.total_uses)
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "policies": len(self.policies),
             "outcomes": len(self.outcomes),

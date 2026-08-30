@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class EvolutionCandidate:
     parent: str
     change_type: str  # planner, memory, tool, agent, workflow, etc.
     hypothesis_id: str
-    changed_components: List[str]
+    changed_components: list[str]
     expected_gain: float = 0.0
     dev_score: float = 0.0
     holdout_score: float = 0.0
@@ -37,17 +37,17 @@ class PopulationArchive:
     """Archive of evolution candidates with diversity tracking."""
 
     def __init__(self):
-        self._candidates: Dict[str, EvolutionCandidate] = {}
-        self._lineages: Dict[str, List[str]] = {}  # parent → [child_ids]
-        self._promoted: List[str] = []
-        self._rejected: List[str] = []
+        self._candidates: dict[str, EvolutionCandidate] = {}
+        self._lineages: dict[str, list[str]] = {}  # parent → [child_ids]
+        self._promoted: list[str] = []
+        self._rejected: list[str] = []
 
     def create_candidate(
         self,
         parent: str,
         change_type: str,
         hypothesis_id: str,
-        changed_components: List[str],
+        changed_components: list[str],
         expected_gain: float = 0.0,
     ) -> EvolutionCandidate:
         """Create a new evolution candidate."""
@@ -88,7 +88,7 @@ class PopulationArchive:
             c.decision = "reject"
             self._rejected.append(candidate_id)
 
-    def get_pareto_frontier(self) -> List[EvolutionCandidate]:
+    def get_pareto_frontier(self) -> list[EvolutionCandidate]:
         """Get candidates on the Pareto frontier."""
         candidates = [c for c in self._candidates.values() if c.decision == "pending"]
         if not candidates:
@@ -111,17 +111,17 @@ class PopulationArchive:
         
         return pareto
 
-    def get_diversity(self) -> Dict[str, int]:
+    def get_diversity(self) -> dict[str, int]:
         """Measure population diversity by change type."""
         diversity = {}
         for c in self._candidates.values():
             diversity[c.change_type] = diversity.get(c.change_type, 0) + 1
         return diversity
 
-    def get_candidate(self, candidate_id: str) -> Optional[EvolutionCandidate]:
+    def get_candidate(self, candidate_id: str) -> EvolutionCandidate | None:
         return self._candidates.get(candidate_id)
 
-    def get_lineage(self, candidate_id: str) -> List[str]:
+    def get_lineage(self, candidate_id: str) -> list[str]:
         """Get full lineage of a candidate."""
         lineage = []
         c = self._candidates.get(candidate_id)
@@ -130,7 +130,7 @@ class PopulationArchive:
             c = self._candidates.get(c.parent)
         return list(reversed(lineage))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total": len(self._candidates),
             "promoted": len(self._promoted),

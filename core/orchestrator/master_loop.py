@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class OrchestratorState(str, Enum):
@@ -35,11 +35,11 @@ class Mission:
     goal: str
     status: OrchestratorState
     created_at: float
-    steps: List[Dict[str, Any]] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
     result: Any = None
-    error: Optional[str] = None
-    risk_scores: List[float] = field(default_factory=list)
-    verification_results: List[bool] = field(default_factory=list)
+    error: str | None = None
+    risk_scores: list[float] = field(default_factory=list)
+    verification_results: list[bool] = field(default_factory=list)
 
 
 class MasterOrchestrator:
@@ -52,8 +52,8 @@ class MasterOrchestrator:
 
     def __init__(self):
         self.state = OrchestratorState.IDLE
-        self.missions: Dict[str, Mission] = {}
-        self.active_mission: Optional[str] = None
+        self.missions: dict[str, Mission] = {}
+        self.active_mission: str | None = None
         self._cycle_count = 0
 
     def create_mission(self, goal: str) -> Mission:
@@ -66,7 +66,7 @@ class MasterOrchestrator:
         self.missions[mission.id] = mission
         return mission
 
-    def execute_mission(self, mission_id: str) -> Dict[str, Any]:
+    def execute_mission(self, mission_id: str) -> dict[str, Any]:
         """Execute a mission through the v9 loop."""
         mission = self.missions.get(mission_id)
         if not mission:
@@ -134,7 +134,7 @@ class MasterOrchestrator:
         mission.status = state
         self.state = state
 
-    def _perceive(self, mission: Mission) -> Dict[str, Any]:
+    def _perceive(self, mission: Mission) -> dict[str, Any]:
         """Gather observations from environment."""
         return {
             "mission_id": mission.id,
@@ -143,7 +143,7 @@ class MasterOrchestrator:
             "observations": [],
         }
 
-    def _estimate(self, mission: Mission, perception: Dict) -> Dict[str, Any]:
+    def _estimate(self, mission: Mission, perception: dict) -> dict[str, Any]:
         """Estimate current state from observations."""
         return {
             "state": "estimated",
@@ -151,7 +151,7 @@ class MasterOrchestrator:
             "entities_involved": [],
         }
 
-    def _predict(self, mission: Mission, state: Dict) -> List[Dict[str, Any]]:
+    def _predict(self, mission: Mission, state: dict) -> list[dict[str, Any]]:
         """Predict possible futures."""
         return [
             {"scenario": "success", "probability": 0.8},
@@ -159,7 +159,7 @@ class MasterOrchestrator:
             {"scenario": "failure", "probability": 0.05},
         ]
 
-    def _simulate(self, mission: Mission, predictions: List[Dict]) -> Dict[str, Any]:
+    def _simulate(self, mission: Mission, predictions: list[dict]) -> dict[str, Any]:
         """Simulate consequences of candidate actions."""
         return {
             "risk_score": 0.3,
@@ -168,13 +168,13 @@ class MasterOrchestrator:
             "predictions": predictions,
         }
 
-    def _select_policy(self, mission: Mission, simulation: Dict) -> Optional[str]:
+    def _select_policy(self, mission: Mission, simulation: dict) -> str | None:
         """Select best policy given simulation results."""
         if simulation.get("risk_score", 1.0) > 0.7:
             return None
         return "default_policy"
 
-    def _execute(self, mission: Mission, policy: str) -> Dict[str, Any]:
+    def _execute(self, mission: Mission, policy: str) -> dict[str, Any]:
         """Execute the selected policy."""
         return {
             "status": "completed",
@@ -182,7 +182,7 @@ class MasterOrchestrator:
             "timestamp": time.time(),
         }
 
-    def _observe(self, mission: Mission, action_result: Dict) -> Dict[str, Any]:
+    def _observe(self, mission: Mission, action_result: dict) -> dict[str, Any]:
         """Observe the result of the action."""
         return {
             "action_result": action_result,
@@ -190,12 +190,12 @@ class MasterOrchestrator:
             "new_observations": [],
         }
 
-    def _verify(self, mission: Mission, observation: Dict) -> bool:
+    def _verify(self, mission: Mission, observation: dict) -> bool:
         """Verify the result meets success criteria."""
         return True
 
-    def _learn(self, mission: Mission, policy: str, action_result: Dict,
-               observation: Dict, verified: bool):
+    def _learn(self, mission: Mission, policy: str, action_result: dict,
+               observation: dict, verified: bool):
         """Learn from the execution."""
         mission.steps.append({
             "policy": policy,
@@ -203,7 +203,7 @@ class MasterOrchestrator:
             "timestamp": time.time(),
         })
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "state": self.state.value,
             "missions_count": len(self.missions),

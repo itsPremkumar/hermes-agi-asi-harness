@@ -14,13 +14,13 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
-from core.dynamic.scenario_analyzer import ScenarioProfile, ScenarioType, ComplexityLevel
-from core.dynamic.planning_engine import DynamicPlan, PlanStep, StepStatus, StepType
-from core.dynamic.decision_engine import DynamicDecisionEngine, Decision, DecisionType
+from core.dynamic.decision_engine import Decision, DynamicDecisionEngine
+from core.dynamic.planning_engine import DynamicPlan, PlanStep
 
 
 class ExecutionStatus(str, Enum):
@@ -36,9 +36,9 @@ class StepResult:
     step_id: str
     status: ExecutionStatus
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
-    decisions: List[Decision] = field(default_factory=list)
+    decisions: list[Decision] = field(default_factory=list)
 
 
 @dataclass
@@ -46,10 +46,10 @@ class ExecutionResult:
     plan_id: str
     goal: str
     status: ExecutionStatus
-    step_results: List[StepResult] = field(default_factory=list)
+    step_results: list[StepResult] = field(default_factory=list)
     total_duration_ms: float = 0.0
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class DynamicWorkflowExecutor:
@@ -69,7 +69,7 @@ class DynamicWorkflowExecutor:
         self.id = str(uuid.uuid4())
         self.kernel = kernel
         self.decision_engine = DynamicDecisionEngine()
-        self._module_registry: Dict[str, Callable] = {}
+        self._module_registry: dict[str, Callable] = {}
         self._register_core_modules()
     
     def _register_core_modules(self):
@@ -283,12 +283,12 @@ class DynamicWorkflowExecutor:
                     )
                 result.step_results.append(step_result)
     
-    def _compute_step_levels(self, steps: List[PlanStep]) -> List[List[PlanStep]]:
+    def _compute_step_levels(self, steps: list[PlanStep]) -> list[list[PlanStep]]:
         """Compute execution levels based on dependency depth."""
         step_map = {s.id: s for s in steps}
-        levels: Dict[int, List[PlanStep]] = {}
+        levels: dict[int, list[PlanStep]] = {}
         
-        def get_depth(step: PlanStep, visited: set = None) -> int:
+        def get_depth(step: PlanStep, visited: set | None = None) -> int:
             if visited is None:
                 visited = set()
             if step.id in visited:
@@ -351,7 +351,7 @@ class DynamicWorkflowExecutor:
         return twin.get_state()
     
     async def _exec_code_graph(self, step: PlanStep, plan: DynamicPlan):
-        from core.coding import CodeGraph, NodeType, RelationType
+        from core.coding import CodeGraph
         graph = CodeGraph()
         return graph.get_state()
     
@@ -361,7 +361,7 @@ class DynamicWorkflowExecutor:
         return idx.get_state()
     
     async def _exec_recon(self, step: PlanStep, plan: DynamicPlan):
-        from core.coding import RepositoryRecon, ReconStage
+        from core.coding import RepositoryRecon
         recon = RepositoryRecon()
         result = recon.run(".")
         return {"stage": result.stage.value, "files": len(result.files)}
@@ -505,7 +505,7 @@ class DynamicWorkflowExecutor:
     
     async def _exec_dynamic_parallelism(self, step: PlanStep, plan: DynamicPlan):
         from core.coding import ParallelScheduler
-        ps = ParallelScheduler()
+        ParallelScheduler()
         return {"status": "ready"}
     
     async def _exec_agent_specialization(self, step: PlanStep, plan: DynamicPlan):
@@ -605,7 +605,7 @@ class DynamicWorkflowExecutor:
     
     async def _exec_action_explainer(self, step: PlanStep, plan: DynamicPlan):
         from core.explanation import ActionExplainer
-        explainer = ActionExplainer()
+        ActionExplainer()
         return {"status": "ready"}
     
     async def _exec_audit_trail(self, step: PlanStep, plan: DynamicPlan):
@@ -643,7 +643,7 @@ class DynamicWorkflowExecutor:
         disc = EnvironmentDiscovery()
         return disc.get_state()
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "modules": len(self._module_registry),

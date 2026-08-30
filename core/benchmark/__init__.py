@@ -1,12 +1,20 @@
 """Benchmark Package."""
-from .continuous import ContinuousBenchmark, BenchmarkCase, BenchmarkRun, Regression, BenchmarkResult, TestResult, RegressionSeverity
+from .continuous import (
+    BenchmarkCase,
+    BenchmarkResult,
+    BenchmarkRun,
+    ContinuousBenchmark,
+    Regression,
+    RegressionSeverity,
+    TestResult,
+)
 
 __all__ = [
-    "ContinuousBenchmark",
     "BenchmarkCase",
-    "BenchmarkRun",
-    "Regression",
     "BenchmarkResult",
-    "TestResult",
+    "BenchmarkRun",
+    "ContinuousBenchmark",
+    "Regression",
     "RegressionSeverity",
+    "TestResult",
 ]

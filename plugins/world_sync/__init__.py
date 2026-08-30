@@ -6,11 +6,11 @@ Tracks: external changes, API changes, security advisories,
 opportunities, competitive intelligence.
 """
 
-import time
 import hashlib
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class SyncSource(str, Enum):
@@ -30,10 +30,10 @@ class WorldChange:
     summary: str
     relevance_score: float = 0.0
     timestamp: float = field(default_factory=time.time)
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     change_id: str = field(default_factory=lambda: f"CHG-{hashlib.sha256(str(time.time()).encode()).hexdigest()[:8]}")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "source": self.source,
             "title": self.title,
@@ -50,9 +50,9 @@ class WorldSync:
     """Synchronize with external world state."""
 
     def __init__(self):
-        self._changes: List[WorldChange] = []
-        self._last_sync: Dict[str, float] = {}
-        self._sync_intervals: Dict[str, int] = {
+        self._changes: list[WorldChange] = []
+        self._last_sync: dict[str, float] = {}
+        self._sync_intervals: dict[str, int] = {
             SyncSource.GITHUB.value: 3600,  # 1 hour
             SyncSource.ARXIV.value: 86400,  # 1 day
             SyncSource.HUGGINGFACE.value: 86400,  # 1 day
@@ -72,7 +72,7 @@ class WorldSync:
 
     def ingest_change(self, source: str, title: str, url: str,
                       summary: str, relevance_score: float = 0.5,
-                      tags: List[str] = None) -> WorldChange:
+                      tags: list[str] | None = None) -> WorldChange:
         change = WorldChange(
             source=source,
             title=title,
@@ -85,23 +85,23 @@ class WorldSync:
         return change
 
     def get_relevant_changes(self, min_relevance: float = 0.5,
-                             limit: int = 20) -> List[WorldChange]:
+                             limit: int = 20) -> list[WorldChange]:
         relevant = [c for c in self._changes if c.relevance_score >= min_relevance]
         relevant.sort(key=lambda c: c.relevance_score, reverse=True)
         return relevant[:limit]
 
-    def get_changes_by_source(self, source: str, limit: int = 20) -> List[WorldChange]:
+    def get_changes_by_source(self, source: str, limit: int = 20) -> list[WorldChange]:
         changes = [c for c in self._changes if c.source == source]
         changes.sort(key=lambda c: c.timestamp, reverse=True)
         return changes[:limit]
 
-    def get_opportunities(self) -> List[WorldChange]:
+    def get_opportunities(self) -> list[WorldChange]:
         """Get high-relevance changes that represent opportunities."""
         return [c for c in self._changes
                 if c.relevance_score >= 0.7 and "opportunity" in c.tags]
 
-    def get_stats(self) -> Dict[str, Any]:
-        by_source: Dict[str, int] = {}
+    def get_stats(self) -> dict[str, Any]:
+        by_source: dict[str, int] = {}
         for c in self._changes:
             by_source[c.source] = by_source.get(c.source, 0) + 1
         return {

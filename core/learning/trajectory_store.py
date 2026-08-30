@@ -9,12 +9,11 @@ Used for: debugging, learning, benchmarking, counterfactuals, policy evaluation.
 
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class TrajectoryStatus(str, Enum):
@@ -27,13 +26,13 @@ class TrajectoryStatus(str, Enum):
 @dataclass
 class TrajectoryStep:
     step_number: int
-    state_before: Dict[str, Any]
-    action: Dict[str, Any]
-    observation: Dict[str, Any]
-    state_after: Dict[str, Any]
+    state_before: dict[str, Any]
+    action: dict[str, Any]
+    observation: dict[str, Any]
+    state_after: dict[str, Any]
     timestamp: float
     confidence: float = 0.5
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -41,24 +40,24 @@ class Trajectory:
     id: str
     mission_id: str
     goal: str
-    steps: List[TrajectoryStep]
+    steps: list[TrajectoryStep]
     status: TrajectoryStatus
     created_at: float
-    completed_at: Optional[float] = None
-    outcome: Optional[str] = None
+    completed_at: float | None = None
+    outcome: str | None = None
     total_reward: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class TrajectoryStore:
     """Store and manage action trajectories."""
 
     def __init__(self):
-        self.trajectories: Dict[str, Trajectory] = {}
-        self._step_counts: Dict[str, int] = {}  # trajectory_id → step count
+        self.trajectories: dict[str, Trajectory] = {}
+        self._step_counts: dict[str, int] = {}  # trajectory_id → step count
 
     def create_trajectory(self, mission_id: str, goal: str,
-                          initial_state: Dict[str, Any] = None) -> Trajectory:
+                          initial_state: dict[str, Any] | None = None) -> Trajectory:
         traj = Trajectory(
             id=str(uuid.uuid4()),
             mission_id=mission_id,
@@ -72,10 +71,10 @@ class TrajectoryStore:
         self._step_counts[traj.id] = 0
         return traj
 
-    def add_step(self, trajectory_id: str, state_before: Dict[str, Any],
-                 action: Dict[str, Any], observation: Dict[str, Any],
-                 state_after: Dict[str, Any], confidence: float = 0.5,
-                 metadata: Dict[str, Any] = None) -> Optional[TrajectoryStep]:
+    def add_step(self, trajectory_id: str, state_before: dict[str, Any],
+                 action: dict[str, Any], observation: dict[str, Any],
+                 state_after: dict[str, Any], confidence: float = 0.5,
+                 metadata: dict[str, Any] | None = None) -> TrajectoryStep | None:
         traj = self.trajectories.get(trajectory_id)
         if not traj:
             return None
@@ -104,19 +103,19 @@ class TrajectoryStore:
         traj.outcome = outcome
         traj.total_reward = reward
 
-    def get_trajectory(self, trajectory_id: str) -> Optional[Trajectory]:
+    def get_trajectory(self, trajectory_id: str) -> Trajectory | None:
         return self.trajectories.get(trajectory_id)
 
-    def get_trajectories_by_mission(self, mission_id: str) -> List[Trajectory]:
+    def get_trajectories_by_mission(self, mission_id: str) -> list[Trajectory]:
         return [t for t in self.trajectories.values() if t.mission_id == mission_id]
 
-    def get_trajectories_by_outcome(self, outcome: str) -> List[Trajectory]:
+    def get_trajectories_by_outcome(self, outcome: str) -> list[Trajectory]:
         return [t for t in self.trajectories.values() if t.outcome == outcome]
 
-    def get_all_trajectories(self) -> List[Trajectory]:
+    def get_all_trajectories(self) -> list[Trajectory]:
         return list(self.trajectories.values())
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total_trajectories": len(self.trajectories),
             "completed": sum(1 for t in self.trajectories.values() if t.status == TrajectoryStatus.COMPLETED),

@@ -9,11 +9,11 @@ Enables:
 
 from __future__ import annotations
 
-import copy
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -26,7 +26,7 @@ class ReplayResult:
     reward: float
     reward_delta: float  # vs original
     timestamp: float
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -34,8 +34,8 @@ class Counterfactual:
     id: str
     trajectory_id: str
     step_number: int
-    original_action: Dict[str, Any]
-    alternative_action: Dict[str, Any]
+    original_action: dict[str, Any]
+    alternative_action: dict[str, Any]
     predicted_outcome: str
     predicted_reward: float
     timestamp: float
@@ -45,11 +45,11 @@ class TrajectoryReplay:
     """Replay trajectories with modified policies for learning."""
 
     def __init__(self):
-        self.replay_results: List[ReplayResult] = []
-        self.counterfactuals: List[Counterfactual] = []
+        self.replay_results: list[ReplayResult] = []
+        self.counterfactuals: list[Counterfactual] = []
 
     def replay(self, trajectory: Any, policy_modifier: Callable,
-               executor: Callable = None) -> ReplayResult:
+               executor: Callable | None = None) -> ReplayResult:
         """Replay a trajectory with a modified policy."""
         result = ReplayResult(
             id=str(uuid.uuid4()),
@@ -91,9 +91,9 @@ class TrajectoryReplay:
         return result
 
     def generate_counterfactual(self, trajectory: Any, step_number: int,
-                                alternative_action: Dict[str, Any],
+                                alternative_action: dict[str, Any],
                                 predicted_outcome: str = "unknown",
-                                predicted_reward: float = 0.0) -> Optional[Counterfactual]:
+                                predicted_reward: float = 0.0) -> Counterfactual | None:
         """Generate a counterfactual: what if we had done Z instead?"""
         if step_number >= len(trajectory.steps):
             return None
@@ -112,15 +112,15 @@ class TrajectoryReplay:
         self.counterfactuals.append(cf)
         return cf
 
-    def get_counterfactuals_for_trajectory(self, trajectory_id: str) -> List[Counterfactual]:
+    def get_counterfactuals_for_trajectory(self, trajectory_id: str) -> list[Counterfactual]:
         return [c for c in self.counterfactuals if c.trajectory_id == trajectory_id]
 
-    def get_replay_results(self, trajectory_id: str = None) -> List[ReplayResult]:
+    def get_replay_results(self, trajectory_id: str | None = None) -> list[ReplayResult]:
         if trajectory_id:
             return [r for r in self.replay_results if r.original_trajectory_id == trajectory_id]
         return self.replay_results
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "replays": len(self.replay_results),
             "counterfactuals": len(self.counterfactuals),

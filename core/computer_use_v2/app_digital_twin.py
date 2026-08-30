@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -22,28 +22,28 @@ class TwinEntity:
     id: str
     name: str
     type: str
-    state: Dict[str, Any] = field(default_factory=dict)
-    actions: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    state: dict[str, Any] = field(default_factory=dict)
+    actions: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class TwinScreen:
     id: str
     name: str
-    elements: List[Dict[str, Any]] = field(default_factory=list)
-    actions_available: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    elements: list[dict[str, Any]] = field(default_factory=list)
+    actions_available: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class TwinWorkflow:
     id: str
     name: str
-    steps: List[Dict[str, Any]]
-    preconditions: List[str] = field(default_factory=list)
-    postconditions: List[str] = field(default_factory=list)
-    failure_modes: List[str] = field(default_factory=list)
+    steps: list[dict[str, Any]]
+    preconditions: list[str] = field(default_factory=list)
+    postconditions: list[str] = field(default_factory=list)
+    failure_modes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -71,18 +71,18 @@ class ApplicationDigitalTwin:
         self.app_name = app_name
         self.app_type = app_type
         self.id = str(uuid.uuid4())
-        self.entities: Dict[str, TwinEntity] = {}
-        self.screens: Dict[str, TwinScreen] = {}
-        self.workflows: Dict[str, TwinWorkflow] = {}
-        self.failure_modes: Dict[str, TwinFailureMode] = {}
-        self.permissions: Dict[str, List[str]] = {}  # role → [actions]
-        self.metadata: Dict[str, Any] = {
+        self.entities: dict[str, TwinEntity] = {}
+        self.screens: dict[str, TwinScreen] = {}
+        self.workflows: dict[str, TwinWorkflow] = {}
+        self.failure_modes: dict[str, TwinFailureMode] = {}
+        self.permissions: dict[str, list[str]] = {}  # role → [actions]
+        self.metadata: dict[str, Any] = {
             "created_at": time.time(),
             "version": "1.0",
         }
 
-    def add_entity(self, name: str, type: str, state: Dict[str, Any] = None,
-                   actions: List[str] = None) -> TwinEntity:
+    def add_entity(self, name: str, type: str, state: dict[str, Any] | None = None,
+                   actions: list[str] | None = None) -> TwinEntity:
         entity = TwinEntity(
             id=str(uuid.uuid4()),
             name=name,
@@ -93,8 +93,8 @@ class ApplicationDigitalTwin:
         self.entities[entity.id] = entity
         return entity
 
-    def add_screen(self, name: str, elements: List[Dict[str, Any]] = None,
-                   actions_available: List[str] = None) -> TwinScreen:
+    def add_screen(self, name: str, elements: list[dict[str, Any]] | None = None,
+                   actions_available: list[str] | None = None) -> TwinScreen:
         screen = TwinScreen(
             id=str(uuid.uuid4()),
             name=name,
@@ -104,10 +104,10 @@ class ApplicationDigitalTwin:
         self.screens[screen.id] = screen
         return screen
 
-    def add_workflow(self, name: str, steps: List[Dict[str, Any]],
-                     preconditions: List[str] = None,
-                     postconditions: List[str] = None,
-                     failure_modes: List[str] = None) -> TwinWorkflow:
+    def add_workflow(self, name: str, steps: list[dict[str, Any]],
+                     preconditions: list[str] | None = None,
+                     postconditions: list[str] | None = None,
+                     failure_modes: list[str] | None = None) -> TwinWorkflow:
         workflow = TwinWorkflow(
             id=str(uuid.uuid4()),
             name=name,
@@ -133,7 +133,7 @@ class ApplicationDigitalTwin:
         return fm
 
     def simulate_action(self, action: str, target: str,
-                        context: Dict[str, Any] = None) -> Dict[str, Any]:
+                        context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Simulate an action against the digital twin."""
         result = {
             "action": action,
@@ -169,19 +169,19 @@ class ApplicationDigitalTwin:
 
         return result
 
-    def get_workflow(self, name: str) -> Optional[TwinWorkflow]:
+    def get_workflow(self, name: str) -> TwinWorkflow | None:
         for w in self.workflows.values():
             if w.name == name:
                 return w
         return None
 
-    def get_entity(self, name: str) -> Optional[TwinEntity]:
+    def get_entity(self, name: str) -> TwinEntity | None:
         for e in self.entities.values():
             if e.name == name:
                 return e
         return None
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "app_name": self.app_name,
             "app_type": self.app_type,

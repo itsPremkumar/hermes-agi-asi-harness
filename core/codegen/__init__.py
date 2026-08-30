@@ -22,10 +22,11 @@ import subprocess
 import textwrap
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_codegen")
 
@@ -45,11 +46,11 @@ class CodeSpec:
     name: str
     description: str
     code_type: CodeGenType
-    inputs: Dict[str, str] = field(default_factory=dict)
-    outputs: Dict[str, str] = field(default_factory=dict)
-    dependencies: List[str] = field(default_factory=list)
-    constraints: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
+    inputs: dict[str, str] = field(default_factory=dict)
+    outputs: dict[str, str] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -61,7 +62,7 @@ class GeneratedCode:
     language: str = "python"
     tests: str = ""
     documentation: str = ""
-    validation_result: Dict[str, Any] = field(default_factory=dict)
+    validation_result: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -94,8 +95,8 @@ class CodeSynthesisEngine:
     def __init__(self, sandbox_dir: str = "state/sandbox"):
         self.sandbox_dir = sandbox_dir
         os.makedirs(sandbox_dir, exist_ok=True)
-        self._generated: List[GeneratedCode] = []
-        self._patches: List[PatchResult] = []
+        self._generated: list[GeneratedCode] = []
+        self._patches: list[PatchResult] = []
     
     async def generate(self, spec: CodeSpec) -> GeneratedCode:
         """Generate code from a specification."""
@@ -309,10 +310,10 @@ await plugin.start()
 ## Configuration
 
 - Type: {spec.code_type.value}
-- Capabilities: {', '.join([spec.code_type.value])}
+- Capabilities: {f'{spec.code_type.value}'}
 """
     
-    async def validate_code(self, code: str, language: str = "python") -> Dict[str, Any]:
+    async def validate_code(self, code: str, language: str = "python") -> dict[str, Any]:
         """Validate generated code."""
         result = {
             "valid": True,
@@ -384,7 +385,7 @@ await plugin.start()
         self._patches.append(patch_result)
         return patch_result
     
-    async def optimize_code(self, code: str, profile_data: Dict[str, Any] = None) -> str:
+    async def optimize_code(self, code: str, profile_data: dict[str, Any] | None = None) -> str:
         """Optimize hot paths based on profiling data."""
         optimized = code
         
@@ -413,7 +414,7 @@ await plugin.start()
         
         return refactored
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

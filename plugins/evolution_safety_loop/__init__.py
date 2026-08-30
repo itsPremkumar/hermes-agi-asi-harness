@@ -6,11 +6,11 @@ corrigibility verification, test coverage requirement, reversibility test.
 All self-modifications must pass safety gates before deployment.
 """
 
-import time
 import hashlib
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ModificationType(str, Enum):
@@ -44,12 +44,12 @@ class ModificationRequest:
     rollback_plan: str
     proposed_by: str = "system"
     timestamp: float = field(default_factory=time.time)
-    safety_checks: List[SafetyCheck] = field(default_factory=list)
+    safety_checks: list[SafetyCheck] = field(default_factory=list)
     approved: bool = False
     rejected: bool = False
     rejection_reason: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "modification_id": self.modification_id,
             "modification_type": self.modification_type,
@@ -78,9 +78,9 @@ class EvolutionSafetyLoop:
     MIN_TEST_COVERAGE = 0.6
 
     def __init__(self):
-        self._requests: List[ModificationRequest] = []
-        self._approved: List[str] = []
-        self._rejected: List[str] = []
+        self._requests: list[ModificationRequest] = []
+        self._approved: list[str] = []
+        self._rejected: list[str] = []
 
     def submit_modification(self, mod_type: str, description: str,
                             blast_radius: int, reversibility: float,
@@ -117,7 +117,7 @@ class EvolutionSafetyLoop:
 
         return request
 
-    def _run_safety_checks(self, request: ModificationRequest) -> List[SafetyCheck]:
+    def _run_safety_checks(self, request: ModificationRequest) -> list[SafetyCheck]:
         checks = []
 
         # Check 1: forbidden types
@@ -189,7 +189,7 @@ class EvolutionSafetyLoop:
         failed = [c.name for c in request.safety_checks if not c.passed]
         return f"Failed safety checks: {', '.join(failed)}"
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_requests": len(self._requests),
             "approved": len(self._approved),

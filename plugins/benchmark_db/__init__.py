@@ -5,12 +5,12 @@ Records: benchmark runs, scores, timestamps, configurations, environments.
 Tracks: score trends, regression detection, performance distribution.
 """
 
-import time
 import json
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
-from pathlib import Path
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -20,8 +20,8 @@ class BenchmarkRun:
     score: float
     max_score: float = 1.0
     duration_seconds: float = 0.0
-    configuration: Dict[str, Any] = field(default_factory=dict)
-    environment: Dict[str, Any] = field(default_factory=dict)
+    configuration: dict[str, Any] = field(default_factory=dict)
+    environment: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
     timestamp: float = field(default_factory=time.time)
 
@@ -29,7 +29,7 @@ class BenchmarkRun:
     def normalized_score(self) -> float:
         return self.score / self.max_score if self.max_score > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
             "benchmark_name": self.benchmark_name,
@@ -47,8 +47,8 @@ class BenchmarkRun:
 class BenchmarkDB:
     """Performance benchmark database."""
 
-    def __init__(self, storage_path: Optional[Path] = None):
-        self._runs: List[BenchmarkRun] = []
+    def __init__(self, storage_path: Path | None = None):
+        self._runs: list[BenchmarkRun] = []
         self._storage_path = storage_path
         if storage_path and storage_path.exists():
             self._load()
@@ -77,8 +77,8 @@ class BenchmarkDB:
 
     def record_run(self, benchmark_name: str, score: float,
                    max_score: float = 1.0, duration_seconds: float = 0.0,
-                   configuration: Dict[str, Any] = None,
-                   environment: Dict[str, Any] = None,
+                   configuration: dict[str, Any] | None = None,
+                   environment: dict[str, Any] | None = None,
                    notes: str = "") -> BenchmarkRun:
         import uuid
         run = BenchmarkRun(
@@ -95,13 +95,13 @@ class BenchmarkDB:
         self._save()
         return run
 
-    def get_trend(self, benchmark_name: str, limit: int = 10) -> List[float]:
+    def get_trend(self, benchmark_name: str, limit: int = 10) -> list[float]:
         """Get recent score trend for a benchmark."""
         runs = [r for r in self._runs if r.benchmark_name == benchmark_name]
         return [r.normalized_score for r in runs[-limit:]]
 
     def detect_regression(self, benchmark_name: str,
-                          threshold: float = 0.1) -> Optional[Dict[str, Any]]:
+                          threshold: float = 0.1) -> dict[str, Any] | None:
         """Detect if recent score has regressed."""
         runs = [r for r in self._runs if r.benchmark_name == benchmark_name]
         if len(runs) < 3:
@@ -118,9 +118,9 @@ class BenchmarkDB:
             }
         return None
 
-    def get_leaderboard(self) -> List[Dict[str, Any]]:
+    def get_leaderboard(self) -> list[dict[str, Any]]:
         """Get top benchmarks by best score."""
-        best_by_name: Dict[str, BenchmarkRun] = {}
+        best_by_name: dict[str, BenchmarkRun] = {}
         for run in self._runs:
             current = best_by_name.get(run.benchmark_name)
             if not current or run.normalized_score > current.normalized_score:
@@ -130,8 +130,8 @@ class BenchmarkDB:
             for name, run in sorted(best_by_name.items(), key=lambda x: -x[1].normalized_score)
         ]
 
-    def get_stats(self) -> Dict[str, Any]:
-        by_name: Dict[str, List[BenchmarkRun]] = defaultdict(list)
+    def get_stats(self) -> dict[str, Any]:
+        by_name: dict[str, list[BenchmarkRun]] = defaultdict(list)
         for run in self._runs:
             by_name[run.benchmark_name].append(run)
         return {
@@ -143,7 +143,7 @@ class BenchmarkDB:
 
 
 class BenchmarkDBPlugin:
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None):
         self.engine = BenchmarkDB(storage_path=storage_path)
 
     async def load(self):

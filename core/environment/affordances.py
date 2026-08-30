@@ -9,11 +9,10 @@ For every resource, Hermes constructs:
 
 from __future__ import annotations
 
-import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class Reversibility(str, Enum):
@@ -36,7 +35,7 @@ class Consequence:
     description: str
     probability: float = 0.5
     severity: float = 0.5
-    entities_affected: List[str] = field(default_factory=list)
+    entities_affected: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -47,13 +46,13 @@ class Affordance:
     action: str
     reversibility: Reversibility = Reversibility.HIGH
     blast_radius: BlastRadius = BlastRadius.LOW
-    preconditions: List[str] = field(default_factory=list)
-    consequences: List[Consequence] = field(default_factory=list)
-    verification_methods: List[str] = field(default_factory=list)
+    preconditions: list[str] = field(default_factory=list)
+    consequences: list[Consequence] = field(default_factory=list)
+    verification_methods: list[str] = field(default_factory=list)
     estimated_cost: float = 0.0
     estimated_time_ms: int = 0
-    required_permissions: List[str] = field(default_factory=list)
-    compensation_action: Optional[str] = None  # for non-reversible actions
+    required_permissions: list[str] = field(default_factory=list)
+    compensation_action: str | None = None  # for non-reversible actions
 
 
 @dataclass
@@ -64,9 +63,9 @@ class AffordanceRule:
     action: str
     reversibility: Reversibility
     blast_radius: BlastRadius
-    preconditions: List[str] = field(default_factory=list)
-    verification_methods: List[str] = field(default_factory=list)
-    compensation_action: Optional[str] = None
+    preconditions: list[str] = field(default_factory=list)
+    verification_methods: list[str] = field(default_factory=list)
+    compensation_action: str | None = None
 
 
 class AffordanceModel:
@@ -78,7 +77,7 @@ class AffordanceModel:
     """
 
     # Default rules for common action types
-    DEFAULT_RULES: List[AffordanceRule] = [
+    DEFAULT_RULES: list[AffordanceRule] = [
         AffordanceRule(
             id="rule-read", resource_type="*", action="read",
             reversibility=Reversibility.HIGH, blast_radius=BlastRadius.LOW,
@@ -131,19 +130,19 @@ class AffordanceModel:
     ]
 
     def __init__(self):
-        self.affordances: Dict[str, Affordance] = {}
-        self.rules: Dict[str, AffordanceRule] = {r.id: r for r in self.DEFAULT_RULES}
+        self.affordances: dict[str, Affordance] = {}
+        self.rules: dict[str, AffordanceRule] = {r.id: r for r in self.DEFAULT_RULES}
 
     # ── Affordance Management ──────────────────────────────────────────────
 
     def add_affordance(self, resource_id: str, action: str,
                        reversibility: Reversibility = Reversibility.HIGH,
                        blast_radius: BlastRadius = BlastRadius.LOW,
-                       preconditions: List[str] = None,
-                       consequences: List[Consequence] = None,
-                       verification_methods: List[str] = None,
-                       required_permissions: List[str] = None,
-                       compensation_action: str = None) -> Affordance:
+                       preconditions: list[str] | None = None,
+                       consequences: list[Consequence] | None = None,
+                       verification_methods: list[str] | None = None,
+                       required_permissions: list[str] | None = None,
+                       compensation_action: str | None = None) -> Affordance:
         aff = Affordance(
             id=str(uuid.uuid4()),
             resource_id=resource_id,
@@ -159,19 +158,19 @@ class AffordanceModel:
         self.affordances[aff.id] = aff
         return aff
 
-    def get_affordances_for_resource(self, resource_id: str) -> List[Affordance]:
+    def get_affordances_for_resource(self, resource_id: str) -> list[Affordance]:
         return [a for a in self.affordances.values() if a.resource_id == resource_id]
 
-    def get_affordances_for_action(self, action: str) -> List[Affordance]:
+    def get_affordances_for_action(self, action: str) -> list[Affordance]:
         return [a for a in self.affordances.values() if a.action == action]
 
     # ── Rule-Based Affordance Generation ───────────────────────────────────
 
     def add_rule(self, resource_type: str, action: str,
                  reversibility: Reversibility, blast_radius: BlastRadius,
-                 preconditions: List[str] = None,
-                 verification_methods: List[str] = None,
-                 compensation_action: str = None) -> AffordanceRule:
+                 preconditions: list[str] | None = None,
+                 verification_methods: list[str] | None = None,
+                 compensation_action: str | None = None) -> AffordanceRule:
         rule = AffordanceRule(
             id=f"rule-{action}-{resource_type}",
             resource_type=resource_type,
@@ -186,8 +185,8 @@ class AffordanceModel:
         return rule
 
     def generate_affordances_for_resource(
-        self, resource_id: str, resource_type: str, capabilities: List[str]
-    ) -> List[Affordance]:
+        self, resource_id: str, resource_type: str, capabilities: list[str]
+    ) -> list[Affordance]:
         """Generate affordances for a resource based on rules and its capabilities."""
         generated = []
         for rule in self.rules.values():
@@ -209,7 +208,7 @@ class AffordanceModel:
 
     def add_consequence(self, affordance_id: str, type: str, description: str,
                          probability: float = 0.5, severity: float = 0.5,
-                         entities_affected: List[str] = None) -> Optional[Consequence]:
+                         entities_affected: list[str] | None = None) -> Consequence | None:
         aff = self.affordances.get(affordance_id)
         if not aff:
             return None
@@ -256,7 +255,7 @@ class AffordanceModel:
 
     # ── Compensation ───────────────────────────────────────────────────────
 
-    def get_compensation(self, affordance_id: str) -> Optional[str]:
+    def get_compensation(self, affordance_id: str) -> str | None:
         aff = self.affordances.get(affordance_id)
         if not aff:
             return None
@@ -270,17 +269,17 @@ class AffordanceModel:
 
     # ── Query & Summary ────────────────────────────────────────────────────
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "affordances_count": len(self.affordances),
             "rules_count": len(self.rules),
         }
 
-    def get_irreversible_actions(self) -> List[Affordance]:
+    def get_irreversible_actions(self) -> list[Affordance]:
         return [a for a in self.affordances.values()
                 if a.reversibility == Reversibility.IMPOSSIBLE]
 
-    def get_high_risk_actions(self, threshold: float = 0.7) -> List[Affordance]:
+    def get_high_risk_actions(self, threshold: float = 0.7) -> list[Affordance]:
         result = []
         for aff in self.affordances.values():
             if self.get_risk_score(aff.id) >= threshold:

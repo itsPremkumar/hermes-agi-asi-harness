@@ -2,10 +2,12 @@
 Architecture Synthesis — Generate competing architectures, tradeoff analysis, selection.
 """
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class ArchitectureStyle(str, Enum):
     MONOLITH = "monolith"
@@ -22,10 +24,10 @@ class ArchitectureStyle(str, Enum):
 
 @dataclass
 class TradeoffAnalysis:
-    dimensions: List[str] = field(default_factory=lambda: [
+    dimensions: list[str] = field(default_factory=lambda: [
         "correctness", "speed", "cost", "maintainability", "risk", "reversibility"
     ])
-    scores: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    scores: dict[str, dict[str, float]] = field(default_factory=dict)
     winner: str = ""
 
 @dataclass
@@ -33,17 +35,17 @@ class ArchitectureCandidate:
     id: str
     style: ArchitectureStyle
     description: str
-    pros: List[str] = field(default_factory=list)
-    cons: List[str] = field(default_factory=list)
-    tradeoffs: Dict[str, float] = field(default_factory=dict)
+    pros: list[str] = field(default_factory=list)
+    cons: list[str] = field(default_factory=list)
+    tradeoffs: dict[str, float] = field(default_factory=dict)
     suitability_score: float = 0.0
 
 class ArchitectureSynthesizer:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.candidates: List[ArchitectureCandidate] = []
+        self.candidates: list[ArchitectureCandidate] = []
     
-    def generate_candidates(self, requirements: Dict[str, Any]) -> List[ArchitectureCandidate]:
+    def generate_candidates(self, requirements: dict[str, Any]) -> list[ArchitectureCandidate]:
         candidates = []
         styles = self._select_styles(requirements)
         for style in styles:
@@ -59,7 +61,7 @@ class ArchitectureSynthesizer:
         self.candidates = candidates
         return candidates
     
-    def _select_styles(self, requirements: Dict[str, Any]) -> List[ArchitectureStyle]:
+    def _select_styles(self, requirements: dict[str, Any]) -> list[ArchitectureStyle]:
         styles = [ArchitectureStyle.MONOLITH, ArchitectureStyle.MODULAR_MONOLITH]
         if requirements.get("scale", 0) > 0.7:
             styles.append(ArchitectureStyle.MICROSERVICES)
@@ -69,7 +71,7 @@ class ArchitectureSynthesizer:
             styles.append(ArchitectureStyle.MICROSERVICES)
         return list(set(styles))
     
-    def _get_pros(self, style: ArchitectureStyle) -> List[str]:
+    def _get_pros(self, style: ArchitectureStyle) -> list[str]:
         pros_map = {
             ArchitectureStyle.MONOLITH: ["Simple deployment", "Easy debugging", "Low operational overhead"],
             ArchitectureStyle.MODULAR_MONOLITH: ["Clear boundaries", "Easier to split later", "Single deploy"],
@@ -78,7 +80,7 @@ class ArchitectureSynthesizer:
         }
         return pros_map.get(style, ["Flexible", "Extensible"])
     
-    def _get_cons(self, style: ArchitectureStyle) -> List[str]:
+    def _get_cons(self, style: ArchitectureStyle) -> list[str]:
         cons_map = {
             ArchitectureStyle.MONOLITH: ["Scaling limits", "Technology lock-in", "Long build times"],
             ArchitectureStyle.MODULAR_MONOLITH: ["Still single deploy", "Module boundaries can blur"],
@@ -87,7 +89,7 @@ class ArchitectureSynthesizer:
         }
         return cons_map.get(style, ["Complexity", "Learning curve"])
     
-    def _get_tradeoffs(self, style: ArchitectureStyle) -> Dict[str, float]:
+    def _get_tradeoffs(self, style: ArchitectureStyle) -> dict[str, float]:
         tradeoffs_map = {
             ArchitectureStyle.MONOLITH: {"correctness": 0.8, "speed": 0.9, "cost": 0.9, "maintainability": 0.6, "risk": 0.7},
             ArchitectureStyle.MODULAR_MONOLITH: {"correctness": 0.8, "speed": 0.8, "cost": 0.8, "maintainability": 0.8, "risk": 0.8},
@@ -96,7 +98,7 @@ class ArchitectureSynthesizer:
         }
         return tradeoffs_map.get(style, {"correctness": 0.7, "speed": 0.7, "cost": 0.7, "maintainability": 0.7, "risk": 0.7})
     
-    def select_best(self) -> Optional[ArchitectureCandidate]:
+    def select_best(self) -> ArchitectureCandidate | None:
         if not self.candidates:
             return None
         return max(self.candidates, key=lambda c: sum(c.tradeoffs.values()))
@@ -111,5 +113,5 @@ class ArchitectureSynthesizer:
             analysis.winner = best_style
         return analysis
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"candidates": len(self.candidates)}

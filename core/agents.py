@@ -8,9 +8,9 @@ Extracted & enhanced from agx-harness-main:
 
 from __future__ import annotations
 
+import builtins
 import logging
 import time
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,9 @@ class AgentRegistry:
     """Registry of live sub-agents."""
 
     def __init__(self) -> None:
-        self.agents: Dict[str, Dict[str, object]] = {}
+        self.agents: dict[str, dict[str, object]] = {}
 
-    def spawn(self, role: str, agent_id: str = None) -> str:
+    def spawn(self, role: str, agent_id: str | None = None) -> str:
         aid = agent_id or ("agent_%d" % (len(self.agents) + 1))
         now = int(time.time())
         self.agents[aid] = {"role": role, "status": "active",
@@ -42,14 +42,14 @@ class AgentRegistry:
             return True
         return False
 
-    def active(self) -> List[str]:
+    def active(self) -> builtins.list[str]:
         return [a for a, b in self.agents.items() if b["status"] == "active"]
 
-    def list(self) -> Dict[str, Dict[str, object]]:
+    def list(self) -> dict[str, dict[str, object]]:
         return self.agents
 
 
-def spawn(state: dict, role: str, agent_id: str = None) -> str:
+def spawn(state: dict, role: str, agent_id: str | None = None) -> str:
     reg = state.setdefault("shared_state", {}).setdefault("_agents", AgentRegistry())
     return reg.spawn(role, agent_id)
 
@@ -59,6 +59,6 @@ def terminate(state: dict, agent_id: str) -> bool:
     return reg.terminate(agent_id) if reg else False
 
 
-def active(state: dict) -> List[str]:
+def active(state: dict) -> list[str]:
     reg = state.get("shared_state", {}).get("_agents")
     return reg.active() if reg else []

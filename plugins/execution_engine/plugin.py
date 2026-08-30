@@ -9,9 +9,9 @@ Extracted & enhanced from:
 
 import asyncio
 import logging
-import time
-from typing import Any, Awaitable, Callable, Dict, List, Optional
-from dataclasses import dataclass, field
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 class StepResult:
     step_number: int
     thought: str
-    action: Optional[str] = None
-    action_input: Optional[Dict[str, Any]] = None
-    observation: Optional[str] = None
+    action: str | None = None
+    action_input: dict[str, Any] | None = None
+    observation: str | None = None
     done: bool = False
-    final_answer: Optional[str] = None
+    final_answer: str | None = None
 
 
 class ExecutionEngine:
@@ -32,20 +32,20 @@ class ExecutionEngine:
     
     def __init__(self):
         self.manifest = None
-        self.tools: Dict[str, Callable[[Dict[str, Any]], Awaitable[str]]] = {}
+        self.tools: dict[str, Callable[[dict[str, Any]], Awaitable[str]]] = {}
         self.max_steps: int = 25
     
-    def register_tool(self, name: str, func: Callable[[Dict[str, Any]], Awaitable[str]]):
+    def register_tool(self, name: str, func: Callable[[dict[str, Any]], Awaitable[str]]):
         """Register a tool."""
         self.tools[name] = func
     
-    async def execute(self, task: Any) -> Dict[str, Any]:
+    async def execute(self, task: Any) -> dict[str, Any]:
         """Execute a task using the ReAct loop with real tool dispatch."""
         goal = task.goal if hasattr(task, 'goal') else str(task)
         logger.info("Executing task: %s", goal)
         
         step = 0
-        history: List[StepResult] = []
+        history: list[StepResult] = []
         final_answer = None
         
         # Select best tool based on task keywords
@@ -103,7 +103,7 @@ class ExecutionEngine:
             "history": history
         }
     
-    def _select_tool(self, goal: str) -> Optional[str]:
+    def _select_tool(self, goal: str) -> str | None:
         """Select the best tool for a goal based on keyword matching."""
         goal_lower = goal.lower()
         
@@ -120,14 +120,13 @@ class ExecutionEngine:
         ]
         
         for keywords, tool_name in keyword_map:
-            if any(kw in goal_lower for kw in keywords):
-                if tool_name in self.tools:
-                    return tool_name
+            if any(kw in goal_lower for kw in keywords) and tool_name in self.tools:
+                return tool_name
         
         # Fallback: use first available tool
-        return list(self.tools.keys())[0] if self.tools else None
+        return next(iter(self.tools.keys())) if self.tools else None
     
-    def _build_action_input(self, tool_name: str, goal: str) -> Dict[str, Any]:
+    def _build_action_input(self, tool_name: str, goal: str) -> dict[str, Any]:
         """Build action input dict for a tool based on the goal."""
         goal_lower = goal.lower()
         
@@ -140,7 +139,7 @@ class ExecutionEngine:
                 # Try to extract path from first part
                 words = parts[0].strip().split()
                 for i, w in enumerate(words):
-                    if w.endswith(".txt") or w.endswith(".py") or w.endswith(".md"):
+                    if w.endswith((".txt", ".py", ".md")):
                         path = w
                         break
                 else:
@@ -179,7 +178,7 @@ class ExecutionEngine:
     async def stop(self) -> bool:
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "execution_engine",

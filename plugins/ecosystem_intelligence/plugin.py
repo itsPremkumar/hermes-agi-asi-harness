@@ -7,9 +7,8 @@ Inspired by: Hermes Agent ecosystem monitoring, DeerFlow research pipeline.
 
 import logging
 import uuid
-import time
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ class EcosystemIntelligence:
     
     def __init__(self):
         self.manifest = None
-        self._discoveries: Dict[str, Discovery] = {}
+        self._discoveries: dict[str, Discovery] = {}
     
     async def load(self) -> bool:
         logger.info("Ecosystem intelligence loaded")
@@ -62,7 +61,7 @@ class EcosystemIntelligence:
         if discovery_id in self._discoveries:
             self._discoveries[discovery_id].score = score
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "ecosystem_intelligence",

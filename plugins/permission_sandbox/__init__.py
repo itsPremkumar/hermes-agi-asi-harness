@@ -50,8 +50,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -63,11 +63,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -98,14 +98,13 @@ class SandboxConfig:
     max_cpu_time: int = 30  # seconds
     max_memory_mb: int = 512
     network_allowed: bool = False
-    allowed_paths: List[str] = field(default_factory=lambda: ["/tmp", "."])
-    forbidden_commands: List[str] = field(default_factory=lambda: ["rm -rf", "sudo", "mkfs", "dd"])
+    allowed_paths: list[str] = field(default_factory=lambda: ["/tmp", "."])
+    forbidden_commands: list[str] = field(default_factory=lambda: ["rm -rf", "sudo", "mkfs", "dd"])
     read_only_fs: bool = False
 
 
 class SandboxViolation(Exception):
     """Raised when a sandbox violation occurs."""
-    pass
 
 
 class PermissionSandbox:
@@ -113,9 +112,9 @@ class PermissionSandbox:
     
     def __init__(self, config: SandboxConfig = None):
         self.config = config or SandboxConfig()
-        self.violations: List[Dict[str, Any]] = []
+        self.violations: list[dict[str, Any]] = []
     
-    def check_command(self, command: str) -> Tuple[bool, str]:
+    def check_command(self, command: str) -> tuple[bool, str]:
         """Check if a command is allowed."""
         # Check forbidden commands
         for forbidden in self.config.forbidden_commands:
@@ -158,7 +157,7 @@ class PermissionSandbox:
         except (ValueError, OSError) as e:
             logger.warning(f"Could not set resource limits: {e}")
     
-    def run_command(self, command: str, cwd: str = ".", timeout: int = None) -> Dict[str, Any]:
+    def run_command(self, command: str, cwd: str = ".", timeout: int | None = None) -> dict[str, Any]:
         """Run a command in sandbox."""
         allowed, reason = self.check_command(command)
         if not allowed:
@@ -203,7 +202,7 @@ class PermissionSandbox:
                 "violation": False,
             }
     
-    def safe_eval(self, expression: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def safe_eval(self, expression: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Safely evaluate a Python expression."""
         # Block dangerous builtins
         dangerous = ["__import__", "eval", "exec", "open", "compile", "globals", "locals", "getattr", "setattr"]
@@ -231,7 +230,7 @@ class PermissionSandbox:
                 "violation": False,
             }
     
-    def get_violations(self) -> List[Dict[str, Any]]:
+    def get_violations(self) -> list[dict[str, Any]]:
         """Get recorded violations."""
         return self.violations
     
@@ -267,7 +266,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.sandbox: Optional[PermissionSandbox] = None
+        self.sandbox: PermissionSandbox | None = None
     
     async def load(self) -> bool:
         self.sandbox = PermissionSandbox()
@@ -284,7 +283,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -296,13 +295,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def check_command(self, command: str) -> Tuple[bool, str]:
+    def check_command(self, command: str) -> tuple[bool, str]:
         return self.sandbox.check_command(command)
     
-    def run_command(self, command: str, cwd: str = ".", timeout: int = None) -> Dict[str, Any]:
+    def run_command(self, command: str, cwd: str = ".", timeout: int | None = None) -> dict[str, Any]:
         return self.sandbox.run_command(command, cwd, timeout)
     
-    def safe_eval(self, expression: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def safe_eval(self, expression: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         return self.sandbox.safe_eval(expression, context)
     
     def configure(self, max_cpu_time: int = 30, max_memory_mb: int = 512, 
@@ -316,8 +315,8 @@ class Plugin(PluginBase):
             read_only_fs=read_only_fs,
         ))
     
-    def get_violations(self) -> List[Dict[str, Any]]:
+    def get_violations(self) -> list[dict[str, Any]]:
         return self.sandbox.get_violations()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

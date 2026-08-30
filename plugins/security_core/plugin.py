@@ -6,12 +6,12 @@ This is a CORE plugin that cannot be disabled.
 Inspired by Hermes Agent security model + DeerFlow 3-ring governance.
 """
 
-import re
 import hashlib
 import logging
-from enum import Enum
-from typing import Any, Dict, List, Optional
+import re
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,8 @@ class SecurityPolicy:
     allow_network: bool = True
     allow_shell: bool = True
     allow_filesystem_write: bool = True
-    allowed_domains: List[str] = field(default_factory=list)
-    blocked_commands: List[str] = field(default_factory=lambda: [
+    allowed_domains: list[str] = field(default_factory=list)
+    blocked_commands: list[str] = field(default_factory=lambda: [
         "rm -rf /", "sudo", "chmod 777", "mkfs", "dd if="
     ])
 
@@ -48,7 +48,7 @@ class SecurityCore:
     def __init__(self):
         self.manifest = None
         self._policy = SecurityPolicy()
-        self._audit_log: List[Dict[str, Any]] = []
+        self._audit_log: list[dict[str, Any]] = []
     
     async def load(self) -> bool:
         logger.info("Security core loaded")
@@ -61,7 +61,7 @@ class SecurityCore:
     async def stop(self) -> bool:
         return True
     
-    def check_permission(self, action: str, context: Dict[str, Any]) -> bool:
+    def check_permission(self, action: str, context: dict[str, Any]) -> bool:
         """Check if an action is permitted."""
         risk = self._assess_risk(action, context)
         
@@ -75,7 +75,7 @@ class SecurityCore:
             return False
         return False
     
-    def _assess_risk(self, action: str, context: Dict[str, Any]) -> RiskLevel:
+    def _assess_risk(self, action: str, context: dict[str, Any]) -> RiskLevel:
         """Assess risk level of an action."""
         # Critical patterns
         critical_patterns = [
@@ -131,7 +131,7 @@ class SecurityCore:
         
         return marked
     
-    def audit(self, action: str, result: str, context: Dict[str, Any]):
+    def audit(self, action: str, result: str, context: dict[str, Any]):
         """Log an action to the audit log."""
         entry = {
             "action": action,
@@ -141,7 +141,7 @@ class SecurityCore:
         }
         self._audit_log.append(entry)
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "security_core",

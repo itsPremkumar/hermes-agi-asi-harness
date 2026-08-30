@@ -9,10 +9,10 @@ Extracted from SKILL.md v9.0 ASI section 8:
 """
 
 from __future__ import annotations
+
 import logging
-import time
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,23 +20,23 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ContextPacket:
     """A synthesized context packet for decision-making."""
-    mission: Dict[str, Any] = field(default_factory=dict)
-    current_goal: Dict[str, Any] = field(default_factory=dict)
-    acceptance_tests: List[str] = field(default_factory=list)
-    constraints: List[str] = field(default_factory=list)
-    permissions: List[str] = field(default_factory=list)
-    relevant_world_state: Dict[str, Any] = field(default_factory=dict)
-    relevant_memory: List[Dict[str, Any]] = field(default_factory=list)
-    evidence: List[Dict[str, Any]] = field(default_factory=list)
-    contradictory_evidence: List[Dict[str, Any]] = field(default_factory=list)
-    hypotheses: List[Dict[str, Any]] = field(default_factory=list)
-    active_plan: Dict[str, Any] = field(default_factory=dict)
-    failures: List[Dict[str, Any]] = field(default_factory=list)
-    pending_commitments: List[Dict[str, Any]] = field(default_factory=list)
-    available_tools: List[str] = field(default_factory=list)
-    known_limitations: List[str] = field(default_factory=list)
-    strategic_context: Dict[str, Any] = field(default_factory=dict)
-    cross_domain_analogies: List[str] = field(default_factory=list)
+    mission: dict[str, Any] = field(default_factory=dict)
+    current_goal: dict[str, Any] = field(default_factory=dict)
+    acceptance_tests: list[str] = field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
+    permissions: list[str] = field(default_factory=list)
+    relevant_world_state: dict[str, Any] = field(default_factory=dict)
+    relevant_memory: list[dict[str, Any]] = field(default_factory=list)
+    evidence: list[dict[str, Any]] = field(default_factory=list)
+    contradictory_evidence: list[dict[str, Any]] = field(default_factory=list)
+    hypotheses: list[dict[str, Any]] = field(default_factory=list)
+    active_plan: dict[str, Any] = field(default_factory=dict)
+    failures: list[dict[str, Any]] = field(default_factory=list)
+    pending_commitments: list[dict[str, Any]] = field(default_factory=list)
+    available_tools: list[str] = field(default_factory=list)
+    known_limitations: list[str] = field(default_factory=list)
+    strategic_context: dict[str, Any] = field(default_factory=dict)
+    cross_domain_analogies: list[str] = field(default_factory=list)
 
 
 class ContextOS:
@@ -54,13 +54,13 @@ class ContextOS:
 
     def __init__(self, token_budget: int = 200000):
         self.token_budget = token_budget
-        self.level1_observations: List[Dict[str, Any]] = []
-        self.level2_facts: List[Dict[str, Any]] = []
-        self.level3_insights: List[Dict[str, Any]] = []
-        self.level4_abstractions: List[Dict[str, Any]] = []
+        self.level1_observations: list[dict[str, Any]] = []
+        self.level2_facts: list[dict[str, Any]] = []
+        self.level3_insights: list[dict[str, Any]] = []
+        self.level4_abstractions: list[dict[str, Any]] = []
         self._current_tokens = 0
 
-    def write(self, data: Dict[str, Any], level: int = 1):
+    def write(self, data: dict[str, Any], level: int = 1):
         """Write data to a specific level."""
         if level == 1:
             self.level1_observations.append(data)
@@ -71,7 +71,7 @@ class ContextOS:
         elif level == 4:
             self.level4_abstractions.append(data)
 
-    def select(self, relevance_threshold: float = 0.5) -> List[Dict[str, Any]]:
+    def select(self, relevance_threshold: float = 0.5) -> list[dict[str, Any]]:
         """Select relevant context."""
         selected = []
         # Select from each level based on relevance
@@ -85,7 +85,7 @@ class ContextOS:
             selected.append(item)
         return selected
 
-    def compress(self) -> Dict[str, Any]:
+    def compress(self) -> dict[str, Any]:
         """Compress context."""
         return {
             "abstractions": len(self.level4_abstractions),

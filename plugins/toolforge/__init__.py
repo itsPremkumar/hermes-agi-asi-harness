@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tool forge plugin."""
 
-from core.toolforge import ToolForge, ToolRequirement
 from core.runtime.plugin_base import PluginBase, PluginManifest
+from core.toolforge import ToolForge, ToolRequirement
 
 
 class Plugin(PluginBase):

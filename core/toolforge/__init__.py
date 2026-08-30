@@ -17,8 +17,9 @@ import logging
 import os
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_toolforge")
 
@@ -28,9 +29,9 @@ class ToolRequirement:
     """A requirement for a new tool."""
     name: str
     description: str
-    inputs: Dict[str, str] = field(default_factory=dict)
-    outputs: Dict[str, str] = field(default_factory=dict)
-    use_cases: List[str] = field(default_factory=list)
+    inputs: dict[str, str] = field(default_factory=dict)
+    outputs: dict[str, str] = field(default_factory=dict)
+    use_cases: list[str] = field(default_factory=list)
     priority: int = 1
 
 
@@ -50,10 +51,10 @@ class ToolForge:
     
     def __init__(self, tools_registry: Any = None):
         self._registry = tools_registry
-        self._requirements: List[ToolRequirement] = []
-        self._created_tools: List[Dict[str, Any]] = []
+        self._requirements: list[ToolRequirement] = []
+        self._created_tools: list[dict[str, Any]] = []
     
-    def analyze_requirements(self, task_description: str, available_tools: List[str]) -> List[ToolRequirement]:
+    def analyze_requirements(self, task_description: str, available_tools: list[str]) -> list[ToolRequirement]:
         """Analyze task requirements to identify missing tools."""
         requirements = []
         
@@ -84,7 +85,7 @@ class ToolForge:
         self._requirements.extend(requirements)
         return requirements
     
-    def generate_spec(self, requirement: ToolRequirement) -> Dict[str, Any]:
+    def generate_spec(self, requirement: ToolRequirement) -> dict[str, Any]:
         """Generate tool specification from requirement."""
         return {
             "name": requirement.name,
@@ -96,7 +97,7 @@ class ToolForge:
             "generated_at": time.time()
         }
     
-    async def create_tool(self, spec: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_tool(self, spec: dict[str, Any]) -> dict[str, Any]:
         """Create a new tool from specification."""
         logger.info("Creating tool: %s", spec.get("name"))
         
@@ -115,7 +116,7 @@ class ToolForge:
         logger.info("Deprecating tool: %s (%s)", tool_name, reason)
         return True
     
-    def compose_tools(self, tool_names: List[str], composition_name: str) -> Dict[str, Any]:
+    def compose_tools(self, tool_names: list[str], composition_name: str) -> dict[str, Any]:
         """Compose existing tools into higher-level tools."""
         return {
             "name": composition_name,
@@ -123,7 +124,7 @@ class ToolForge:
             "created_at": time.time()
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

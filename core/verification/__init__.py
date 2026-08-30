@@ -12,20 +12,20 @@ This is the system that ensures the project is truly complete and working
 before declaring "done".
 """
 
+import asyncio
+import hashlib
+import importlib
+import json
 import os
+import subprocess
 import sys
 import time
-import json
-import asyncio
-import subprocess
-import hashlib
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
-from collections import defaultdict
-from pathlib import Path
-from enum import Enum
-import importlib
 import traceback
+from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class VerificationStatus(str, Enum):
@@ -42,11 +42,11 @@ class RoundResult:
     start_time: float
     end_time: float
     passed: bool
-    error: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-    traceback: Optional[str] = None
+    error: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+    traceback: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "round": self.round_num,
             "start_time": self.start_time,
@@ -61,7 +61,7 @@ class RoundResult:
 
 @dataclass
 class VerificationPlan:
-    test_files: List[str]
+    test_files: list[str]
     num_rounds: int = 3
     isolated_runs: bool = True  # Each round runs in fresh process
     cross_validate: bool = True
@@ -72,22 +72,22 @@ class VerificationPlan:
 class MultiRoundVerifier:
     """Multi-round independent verification with cross-validation."""
 
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str | None = None):
         self._project_root = project_root or os.getcwd()
-        self._round_results: List[RoundResult] = []
-        self._brier_scores: List[float] = []
-        self._consensus_results: Dict[str, Any] = {}
+        self._round_results: list[RoundResult] = []
+        self._brier_scores: list[float] = []
+        self._consensus_results: dict[str, Any] = {}
 
-    def create_plan(self, test_files: List[str], num_rounds: int = 3) -> VerificationPlan:
+    def create_plan(self, test_files: list[str], num_rounds: int = 3) -> VerificationPlan:
         return VerificationPlan(
             test_files=test_files,
             num_rounds=num_rounds,
         )
 
-    async def run_verification(self, plan: VerificationPlan) -> Dict[str, Any]:
+    async def run_verification(self, plan: VerificationPlan) -> dict[str, Any]:
         """Run multi-round verification."""
         print(f"\n{'='*70}")
-        print(f"  MULTI-ROUND VERIFICATION FACILITY")
+        print("  MULTI-ROUND VERIFICATION FACILITY")
         print(f"  Rounds: {plan.num_rounds} | Isolated: {plan.isolated_runs}")
         print(f"{'='*70}")
 
@@ -107,7 +107,7 @@ class MultiRoundVerifier:
 
         # Cross-validation
         if plan.cross_validate and plan.num_rounds >= 2:
-            print(f"\n--- Cross-Validation ---")
+            print("\n--- Cross-Validation ---")
             consensus = self._cross_validate()
             self._consensus_results = consensus
             print(f"  Consensus score: {consensus['consensus_score']:.2f}")
@@ -170,7 +170,7 @@ class MultiRoundVerifier:
 
         return result
 
-    def _run_test_in_subprocess(self, test_file: str, timeout: int) -> Tuple[bool, str]:
+    def _run_test_in_subprocess(self, test_file: str, timeout: int) -> tuple[bool, str]:
         """Run a test file in a completely isolated subprocess."""
         import uuid
         hermes_home = f"/tmp/verify_{uuid.uuid4().hex[:8]}"
@@ -192,16 +192,16 @@ class MultiRoundVerifier:
         except Exception as e:
             return False, f"ERROR: {e}"
 
-    async def _run_test_inline(self, test_file: str) -> Tuple[bool, str]:
+    async def _run_test_inline(self, test_file: str) -> tuple[bool, str]:
         """Run a test file in the current process."""
         try:
             mod = importlib.import_module(test_file.replace("/", ".").replace(".py", ""))
             result = await mod.main() if hasattr(mod, "main") else True
             return bool(result), ""
-        except Exception as e:
+        except Exception:
             return False, traceback.format_exc()
 
-    def _cross_validate(self) -> Dict[str, Any]:
+    def _cross_validate(self) -> dict[str, Any]:
         """Cross-validate results across rounds."""
         if len(self._round_results) < 2:
             return {"consensus_score": 0.0, "all_agree": False}
@@ -215,7 +215,7 @@ class MultiRoundVerifier:
         consensus_score = pass_count / len(self._round_results)
 
         # Per-test agreement
-        test_agreement: Dict[str, float] = {}
+        test_agreement: dict[str, float] = {}
         test_names = set()
         for r in self._round_results:
             test_names.update(r.details.keys())
@@ -234,7 +234,7 @@ class MultiRoundVerifier:
             "per_test_agreement": test_agreement,
         }
 
-    def _calculate_brier_score(self) -> Optional[float]:
+    def _calculate_brier_score(self) -> float | None:
         """Calculate Brier score for confidence calibration."""
         if not self._round_results:
             return None
@@ -252,7 +252,7 @@ class MultiRoundVerifier:
         passed = sum(1 for r in self._round_results if r.passed)
         total = len(self._round_results)
         print(f"\n{'='*70}")
-        print(f"  VERIFICATION SUMMARY")
+        print("  VERIFICATION SUMMARY")
         print(f"{'='*70}")
         print(f"  Rounds passed: {passed}/{total}")
 
@@ -264,7 +264,7 @@ class MultiRoundVerifier:
                 print(f"    Error: {r.error}")
 
         if self._consensus_results:
-            print(f"\n  Cross-validation:")
+            print("\n  Cross-validation:")
             print(f"    Consensus score: {self._consensus_results['consensus_score']:.2f}")
             print(f"    All rounds agree: {self._consensus_results['all_rounds_agree']}")
 
@@ -281,7 +281,7 @@ class VerificationPlugin:
 
     def __init__(self):
         self.engine = MultiRoundVerifier()
-        self._verifications: List[Dict[str, Any]] = []
+        self._verifications: list[dict[str, Any]] = []
 
     async def load(self):
         pass
@@ -299,7 +299,7 @@ class VerificationPlugin:
             "last_result": self._verifications[-1].get("overall_passed", False) if self._verifications else None,
         }
 
-    async def verify_all(self) -> Dict[str, Any]:
+    async def verify_all(self) -> dict[str, Any]:
         """Run verification across all test files."""
         test_files = self._find_test_files()
         plan = self.engine.create_plan(test_files, num_rounds=3)
@@ -307,7 +307,7 @@ class VerificationPlugin:
         self._verifications.append(result)
         return result
 
-    def _find_test_files(self) -> List[str]:
+    def _find_test_files(self) -> list[str]:
         """Find all test_*.py files in the project."""
         tests = []
         for f in sorted(Path(self.engine._project_root).glob("test_*.py")):

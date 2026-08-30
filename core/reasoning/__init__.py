@@ -19,9 +19,10 @@ import math
 import random
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_reasoning")
 
@@ -42,11 +43,11 @@ class ReasoningStep:
     """A single step in a reasoning chain."""
     step_number: int
     thought: str
-    action: Optional[str] = None
-    observation: Optional[str] = None
+    action: str | None = None
+    observation: str | None = None
     confidence: float = 0.5
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -55,11 +56,11 @@ class ReasoningResult:
     question: str
     answer: str
     mode: ReasoningMode
-    steps: List[ReasoningStep] = field(default_factory=list)
+    steps: list[ReasoningStep] = field(default_factory=list)
     confidence: float = 0.5
     execution_time_ms: float = 0.0
     token_count: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -67,11 +68,11 @@ class ThoughtNode:
     """A node in tree/graph of thought."""
     node_id: str
     thought: str
-    parent_id: Optional[str] = None
-    children: List[str] = field(default_factory=list)
+    parent_id: str | None = None
+    children: list[str] = field(default_factory=list)
     score: float = 0.5
     visited: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ChainOfThought:
@@ -117,7 +118,7 @@ class TreeOfThought:
     async def reason(self, question: str, brain: Any = None) -> ReasoningResult:
         """Generate branching reasoning tree with pruning."""
         start_time = time.time()
-        nodes: Dict[str, ThoughtNode] = {}
+        nodes: dict[str, ThoughtNode] = {}
         steps = []
         
         # Root node
@@ -189,7 +190,7 @@ class GraphOfThought:
     async def reason(self, question: str, brain: Any = None) -> ReasoningResult:
         """Generate reasoning graph with node merging."""
         start_time = time.time()
-        nodes: Dict[str, ThoughtNode] = {}
+        nodes: dict[str, ThoughtNode] = {}
         steps = []
         
         # Create initial nodes
@@ -238,7 +239,7 @@ class ReActLoop:
     def __init__(self, max_iterations: int = 10):
         self.max_iterations = max_iterations
     
-    async def reason(self, question: str, brain: Any = None, tools: Dict[str, Callable] = None) -> ReasoningResult:
+    async def reason(self, question: str, brain: Any = None, tools: dict[str, Callable] | None = None) -> ReasoningResult:
         """Execute ReAct loop: Think → Act → Observe."""
         start_time = time.time()
         steps = []
@@ -385,8 +386,8 @@ class LeastToMost:
         # Decompose
         sub_questions = [
             f"Sub-question 1: What is the context of '{question[:30]}'?",
-            f"Sub-question 2: What are the key components?",
-            f"Sub-question 3: How do they relate?",
+            "Sub-question 2: What are the key components?",
+            "Sub-question 3: How do they relate?",
         ]
         
         for i, sq in enumerate(sub_questions):
@@ -485,7 +486,7 @@ class ReasoningEngine:
     """
     
     def __init__(self):
-        self._engines: Dict[ReasoningMode, Any] = {
+        self._engines: dict[ReasoningMode, Any] = {
             ReasoningMode.COT: ChainOfThought(),
             ReasoningMode.TOT: TreeOfThought(),
             ReasoningMode.GOT: GraphOfThought(),
@@ -501,7 +502,7 @@ class ReasoningEngine:
         question: str,
         mode: ReasoningMode = ReasoningMode.COT,
         brain: Any = None,
-        tools: Dict[str, Callable] = None,
+        tools: dict[str, Callable] | None = None,
         **kwargs
     ) -> ReasoningResult:
         """Execute reasoning with the specified mode."""
@@ -521,17 +522,17 @@ class ReasoningEngine:
         
         return result
     
-    def list_modes(self) -> List[Dict[str, str]]:
+    def list_modes(self) -> list[dict[str, str]]:
         """List available reasoning modes."""
         return [
             {"mode": mode.value, "description": engine.__class__.__name__}
             for mode, engine in self._engines.items()
         ]
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",
             "modes": len(self._engines),
-            "available_modes": [m.value for m in self._engines.keys()]
+            "available_modes": [m.value for m in self._engines]
         }

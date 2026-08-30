@@ -1,16 +1,31 @@
 """Web Dashboard - FastAPI + WebSocket dashboard server."""
 from __future__ import annotations
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
-import json
 
-BASE_DIR = Path(__file__).parent
+from .plugins import PluginManager
+from .missions import MissionController
+from .health import HealthMonitor, HealthStatus
+from .events import EventLog
+from .config import ConfigEditor
 
 app = FastAPI(title="Hermes AGI Dashboard")
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# Shared state
+plugins = PluginManager()
+missions = MissionController()
+health = HealthMonitor()
+events = EventLog()
+config = ConfigEditor()
+
+# Seed some data
+plugins.register("web-search", "1.0", "Web search plugin", ["search", "browse"])
+plugins.register("code-gen", "1.0", "Code generation plugin", ["codegen", "refactor"])
+plugins.register("memory", "1.0", "Memory plugin", ["memory", "context"])
+health.update("api", HealthStatus.HEALTHY, 5.0, "API healthy")
+health.update("database", HealthStatus.HEALTHY, 2.0, "DB connected")
+events.info("Dashboard loaded", "system")
 
 DASHBOARD_HTML = """
 <!DOCTYPE html>
@@ -58,154 +73,95 @@ DASHBOARD_HTML = """
         <h1>Hermes AGI</h1>
         <div class="status">
             <span class="online">● Online</span>
-            <span id="plugins-count">82 plugins</span>
-            <span id="missions-count">0 missions</span>
+            <span id="plugins-count">""" + str(plugins.active_count()) + """ plugins</span>
+            <span id="missions-count">""" + str(missions.count()) + """ missions</span>
         </div>
     </div>
     <div class="main">
         <div class="sidebar">
             <h3>Navigation</h3>
             <div class="nav-item active" onclick="showTab('overview')">Overview</div>
+            <div class="nav-item" onclick="showTab('plugins')">Plugins</div>
             <div class="nav-item" onclick="showTab('missions')">Missions</div>
-            <div class="nav-item" onclick="showTab('trajectories')">Trajectories</div>
-            <div class="nav-item" onclick="showTab('code')">Code Gen</div>
-            <div class="nav-item" onclick="showTab('security')">Security</div>
-            <div class="nav-item" onclick="showTab('logs')">Logs</div>
+            <div class="nav-item" onclick="showTab('health')">Health</div>
+            <div class="nav-item" onclick="showTab('events')">Events</div>
+            <div class="nav-item" onclick="showTab('config')">Config</div>
         </div>
         <div class="content">
             <div id="overview">
                 <div class="grid">
-                    <div class="card">
-                        <h4>Total Missions</h4>
-                        <div class="value" id="total-missions">0</div>
-                        <div class="sub">All time</div>
-                    </div>
-                    <div class="card">
-                        <h4>Completed</h4>
-                        <div class="value" id="completed-missions">0</div>
-                        <div class="sub">Successful executions</div>
-                    </div>
-                    <div class="card">
-                        <h4>Running</h4>
-                        <div class="value" id="running-missions">0</div>
-                        <div class="sub">Active missions</div>
-                    </div>
-                    <div class="card">
-                        <h4>Cost</h4>
-                        <div class="value" id="total-cost">$0.00</div>
-                        <div class="sub">LLM usage</div>
-                    </div>
+                    <div class="card"><h4>Total Missions</h4><div class="value" id="total-missions">0</div></div>
+                    <div class="card"><h4>Completed</h4><div class="value" id="completed-missions">0</div></div>
+                    <div class="card"><h4>Running</h4><div class="value" id="running-missions">0</div></div>
+                    <div class="card"><h4>Plugins</h4><div class="value" id="active-plugins">""" + str(plugins.active_count()) + """</div></div>
                 </div>
-                <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
-                <input type="text" class="input" id="goal-input" placeholder="Enter a goal (e.g., Build a REST API with authentication)">
+                <h3>Quick Actions</h3>
+                <input type="text" class="input" id="goal-input" placeholder="Enter a goal">
                 <button class="btn" onclick="startMission()">Start Mission</button>
             </div>
-            <div id="missions" style="display:none">
-                <h2>Missions</h2>
-                <div id="missions-list"></div>
-            </div>
-            <div id="trajectories" style="display:none">
-                <h2>Trajectories</h2>
-                <div id="trajectories-list"></div>
-            </div>
-            <div id="code" style="display:none">
-                <h2>Code Generation</h2>
-                <textarea class="input" rows="5" id="code-spec" placeholder="Describe the code you want to generate..."></textarea>
-                <button class="btn" onclick="generateCode()">Generate</button>
-                <pre id="code-output" style="margin-top:1rem;background:#0f172a;padding:1rem;border-radius:8px;"></pre>
-            </div>
-            <div id="security" style="display:none">
-                <h2>Security Scan</h2>
-                <input type="text" class="input" id="scan-path" placeholder="Path to scan">
-                <button class="btn" onclick="runSecurityScan()">Scan</button>
-                <div id="security-results"></div>
-            </div>
-            <div id="logs" style="display:none">
-                <h2>System Logs</h2>
-                <div class="log" id="logs-content"></div>
-            </div>
+            <div id="plugins" style="display:none"><h2>Plugins</h2><div id="plugins-list"></div></div>
+            <div id="missions" style="display:none"><h2>Missions</h2><div id="missions-list"></div></div>
+            <div id="health" style="display:none"><h2>Health</h2><div id="health-list"></div></div>
+            <div id="events" style="display:none"><h2>Event Log</h2><div class="log" id="events-list"></div></div>
+            <div id="config" style="display:none"><h2>Configuration</h2><div id="config-list"></div></div>
         </div>
     </div>
     <script>
         function showTab(tab) {
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
             event.target.classList.add('active');
-            ['overview','missions','trajectories','code','security','logs'].forEach(t => {
+            ['overview','plugins','missions','health','events','config'].forEach(t => {
                 document.getElementById(t).style.display = t === tab ? 'block' : 'none';
             });
+            if (tab === 'plugins') loadPlugins();
+            if (tab === 'missions') loadMissions();
+            if (tab === 'health') loadHealth();
+            if (tab === 'events') loadEvents();
+            if (tab === 'config') loadConfig();
         }
-        
         async function startMission() {
             const goal = document.getElementById('goal-input').value;
             if (!goal) return;
-            
-            const resp = await fetch('/api/missions', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({goal})
-            });
-            const mission = await resp.json();
-            addLog('Started mission: ' + mission.id, 'success');
+            await fetch('/api/missions', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({goal}) });
             loadMissions();
         }
-        
+        async function loadPlugins() {
+            const resp = await fetch('/api/plugins');
+            const data = await resp.json();
+            document.getElementById('plugins-list').innerHTML = data.map(p =>
+                '<div class="mission-item"><strong>' + p.name + '</strong> v' + p.version +
+                '<div style="color:#94a3b8;font-size:0.75rem;">' + p.id + ' - ' + p.status + '</div></div>'
+            ).join('');
+        }
         async function loadMissions() {
             const resp = await fetch('/api/missions');
-            const missions = await resp.json();
-            document.getElementById('missions-list').innerHTML = missions.map(m => `
-                <div class="mission-item ${m.status}">
-                    <strong>${m.goal}</strong>
-                    <div style="color:#94a3b8;font-size:0.75rem;">${m.id} - ${m.status}</div>
-                </div>
-            `).join('');
-            document.getElementById('total-missions').textContent = missions.length;
-            document.getElementById('completed-missions').textContent = missions.filter(m => m.status === 'completed').length;
-            document.getElementById('running-missions').textContent = missions.filter(m => m.status === 'running').length;
+            const data = await resp.json();
+            document.getElementById('missions-list').innerHTML = data.map(m =>
+                '<div class="mission-item ' + m.status + '"><strong>' + m.goal + '</strong>' +
+                '<div style="color:#94a3b8;font-size:0.75rem;">' + m.id + ' - ' + m.status + '</div></div>'
+            ).join('');
         }
-        
-        async function generateCode() {
-            const spec = document.getElementById('code-spec').value;
-            const resp = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({spec})
-            });
-            const result = await resp.json();
-            document.getElementById('code-output').textContent = result.code || result.error;
+        async function loadHealth() {
+            const resp = await fetch('/api/health');
+            const data = await resp.json();
+            document.getElementById('health-list').innerHTML = Object.entries(data.components).map(([k,v]) =>
+                '<div class="mission-item"><strong>' + k + '</strong><div style="color:#94a3b8;font-size:0.75rem;">' + v + '</div></div>'
+            ).join('');
         }
-        
-        async function runSecurityScan() {
-            const path = document.getElementById('scan-path').value;
-            const resp = await fetch('/api/scan', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({path})
-            });
-            const result = await resp.json();
-            document.getElementById('security-results').innerHTML = (result.findings || []).map(f => `
-                <div class="card" style="margin-top:0.5rem;border-left:3px solid ${f.severity === 'CRITICAL' ? '#f87171' : '#fbbf24'}">
-                    <strong>${f.rule_id}</strong> - ${f.severity}
-                    <div style="color:#94a3b8;font-size:0.75rem;">${f.message} at ${f.file}:${f.line}</div>
-                </div>
-            `).join('');
+        async function loadEvents() {
+            const resp = await fetch('/api/events');
+            const data = await resp.json();
+            document.getElementById('events-list').innerHTML = data.map(e =>
+                '<div class="log-entry ' + e.level + '">[' + new Date(e.timestamp * 1000).toLocaleTimeString() + '] ' + e.message + '</div>'
+            ).join('');
         }
-        
-        function addLog(msg, type = 'info') {
-            const logs = document.getElementById('logs-content');
-            logs.innerHTML += `<div class="log-entry ${type}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-            logs.scrollTop = logs.scrollHeight;
+        async function loadConfig() {
+            const resp = await fetch('/api/config');
+            const data = await resp.json();
+            document.getElementById('config-list').innerHTML = Object.entries(data).map(([k,v]) =>
+                '<div class="mission-item"><strong>' + k + '</strong><div style="color:#94a3b8;font-size:0.75rem;">' + v + '</div></div>'
+            ).join('');
         }
-        
-        // Load initial data
-        loadMissions();
-        addLog('Dashboard loaded', 'success');
-        
-        // WebSocket for real-time updates
-        const ws = new WebSocket(`ws://${window.location.host}/ws/live`);
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            addLog(data.message, data.type);
-        };
     </script>
 </body>
 </html>
@@ -217,7 +173,100 @@ async def dashboard():
 
 @app.get("/api/status")
 async def status():
-    return {"status": "running", "version": "12.0", "plugins": 82}
+    return {
+        "status": "running",
+        "version": "2.1.0",
+        "plugins": plugins.count(),
+        "missions": missions.count(),
+        "health": health.overall_status().value,
+    }
+
+@app.get("/api/plugins")
+async def list_plugins():
+    return [
+        {"id": p.id, "name": p.name, "version": p.version, "status": p.status.value, "capabilities": p.capabilities}
+        for p in plugins.list_all()
+    ]
+
+@app.post("/api/plugins")
+async def register_plugin(req: Request):
+    body = await req.json()
+    p = plugins.register(body.get("name", ""), body.get("version", "0.1.0"), body.get("description", ""), body.get("capabilities", []))
+    events.info(f"Plugin registered: {p.name}", "plugins")
+    return {"id": p.id, "name": p.name}
+
+@app.delete("/api/plugins/{plugin_id}")
+async def unregister_plugin(plugin_id: str):
+    if plugins.unregister(plugin_id):
+        events.info(f"Plugin unregistered: {plugin_id}", "plugins")
+        return {"status": "removed"}
+    return {"error": "not found"}
+
+@app.post("/api/plugins/{plugin_id}/enable")
+async def enable_plugin(plugin_id: str):
+    return {"status": "enabled" if plugins.enable(plugin_id) else "not found"}
+
+@app.post("/api/plugins/{plugin_id}/disable")
+async def disable_plugin(plugin_id: str):
+    return {"status": "disabled" if plugins.disable(plugin_id) else "not found"}
+
+@app.get("/api/missions")
+async def list_missions():
+    return [
+        {"id": m.id, "goal": m.goal, "status": m.status.value}
+        for m in missions.list_all()
+    ]
+
+@app.post("/api/missions")
+async def create_mission(req: Request):
+    body = await req.json()
+    m = missions.create(body.get("goal", ""))
+    events.info(f"Mission created: {m.goal}", "missions")
+    return {"id": m.id, "goal": m.goal}
+
+@app.post("/api/missions/{mission_id}/start")
+async def start_mission(mission_id: str):
+    missions.start(mission_id)
+    return {"status": "started"}
+
+@app.post("/api/missions/{mission_id}/complete")
+async def complete_mission(mission_id: str):
+    missions.complete(mission_id)
+    events.success(f"Mission completed: {mission_id}", "missions")
+    return {"status": "completed"}
+
+@app.post("/api/missions/{mission_id}/fail")
+async def fail_mission(mission_id: str, req: Request):
+    body = await req.json()
+    missions.fail(mission_id, body.get("error", ""))
+    events.error(f"Mission failed: {mission_id}", "missions")
+    return {"status": "failed"}
+
+@app.get("/api/health")
+async def get_health():
+    return {
+        "overall": health.overall_status().value,
+        "components": {k: v.status.value for k, v in health.get_all().items()},
+    }
+
+@app.get("/api/events")
+async def get_events():
+    return [
+        {"id": e.id, "message": e.message, "level": e.level.value, "timestamp": e.timestamp}
+        for e in events.get_recent(100)
+    ]
+
+@app.get("/api/config")
+async def get_config():
+    return {k: v.value for k, v in config._config.items()}
+
+@app.post("/api/config")
+async def set_config(req: Request):
+    body = await req.json()
+    for key, value in body.items():
+        config.set(key, value)
+    events.info("Configuration updated", "config")
+    return {"status": "updated"}
 
 def run_dashboard(host: str = "0.0.0.0", port: int = 8080):
     import uvicorn

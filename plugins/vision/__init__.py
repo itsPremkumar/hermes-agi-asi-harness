@@ -20,9 +20,9 @@ class VisionEngine:
     """Vision understanding engine."""
     
     def __init__(self):
-        self._models: List[str] = []
+        self._models: list[str] = []
     
-    async def analyze_image(self, image_path: str) -> Dict[str, Any]:
+    async def analyze_image(self, image_path: str) -> dict[str, Any]:
         """Analyze an image."""
         return {
             "image_path": image_path,
@@ -31,7 +31,7 @@ class VisionEngine:
             "text": ""
         }
     
-    async def detect_objects(self, image_path: str) -> List[Dict[str, Any]]:
+    async def detect_objects(self, image_path: str) -> list[dict[str, Any]]:
         """Detect objects in an image."""
         return [{"label": "object", "confidence": 0.9, "bbox": [0, 0, 100, 100]}]
     
@@ -39,5 +39,5 @@ class VisionEngine:
         """Extract text from an image (OCR)."""
         return "Extracted text"
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "models": len(self._models)}

@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class DiscoveryStage(str, Enum):
@@ -31,17 +31,17 @@ class DiscoveryStage(str, Enum):
 class DiscoveredInterface:
     name: str
     type: str  # api, gui, cli, file, network
-    endpoint: Optional[str] = None
-    protocol: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    endpoint: str | None = None
+    protocol: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class DiscoveredCapability:
     name: str
     action: str
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    constraints: List[str] = field(default_factory=list)
+    parameters: dict[str, Any] = field(default_factory=dict)
+    constraints: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -57,15 +57,15 @@ class DiscoveryResult:
     id: str
     environment_name: str
     stage: DiscoveryStage
-    interfaces: List[DiscoveredInterface]
-    capabilities: List[DiscoveredCapability]
-    state: Dict[str, Any]
-    permissions: Dict[str, List[str]]
-    risks: List[DiscoveredRisk]
-    model: Optional[Dict[str, Any]] = None
+    interfaces: list[DiscoveredInterface]
+    capabilities: list[DiscoveredCapability]
+    state: dict[str, Any]
+    permissions: dict[str, list[str]]
+    risks: list[DiscoveredRisk]
+    model: dict[str, Any] | None = None
     started_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
-    error: Optional[str] = None
+    completed_at: float | None = None
+    error: str | None = None
 
 
 class EnvironmentDiscovery:
@@ -83,7 +83,7 @@ class EnvironmentDiscovery:
     """
 
     def __init__(self):
-        self.results: Dict[str, DiscoveryResult] = {}
+        self.results: dict[str, DiscoveryResult] = {}
         self._discovery_count = 0
 
     def start_discovery(self, environment_name: str) -> DiscoveryResult:
@@ -102,7 +102,7 @@ class EnvironmentDiscovery:
         return result
 
     def discover_interfaces(self, discovery_id: str,
-                            interfaces: List[DiscoveredInterface]) -> DiscoveryResult:
+                            interfaces: list[DiscoveredInterface]) -> DiscoveryResult:
         result = self.results.get(discovery_id)
         if not result:
             raise ValueError(f"Discovery {discovery_id} not found")
@@ -112,7 +112,7 @@ class EnvironmentDiscovery:
         return result
 
     def discover_capabilities(self, discovery_id: str,
-                              capabilities: List[DiscoveredCapability]) -> DiscoveryResult:
+                              capabilities: list[DiscoveredCapability]) -> DiscoveryResult:
         result = self.results.get(discovery_id)
         if not result:
             raise ValueError(f"Discovery {discovery_id} not found")
@@ -121,7 +121,7 @@ class EnvironmentDiscovery:
         result.stage = DiscoveryStage.CAPABILITY_DISCOVERY
         return result
 
-    def discover_state(self, discovery_id: str, state: Dict[str, Any]) -> DiscoveryResult:
+    def discover_state(self, discovery_id: str, state: dict[str, Any]) -> DiscoveryResult:
         result = self.results.get(discovery_id)
         if not result:
             raise ValueError(f"Discovery {discovery_id} not found")
@@ -131,7 +131,7 @@ class EnvironmentDiscovery:
         return result
 
     def discover_permissions(self, discovery_id: str,
-                             permissions: Dict[str, List[str]]) -> DiscoveryResult:
+                             permissions: dict[str, list[str]]) -> DiscoveryResult:
         result = self.results.get(discovery_id)
         if not result:
             raise ValueError(f"Discovery {discovery_id} not found")
@@ -141,7 +141,7 @@ class EnvironmentDiscovery:
         return result
 
     def discover_risks(self, discovery_id: str,
-                       risks: List[DiscoveredRisk]) -> DiscoveryResult:
+                       risks: list[DiscoveredRisk]) -> DiscoveryResult:
         result = self.results.get(discovery_id)
         if not result:
             raise ValueError(f"Discovery {discovery_id} not found")
@@ -167,13 +167,13 @@ class EnvironmentDiscovery:
         result.completed_at = time.time()
         return result
 
-    def get_result(self, discovery_id: str) -> Optional[DiscoveryResult]:
+    def get_result(self, discovery_id: str) -> DiscoveryResult | None:
         return self.results.get(discovery_id)
 
-    def get_all_results(self) -> List[DiscoveryResult]:
+    def get_all_results(self) -> list[DiscoveryResult]:
         return list(self.results.values())
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total_discoveries": self._discovery_count,
             "completed": sum(1 for r in self.results.values() if r.stage == DiscoveryStage.COMPLETED),

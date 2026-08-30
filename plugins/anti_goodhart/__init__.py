@@ -7,7 +7,7 @@ Multiple objectives, hidden holdout protection, adversarial test suite, regressi
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +16,11 @@ class AntiGoodhartEngine:
     """Protect against metric gaming."""
 
     def __init__(self):
-        self._metrics: Dict[str, List[Dict[str, Any]]] = {}
-        self._holdout_set: List[Dict[str, Any]] = []
-        self._adversarial_tests: List[Dict[str, Any]] = []
+        self._metrics: dict[str, list[dict[str, Any]]] = {}
+        self._holdout_set: list[dict[str, Any]] = []
+        self._adversarial_tests: list[dict[str, Any]] = []
 
-    def record_metric(self, metric: str, value: float, candidate_id: str = None):
+    def record_metric(self, metric: str, value: float, candidate_id: str | None = None):
         """Record a metric value."""
         if metric not in self._metrics:
             self._metrics[metric] = []
@@ -30,15 +30,15 @@ class AntiGoodhartEngine:
             "timestamp": time.time(),
         })
 
-    def add_holdout_test(self, test: Dict[str, Any]):
+    def add_holdout_test(self, test: dict[str, Any]):
         """Add a hidden holdout test."""
         self._holdout_set.append(test)
 
-    def add_adversarial_test(self, test: Dict[str, Any]):
+    def add_adversarial_test(self, test: dict[str, Any]):
         """Add an adversarial test."""
         self._adversarial_tests.append(test)
 
-    def check_pareto(self, candidate_scores: Dict[str, float]) -> Dict[str, Any]:
+    def check_pareto(self, candidate_scores: dict[str, float]) -> dict[str, Any]:
         """
         Check if candidate dominates on Pareto frontier.
         Returns analysis of trade-offs.
@@ -62,7 +62,7 @@ class AntiGoodhartEngine:
             "timestamp": time.time(),
         }
 
-    def evaluate_candidate(self, candidate_id: str, metrics: Dict[str, float]) -> Dict[str, Any]:
+    def evaluate_candidate(self, candidate_id: str, metrics: dict[str, float]) -> dict[str, Any]:
         """Comprehensive candidate evaluation."""
         # Check for gaming
         pareto = self.check_pareto(metrics)
@@ -83,7 +83,7 @@ class AntiGoodhartEngine:
             "metrics": metrics,
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "metrics_tracked": len(self._metrics),
             "holdout_tests": len(self._holdout_set),

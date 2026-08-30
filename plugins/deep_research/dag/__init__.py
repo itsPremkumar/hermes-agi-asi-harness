@@ -16,9 +16,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_dag_executor")
 
@@ -36,13 +37,13 @@ class ResearchTask:
     task_id: str
     name: str
     description: str
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     status: TaskStatus = TaskStatus.PENDING
-    result: Optional[str] = None
-    error: Optional[str] = None
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    result: str | None = None
+    error: str | None = None
+    started_at: float | None = None
+    completed_at: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DAGResearchExecutor:
@@ -59,10 +60,10 @@ class DAGResearchExecutor:
     
     def __init__(self, max_parallel: int = 5):
         self.max_parallel = max_parallel
-        self._tasks: Dict[str, ResearchTask] = {}
-        self._execution_order: List[str] = []
+        self._tasks: dict[str, ResearchTask] = {}
+        self._execution_order: list[str] = []
     
-    def create_task(self, name: str, description: str, dependencies: List[str] = None) -> str:
+    def create_task(self, name: str, description: str, dependencies: list[str] | None = None) -> str:
         """Create a research task."""
         task_id = str(uuid.uuid4())
         
@@ -76,7 +77,7 @@ class DAGResearchExecutor:
         self._tasks[task_id] = task
         return task_id
     
-    def build_dag(self, topic: str) -> Dict[str, Any]:
+    def build_dag(self, topic: str) -> dict[str, Any]:
         """Build a research DAG for a topic."""
         # Create tasks
         plan_task = self.create_task("Plan Research", f"Plan research for: {topic}")
@@ -92,11 +93,11 @@ class DAGResearchExecutor:
             )
             crawl_tasks.append(task_id)
         
-        analyze_task = self.create_task("Analyze Evidence", f"Analyze collected evidence", crawl_tasks)
+        analyze_task = self.create_task("Analyze Evidence", "Analyze collected evidence", crawl_tasks)
         
-        verify_task = self.create_task("Verify Claims", f"Verify research claims", [analyze_task])
+        verify_task = self.create_task("Verify Claims", "Verify research claims", [analyze_task])
         
-        report_task = self.create_task("Generate Report", f"Generate final report", [verify_task])
+        self.create_task("Generate Report", "Generate final report", [verify_task])
         
         # Compute execution order
         self._execution_order = self._topological_sort()
@@ -115,7 +116,7 @@ class DAGResearchExecutor:
             }
         }
     
-    def _topological_sort(self) -> List[str]:
+    def _topological_sort(self) -> list[str]:
         """Topological sort of tasks."""
         # Build adjacency list
         in_degree = {task_id: 0 for task_id in self._tasks}
@@ -142,7 +143,7 @@ class DAGResearchExecutor:
         
         return order
     
-    async def execute(self, task_handlers: Dict[str, Callable] = None) -> Dict[str, Any]:
+    async def execute(self, task_handlers: dict[str, Callable] | None = None) -> dict[str, Any]:
         """Execute the research DAG."""
         results = {}
         
@@ -198,7 +199,7 @@ class DAGResearchExecutor:
             "results": results
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

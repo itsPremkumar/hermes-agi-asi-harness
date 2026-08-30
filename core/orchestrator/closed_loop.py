@@ -6,12 +6,11 @@ Runs: perceive → estimate → predict → search → simulate → safety → s
 
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class LoopStep(str, Enum):
@@ -38,10 +37,10 @@ class LoopStep(str, Enum):
 @dataclass
 class LoopContext:
     """Execution context maintained across the loop."""
-    world_state: Dict[str, Any] = field(default_factory=dict)
-    active_policy: Optional[str] = None
-    active_envelope: Optional[str] = None
-    trajectory_id: Optional[str] = None
+    world_state: dict[str, Any] = field(default_factory=dict)
+    active_policy: str | None = None
+    active_envelope: str | None = None
+    trajectory_id: str | None = None
     mission_id: str = ""
     cycle_count: int = 0
     last_success: bool = False
@@ -54,7 +53,7 @@ class LoopResult:
     step_reached: LoopStep
     context: LoopContext
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
 
 
@@ -73,7 +72,7 @@ class ClosedLoopOrchestrator:
         self.context = LoopContext()
         self.state = LoopStep.IDLE
     
-    def run_loop(self, goal: str, initial_state: Dict[str, Any] = None) -> LoopResult:
+    def run_loop(self, goal: str, initial_state: dict[str, Any] | None = None) -> LoopResult:
         """Run the full 15-step loop."""
         start_time = time.time()
         self.context = LoopContext(mission_id=str(uuid.uuid4()))
@@ -92,7 +91,7 @@ class ClosedLoopOrchestrator:
             
             # Step 3: Predict futures
             self.state = LoopStep.PREDICTING
-            predictions = self._predict(state_estimate)
+            self._predict(state_estimate)
             
             # Step 4: Search policies
             self.state = LoopStep.SEARCHING_POLICIES
@@ -168,7 +167,7 @@ class ClosedLoopOrchestrator:
                 duration_ms=(time.time() - start_time) * 1000,
             )
     
-    def _perceive(self, goal: str) -> Dict[str, Any]:
+    def _perceive(self, goal: str) -> dict[str, Any]:
         """Step 1: Gather observations from environment."""
         return {
             "goal": goal,
@@ -176,52 +175,52 @@ class ClosedLoopOrchestrator:
             "environment_state": self.context.world_state,
         }
     
-    def _estimate(self, observations: Dict[str, Any]) -> Dict[str, Any]:
+    def _estimate(self, observations: dict[str, Any]) -> dict[str, Any]:
         """Step 2: Fuse observations into state estimate."""
         return {
             "state": observations.get("environment_state", {}),
             "confidence": 0.7,
         }
     
-    def _predict(self, state_estimate: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _predict(self, state_estimate: dict[str, Any]) -> list[dict[str, Any]]:
         """Step 3: Predict possible futures."""
         return [
             {"scenario": "success", "probability": 0.8},
             {"scenario": "failure", "probability": 0.2},
         ]
     
-    def _search_policies(self, goal: str) -> List[Dict[str, Any]]:
+    def _search_policies(self, goal: str) -> list[dict[str, Any]]:
         """Step 4: Find candidate policies for the goal."""
         return [{"policy_id": "default", "goal": goal}]
     
-    def _simulate_candidates(self, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _simulate_candidates(self, candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Step 5: Simulate consequences for each candidate."""
         return [{"candidate": c, "risk": 0.3} for c in candidates]
     
-    def _check_safety(self, simulations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _check_safety(self, simulations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Step 6: Filter candidates through safety envelope."""
         return [s for s in simulations if s.get("risk", 1.0) < 0.7]
     
-    def _select_best(self, candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _select_best(self, candidates: list[dict[str, Any]]) -> dict[str, Any]:
         """Step 7: Pick the best candidate."""
         if not candidates:
             raise Exception("No candidates to select")
         return candidates[0]
     
-    def _execute(self, selected: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute(self, selected: dict[str, Any]) -> dict[str, Any]:
         """Step 8: Execute the selected action."""
         return {"status": "executed", "action": selected}
     
-    def _observe(self, action_result: Dict[str, Any]) -> Dict[str, Any]:
+    def _observe(self, action_result: dict[str, Any]) -> dict[str, Any]:
         """Step 9: Observe the result."""
         return {"result": action_result, "timestamp": time.time()}
     
-    def _verify(self, observation: Dict[str, Any]) -> bool:
+    def _verify(self, observation: dict[str, Any]) -> bool:
         """Step 10: Verify the result."""
         return observation.get("result", {}).get("status") == "executed"
     
-    def _record_trajectory(self, selected: Dict, action_result: Dict,
-                           observation: Dict, verified: bool):
+    def _record_trajectory(self, selected: dict, action_result: dict,
+                           observation: dict, verified: bool):
         """Step 11: Record the trajectory."""
         traj = self.trajectory_store.create_trajectory(
             self.context.mission_id, "closed_loop"
@@ -238,7 +237,7 @@ class ClosedLoopOrchestrator:
         )
         self.context.trajectory_id = traj.id
     
-    def _self_evaluate(self, verified: bool, selected: Dict) -> Dict[str, Any]:
+    def _self_evaluate(self, verified: bool, selected: dict) -> dict[str, Any]:
         """Step 12: Self-evaluate the result."""
         return {
             "success": verified,
@@ -247,20 +246,20 @@ class ClosedLoopOrchestrator:
     
     def _trigger_rsi(self, bottleneck: str):
         """Step 13: Trigger RSI experiment if bottleneck detected."""
-        pass  # RSI integration handled by RSIntegrationEngine
+        # RSI integration handled by RSIntegrationEngine
     
-    def _benchmark(self, selected: Dict[str, Any]) -> Dict[str, Any]:
+    def _benchmark(self, selected: dict[str, Any]) -> dict[str, Any]:
         """Step 14: Benchmark the selected policy."""
         return {"score": 0.8, "baseline": 0.7, "improved": True}
     
-    def _promote_or_rollback(self, selected: Dict, bench_result: Dict, verified: bool):
+    def _promote_or_rollback(self, selected: dict, bench_result: dict, verified: bool):
         """Step 15: Promote or rollback based on benchmark."""
         if verified and bench_result.get("improved"):
             self.context.last_reward = bench_result["score"]
         elif not verified:
             pass  # Rollback logic handled by PolicyBridge
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "state": self.state.value,
             "cycle_count": self.context.cycle_count,

@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 class ConsequenceType(str, Enum):
@@ -36,7 +36,7 @@ class ConsequencePrediction:
     description: str
     probability: float  # 0.0 to 1.0
     severity: Severity
-    affected_entities: List[str] = field(default_factory=list)
+    affected_entities: list[str] = field(default_factory=list)
     verification_method: str = ""
     mitigation: str = ""
     timeframe_seconds: int = 0  # when this consequence is expected
@@ -46,13 +46,13 @@ class ConsequencePrediction:
 class SimulationResult:
     action: str
     target: str
-    predictions: List[ConsequencePrediction]
+    predictions: list[ConsequencePrediction]
     overall_risk: float  # 0.0 to 1.0
     should_execute: bool
     requires_approval: bool
     timestamp: float
     confidence: float = 0.5
-    alternatives_considered: List[str] = field(default_factory=list)
+    alternatives_considered: list[str] = field(default_factory=list)
 
 
 class ConsequenceSimulator:
@@ -66,8 +66,8 @@ class ConsequenceSimulator:
     """
 
     def __init__(self):
-        self._rules: List[Dict[str, Any]] = []
-        self._historical: List[Dict[str, Any]] = []
+        self._rules: list[dict[str, Any]] = []
+        self._historical: list[dict[str, Any]] = []
         self._simulation_count = 0
 
     # ── Rule-Based Simulation ──────────────────────────────────────────────
@@ -194,10 +194,10 @@ class ConsequenceSimulator:
     # ── Simulation ─────────────────────────────────────────────────────────
 
     def simulate(self, action: str, target: str,
-                 context: Dict[str, Any] = None) -> SimulationResult:
+                 context: dict[str, Any] | None = None) -> SimulationResult:
         """Run consequence simulation for an action."""
         self._simulation_count += 1
-        predictions: List[ConsequencePrediction] = []
+        predictions: list[ConsequencePrediction] = []
 
         # Match action against rules
         for rule in self._rules:
@@ -239,7 +239,7 @@ class ConsequenceSimulator:
         return pattern in action.lower() or action.lower() in pattern
 
     def _context_predictions(self, action: str, target: str,
-                             context: Dict[str, Any]) -> List[ConsequencePrediction]:
+                             context: dict[str, Any]) -> list[ConsequencePrediction]:
         """Generate predictions from context."""
         preds = []
         if context.get("is_production"):
@@ -262,7 +262,7 @@ class ConsequenceSimulator:
             ))
         return preds
 
-    def _calculate_overall_risk(self, predictions: List[ConsequencePrediction]) -> float:
+    def _calculate_overall_risk(self, predictions: list[ConsequencePrediction]) -> float:
         """Calculate overall risk score from predictions."""
         if not predictions:
             return 0.5
@@ -309,7 +309,7 @@ class ConsequenceSimulator:
 
     # ── Query & Summary ────────────────────────────────────────────────────
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "rules_count": len(self._rules),
             "simulations_run": self._simulation_count,

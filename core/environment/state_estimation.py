@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ObservationSource(str, Enum):
@@ -36,24 +36,24 @@ class Observation:
     id: str
     source: ObservationSource
     entity_id: str
-    state: Dict[str, Any]
+    state: dict[str, Any]
     timestamp: float
     confidence: float = 0.5
     raw_data: Any = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class StateEstimate:
     entity_id: str
-    state: Dict[str, Any]
+    state: dict[str, Any]
     confidence: StateConfidence
     confidence_score: float  # 0.0 to 1.0
-    sources: List[ObservationSource]
+    sources: list[ObservationSource]
     timestamp: float
     freshness_seconds: float
-    contradictions: List[Dict[str, Any]] = field(default_factory=list)
-    anomalies: List[str] = field(default_factory=list)
+    contradictions: list[dict[str, Any]] = field(default_factory=list)
+    anomalies: list[str] = field(default_factory=list)
 
 
 class StateEstimator:
@@ -68,7 +68,7 @@ class StateEstimator:
     """
 
     # Source reliability weights (higher = more reliable)
-    SOURCE_RELIABILITY: Dict[ObservationSource, float] = {
+    SOURCE_RELIABILITY: dict[ObservationSource, float] = {
         ObservationSource.API: 0.9,
         ObservationSource.MONITORING: 0.85,
         ObservationSource.TOOL_RESPONSE: 0.8,
@@ -79,9 +79,9 @@ class StateEstimator:
     }
 
     def __init__(self):
-        self.observations: Dict[str, List[Observation]] = {}  # entity_id → observations
-        self.estimates: Dict[str, StateEstimate] = {}
-        self._conflict_log: List[Dict[str, Any]] = []
+        self.observations: dict[str, list[Observation]] = {}  # entity_id → observations
+        self.estimates: dict[str, StateEstimate] = {}
+        self._conflict_log: list[dict[str, Any]] = []
 
     # ── Observation Ingestion ──────────────────────────────────────────────
 
@@ -89,10 +89,10 @@ class StateEstimator:
         self,
         entity_id: str,
         source: ObservationSource,
-        state: Dict[str, Any],
+        state: dict[str, Any],
         confidence: float = 0.5,
         raw_data: Any = None,
-        metadata: Dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Observation:
         import uuid
         obs = Observation(
@@ -110,12 +110,12 @@ class StateEstimator:
         self.observations[entity_id].append(obs)
         return obs
 
-    def get_observations(self, entity_id: str, limit: int = 20) -> List[Observation]:
+    def get_observations(self, entity_id: str, limit: int = 20) -> list[Observation]:
         return self.observations.get(entity_id, [])[-limit:]
 
     # ── State Estimation ───────────────────────────────────────────────────
 
-    def estimate(self, entity_id: str) -> Optional[StateEstimate]:
+    def estimate(self, entity_id: str) -> StateEstimate | None:
         """Produce best state estimate for an entity from all observations."""
         obs_list = self.observations.get(entity_id, [])
         if not obs_list:
@@ -147,7 +147,7 @@ class StateEstimator:
             state=fused_state,
             confidence=confidence,
             confidence_score=confidence_score,
-            sources=list(set(o.source for o in recent)),
+            sources=list({o.source for o in recent}),
             timestamp=time.time(),
             freshness_seconds=time.time() - recent[0].timestamp,
             contradictions=contradictions,
@@ -156,15 +156,15 @@ class StateEstimator:
         self.estimates[entity_id] = estimate
         return estimate
 
-    def get_estimate(self, entity_id: str) -> Optional[StateEstimate]:
+    def get_estimate(self, entity_id: str) -> StateEstimate | None:
         return self.estimates.get(entity_id)
 
     # ── Fusion Logic ──────────────────────────────────────────────────────
 
-    def _fuse_states(self, observations: List[Observation]) -> Dict[str, Any]:
+    def _fuse_states(self, observations: list[Observation]) -> dict[str, Any]:
         """Weighted fusion of state from multiple observations."""
-        fused: Dict[str, Any] = {}
-        weights: Dict[str, float] = {}
+        fused: dict[str, Any] = {}
+        weights: dict[str, float] = {}
 
         for obs in observations:
             reliability = self.SOURCE_RELIABILITY.get(obs.source, 0.5)
@@ -202,8 +202,8 @@ class StateEstimator:
         else:
             return 0.1
 
-    def _calculate_confidence(self, observations: List[Observation],
-                               contradictions: List[Dict]) -> float:
+    def _calculate_confidence(self, observations: list[Observation],
+                               contradictions: list[dict]) -> float:
         """Calculate overall confidence score."""
         if not observations:
             return 0.0
@@ -218,7 +218,7 @@ class StateEstimator:
         base = sum(confidences) / len(confidences)
 
         # Boost for multiple independent sources
-        unique_sources = len(set(o.source for o in observations))
+        unique_sources = len({o.source for o in observations})
         independence_boost = min(0.2, unique_sources * 0.05)
 
         # Penalty for contradictions
@@ -237,7 +237,7 @@ class StateEstimator:
 
     # ── Contradiction Detection ────────────────────────────────────────────
 
-    def _detect_contradictions(self, observations: List[Observation]) -> List[Dict[str, Any]]:
+    def _detect_contradictions(self, observations: list[Observation]) -> list[dict[str, Any]]:
         """Detect when sources disagree on state."""
         contradictions = []
         for i, obs_a in enumerate(observations):
@@ -263,7 +263,7 @@ class StateEstimator:
 
     # ── Anomaly Detection ─────────────────────────────────────────────────
 
-    def _detect_anomalies(self, entity_id: str, current_state: Dict[str, Any]) -> List[str]:
+    def _detect_anomalies(self, entity_id: str, current_state: dict[str, Any]) -> list[str]:
         """Detect anomalies by comparing with historical patterns."""
         anomalies = []
         all_obs = self.observations.get(entity_id, [])
@@ -287,7 +287,7 @@ class StateEstimator:
 
     # ── Query & Summary ────────────────────────────────────────────────────
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "entities_tracked": len(self.observations),
             "total_observations": sum(len(v) for v in self.observations.values()),
@@ -295,7 +295,7 @@ class StateEstimator:
             "conflicts_detected": len(self._conflict_log),
         }
 
-    def get_low_confidence_entities(self, threshold: float = 0.5) -> List[str]:
+    def get_low_confidence_entities(self, threshold: float = 0.5) -> list[str]:
         """Get entities with low confidence estimates."""
         return [
             eid for eid, est in self.estimates.items()

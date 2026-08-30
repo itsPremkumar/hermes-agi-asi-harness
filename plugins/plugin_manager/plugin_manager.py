@@ -5,13 +5,12 @@ Plugin Manager - dynamic plugin loader & capability registry.
 Extracted from: agi-hermes-advanced-master/hermes_agi_harness/src/plugins/plugin_manager.py
 """
 
-import os
-import sys
 import importlib
 import importlib.util
 import logging
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,31 +27,31 @@ class BasePlugin:
     def shutdown(self):
         self.is_enabled = False
     
-    def pre_step_hook(self, step_number: int, task: str) -> Optional[str]:
+    def pre_step_hook(self, step_number: int, task: str) -> str | None:
         return None
     
     def post_step_hook(self, step_number: int, observation: str):
         pass
     
-    def pre_tool_hook(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_tool_hook(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         return args
     
     def post_tool_hook(self, tool_name: str, result: Any) -> Any:
         return result
     
-    def on_error_hook(self, error: Exception) -> Optional[str]:
+    def on_error_hook(self, error: Exception) -> str | None:
         return None
 
 
 class PluginManager:
-    def __init__(self, plugins_root: Optional[Path] = None, kernel: Any = None):
+    def __init__(self, plugins_root: Path | None = None, kernel: Any = None):
         self.kernel = kernel
         self.plugins_root = plugins_root or Path("plugins")
-        self._plugins: Dict[str, BasePlugin] = {}
-        self._tool_registry: Dict[str, tuple] = {}
-        self._capabilities: Dict[str, List[str]] = {}
+        self._plugins: dict[str, BasePlugin] = {}
+        self._tool_registry: dict[str, tuple] = {}
+        self._capabilities: dict[str, list[str]] = {}
     
-    def discover_plugins(self) -> Dict[str, Any]:
+    def discover_plugins(self) -> dict[str, Any]:
         discovered = {}
         if not self.plugins_root.exists():
             return discovered
@@ -125,7 +124,7 @@ class PluginManager:
                 self._capabilities[cap].remove(name)
         return True
     
-    def list_plugins(self) -> List[Dict[str, Any]]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         return [
             {
                 "name": name,
@@ -135,7 +134,7 @@ class PluginManager:
             for name, p in self._plugins.items()
         ]
     
-    def execute_pre_tool_hooks(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def execute_pre_tool_hooks(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         curr_args = args
         for plugin in self._plugins.values():
             if plugin.is_enabled:
@@ -152,7 +151,7 @@ class PluginManager:
     def has_capability(self, capability: str) -> bool:
         return bool(self._capabilities.get(capability))
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "plugin_manager",

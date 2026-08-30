@@ -17,9 +17,10 @@ import logging
 import random
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_causal")
 
@@ -40,9 +41,9 @@ class CausalRelation:
     relation_type: CausalRelationType
     strength: float = 0.5
     confidence: float = 0.5
-    evidence: List[str] = field(default_factory=list)
-    confounders: List[str] = field(default_factory=list)
-    mediators: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    confounders: list[str] = field(default_factory=list)
+    mediators: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -52,9 +53,9 @@ class CausalNode:
     node_id: str
     name: str
     description: str = ""
-    parents: List[str] = field(default_factory=list)
-    children: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    parents: list[str] = field(default_factory=list)
+    children: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -62,7 +63,7 @@ class CounterfactualScenario:
     """A counterfactual scenario."""
     scenario_id: str
     description: str
-    changed_variables: Dict[str, Any] = field(default_factory=dict)
+    changed_variables: dict[str, Any] = field(default_factory=dict)
     predicted_outcome: str = ""
     probability: float = 0.5
     timestamp: float = field(default_factory=time.time)
@@ -72,9 +73,9 @@ class CounterfactualScenario:
 class CausalGraph:
     """A causal graph."""
     graph_id: str
-    nodes: Dict[str, CausalNode] = field(default_factory=dict)
-    relations: List[CausalRelation] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    nodes: dict[str, CausalNode] = field(default_factory=dict)
+    relations: list[CausalRelation] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CausalEngine:
@@ -92,11 +93,11 @@ class CausalEngine:
     """
     
     def __init__(self):
-        self._graphs: Dict[str, CausalGraph] = {}
-        self._observations: List[Dict[str, Any]] = []
-        self._counterfactuals: List[CounterfactualScenario] = []
+        self._graphs: dict[str, CausalGraph] = {}
+        self._observations: list[dict[str, Any]] = []
+        self._counterfactuals: list[CounterfactualScenario] = []
     
-    def build_graph(self, name: str, observations: List[Dict[str, Any]] = None) -> CausalGraph:
+    def build_graph(self, name: str, observations: list[dict[str, Any]] | None = None) -> CausalGraph:
         """Build a causal graph from observations."""
         graph = CausalGraph(graph_id=str(uuid.uuid4()), metadata={"name": name})
         
@@ -104,7 +105,7 @@ class CausalEngine:
             self._observations.extend(observations)
             # Extract nodes from observations
             for obs in observations:
-                for key, value in obs.items():
+                for key in obs:
                     if key not in graph.nodes:
                         graph.nodes[key] = CausalNode(
                             node_id=str(uuid.uuid4()),
@@ -123,7 +124,7 @@ class CausalEngine:
         effect: str,
         relation_type: CausalRelationType = CausalRelationType.CAUSES,
         strength: float = 0.5
-    ) -> Optional[CausalRelation]:
+    ) -> CausalRelation | None:
         """Add a causal relation to a graph."""
         graph = self._graphs.get(graph_id)
         if not graph:
@@ -145,7 +146,7 @@ class CausalEngine:
         
         return relation
     
-    def identify_confounders(self, graph_id: str, cause: str, effect: str) -> List[str]:
+    def identify_confounders(self, graph_id: str, cause: str, effect: str) -> list[str]:
         """Identify confounders between cause and effect."""
         graph = self._graphs.get(graph_id)
         if not graph:
@@ -168,7 +169,7 @@ class CausalEngine:
         cause: str,
         effect: str,
         method: str = "backdoor"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Estimate causal effect of cause on effect."""
         graph = self._graphs.get(graph_id)
         if not graph:
@@ -205,11 +206,11 @@ class CausalEngine:
     def counterfactual_reasoning(
         self,
         graph_id: str,
-        intervention: Dict[str, Any],
+        intervention: dict[str, Any],
         outcome_variable: str
     ) -> CounterfactualScenario:
         """Perform counterfactual reasoning."""
-        graph = self._graphs.get(graph_id)
+        self._graphs.get(graph_id)
         
         # Predict outcome under intervention
         predicted = f"If {intervention}, then {outcome_variable} would change"
@@ -229,9 +230,9 @@ class CausalEngine:
     def what_if_simulation(
         self,
         graph_id: str,
-        changes: Dict[str, Any],
+        changes: dict[str, Any],
         steps: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Run what-if simulation."""
         results = []
         
@@ -252,7 +253,7 @@ class CausalEngine:
         cause: str,
         effect: str,
         expected_direction: str = "positive"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate a causal hypothesis."""
         effect_estimate = self.estimate_causal_effect(graph_id, cause, effect)
         
@@ -294,7 +295,7 @@ class CausalEngine:
         
         return " ".join(explanation_parts)
     
-    def get_graph_summary(self, graph_id: str) -> Dict[str, Any]:
+    def get_graph_summary(self, graph_id: str) -> dict[str, Any]:
         """Get summary of a causal graph."""
         graph = self._graphs.get(graph_id)
         if not graph:
@@ -311,7 +312,7 @@ class CausalEngine:
             ]
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

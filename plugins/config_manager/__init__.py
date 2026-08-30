@@ -45,8 +45,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -58,11 +58,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -95,13 +95,13 @@ class ConfigManager:
     def __init__(self, config_dir: str = "config"):
         self.config_dir = Path(config_dir)
         self.config_dir.mkdir(parents=True, exist_ok=True)
-        self._config: Dict[str, Any] = {}
-        self._secrets: Dict[str, str] = {}
-        self._env_cache: Dict[str, str] = {}
-        self._loaded_files: List[str] = []
+        self._config: dict[str, Any] = {}
+        self._secrets: dict[str, str] = {}
+        self._env_cache: dict[str, str] = {}
+        self._loaded_files: list[str] = []
         self._last_load_time: float = 0
     
-    def load_toml(self, filename: str = "config.toml") -> Dict[str, Any]:
+    def load_toml(self, filename: str = "config.toml") -> dict[str, Any]:
         """Load a TOML config file."""
         filepath = self.config_dir / filename
         if not filepath.exists():
@@ -134,7 +134,7 @@ class ConfigManager:
             logger.error(f"Failed to load TOML config: {e}")
             return {}
     
-    def load_yaml(self, filename: str = "config.yaml") -> Dict[str, Any]:
+    def load_yaml(self, filename: str = "config.yaml") -> dict[str, Any]:
         """Load a YAML config file."""
         filepath = self.config_dir / filename
         if not filepath.exists():
@@ -158,7 +158,7 @@ class ConfigManager:
             logger.error(f"Failed to load YAML config: {e}")
             return {}
     
-    def load_env(self, filename: str = ".env") -> Dict[str, str]:
+    def load_env(self, filename: str = ".env") -> dict[str, str]:
         """Load environment variables from .env file."""
         filepath = self.config_dir / filename
         if not filepath.exists():
@@ -229,11 +229,11 @@ class ConfigManager:
         
         config[keys[-1]] = value
     
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         """Get all config values."""
         return self._config.copy()
     
-    def get_loaded_files(self) -> List[str]:
+    def get_loaded_files(self) -> list[str]:
         """Get list of loaded config files."""
         return self._loaded_files.copy()
     
@@ -265,7 +265,7 @@ class ConfigManager:
     
     # ── Secrets Management ─────────────────────────────────────────────
     
-    def load_secrets(self, filename: str = "secrets.enc") -> Dict[str, str]:
+    def load_secrets(self, filename: str = "secrets.enc") -> dict[str, str]:
         """Load encrypted secrets file."""
         filepath = self.config_dir / filename
         if not filepath.exists():
@@ -302,7 +302,7 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"Failed to save secrets: {e}")
     
-    def get_secret(self, key: str, default: str = None) -> Optional[str]:
+    def get_secret(self, key: str, default: str | None = None) -> str | None:
         """Get a secret value."""
         return self._secrets.get(key, default)
     
@@ -314,7 +314,7 @@ class ConfigManager:
         """Delete a secret."""
         self._secrets.pop(key, None)
     
-    def list_secrets(self) -> List[str]:
+    def list_secrets(self) -> list[str]:
         """List secret keys (not values)."""
         return list(self._secrets.keys())
     
@@ -333,7 +333,7 @@ class ConfigManager:
     
     # ── Profile Management ────────────────────────────────────────────
     
-    def load_profile(self, profile_name: str) -> Dict[str, Any]:
+    def load_profile(self, profile_name: str) -> dict[str, Any]:
         """Load a profile configuration."""
         # Try TOML first, then YAML
         toml_config = self.load_toml(f"profiles/{profile_name}.toml")
@@ -343,7 +343,7 @@ class ConfigManager:
         yaml_config = self.load_yaml(f"profiles/{profile_name}.yaml")
         return yaml_config
     
-    def save_profile(self, profile_name: str, config: Dict[str, Any]):
+    def save_profile(self, profile_name: str, config: dict[str, Any]):
         """Save a profile configuration."""
         profile_dir = self.config_dir / "profiles"
         profile_dir.mkdir(exist_ok=True)
@@ -359,7 +359,7 @@ class ConfigManager:
             with open(filepath, "w") as f:
                 yaml.dump(config, f, default_flow_style=False)
     
-    def list_profiles(self) -> List[str]:
+    def list_profiles(self) -> list[str]:
         """List available profiles."""
         profile_dir = self.config_dir / "profiles"
         if not profile_dir.exists():
@@ -405,7 +405,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.manager: Optional[ConfigManager] = None
+        self.manager: ConfigManager | None = None
     
     async def load(self) -> bool:
         self.manager = ConfigManager()
@@ -422,7 +422,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -434,13 +434,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def load_toml(self, filename: str = "config.toml") -> Dict[str, Any]:
+    def load_toml(self, filename: str = "config.toml") -> dict[str, Any]:
         return self.manager.load_toml(filename)
     
-    def load_yaml(self, filename: str = "config.yaml") -> Dict[str, Any]:
+    def load_yaml(self, filename: str = "config.yaml") -> dict[str, Any]:
         return self.manager.load_yaml(filename)
     
-    def load_env(self, filename: str = ".env") -> Dict[str, str]:
+    def load_env(self, filename: str = ".env") -> dict[str, str]:
         return self.manager.load_env(filename)
     
     def get(self, key: str, default: Any = None) -> Any:
@@ -449,29 +449,29 @@ class Plugin(PluginBase):
     def set(self, key: str, value: Any):
         self.manager.set(key, value)
     
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         return self.manager.get_all()
     
-    def get_secret(self, key: str, default: str = None) -> Optional[str]:
+    def get_secret(self, key: str, default: str | None = None) -> str | None:
         return self.manager.get_secret(key, default)
     
     def set_secret(self, key: str, value: str):
         self.manager.set_secret(key, value)
     
-    def load_secrets(self, filename: str = "secrets.enc") -> Dict[str, str]:
+    def load_secrets(self, filename: str = "secrets.enc") -> dict[str, str]:
         return self.manager.load_secrets(filename)
     
     def save_secrets(self, filename: str = "secrets.enc"):
         self.manager.save_secrets(filename)
     
-    def load_profile(self, profile_name: str) -> Dict[str, Any]:
+    def load_profile(self, profile_name: str) -> dict[str, Any]:
         return self.manager.load_profile(profile_name)
     
-    def save_profile(self, profile_name: str, config: Dict[str, Any]):
+    def save_profile(self, profile_name: str, config: dict[str, Any]):
         self.manager.save_profile(profile_name, config)
     
-    def list_profiles(self) -> List[str]:
+    def list_profiles(self) -> list[str]:
         return self.manager.list_profiles()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

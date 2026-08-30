@@ -23,7 +23,7 @@ class SecretManager:
     def __init__(self, storage_path: str = "state/secrets"):
         self.storage_path = storage_path
         os.makedirs(storage_path, exist_ok=True)
-        self._secrets: Dict[str, Dict[str, Any]] = {}
+        self._secrets: dict[str, dict[str, Any]] = {}
     
     def store_secret(self, name: str, value: str) -> str:
         """Store a secret."""
@@ -36,7 +36,7 @@ class SecretManager:
         }
         return secret_id
     
-    def get_secret(self, name: str) -> Optional[str]:
+    def get_secret(self, name: str) -> str | None:
         """Get a secret."""
         secret = self._secrets.get(name)
         if secret:
@@ -44,5 +44,5 @@ class SecretManager:
             return secret["value"]
         return None
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "secrets": len(self._secrets)}

@@ -5,10 +5,10 @@ Completion Proof Plugin — Evidence-Backed Goal Completion
 Every completed goal has: expected outcome, actual result, evidence, confidence.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
-from enum import Enum
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class CompletionStatus(str, Enum):
@@ -24,16 +24,16 @@ class CompletionStatus(str, Enum):
 class CompletionProof:
     goal_id: str
     status: CompletionStatus = CompletionStatus.NOT_STARTED
-    expected: List[str] = field(default_factory=list)
-    observed: List[str] = field(default_factory=list)
-    evidence: List[str] = field(default_factory=list)
-    verification_results: Dict[str, Any] = field(default_factory=dict)
+    expected: list[str] = field(default_factory=list)
+    observed: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    verification_results: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
     duration_seconds: float = 0.0
     timestamp: float = field(default_factory=time.time)
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "goal_id": self.goal_id,
             "status": self.status.value,
@@ -58,8 +58,8 @@ class CompletionProof:
 
 class CompletionProofPlugin:
     def __init__(self):
-        self._proofs: Dict[str, CompletionProof] = {}
-        self._start_times: Dict[str, float] = {}
+        self._proofs: dict[str, CompletionProof] = {}
+        self._start_times: dict[str, float] = {}
 
     async def load(self):
         pass
@@ -73,7 +73,7 @@ class CompletionProofPlugin:
     async def health(self):
         return {"status": "healthy", "proofs_generated": len(self._proofs)}
 
-    def start_goal(self, goal_id: str, expected: List[str] = None) -> CompletionProof:
+    def start_goal(self, goal_id: str, expected: list[str] | None = None) -> CompletionProof:
         proof = CompletionProof(
             goal_id=goal_id,
             status=CompletionStatus.IN_PROGRESS,
@@ -91,7 +91,7 @@ class CompletionProofPlugin:
         if goal_id in self._proofs:
             self._proofs[goal_id].observed.append(observation)
 
-    def verify(self, goal_id: str, results: Dict[str, Any]) -> CompletionProof:
+    def verify(self, goal_id: str, results: dict[str, Any]) -> CompletionProof:
         if goal_id not in self._proofs:
             return None
         proof = self._proofs[goal_id]
@@ -112,7 +112,7 @@ class CompletionProofPlugin:
 
         return proof
 
-    def _calculate_confidence(self, proof: CompletionProof, results: Dict[str, Any]) -> float:
+    def _calculate_confidence(self, proof: CompletionProof, results: dict[str, Any]) -> float:
         """Calculate confidence from evidence quality."""
         score = 0.0
 
@@ -137,10 +137,10 @@ class CompletionProofPlugin:
 
         return min(1.0, score)
 
-    def get_proof(self, goal_id: str) -> Optional[CompletionProof]:
+    def get_proof(self, goal_id: str) -> CompletionProof | None:
         return self._proofs.get(goal_id)
 
-    def get_all_proofs(self) -> List[CompletionProof]:
+    def get_all_proofs(self) -> list[CompletionProof]:
         return list(self._proofs.values())
 
     def get_completion_rate(self) -> float:
@@ -149,7 +149,7 @@ class CompletionProofPlugin:
         verified = sum(1 for p in self._proofs.values() if p.status == CompletionStatus.VERIFIED)
         return verified / len(self._proofs)
 
-    def generate_proof_report(self, goal_id: str) -> Dict[str, Any]:
+    def generate_proof_report(self, goal_id: str) -> dict[str, Any]:
         proof = self._proofs.get(goal_id)
         if not proof:
             return {"error": "Goal not found"}

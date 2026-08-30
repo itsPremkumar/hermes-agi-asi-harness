@@ -10,11 +10,11 @@ Extracted from SKILL.md v9.0 ASI section 12:
 
 from __future__ import annotations
 
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +32,17 @@ class PlanType(str, Enum):
 class Task:
     id: str
     objective: str
-    inputs: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
+    inputs: list[str] = field(default_factory=list)
+    outputs: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     owner: str = ""
     workspace: str = ""
-    permissions: List[str] = field(default_factory=list)
-    budget: Dict[str, Any] = field(default_factory=dict)
-    acceptance_tests: List[str] = field(default_factory=list)
-    formal_properties: List[str] = field(default_factory=list)
-    verification: Dict[str, Any] = field(default_factory=dict)
-    rollback: Dict[str, Any] = field(default_factory=dict)
+    permissions: list[str] = field(default_factory=list)
+    budget: dict[str, Any] = field(default_factory=dict)
+    acceptance_tests: list[str] = field(default_factory=list)
+    formal_properties: list[str] = field(default_factory=list)
+    verification: dict[str, Any] = field(default_factory=dict)
+    rollback: dict[str, Any] = field(default_factory=dict)
     status: str = "pending"
 
 
@@ -50,7 +50,7 @@ class Task:
 class Plan:
     id: str
     plan_type: PlanType
-    tasks: List[Task] = field(default_factory=list)
+    tasks: list[Task] = field(default_factory=list)
     expected_outcome: str = ""
     success_probability: float = 0.5
     evidence: str = ""
@@ -59,7 +59,7 @@ class Plan:
     risk: float = 0.5
     reversibility: bool = True
     complexity: float = 0.5
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     maintenance: float = 0.0
     optionality: float = 0.5
     antifragility: float = 0.5
@@ -78,10 +78,10 @@ class PlanningEngine:
     """
 
     def __init__(self):
-        self.plans: Dict[str, Plan] = {}
-        self.active_plan: Optional[str] = None
+        self.plans: dict[str, Plan] = {}
+        self.active_plan: str | None = None
 
-    def generate_plans(self, mission: Any) -> List[Plan]:
+    def generate_plans(self, mission: Any) -> list[Plan]:
         """Generate 6 plans for a mission."""
         plans = []
 
@@ -147,7 +147,7 @@ class PlanningEngine:
 
         return plans
 
-    def select_plan(self, mission: Any, preference: str = "balanced") -> Optional[Plan]:
+    def select_plan(self, mission: Any, preference: str = "balanced") -> Plan | None:
         """Select the best plan based on mission and preference."""
         if not self.plans:
             return None
@@ -159,11 +159,11 @@ class PlanningEngine:
                 return plan
 
         # Fallback to first plan
-        first = list(self.plans.values())[0]
+        first = next(iter(self.plans.values()))
         self.active_plan = first.id
         return first
 
-    def should_replan(self, state: Dict[str, Any]) -> bool:
+    def should_replan(self, state: dict[str, Any]) -> bool:
         """Determine if replanning is needed."""
         triggers = [
             state.get("assumption_failed"),
@@ -180,7 +180,7 @@ class PlanningEngine:
         ]
         return any(triggers)
 
-    def get_critical_path(self, plan: Plan) -> List[str]:
+    def get_critical_path(self, plan: Plan) -> list[str]:
         """Calculate critical path for a plan."""
         # Simple topological sort
         visited = set()

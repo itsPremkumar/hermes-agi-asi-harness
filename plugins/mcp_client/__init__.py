@@ -42,8 +42,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +55,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -89,17 +89,17 @@ class MCPServer:
     """An MCP server connection."""
     name: str
     command: str
-    process: Optional[subprocess.Popen] = None
+    process: subprocess.Popen | None = None
     connected: bool = False
-    tools: List[Dict[str, Any]] = field(default_factory=list)
-    last_error: Optional[str] = None
+    tools: list[dict[str, Any]] = field(default_factory=list)
+    last_error: str | None = None
 
 
 class MCPClient:
     """MCP protocol client."""
     
     def __init__(self):
-        self.servers: Dict[str, MCPServer] = {}
+        self.servers: dict[str, MCPServer] = {}
         self._request_id = 0
     
     def _next_id(self) -> int:
@@ -114,7 +114,7 @@ class MCPClient:
         self.servers[name] = MCPServer(name=name, command=command)
         return True
     
-    def connect(self, name: str) -> Dict[str, Any]:
+    def connect(self, name: str) -> dict[str, Any]:
         """Connect to an MCP server."""
         server = self.servers.get(name)
         if not server:
@@ -139,7 +139,7 @@ class MCPClient:
             server.last_error = str(e)
             return {"success": False, "error": str(e)}
     
-    def disconnect(self, name: str) -> Dict[str, Any]:
+    def disconnect(self, name: str) -> dict[str, Any]:
         """Disconnect from an MCP server."""
         server = self.servers.get(name)
         if not server:
@@ -152,14 +152,14 @@ class MCPClient:
         server.connected = False
         return {"success": True, "server": name, "connected": False}
     
-    def list_tools(self, name: str) -> List[Dict[str, Any]]:
+    def list_tools(self, name: str) -> list[dict[str, Any]]:
         """List tools from an MCP server."""
         server = self.servers.get(name)
         if not server or not server.connected:
             return []
         return server.tools
     
-    def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any] = None) -> Dict[str, Any]:
+    def call_tool(self, server_name: str, tool_name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
         """Call an MCP tool."""
         server = self.servers.get(server_name)
         if not server or not server.connected:
@@ -183,7 +183,7 @@ class MCPClient:
             },
         }
     
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get status of all servers."""
         return {
             name: {
@@ -222,7 +222,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.client: Optional[MCPClient] = None
+        self.client: MCPClient | None = None
     
     async def load(self) -> bool:
         self.client = MCPClient()
@@ -242,7 +242,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -257,20 +257,20 @@ class Plugin(PluginBase):
     def add_server(self, name: str, command: str) -> bool:
         return self.client.add_server(name, command)
     
-    def connect(self, name: str) -> Dict[str, Any]:
+    def connect(self, name: str) -> dict[str, Any]:
         return self.client.connect(name)
     
-    def disconnect(self, name: str) -> Dict[str, Any]:
+    def disconnect(self, name: str) -> dict[str, Any]:
         return self.client.disconnect(name)
     
-    def list_tools(self, name: str) -> List[Dict[str, Any]]:
+    def list_tools(self, name: str) -> list[dict[str, Any]]:
         return self.client.list_tools(name)
     
-    def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any] = None) -> Dict[str, Any]:
+    def call_tool(self, server_name: str, tool_name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
         return self.client.call_tool(server_name, tool_name, arguments)
     
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         return self.client.get_status()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

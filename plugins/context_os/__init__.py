@@ -5,29 +5,29 @@ Builds comprehensive mission context from user, mission, memory, world,
 beliefs, available tools/agents, environment, constraints, history.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
-from enum import Enum
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class MissionContext:
-    user: Dict[str, Any] = field(default_factory=dict)
-    mission: Dict[str, Any] = field(default_factory=dict)
-    previous_missions: List[Dict[str, Any]] = field(default_factory=list)
-    memory: Dict[str, Any] = field(default_factory=dict)
-    world_state: Dict[str, Any] = field(default_factory=dict)
-    beliefs: Dict[str, Any] = field(default_factory=dict)
-    available_tools: List[str] = field(default_factory=list)
-    available_agents: List[str] = field(default_factory=list)
-    environment: Dict[str, Any] = field(default_factory=dict)
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    historical_failures: List[Dict[str, Any]] = field(default_factory=list)
-    historical_successes: List[Dict[str, Any]] = field(default_factory=list)
+    user: dict[str, Any] = field(default_factory=dict)
+    mission: dict[str, Any] = field(default_factory=dict)
+    previous_missions: list[dict[str, Any]] = field(default_factory=list)
+    memory: dict[str, Any] = field(default_factory=dict)
+    world_state: dict[str, Any] = field(default_factory=dict)
+    beliefs: dict[str, Any] = field(default_factory=dict)
+    available_tools: list[str] = field(default_factory=list)
+    available_agents: list[str] = field(default_factory=list)
+    environment: dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    historical_failures: list[dict[str, Any]] = field(default_factory=list)
+    historical_successes: list[dict[str, Any]] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "user": self.user,
             "mission": self.mission,
@@ -58,7 +58,7 @@ class ContextBuilder:
     def __init__(self, kernel=None):
         self.kernel = kernel
 
-    async def build(self, mission: Dict[str, Any]) -> MissionContext:
+    async def build(self, mission: dict[str, Any]) -> MissionContext:
         """Construct full context for a mission."""
         ctx = MissionContext()
         ctx.mission = mission
@@ -108,7 +108,7 @@ class ContextBuilder:
 class ContextOSPlugin:
     def __init__(self):
         self.builder = None
-        self._contexts: Dict[str, MissionContext] = {}
+        self._contexts: dict[str, MissionContext] = {}
 
     async def load(self):
         pass
@@ -125,7 +125,7 @@ class ContextOSPlugin:
     def set_kernel(self, kernel):
         self.builder = ContextBuilder(kernel)
 
-    async def build_context(self, mission: Dict[str, Any]) -> MissionContext:
+    async def build_context(self, mission: dict[str, Any]) -> MissionContext:
         if self.builder is None:
             self.builder = ContextBuilder()
         ctx = await self.builder.build(mission)
@@ -133,7 +133,7 @@ class ContextOSPlugin:
             self._contexts[mission["id"]] = ctx
         return ctx
 
-    def get_context(self, mission_id: str) -> Optional[MissionContext]:
+    def get_context(self, mission_id: str) -> MissionContext | None:
         return self._contexts.get(mission_id)
 
 

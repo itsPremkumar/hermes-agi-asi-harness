@@ -13,13 +13,15 @@ Extracted from:
 from __future__ import annotations
 
 import hashlib
+import re
 import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_evidence_store")
 
@@ -48,7 +50,7 @@ class Source:
     credibility: SourceCredibility = SourceCredibility.UNKNOWN
     relevance_score: float = 0.0
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -59,10 +61,10 @@ class Evidence:
     source: Source
     status: EvidenceStatus = EvidenceStatus.RAW
     confidence: float = 0.5
-    supporting_evidence: List[str] = field(default_factory=list)
-    contradicting_evidence: List[str] = field(default_factory=list)
+    supporting_evidence: list[str] = field(default_factory=list)
+    contradicting_evidence: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -91,9 +93,9 @@ class EvidenceStore:
     """
     
     def __init__(self):
-        self._sources: Dict[str, Source] = {}
-        self._evidence: Dict[str, Evidence] = {}
-        self._contradictions: List[Contradiction] = []
+        self._sources: dict[str, Source] = {}
+        self._evidence: dict[str, Evidence] = {}
+        self._contradictions: list[Contradiction] = []
     
     def add_source(self, url: str, title: str, content: str,
                    credibility: SourceCredibility = SourceCredibility.UNKNOWN) -> str:
@@ -170,7 +172,7 @@ class EvidenceStore:
         
         return False
     
-    def rank_sources(self) -> List[Source]:
+    def rank_sources(self) -> list[Source]:
         """Rank sources by credibility and relevance."""
         sources = list(self._sources.values())
         
@@ -199,7 +201,7 @@ class EvidenceStore:
         sources.sort(key=lambda s: s.metadata.get("rank_score", 0), reverse=True)
         return sources
     
-    def get_evidence_for_claim(self, claim: str) -> List[Evidence]:
+    def get_evidence_for_claim(self, claim: str) -> list[Evidence]:
         """Get evidence supporting a claim."""
         evidence_list = []
         
@@ -211,7 +213,7 @@ class EvidenceStore:
         evidence_list.sort(key=lambda e: e.confidence, reverse=True)
         return evidence_list
     
-    def get_contradictions(self) -> List[Contradiction]:
+    def get_contradictions(self) -> list[Contradiction]:
         """Get all contradictions."""
         return self._contradictions
     
@@ -235,7 +237,7 @@ class EvidenceStore:
                 
                 break
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics."""
         return {
             "sources": len(self._sources),
@@ -246,7 +248,7 @@ class EvidenceStore:
             "contradicted_evidence": sum(1 for e in self._evidence.values() if e.status == EvidenceStatus.CONTRADICTED),
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

@@ -8,11 +8,11 @@ Extracted from SKILL.md v9.0 ASI section 10:
 """
 
 from __future__ import annotations
+
 import logging
-import time
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ class CognitiveState:
     confidence: float = 0.5
     confusion: float = 0.0
     overconfidence: float = 0.0
-    stale_assumptions: List[str] = field(default_factory=list)
-    missing_evidence: List[str] = field(default_factory=list)
+    stale_assumptions: list[str] = field(default_factory=list)
+    missing_evidence: list[str] = field(default_factory=list)
     premature_convergence: bool = False
     confirmation_bias: float = 0.0
     repetition: float = 0.0
@@ -81,9 +81,9 @@ class CognitiveRouter:
 
     def __init__(self):
         self.state = CognitiveState()
-        self._mode_history: List[CognitiveMode] = []
+        self._mode_history: list[CognitiveMode] = []
 
-    def select_mode(self, task: str, context: Dict[str, Any] = None) -> CognitiveMode:
+    def select_mode(self, task: str, context: dict[str, Any] | None = None) -> CognitiveMode:
         """Select the appropriate cognitive mode for a task."""
         task_lower = task.lower()
 
@@ -117,7 +117,7 @@ class CognitiveRouter:
         """Get description of a cognitive mode."""
         return self.MODE_DESCRIPTIONS.get(mode, "Unknown mode")
 
-    def monitor(self) -> Dict[str, Any]:
+    def monitor(self) -> dict[str, Any]:
         """Monitor cognitive state for issues."""
         issues = []
 
@@ -152,7 +152,7 @@ class CognitiveRouter:
             "issue_count": len(issues),
         }
 
-    def reflect(self) -> Dict[str, Any]:
+    def reflect(self) -> dict[str, Any]:
         """Reflect on cognitive state and adjust."""
         monitor_result = self.monitor()
 

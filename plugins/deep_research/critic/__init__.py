@@ -17,9 +17,10 @@ import logging
 import re
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_critic")
 
@@ -42,7 +43,7 @@ class Citation:
     context: str
     status: VerificationStatus = VerificationStatus.UNVERIFIED
     confidence: float = 0.0
-    verified_at: Optional[float] = None
+    verified_at: float | None = None
 
 
 @dataclass
@@ -71,8 +72,8 @@ class CriticEngine:
     """
     
     def __init__(self):
-        self._citations: List[Citation] = []
-        self._quality_scores: List[QualityScore] = []
+        self._citations: list[Citation] = []
+        self._quality_scores: list[QualityScore] = []
     
     async def verify_citation(self, claim: str, source_url: str, source_content: str) -> Citation:
         """Verify a citation."""
@@ -114,7 +115,7 @@ class CriticEngine:
         overlap = len(claim_words & source_words)
         return min(1.0, overlap / len(claim_words))
     
-    async def assess_quality(self, research: Dict[str, Any]) -> QualityScore:
+    async def assess_quality(self, research: dict[str, Any]) -> QualityScore:
         """Assess research quality."""
         score = QualityScore()
         
@@ -155,7 +156,7 @@ class CriticEngine:
         self._quality_scores.append(score)
         return score
     
-    async def red_team_review(self, research: Dict[str, Any]) -> Dict[str, Any]:
+    async def red_team_review(self, research: dict[str, Any]) -> dict[str, Any]:
         """Red team review — find weaknesses."""
         weaknesses = []
         
@@ -174,9 +175,8 @@ class CriticEngine:
             weaknesses.append(f"{len(contradictions)} contradictions found")
         
         # Check for bias
-        if "perspectives" in research:
-            if len(research["perspectives"]) < 3:
-                weaknesses.append("Limited perspectives (potential bias)")
+        if "perspectives" in research and len(research["perspectives"]) < 3:
+            weaknesses.append("Limited perspectives (potential bias)")
         
         return {
             "weaknesses": weaknesses,
@@ -188,7 +188,7 @@ class CriticEngine:
             ]
         }
     
-    async def blue_team_repair(self, research: Dict[str, Any], weaknesses: List[str]) -> Dict[str, Any]:
+    async def blue_team_repair(self, research: dict[str, Any], weaknesses: list[str]) -> dict[str, Any]:
         """Blue team repair — fix weaknesses."""
         repairs = []
         
@@ -206,7 +206,7 @@ class CriticEngine:
             "status": "repaired"
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

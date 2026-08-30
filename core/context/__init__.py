@@ -1,5 +1,6 @@
 """Context Engineering & Compaction - Intelligent context management."""
 from __future__ import annotations
+
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -10,7 +11,7 @@ class ContextWindow:
     """Manages a sliding context window."""
     
     max_tokens: int = 8000
-    _messages: List[Dict[str, str]] = field(default_factory=list)
+    _messages: list[dict[str, str]] = field(default_factory=list)
     
     def add(self, role: str, content: str):
         self._messages.append({"role": role, "content": content, "timestamp": time.time()})
@@ -21,7 +22,7 @@ class ContextWindow:
         while len(str(self._messages)) > self.max_tokens * 4 and len(self._messages) > 1:
             self._messages.pop(0)
     
-    def get(self) -> List[Dict[str, str]]:
+    def get(self) -> list[dict[str, str]]:
         return self._messages.copy()
     
     def compact(self) -> str:
@@ -35,7 +36,7 @@ class ContextCompactor:
     def __init__(self, llm_manager=None):
         self.llm = llm_manager
     
-    async def compact(self, messages: List[Dict[str, str]], max_tokens: int = 2000) -> str:
+    async def compact(self, messages: list[dict[str, str]], max_tokens: int = 2000) -> str:
         """Compact messages into a summary."""
         if self.llm:
             # Use LLM for intelligent compaction

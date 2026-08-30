@@ -43,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -91,7 +91,7 @@ class PythonTool:
     def __init__(self, timeout: float = 30.0):
         self.timeout = timeout
     
-    def run(self, code: str, timeout: float = None, globals_dict: Dict = None) -> Dict[str, Any]:
+    def run(self, code: str, timeout: float | None = None, globals_dict: dict | None = None) -> dict[str, Any]:
         """
         Execute Python code safely.
         """
@@ -135,19 +135,19 @@ class PythonTool:
                 pass
         
         result_value = None
-        error_info: Optional[Dict] = None
+        error_info: dict | None = None
         
         try:
-            exec_locals: Dict[str, Any] = {}
+            exec_locals: dict[str, Any] = {}
             
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
                 exec(code, exec_globals, exec_locals)
             
             # Get the last expression result
             if exec_locals and '__result__' not in exec_locals:
-                result_value = exec_locals.get('_', None) or exec_locals.get('result', None)
+                result_value = exec_locals.get('_') or exec_locals.get('result')
             else:
-                result_value = exec_locals.get('__result__', None)
+                result_value = exec_locals.get('__result__')
                 
         except Exception as e:
             error_info = {
@@ -167,7 +167,7 @@ class PythonTool:
             "error": error_info,
         }
     
-    async def run_async(self, code: str, timeout: float = None) -> Dict[str, Any]:
+    async def run_async(self, code: str, timeout: float | None = None) -> dict[str, Any]:
         """Execute Python code asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.run, code, timeout)
@@ -200,7 +200,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=50,
             ),
         )
-        self.tool: Optional[PythonTool] = None
+        self.tool: PythonTool | None = None
     
     async def load(self) -> bool:
         self.tool = PythonTool()
@@ -217,7 +217,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -228,13 +228,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def run(self, code: str, timeout: float = 30.0) -> Dict[str, Any]:
+    def run(self, code: str, timeout: float = 30.0) -> dict[str, Any]:
         """Execute Python code."""
         return self.tool.run(code, timeout=timeout)
     
-    async def run_async(self, code: str, timeout: float = 30.0) -> Dict[str, Any]:
+    async def run_async(self, code: str, timeout: float = 30.0) -> dict[str, Any]:
         """Execute Python code asynchronously."""
         return await self.tool.run_async(code, timeout=timeout)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

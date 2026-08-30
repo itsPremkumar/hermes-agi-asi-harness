@@ -16,9 +16,9 @@ import asyncio
 import logging
 import time
 import uuid
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -78,17 +78,17 @@ class TaskSupervisor:
     def __init__(
         self,
         kernel=None,
-        budget: Optional[ResourceBudget] = None,
+        budget: ResourceBudget | None = None,
         auto_recovery: bool = True,
     ):
         self.kernel = kernel
         self.budget = budget or ResourceBudget()
         self.auto_recovery = auto_recovery
         self.state = SupervisorState.INITIALIZED
-        self.heartbeats: Dict[str, HeartbeatRecord] = {}
-        self.failed_tasks: List[Dict[str, Any]] = []
+        self.heartbeats: dict[str, HeartbeatRecord] = {}
+        self.failed_tasks: list[dict[str, Any]] = []
         self.recovery_count = 0
-        self._supervisor_task: Optional[asyncio.Task] = None
+        self._supervisor_task: asyncio.Task | None = None
         self._shutdown_event = asyncio.Event()
 
     async def start(self):
@@ -189,7 +189,7 @@ class TaskSupervisor:
         self.failed_tasks = still_failed
         self.state = SupervisorState.RUNNING
 
-    async def _emit_recovery_event(self, failure: Dict[str, Any]):
+    async def _emit_recovery_event(self, failure: dict[str, Any]):
         """Emits a recovery event for audit trail."""
         if self.kernel and hasattr(self.kernel, 'emit'):
             await self.kernel.emit("supervisor.recovery", {
@@ -226,7 +226,7 @@ class TaskSupervisor:
                 "timestamp": time.time(),
             })
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Returns current supervisor status."""
         active_heartbeats = sum(1 for h in self.heartbeats.values() if h.is_alive)
         return {

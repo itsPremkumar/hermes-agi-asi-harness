@@ -15,9 +15,9 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 class Confidence(str, Enum):
@@ -33,8 +33,8 @@ class Entity:
     id: str
     name: str
     type: str  # person, system, tool, resource, concept
-    properties: Dict[str, Any] = field(default_factory=dict)
-    relationships: List[Dict[str, str]] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    relationships: list[dict[str, str]] = field(default_factory=list)
     confidence: Confidence = Confidence.UNCERTAIN
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
@@ -46,15 +46,15 @@ class CausalModel:
     mechanism: str
     effect: str
     confidence: float = 0.5
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
 
 @dataclass
 class WorldTransition:
-    before: Dict[str, Any]
-    action: Dict[str, Any]
-    observation: Dict[str, Any]
-    after: Dict[str, Any]
+    before: dict[str, Any]
+    action: dict[str, Any]
+    observation: dict[str, Any]
+    after: dict[str, Any]
     timestamp: str
     actor: str
     source: str
@@ -76,35 +76,35 @@ class WorldModel:
     - Simulation ensemble
     """
 
-    def __init__(self, persist_path: Optional[str] = None):
+    def __init__(self, persist_path: str | None = None):
         self.persist_path = persist_path
-        self.entities: Dict[str, Entity] = {}
-        self.relationships: List[Dict[str, str]] = []
-        self.resources: List[Dict[str, Any]] = []
-        self.capabilities: List[Dict[str, Any]] = []
-        self.environment: Dict[str, Any] = {}
-        self.tasks: List[Dict[str, Any]] = []
-        self.dependencies: List[Dict[str, Any]] = []
-        self.observations: List[Dict[str, Any]] = []
-        self.events: List[Dict[str, Any]] = []
-        self.assumptions: List[Dict[str, Any]] = []
-        self.hypotheses: List[Dict[str, Any]] = []
-        self.risks: List[Dict[str, Any]] = []
-        self.commitments: List[Dict[str, Any]] = []
-        self.external_state: Dict[str, Any] = {}
-        self.temporal_state: Dict[str, Any] = {
+        self.entities: dict[str, Entity] = {}
+        self.relationships: list[dict[str, str]] = []
+        self.resources: list[dict[str, Any]] = []
+        self.capabilities: list[dict[str, Any]] = []
+        self.environment: dict[str, Any] = {}
+        self.tasks: list[dict[str, Any]] = []
+        self.dependencies: list[dict[str, Any]] = []
+        self.observations: list[dict[str, Any]] = []
+        self.events: list[dict[str, Any]] = []
+        self.assumptions: list[dict[str, Any]] = []
+        self.hypotheses: list[dict[str, Any]] = []
+        self.risks: list[dict[str, Any]] = []
+        self.commitments: list[dict[str, Any]] = []
+        self.external_state: dict[str, Any] = {}
+        self.temporal_state: dict[str, Any] = {
             "past": {},
             "present": {},
             "future_scenarios": []
         }
-        self.causal_models: List[CausalModel] = []
-        self.counterfactual_worlds: List[Dict[str, Any]] = []
-        self.simulation_ensemble: List[Dict[str, Any]] = []
-        self.unknowns: List[str] = []
-        self.known_unknowns: List[str] = []
+        self.causal_models: list[CausalModel] = []
+        self.counterfactual_worlds: list[dict[str, Any]] = []
+        self.simulation_ensemble: list[dict[str, Any]] = []
+        self.unknowns: list[str] = []
+        self.known_unknowns: list[str] = []
         self.unknown_unknowns_estimate: float = 0.5
 
-    def add_entity(self, name: str, type: str, properties: Dict[str, Any] = None) -> Entity:
+    def add_entity(self, name: str, type: str, properties: dict[str, Any] | None = None) -> Entity:
         """Add an entity to the world model."""
         entity = Entity(
             id=str(uuid.uuid4()),
@@ -125,7 +125,7 @@ class WorldModel:
         )
         self.causal_models.append(model)
 
-    def add_observation(self, observation: Dict[str, Any], source: str = "agent"):
+    def add_observation(self, observation: dict[str, Any], source: str = "agent"):
         """Add an observation."""
         observation["timestamp"] = time.time()
         observation["source"] = source
@@ -158,7 +158,7 @@ class WorldModel:
             "created_at": time.time(),
         })
 
-    def query(self, query: str) -> Dict[str, Any]:
+    def query(self, query: str) -> dict[str, Any]:
         """Query the world model."""
         results = {
             "entities": [],
@@ -183,7 +183,7 @@ class WorldModel:
 
         return results
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """Get the current world state."""
         return {
             "entities_count": len(self.entities),

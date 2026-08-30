@@ -5,16 +5,16 @@ Executes code and shell commands safely with working-dir containment,
 timeout protection, and AST pre-validation.
 """
 
-import os
-import sys
 import ast
-import time
-import shutil
-import pathlib
-import subprocess
 import logging
-from typing import Dict, Any, Optional, List
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +45,13 @@ class ExecutionSandbox:
         "sys.exit", "sys.quit",
     }
 
-    def __init__(self, base_workspace: Optional[str] = None, timeout_seconds: int = 60):
+    def __init__(self, base_workspace: str | None = None, timeout_seconds: int = 60):
         self.base_workspace = pathlib.Path(
             base_workspace or (pathlib.Path.home() / ".hermes" / "sandbox")
         )
         self.base_workspace.mkdir(parents=True, exist_ok=True)
         self.timeout_seconds = timeout_seconds
-        self._blocked_dirs: List[pathlib.Path] = [
+        self._blocked_dirs: list[pathlib.Path] = [
             pathlib.Path("/etc"),
             pathlib.Path("/root"),
             pathlib.Path("/sys"),
@@ -73,7 +73,7 @@ class ExecutionSandbox:
         except Exception:
             return False
 
-    def _check_ast_safety(self, code: str) -> List[str]:
+    def _check_ast_safety(self, code: str) -> list[str]:
         """Performs AST-based safety check on Python code."""
         violations = []
         try:
@@ -98,10 +98,10 @@ class ExecutionSandbox:
 
     def run_command(
         self,
-        command: List[str],
-        cwd: Optional[pathlib.Path] = None,
-        timeout: Optional[int] = None,
-        env: Optional[Dict[str, str]] = None,
+        command: list[str],
+        cwd: pathlib.Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
     ) -> ExecutionResult:
         """Executes a shell command with timeout protection."""
         work_dir = cwd or self.base_workspace
@@ -153,8 +153,8 @@ class ExecutionSandbox:
     def run_python(
         self,
         code: str,
-        cwd: Optional[pathlib.Path] = None,
-        timeout: Optional[int] = None,
+        cwd: pathlib.Path | None = None,
+        timeout: int | None = None,
     ) -> ExecutionResult:
         """Executes Python code with AST pre-validation."""
         violations = self._check_ast_safety(code)

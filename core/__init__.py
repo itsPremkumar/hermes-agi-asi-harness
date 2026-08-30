@@ -6,30 +6,30 @@ Import individual modules directly for advanced features.
 """
 
 # Core runtime
-from .runtime.kernel import HermesKernel, KernelConfig, KernelState, Task
-from .runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions, PluginState
-
-# Events and state
-from .events.event_bus import EventBus, Event, EventType
-from .state.state_manager import StateManager
+from .agents import AgentRegistry, active, spawn, terminate
 
 # Brain and memory
-from .brain import HermesBrain, EchoBrain, BrainError, PlannerBrain, ModelResponse
-from .memory import MemoryStore, semantic_search, retrieve
+from .brain import BrainError, EchoBrain, HermesBrain, ModelResponse, PlannerBrain
+from .cognition import CognitiveRouter, CognitiveState
+from .context_os import ContextOS
 
 # Evaluation and planning
 from .evaluator import EvalResult, evaluate
-from .frontier import select_next_parent, STRATEGIES
-from .agents import AgentRegistry, spawn, terminate, active
-from .selfheal import self_heal, RetryPolicy
-from .supervisor import supervisor_redirect
-from .governance import plan_hash, check_plan, require_goal, supervise, round_budget_ok
+
+# Events and state
+from .events.event_bus import Event, EventBus, EventType
+from .frontier import STRATEGIES, select_next_parent
+from .governance import check_plan, plan_hash, require_goal, round_budget_ok, supervise
+from .memory import MemoryStore, retrieve, semantic_search
+from .mission_compiler import MissionCompiler
+from .planning import PlanningEngine
+from .research_engine import ResearchEngine
+from .runtime.kernel import HermesKernel, KernelConfig, KernelState, Task
+from .runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions, PluginState
+from .selfheal import RetryPolicy, self_heal
 
 # Soul and mission
-from .soul import Mission, Claim, RiskTier, EpistemicStatus, CognitiveMode
-from .mission_compiler import MissionCompiler
-from .world_model import WorldModel, Entity, CausalModel, WorldTransition, Confidence
-from .cognition import CognitiveRouter, CognitiveState
-from .research_engine import ResearchEngine
-from .planning import PlanningEngine
-from .context_os import ContextOS
+from .soul import Claim, CognitiveMode, EpistemicStatus, Mission, RiskTier
+from .state.state_manager import StateManager
+from .supervisor import supervisor_redirect
+from .world_model import CausalModel, Confidence, Entity, WorldModel, WorldTransition

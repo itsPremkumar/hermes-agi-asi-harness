@@ -45,8 +45,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -58,11 +58,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -93,7 +93,7 @@ class FilesystemTool:
     def __init__(self, root_dir: str = "."):
         self.root_dir = Path(root_dir).resolve()
     
-    def _safe_path(self, path: str) -> Optional[Path]:
+    def _safe_path(self, path: str) -> Path | None:
         """Validate and resolve a path within root_dir."""
         try:
             full_path = (self.root_dir / path).resolve()
@@ -103,7 +103,7 @@ class FilesystemTool:
         except (ValueError, RuntimeError):
             return None
     
-    def read(self, path: str, offset: int = 0, limit: int = 2000) -> Dict[str, Any]:
+    def read(self, path: str, offset: int = 0, limit: int = 2000) -> dict[str, Any]:
         """Read a file."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -130,7 +130,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def write(self, path: str, content: str) -> Dict[str, Any]:
+    def write(self, path: str, content: str) -> dict[str, Any]:
         """Write content to a file."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -143,7 +143,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def edit(self, path: str, old_string: str, new_string: str) -> Dict[str, Any]:
+    def edit(self, path: str, old_string: str, new_string: str) -> dict[str, Any]:
         """Edit a file by replacing a string."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -168,7 +168,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def list_dir(self, path: str = ".") -> Dict[str, Any]:
+    def list_dir(self, path: str = ".") -> dict[str, Any]:
         """List directory contents."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -197,7 +197,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def search_files(self, pattern: str, path: str = ".") -> Dict[str, Any]:
+    def search_files(self, pattern: str, path: str = ".") -> dict[str, Any]:
         """Search files by glob pattern."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -220,7 +220,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def file_info(self, path: str) -> Dict[str, Any]:
+    def file_info(self, path: str) -> dict[str, Any]:
         """Get file metadata."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -245,7 +245,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def delete(self, path: str) -> Dict[str, Any]:
+    def delete(self, path: str) -> dict[str, Any]:
         """Delete a file or directory."""
         safe_path = self._safe_path(path)
         if not safe_path:
@@ -264,7 +264,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def copy(self, src: str, dst: str) -> Dict[str, Any]:
+    def copy(self, src: str, dst: str) -> dict[str, Any]:
         """Copy a file or directory."""
         safe_src = self._safe_path(src)
         safe_dst = self._safe_path(dst)
@@ -285,7 +285,7 @@ class FilesystemTool:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def move(self, src: str, dst: str) -> Dict[str, Any]:
+    def move(self, src: str, dst: str) -> dict[str, Any]:
         """Move a file or directory."""
         safe_src = self._safe_path(src)
         safe_dst = self._safe_path(dst)
@@ -330,7 +330,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.tool: Optional[FilesystemTool] = None
+        self.tool: FilesystemTool | None = None
     
     async def load(self) -> bool:
         self.tool = FilesystemTool()
@@ -347,7 +347,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -358,32 +358,32 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def read(self, path: str, offset: int = 0, limit: int = 2000) -> Dict[str, Any]:
+    def read(self, path: str, offset: int = 0, limit: int = 2000) -> dict[str, Any]:
         return self.tool.read(path, offset, limit)
     
-    def write(self, path: str, content: str) -> Dict[str, Any]:
+    def write(self, path: str, content: str) -> dict[str, Any]:
         return self.tool.write(path, content)
     
-    def edit(self, path: str, old_string: str, new_string: str) -> Dict[str, Any]:
+    def edit(self, path: str, old_string: str, new_string: str) -> dict[str, Any]:
         return self.tool.edit(path, old_string, new_string)
     
-    def list_dir(self, path: str = ".") -> Dict[str, Any]:
+    def list_dir(self, path: str = ".") -> dict[str, Any]:
         return self.tool.list_dir(path)
     
-    def search_files(self, pattern: str, path: str = ".") -> Dict[str, Any]:
+    def search_files(self, pattern: str, path: str = ".") -> dict[str, Any]:
         return self.tool.search_files(pattern, path)
     
-    def file_info(self, path: str) -> Dict[str, Any]:
+    def file_info(self, path: str) -> dict[str, Any]:
         return self.tool.file_info(path)
     
-    def delete(self, path: str) -> Dict[str, Any]:
+    def delete(self, path: str) -> dict[str, Any]:
         return self.tool.delete(path)
     
-    def copy(self, src: str, dst: str) -> Dict[str, Any]:
+    def copy(self, src: str, dst: str) -> dict[str, Any]:
         return self.tool.copy(src, dst)
     
-    def move(self, src: str, dst: str) -> Dict[str, Any]:
+    def move(self, src: str, dst: str) -> dict[str, Any]:
         return self.tool.move(src, dst)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

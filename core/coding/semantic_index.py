@@ -11,7 +11,7 @@ import re
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class IndexLevel(str, Enum):
@@ -35,15 +35,15 @@ class CodeChunk:
     content: str
     line_start: int
     line_end: int
-    symbols: List[str] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    symbols: list[str] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SearchQuery:
     text: str
-    level: Optional[IndexLevel] = None
+    level: IndexLevel | None = None
     file_pattern: str = ""
     symbol_type: str = ""
     include_tests: bool = True
@@ -62,12 +62,12 @@ class SemanticCodeIndex:
     
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.chunks: Dict[str, CodeChunk] = {}
-        self._symbol_index: Dict[str, List[str]] = {}  # symbol → [chunk_ids]
-        self._file_index: Dict[str, List[str]] = {}  # file → [chunk_ids]
+        self.chunks: dict[str, CodeChunk] = {}
+        self._symbol_index: dict[str, list[str]] = {}  # symbol → [chunk_ids]
+        self._file_index: dict[str, list[str]] = {}  # file → [chunk_ids]
     
     def index_file(self, file_path: str, content: str,
-                   level: IndexLevel = IndexLevel.MODULE) -> List[CodeChunk]:
+                   level: IndexLevel = IndexLevel.MODULE) -> list[CodeChunk]:
         """Index a file and return created chunks."""
         chunks = []
         lines = content.split('\n')
@@ -116,7 +116,7 @@ class SemanticCodeIndex:
         
         return chunks
     
-    def _extract_function_content(self, lines: List[str], start: int) -> str:
+    def _extract_function_content(self, lines: list[str], start: int) -> str:
         """Extract function body from lines."""
         if start > len(lines):
             return ""
@@ -137,7 +137,7 @@ class SemanticCodeIndex:
         
         return '\n'.join(content_lines)
     
-    def search(self, query: SearchQuery) -> List[SearchResult]:
+    def search(self, query: SearchQuery) -> list[SearchResult]:
         """Search the index."""
         results = []
         
@@ -165,17 +165,17 @@ class SemanticCodeIndex:
         results.sort(key=lambda r: r.score, reverse=True)
         return results
     
-    def get_symbol(self, name: str) -> List[CodeChunk]:
+    def get_symbol(self, name: str) -> list[CodeChunk]:
         """Get all chunks containing a symbol."""
         chunk_ids = self._symbol_index.get(name, [])
         return [self.chunks[cid] for cid in chunk_ids if cid in self.chunks]
     
-    def get_file_chunks(self, file_path: str) -> List[CodeChunk]:
+    def get_file_chunks(self, file_path: str) -> list[CodeChunk]:
         """Get all chunks for a file."""
         chunk_ids = self._file_index.get(file_path, [])
         return [self.chunks[cid] for cid in chunk_ids if cid in self.chunks]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "chunks": len(self.chunks),
             "symbols": len(self._symbol_index),

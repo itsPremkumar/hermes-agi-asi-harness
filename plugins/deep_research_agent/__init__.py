@@ -57,8 +57,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: int = 512
         max_cpu_percent: int = 50
@@ -70,11 +70,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -148,14 +148,14 @@ class DeepResearchReport:
     """Complete research report with all metadata."""
     question: str
     summary: str = ""
-    findings: List[Dict[str, Any]] = field(default_factory=list)
-    sources: List[Dict[str, Any]] = field(default_factory=list)
-    evidence: List[Evidence] = field(default_factory=list)
-    gaps: List[str] = field(default_factory=list)
-    contradictions: List[Dict[str, str]] = field(default_factory=list)
-    phases: List[ResearchPhase] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
+    sources: list[dict[str, Any]] = field(default_factory=list)
+    evidence: list[Evidence] = field(default_factory=list)
+    gaps: list[str] = field(default_factory=list)
+    contradictions: list[dict[str, str]] = field(default_factory=list)
+    phases: list[ResearchPhase] = field(default_factory=list)
     full_report: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
     
     def to_markdown(self) -> str:
@@ -225,7 +225,7 @@ class FreeSearchBackend:
     
     name: str = "base"
     
-    async def search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
+    async def search(self, query: str, limit: int = 10) -> list[dict[str, str]]:
         raise NotImplementedError
 
 
@@ -235,7 +235,7 @@ class DuckDuckGoHTML(FreeSearchBackend):
     name = "duckduckgo_html"
     BASE_URL = "https://html.duckduckgo.com/html/"
     
-    async def search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
+    async def search(self, query: str, limit: int = 10) -> list[dict[str, str]]:
         results = []
         try:
             params = urllib.parse.urlencode({"q": query})
@@ -311,7 +311,7 @@ class WikipediaAPI(FreeSearchBackend):
     name = "wikipedia_api"
     API_URL = "https://en.wikipedia.org/w/api.php"
     
-    async def search(self, query: str, limit: int = 5) -> List[Dict[str, str]]:
+    async def search(self, query: str, limit: int = 5) -> list[dict[str, str]]:
         results = []
         try:
             params = urllib.parse.urlencode({
@@ -357,7 +357,7 @@ class ArxivAPI(FreeSearchBackend):
     name = "arxiv_api"
     API_URL = "http://export.arxiv.org/api/query"
     
-    async def search(self, query: str, limit: int = 5) -> List[Dict[str, str]]:
+    async def search(self, query: str, limit: int = 5) -> list[dict[str, str]]:
         results = []
         try:
             params = urllib.parse.urlencode({
@@ -413,9 +413,9 @@ class ContentExtractor:
     """Extract readable content from web pages."""
     
     def __init__(self):
-        self._cache: Dict[str, str] = {}
+        self._cache: dict[str, str] = {}
     
-    async def extract(self, url: str) -> Dict[str, str]:
+    async def extract(self, url: str) -> dict[str, str]:
         """Extract content from a URL."""
         if url in self._cache:
             return {"url": url, "content": self._cache[url]}
@@ -491,13 +491,13 @@ class UnifiedDeepResearchAgent:
     8. Final report generation
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.max_depth = self.config.get("max_depth", 3)
         self.max_sources = self.config.get("max_sources", 20)
         
         # Initialize components
-        self.search_backends: List[FreeSearchBackend] = [
+        self.search_backends: list[FreeSearchBackend] = [
             DuckDuckGoHTML(),
             WikipediaAPI(),
             ArxivAPI(),
@@ -506,7 +506,7 @@ class UnifiedDeepResearchAgent:
         
         # Deduplication
         self._seen_urls: set = set()
-        self._evidence: List[Evidence] = []
+        self._evidence: list[Evidence] = []
     
     async def research(self, question: str) -> DeepResearchReport:
         """Execute full deep research pipeline."""
@@ -592,7 +592,7 @@ class UnifiedDeepResearchAgent:
         
         return report
     
-    def _decompose_question(self, question: str) -> List[str]:
+    def _decompose_question(self, question: str) -> list[str]:
         """Decompose question into perspectives (STORM-style)."""
         perspectives = [
             question,
@@ -605,7 +605,7 @@ class UnifiedDeepResearchAgent:
         ]
         return perspectives
     
-    async def _parallel_search(self, queries: List[str]) -> List[Dict[str, str]]:
+    async def _parallel_search(self, queries: list[str]) -> list[dict[str, str]]:
         """Search all backends in parallel for all queries."""
         all_results = []
         self._seen_urls.clear()
@@ -627,7 +627,7 @@ class UnifiedDeepResearchAgent:
         
         return all_results
     
-    async def _safe_search(self, backend: FreeSearchBackend, query: str, limit: int) -> List[Dict[str, str]]:
+    async def _safe_search(self, backend: FreeSearchBackend, query: str, limit: int) -> list[dict[str, str]]:
         """Search with error handling."""
         try:
             return await backend.search(query, limit)
@@ -635,7 +635,7 @@ class UnifiedDeepResearchAgent:
             logger.debug(f"Backend {backend.name} failed: {e}")
             return []
     
-    async def _extract_content(self, results: List[Dict[str, str]]):
+    async def _extract_content(self, results: list[dict[str, str]]):
         """Extract content from search results."""
         tasks = []
         for result in results:
@@ -685,7 +685,7 @@ class UnifiedDeepResearchAgent:
         """Rank evidence by score."""
         self._evidence.sort(key=lambda e: e.score, reverse=True)
     
-    def _identify_gaps(self, findings: List[Dict], perspectives: List[str]) -> List[str]:
+    def _identify_gaps(self, findings: list[dict], perspectives: list[str]) -> list[str]:
         """Identify knowledge gaps."""
         gaps = []
         
@@ -693,12 +693,11 @@ class UnifiedDeepResearchAgent:
             gaps.append("Limited findings — deeper research recommended")
         
         if not any("academic" in str(f) or "research" in str(f) for f in findings):
-            academic_keywords = ["study", "paper", "journal", "experiment", "analysis"]
             gaps.append("Limited academic sources — scholarly databases may help")
         
         return gaps
     
-    def _synthesize_findings(self) -> List[Dict[str, Any]]:
+    def _synthesize_findings(self) -> list[dict[str, Any]]:
         """Synthesize findings from evidence."""
         findings = []
         
@@ -712,7 +711,7 @@ class UnifiedDeepResearchAgent:
         
         return findings
     
-    def _get_source_list(self) -> List[Dict[str, Any]]:
+    def _get_source_list(self) -> list[dict[str, Any]]:
         """Get list of sources for report."""
         sources = []
         for evidence in self._evidence[:15]:
@@ -726,7 +725,7 @@ class UnifiedDeepResearchAgent:
     def _generate_summary(self) -> str:
         """Generate executive summary."""
         summary_parts = []
-        summary_parts.append(f"This report presents findings from deep research on the question.")
+        summary_parts.append("This report presents findings from deep research on the question.")
         summary_parts.append(f"A total of {len(self._evidence)} evidence items were collected from {len(self._seen_urls)} sources.")
         
         if self._evidence:
@@ -783,7 +782,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=80,
             ),
         )
-        self.agent: Optional[UnifiedDeepResearchAgent] = None
+        self.agent: UnifiedDeepResearchAgent | None = None
     
     async def load(self) -> bool:
         """Load the plugin."""
@@ -803,7 +802,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "plugin": self.manifest.name,
@@ -826,16 +825,16 @@ class Plugin(PluginBase):
         
         return await self.agent.research(question)
     
-    async def search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
+    async def search(self, query: str, limit: int = 10) -> list[dict[str, str]]:
         """Perform a web search across all free backends."""
         backend = DuckDuckGoHTML()
         return await backend.search(query, limit)
     
-    async def extract(self, url: str) -> Dict[str, str]:
+    async def extract(self, url: str) -> dict[str, str]:
         """Extract content from a URL."""
         extractor = ContentExtractor()
         return await extractor.extract(url)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Return plugin capabilities."""
         return self.manifest.capabilities

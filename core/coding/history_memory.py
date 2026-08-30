@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class HistoryType(str, Enum):
@@ -32,15 +32,15 @@ class HistoryEntry:
     description: str
     author: str
     timestamp: float
-    files_changed: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    files_changed: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class BugPattern:
     id: str
     description: str
-    affected_files: List[str]
+    affected_files: list[str]
     root_cause: str
     fix: str
     recurrence_risk: float
@@ -53,10 +53,10 @@ class HistoricalMemory:
     
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.entries: List[HistoryEntry] = []
-        self.bug_patterns: List[BugPattern] = []
+        self.entries: list[HistoryEntry] = []
+        self.bug_patterns: list[BugPattern] = []
     
-    def ingest_git_history(self, repo_path: str) -> List[HistoryEntry]:
+    def ingest_git_history(self, repo_path: str) -> list[HistoryEntry]:
         """Ingest git history."""
         entries = []
         
@@ -89,7 +89,7 @@ class HistoricalMemory:
         self.entries.extend(entries)
         return entries
     
-    def query(self, query: str) -> List[HistoryEntry]:
+    def query(self, query: str) -> list[HistoryEntry]:
         """Query history entries."""
         query_lower = query.lower()
         results = []
@@ -100,12 +100,12 @@ class HistoricalMemory:
         
         return results
     
-    def get_recent_changes(self, days: int = 30) -> List[HistoryEntry]:
+    def get_recent_changes(self, days: int = 30) -> list[HistoryEntry]:
         """Get recent changes."""
         cutoff = time.time() - (days * 86400)
         return [e for e in self.entries if e.timestamp >= cutoff]
     
-    def get_bugs_in_area(self, filepath: str) -> List[BugPattern]:
+    def get_bugs_in_area(self, filepath: str) -> list[BugPattern]:
         """Get bugs related to a file area."""
         return [b for b in self.bug_patterns if filepath in b.affected_files]
     
@@ -113,7 +113,7 @@ class HistoricalMemory:
         """Add a bug pattern."""
         self.bug_patterns.append(pattern)
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "entries": len(self.entries),
             "bug_patterns": len(self.bug_patterns),

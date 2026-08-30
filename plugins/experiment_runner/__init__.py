@@ -21,10 +21,10 @@ class ExperimentRunner:
     """Experiment runner."""
     
     def __init__(self):
-        self._experiments: List[Dict[str, Any]] = []
+        self._experiments: list[dict[str, Any]] = []
     
     async def run_ab_test(self, name: str, variant_a: str, variant_b: str,
-                          metric: str, sample_size: int = 100) -> Dict[str, Any]:
+                          metric: str, sample_size: int = 100) -> dict[str, Any]:
         """Run an A/B test."""
         results_a = [random.uniform(0.4, 0.8) for _ in range(sample_size)]
         results_b = [random.uniform(0.4, 0.8) for _ in range(sample_size)]
@@ -40,5 +40,5 @@ class ExperimentRunner:
             "significant": abs(avg_a - avg_b) > 0.05
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "experiments": len(self._experiments)}

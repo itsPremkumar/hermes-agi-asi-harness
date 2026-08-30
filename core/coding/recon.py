@@ -5,14 +5,11 @@ Repository Reconnaissance — Discover build system, test system, CI/CD, convent
 from __future__ import annotations
 
 import os
-import re
-import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ReconStage(str, Enum):
@@ -30,16 +27,16 @@ class ReconResult:
     id: str
     repo_path: str
     stage: ReconStage = ReconStage.INIT
-    files: List[str] = field(default_factory=list)
-    entry_points: List[str] = field(default_factory=list)
+    files: list[str] = field(default_factory=list)
+    entry_points: list[str] = field(default_factory=list)
     build_system: str = ""
     test_framework: str = ""
-    ci_platform: List[str] = field(default_factory=list)
-    conventions: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
+    ci_platform: list[str] = field(default_factory=list)
+    conventions: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     started_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
+    completed_at: float | None = None
 
 
 class RepositoryRecon:
@@ -87,7 +84,7 @@ class RepositoryRecon:
         
         return result
     
-    def _discover_files(self, repo_path: str) -> List[str]:
+    def _discover_files(self, repo_path: str) -> list[str]:
         """Discover all source files."""
         files = []
         for root, dirs, filenames in os.walk(repo_path):
@@ -123,13 +120,13 @@ class RepositoryRecon:
             for f in files:
                 if f.startswith('test_') and f.endswith('.py'):
                     return "pytest"
-                if f.endswith('.test.js') or f.endswith('.spec.ts'):
+                if f.endswith(('.test.js', '.spec.ts')):
                     return "jest"
                 if f.endswith('_test.go'):
                     return "go_test"
         return "unknown"
     
-    def _detect_ci(self, repo_path: str) -> List[str]:
+    def _detect_ci(self, repo_path: str) -> list[str]:
         """Detect CI/CD platforms."""
         ci = []
         if os.path.exists(os.path.join(repo_path, '.github', 'workflows')):
@@ -142,7 +139,7 @@ class RepositoryRecon:
             ci.append("circleci")
         return ci
     
-    def _detect_conventions(self, repo_path: str) -> List[str]:
+    def _detect_conventions(self, repo_path: str) -> list[str]:
         """Detect coding conventions."""
         conventions = []
         
@@ -176,7 +173,7 @@ class RepositoryRecon:
         
         return list(set(conventions))
     
-    def _detect_dependencies(self, repo_path: str) -> List[str]:
+    def _detect_dependencies(self, repo_path: str) -> list[str]:
         """Detect dependencies."""
         deps = []
         
@@ -200,7 +197,7 @@ class RepositoryRecon:
         
         return deps
     
-    def _detect_entry_points(self, repo_path: str) -> List[str]:
+    def _detect_entry_points(self, repo_path: str) -> list[str]:
         """Detect application entry points."""
         entry_points = []
         candidates = [
@@ -214,7 +211,7 @@ class RepositoryRecon:
         
         return entry_points
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "id": self.id,
         }

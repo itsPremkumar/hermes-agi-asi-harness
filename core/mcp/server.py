@@ -1,19 +1,19 @@
 """MCP Server - Expose Hermes tools as an MCP server."""
 from __future__ import annotations
+
 import asyncio
 import json
-import os
 import sys
-import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
 class MCPToolDefinition:
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: dict[str, Any]
     handler: Callable
 
 
@@ -23,10 +23,10 @@ class MCPServer:
     def __init__(self, name: str = "hermes-agi", version: str = "12.0.0"):
         self.name = name
         self.version = version
-        self._tools: Dict[str, MCPToolDefinition] = {}
+        self._tools: dict[str, MCPToolDefinition] = {}
         self._running = False
     
-    def register_tool(self, name: str, description: str, input_schema: Dict[str, Any], handler: Callable):
+    def register_tool(self, name: str, description: str, input_schema: dict[str, Any], handler: Callable):
         self._tools[name] = MCPToolDefinition(name=name, description=description, input_schema=input_schema, handler=handler)
     
     async def start_stdio(self):
@@ -44,7 +44,7 @@ class MCPServer:
                 sys.stdout.write(json.dumps({"jsonrpc": "2.0", "error": {"code": -32603, "message": str(e)}}) + "\n")
                 sys.stdout.flush()
     
-    async def _handle_request(self, request: Dict) -> Dict:
+    async def _handle_request(self, request: dict) -> dict:
         method = request.get("method")
         params = request.get("params", {})
         request_id = request.get("id")

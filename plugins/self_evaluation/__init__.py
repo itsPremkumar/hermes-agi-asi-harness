@@ -5,12 +5,12 @@ Tracks: success/failure, quality scores, evidence, accuracy,
 hallucination rate, user satisfaction. Provides self-improvement signals.
 """
 
-import time
 import json
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -22,12 +22,12 @@ class EvaluationRecord:
     hallucination_score: float = 0.0
     user_satisfaction: float = 0.0
     duration_seconds: float = 0.0
-    evidence: List[str] = field(default_factory=list)
-    mistakes: List[str] = field(default_factory=list)
-    improvements: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    mistakes: list[str] = field(default_factory=list)
+    improvements: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id,
             "success": self.success,
@@ -46,10 +46,10 @@ class EvaluationRecord:
 class SelfEvaluation:
     """Self-evaluation engine."""
 
-    def __init__(self, storage_path: Optional[Path] = None):
-        self._records: List[EvaluationRecord] = []
-        self._quality_by_task: Dict[str, List[float]] = defaultdict(list)
-        self._mistakes_by_type: Dict[str, int] = defaultdict(int)
+    def __init__(self, storage_path: Path | None = None):
+        self._records: list[EvaluationRecord] = []
+        self._quality_by_task: dict[str, list[float]] = defaultdict(list)
+        self._mistakes_by_type: dict[str, int] = defaultdict(int)
         self._storage_path = storage_path
 
         if storage_path and storage_path.exists():
@@ -80,8 +80,8 @@ class SelfEvaluation:
     def evaluate(self, task_id: str, success: bool, quality_score: float,
                  accuracy: float = 0.0, hallucination_score: float = 0.0,
                  user_satisfaction: float = 0.0, duration_seconds: float = 0.0,
-                 evidence: List[str] = None, mistakes: List[str] = None,
-                 improvements: List[str] = None) -> EvaluationRecord:
+                 evidence: list[str] | None = None, mistakes: list[str] | None = None,
+                 improvements: list[str] | None = None) -> EvaluationRecord:
         """Record a self-evaluation."""
         record = EvaluationRecord(
             task_id=task_id,
@@ -102,7 +102,7 @@ class SelfEvaluation:
         self._save()
         return record
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         if not self._records:
             return {
                 "total_evaluations": 0,
@@ -121,12 +121,12 @@ class SelfEvaluation:
             "avg_user_satisfaction": sum(r.user_satisfaction for r in self._records) / len(self._records),
         }
 
-    def get_mistake_patterns(self) -> List[Dict[str, Any]]:
+    def get_mistake_patterns(self) -> list[dict[str, Any]]:
         """Identify recurring mistakes."""
         sorted_mistakes = sorted(self._mistakes_by_type.items(), key=lambda x: -x[1])
         return [{"type": m, "count": c} for m, c in sorted_mistakes[:10]]
 
-    def get_improvement_signals(self) -> List[str]:
+    def get_improvement_signals(self) -> list[str]:
         """Generate improvement signals based on patterns."""
         signals = []
         summary = self.get_summary()
@@ -140,12 +140,12 @@ class SelfEvaluation:
             signals.append("low_user_satisfaction")
         return signals
 
-    def get_recent_records(self, limit: int = 10) -> List[EvaluationRecord]:
+    def get_recent_records(self, limit: int = 10) -> list[EvaluationRecord]:
         return list(reversed(self._records[-limit:]))
 
 
 class SelfEvaluationPlugin:
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None):
         self.engine = SelfEvaluation(storage_path=storage_path)
 
     async def load(self):

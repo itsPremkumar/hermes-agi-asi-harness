@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,10 @@ class ModelRouterEngine:
     """Measured model routing with history."""
 
     def __init__(self):
-        self._records: Dict[str, ModelRecord] = {}  # key = f"{model_id}:{task_class}"
+        self._records: dict[str, ModelRecord] = {}  # key = f"{model_id}:{task_class}"
         self._default_model: str = "default"
 
-    def register_model(self, model_id: str, task_classes: List[str]):
+    def register_model(self, model_id: str, task_classes: list[str]):
         """Register a model for specific task classes."""
         for tc in task_classes:
             key = f"{model_id}:{tc}"
@@ -68,7 +68,7 @@ class ModelRouterEngine:
             self._records[key] = ModelRecord(model_id=model_id, task_class=task_class)
         self._records[key].update(success, latency, cost)
 
-    def get_best_model(self, task_class: str) -> Optional[str]:
+    def get_best_model(self, task_class: str) -> str | None:
         """Get the best model for a task class based on measured history."""
         candidates = [r for r in self._records.values() if r.task_class == task_class and r.sample_count >= 1]
         if not candidates:
@@ -76,17 +76,17 @@ class ModelRouterEngine:
         candidates.sort(key=lambda r: r.score(), reverse=True)
         return candidates[0].model_id
 
-    def get_records(self, task_class: str = None) -> List[ModelRecord]:
+    def get_records(self, task_class: str | None = None) -> list[ModelRecord]:
         """Get records filtered by task class."""
         if task_class:
             return [r for r in self._records.values() if r.task_class == task_class]
         return list(self._records.values())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_records": len(self._records),
-            "models": len(set(r.model_id for r in self._records.values())),
-            "task_classes": len(set(r.task_class for r in self._records.values())),
+            "models": len({r.model_id for r in self._records.values()}),
+            "task_classes": len({r.task_class for r in self._records.values()}),
         }
 
 

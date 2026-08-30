@@ -56,7 +56,7 @@ def install_harness():
     print("\n✓ Harness installed successfully!")
     print(f"  Harness path: {HARNESS_PATH}")
     print(f"  Venv path: {VENV_PATH}")
-    print(f"\nYou can now use the harness in Hermes Agent:")
+    print("\nYou can now use the harness in Hermes Agent:")
     print("  from core.dynamic import DynamicScenarioAnalyzer")
     print("  from core.coding import RepositoryDigitalTwin")
     print("  from core.runtime.kernel import HermesKernel")

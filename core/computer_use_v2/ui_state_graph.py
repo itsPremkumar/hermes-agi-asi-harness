@@ -13,7 +13,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class UIElementType(str, Enum):
@@ -34,20 +34,20 @@ class UIElement:
     id: str
     element_type: UIElementType
     label: str
-    location: Tuple[int, int]  # x, y
-    size: Tuple[int, int]  # width, height
+    location: tuple[int, int]  # x, y
+    size: tuple[int, int]  # width, height
     enabled: bool = True
     visible: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class UIState:
     id: str
     name: str
-    elements: List[UIElement]
-    screenshot_path: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    elements: list[UIElement]
+    screenshot_path: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -56,12 +56,12 @@ class StateTransition:
     id: str
     from_state_id: str
     to_state_id: str
-    action: Dict[str, Any]
-    element_target: Optional[str] = None
+    action: dict[str, Any]
+    element_target: str | None = None
     success_count: int = 0
     failure_count: int = 0
     average_time_ms: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class UIStateGraph:
@@ -76,12 +76,12 @@ class UIStateGraph:
 
     def __init__(self, app_name: str):
         self.app_name = app_name
-        self.states: Dict[str, UIState] = {}
-        self.transitions: List[StateTransition] = []
-        self.current_state: Optional[str] = None
+        self.states: dict[str, UIState] = {}
+        self.transitions: list[StateTransition] = []
+        self.current_state: str | None = None
 
-    def add_state(self, name: str, elements: List[UIElement] = None,
-                  screenshot_path: str = None, metadata: Dict[str, Any] = None) -> UIState:
+    def add_state(self, name: str, elements: list[UIElement] | None = None,
+                  screenshot_path: str | None = None, metadata: dict[str, Any] | None = None) -> UIState:
         state = UIState(
             id=str(uuid.uuid4()),
             name=name,
@@ -93,7 +93,7 @@ class UIStateGraph:
         return state
 
     def add_transition(self, from_state_id: str, to_state_id: str,
-                       action: Dict[str, Any], element_target: str = None) -> StateTransition:
+                       action: dict[str, Any], element_target: str | None = None) -> StateTransition:
         transition = StateTransition(
             id=str(uuid.uuid4()),
             from_state_id=from_state_id,
@@ -116,13 +116,13 @@ class UIStateGraph:
                 t.average_time_ms = (t.average_time_ms * (total - 1) + time_ms) / total
                 break
 
-    def get_transitions_from(self, state_id: str) -> List[StateTransition]:
+    def get_transitions_from(self, state_id: str) -> list[StateTransition]:
         return [t for t in self.transitions if t.from_state_id == state_id]
 
-    def get_transitions_to(self, state_id: str) -> List[StateTransition]:
+    def get_transitions_to(self, state_id: str) -> list[StateTransition]:
         return [t for t in self.transitions if t.to_state_id == state_id]
 
-    def find_path(self, from_state_id: str, to_state_id: str) -> List[StateTransition]:
+    def find_path(self, from_state_id: str, to_state_id: str) -> list[StateTransition]:
         """Find a path between states using BFS."""
         if from_state_id == to_state_id:
             return []
@@ -145,7 +145,7 @@ class UIStateGraph:
         
         return []  # No path found
 
-    def get_best_transition(self, from_state_id: str) -> Optional[StateTransition]:
+    def get_best_transition(self, from_state_id: str) -> StateTransition | None:
         """Get the most reliable transition from a state."""
         transitions = self.get_transitions_from(from_state_id)
         if not transitions:
@@ -159,7 +159,7 @@ class UIStateGraph:
         
         return max(transitions, key=reliability)
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "app_name": self.app_name,
             "states": len(self.states),

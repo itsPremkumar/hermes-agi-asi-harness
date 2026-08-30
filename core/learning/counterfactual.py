@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,7 +21,7 @@ class CounterfactualQuery:
     step_number: int
     original_action: str
     alternative_action: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
 
 
 @dataclass
@@ -33,7 +34,7 @@ class CounterfactualResult:
     confidence: float
     timestamp: float
     reasoning: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CounterfactualEvaluator:
@@ -47,8 +48,8 @@ class CounterfactualEvaluator:
     """
 
     def __init__(self):
-        self.results: List[CounterfactualResult] = []
-        self._action_outcomes: Dict[str, List[float]] = {}  # action → [rewards]
+        self.results: list[CounterfactualResult] = []
+        self._action_outcomes: dict[str, list[float]] = {}  # action → [rewards]
 
     def record_action_outcome(self, action: str, reward: float):
         """Record an outcome for correlation analysis."""
@@ -58,7 +59,7 @@ class CounterfactualEvaluator:
 
     def evaluate(self, query: CounterfactualQuery,
                  trajectory: Any = None,
-                 simulator: Callable = None) -> CounterfactualResult:
+                 simulator: Callable | None = None) -> CounterfactualResult:
         """Evaluate a counterfactual scenario."""
         # Estimate based on historical correlation
         estimated_reward = self._estimate_reward(query.alternative_action, query.context)
@@ -99,7 +100,7 @@ class CounterfactualEvaluator:
         self.results.append(result)
         return result
 
-    def _estimate_reward(self, action: str, context: Dict[str, Any]) -> float:
+    def _estimate_reward(self, action: str, context: dict[str, Any]) -> float:
         """Estimate reward from historical data."""
         rewards = self._action_outcomes.get(action, [])
         if not rewards:
@@ -107,7 +108,7 @@ class CounterfactualEvaluator:
         return sum(rewards) / len(rewards)
 
     def compare_actions(self, action_a: str, action_b: str,
-                        context: Dict[str, Any] = None) -> Dict[str, Any]:
+                        context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Compare two actions based on historical performance."""
         reward_a = self._estimate_reward(action_a, context or {})
         reward_b = self._estimate_reward(action_b, context or {})
@@ -121,12 +122,12 @@ class CounterfactualEvaluator:
             "delta": reward_a - reward_b,
         }
 
-    def get_results(self, trajectory_id: str = None) -> List[CounterfactualResult]:
+    def get_results(self, trajectory_id: str | None = None) -> list[CounterfactualResult]:
         if trajectory_id:
             return [r for r in self.results if r.query.trajectory_id == trajectory_id]
         return self.results
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "evaluations": len(self.results),
             "actions_tracked": len(self._action_outcomes),

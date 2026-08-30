@@ -1,1 +1,1 @@
-from .plugin import EvolutionEngine, Candidate, create
+from .plugin import Candidate, EvolutionEngine, create

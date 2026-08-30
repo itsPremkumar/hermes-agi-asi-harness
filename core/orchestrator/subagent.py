@@ -1,10 +1,11 @@
 """Multi-Agent Architecture with Subagents."""
 from __future__ import annotations
+
 import asyncio
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class SubagentRole(str, Enum):
@@ -33,13 +34,13 @@ class SubagentTask:
     id: str
     task: str
     role: SubagentRole
-    model: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
-    isolation: Dict[str, Any] = field(default_factory=dict)
-    budget: Dict[str, Any] = field(default_factory=dict)
+    model: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    isolation: dict[str, Any] = field(default_factory=dict)
+    budget: dict[str, Any] = field(default_factory=dict)
     status: SubagentStatus = SubagentStatus.PENDING
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     tokens_used: int = 0
     cost: float = 0.0
     duration_ms: float = 0.0
@@ -51,10 +52,10 @@ class AgentTeam:
     id: str
     goal: str
     leader_id: str
-    subagents: List[SubagentTask] = field(default_factory=list)
+    subagents: list[SubagentTask] = field(default_factory=list)
     status: SubagentStatus = SubagentStatus.PENDING
-    results: Dict[str, Any] = field(default_factory=dict)
-    consensus: Optional[str] = None
+    results: dict[str, Any] = field(default_factory=dict)
+    consensus: str | None = None
 
 
 class SubagentOrchestrator:
@@ -62,14 +63,14 @@ class SubagentOrchestrator:
     
     def __init__(self, llm_manager=None):
         self.llm_manager = llm_manager
-        self._subagents: Dict[str, SubagentTask] = {}
-        self._teams: Dict[str, AgentTeam] = {}
+        self._subagents: dict[str, SubagentTask] = {}
+        self._teams: dict[str, AgentTeam] = {}
     
     async def spawn_subagent(self, task: str, role: SubagentRole,
-                              model: Optional[str] = None,
-                              isolation: Dict[str, Any] = None,
-                              budget: Dict[str, Any] = None,
-                              context: Dict[str, Any] = None) -> SubagentTask:
+                              model: str | None = None,
+                              isolation: dict[str, Any] | None = None,
+                              budget: dict[str, Any] | None = None,
+                              context: dict[str, Any] | None = None) -> SubagentTask:
         """Spawn a new subagent."""
         subagent = SubagentTask(
             id=str(uuid.uuid4()),
@@ -113,40 +114,40 @@ class SubagentOrchestrator:
         subagent.duration_ms = (asyncio.get_event_loop().time() - start) * 1000
         return subagent
     
-    async def _run_researcher(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_researcher(self, task: SubagentTask) -> dict[str, Any]:
         """Run a researcher subagent."""
         return {"role": "researcher", "findings": f"Research on: {task.task}", "sources": []}
     
-    async def _run_coder(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_coder(self, task: SubagentTask) -> dict[str, Any]:
         """Run a coder subagent."""
         return {"role": "coder", "code": f"# Code for: {task.task}\n", "language": "python"}
     
-    async def _run_tester(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_tester(self, task: SubagentTask) -> dict[str, Any]:
         """Run a tester subagent."""
         return {"role": "tester", "tests": f"Tests for: {task.task}", "coverage": 0.0}
     
-    async def _run_reviewer(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_reviewer(self, task: SubagentTask) -> dict[str, Any]:
         """Run a reviewer subagent."""
         return {"role": "reviewer", "issues": [], "score": 0.0}
     
-    async def _run_architect(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_architect(self, task: SubagentTask) -> dict[str, Any]:
         """Run an architect subagent."""
         return {"role": "architect", "design": f"Design for: {task.task}"}
     
-    async def _run_debugger(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_debugger(self, task: SubagentTask) -> dict[str, Any]:
         """Run a debugger subagent."""
         return {"role": "debugger", "root_cause": "", "fix": ""}
     
-    async def _run_security(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_security(self, task: SubagentTask) -> dict[str, Any]:
         """Run a security subagent."""
         return {"role": "security", "findings": [], "risk_score": 0.0}
     
-    async def _run_generic(self, task: SubagentTask) -> Dict[str, Any]:
+    async def _run_generic(self, task: SubagentTask) -> dict[str, Any]:
         """Run a generic subagent."""
         return {"role": "generic", "result": f"Completed: {task.task}"}
     
-    def get_subagent(self, subagent_id: str) -> Optional[SubagentTask]:
+    def get_subagent(self, subagent_id: str) -> SubagentTask | None:
         return self._subagents.get(subagent_id)
     
-    def get_all_subagents(self) -> List[SubagentTask]:
+    def get_all_subagents(self) -> list[SubagentTask]:
         return list(self._subagents.values())

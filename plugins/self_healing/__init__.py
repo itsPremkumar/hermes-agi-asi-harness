@@ -5,12 +5,13 @@ Analyzes failures, classifies them by root cause, suggests fixes,
 and attempts automated repair with verification.
 """
 
-import time
 import ast
 import logging
-from typing import Dict, List, Any, Optional, Callable
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +60,9 @@ class SelfHealingEngine:
     """
 
     def __init__(self):
-        self.known_patterns: Dict[str, FailurePattern] = {}
-        self.repair_history: List[RepairAttempt] = []
-        self._repair_strategies: Dict[FailureClass, Callable] = {
+        self.known_patterns: dict[str, FailurePattern] = {}
+        self.repair_history: list[RepairAttempt] = []
+        self._repair_strategies: dict[FailureClass, Callable] = {
             FailureClass.SYNTAX: self._repair_syntax,
             FailureClass.TIMEOUT: self._repair_timeout,
             FailureClass.PERMISSION: self._repair_permission,
@@ -139,7 +140,7 @@ class SelfHealingEngine:
     async def attempt_repair(
         self,
         pattern: FailurePattern,
-        repair_fn: Optional[Callable] = None,
+        repair_fn: Callable | None = None,
     ) -> RepairAttempt:
         """
         Attempts to repair a failure.
@@ -211,7 +212,7 @@ class SelfHealingEngine:
         """Suggests logic repair."""
         return "Add try/except boundary checks, validate inputs, and test edge cases."
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Returns self-healing statistics."""
         successful = sum(1 for r in self.repair_history if r.success)
         return {

@@ -1,8 +1,11 @@
 """Hooks & Customization System - Pre/post command hooks, slash commands."""
 from __future__ import annotations
+
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class HookType(str, Enum):
@@ -26,7 +29,7 @@ class HookManager:
     """Manage hooks for customizing agent behavior."""
     
     def __init__(self):
-        self._hooks: List[Hook] = []
+        self._hooks: list[Hook] = []
     
     def register(self, hook_type: HookType, pattern: str, action: Callable, description: str = ""):
         import uuid
@@ -38,7 +41,7 @@ class HookManager:
             description=description,
         ))
     
-    async def execute(self, hook_type: HookType, command: str, context: Dict = None) -> bool:
+    async def execute(self, hook_type: HookType, command: str, context: dict | None = None) -> bool:
         """Execute hooks matching a command."""
         for hook in self._hooks:
             if hook.hook_type == hook_type and hook.enabled:
@@ -65,13 +68,13 @@ class SlashCommandRegistry:
     """Registry for slash commands."""
     
     def __init__(self):
-        self._commands: Dict[str, SlashCommand] = {}
+        self._commands: dict[str, SlashCommand] = {}
     
     def register(self, name: str, description: str, handler: Callable):
         self._commands[name] = SlashCommand(name, description, handler)
     
-    def get(self, name: str) -> Optional[SlashCommand]:
+    def get(self, name: str) -> SlashCommand | None:
         return self._commands.get(name)
     
-    def list_commands(self) -> List[Dict[str, str]]:
+    def list_commands(self) -> list[dict[str, str]]:
         return [{"name": c.name, "description": c.description} for c in self._commands.values()]

@@ -2,9 +2,23 @@
 plugin.py — Re-export module.
 """
 from . import (
+    Goal,
     GoalEngine,
-    HierarchicalGoal,
     SubTask,
-    GoalStatus,
+    TaskStatus,
     create,
 )
+
+# Backward-compatible aliases
+HierarchicalGoal = Goal
+GoalStatus = TaskStatus
+
+__all__ = [
+    "Goal",
+    "GoalEngine",
+    "GoalStatus",
+    "HierarchicalGoal",
+    "SubTask",
+    "TaskStatus",
+    "create",
+]

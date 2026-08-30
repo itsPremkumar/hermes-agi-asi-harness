@@ -26,20 +26,15 @@ Architecture:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import logging
 import os
-import re
-import subprocess
-import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # LOGGING
@@ -117,7 +112,7 @@ class Task:
     objective: str
     dependencies: List[str] = field(default_factory=list)
     status: str = "pending"
-    result: Optional[str] = None
+    result: str | None = None
 
 
 @dataclass
@@ -331,7 +326,7 @@ class RecoveryEngine:
         }
         return checkpoint_id
     
-    def get_latest_checkpoint(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_latest_checkpoint(self, task_id: str) -> Dict[str, Any] | None:
         checkpoints = [c for c in self._checkpoints.values() if c["task_id"] == task_id]
         if not checkpoints:
             return None
@@ -365,7 +360,7 @@ class Governance:
             return False, self.EXIT_GOAL_REQUIRED
         return True, 0
     
-    def supervise(self, state: Dict[str, Any]) -> Optional[str]:
+    def supervise(self, state: Dict[str, Any]) -> str | None:
         if state.get("stagnation", 0) >= self.STAGNATION_LIMIT:
             return "await_human"
         if state.get("stagnation", 0) >= 2:
@@ -394,7 +389,7 @@ class HermesEngine:
     7. Repeat
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Dict[str, Any] | None = None):
         self.config = config or {}
         self.state = EngineState.INITIALIZED
         self.engine_id = str(uuid.uuid4())
@@ -520,7 +515,7 @@ class HermesEngine:
     
     async def run_loop(self, goals: List[str]):
         """Run the engine in a continuous loop."""
-        await engine.start()
+        await self.start()
         
         try:
             mission_ids = []
@@ -551,7 +546,7 @@ class HermesEngine:
         except Exception as e:
             logger.error("Engine error: %s", e)
         finally:
-            await engine.stop()
+            await self.stop()
     
     async def health_check(self) -> Dict[str, Any]:
         """Run health check."""

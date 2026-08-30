@@ -15,7 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import yaml
 
 
@@ -33,8 +34,8 @@ class PluginPermissions:
     """What this plugin is allowed to do."""
     filesystem_read: str = "project"   # project | workspace | none | all
     filesystem_write: str = "project"
-    network_domains: List[str] = field(default_factory=list)  # empty = none
-    shell_commands: List[str] = field(default_factory=list)  # empty = none
+    network_domains: list[str] = field(default_factory=list)  # empty = none
+    shell_commands: list[str] = field(default_factory=list)  # empty = none
     secrets_access: str = "none"  # none | scoped | all
     max_memory_mb: int = 512
     max_cpu_percent: int = 50
@@ -48,14 +49,14 @@ class PluginManifest:
     description: str
     license: str
     source: str
-    capabilities: List[str]
+    capabilities: list[str]
     cost: str  # free | optional-paid
     permissions: PluginPermissions
-    dependencies: List[str] = field(default_factory=list)
-    path: Optional[Path] = None
+    dependencies: list[str] = field(default_factory=list)
+    path: Path | None = None
 
     @classmethod
-    def from_yaml(cls, yaml_path: Path) -> "PluginManifest":
+    def from_yaml(cls, yaml_path: Path) -> PluginManifest:
         data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
         perms = data.get("permissions", {})
         fs = perms.get("filesystem", {})
@@ -138,7 +139,7 @@ class PluginBase:
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Return health status."""
         return {
             "plugin": self.manifest.name,
@@ -147,7 +148,7 @@ class PluginBase:
             "healthy": self.state in (PluginState.LOADED, PluginState.RUNNING),
         }
     
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         """Return list of capabilities this plugin provides."""
         return self.manifest.capabilities
     
@@ -156,15 +157,14 @@ class PluginBase:
         return True
     
     # Hook system (from agi-hermes-advanced-master)
-    def pre_step_hook(self, step_number: int, task: str) -> Optional[str]:
+    def pre_step_hook(self, step_number: int, task: str) -> str | None:
         """Called before each agent step. Return a string to inject context."""
         return None
     
     def post_step_hook(self, step_number: int, observation: str):
         """Called after each agent step."""
-        pass
     
-    def pre_tool_hook(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_tool_hook(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         """Called before each tool execution. Can modify args."""
         return args
     
@@ -172,6 +172,6 @@ class PluginBase:
         """Called after each tool execution. Can modify result."""
         return result
     
-    def on_error_hook(self, error: Exception) -> Optional[str]:
+    def on_error_hook(self, error: Exception) -> str | None:
         """Called when an error occurs. Return a recovery suggestion."""
         return None

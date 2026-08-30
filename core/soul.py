@@ -10,9 +10,10 @@ Source: agi-hermes-advanced-master/03-AGI-ASI-Ultimate/SOUL.md
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class EpistemicStatus(str, Enum):
@@ -58,18 +59,18 @@ class Claim:
     confidence: float = 0.0
     bayesian_prior: float = 0.5
     bayesian_posterior: float = 0.5
-    sources: List[Dict[str, Any]] = field(default_factory=list)
+    sources: list[dict[str, Any]] = field(default_factory=list)
     independent_sources: int = 0
     contradictory_sources: int = 0
     verification_method: str = ""
     falsification_test: str = ""
     last_verified: str = ""
     expires_at: str = ""
-    conflicting_claims: List[str] = field(default_factory=list)
+    conflicting_claims: list[str] = field(default_factory=list)
     calibration_score: float = 0.0
-    cross_domain_support: List[str] = field(default_factory=list)
+    cross_domain_support: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "text": self.text,
             "status": self.status.value,
@@ -92,27 +93,27 @@ class Mission:
     desired_outcome: str = ""
     user_value: str = ""
     strategic_value: str = ""
-    acceptance_criteria: List[str] = field(default_factory=list)
-    formal_properties: List[str] = field(default_factory=list)
-    constraints: Dict[str, List[str]] = field(default_factory=lambda: {
+    acceptance_criteria: list[str] = field(default_factory=list)
+    formal_properties: list[str] = field(default_factory=list)
+    constraints: dict[str, list[str]] = field(default_factory=lambda: {
         "hard": [], "soft": [], "forbidden": [], "physical": [], "legal": [], "ethical": []
     })
-    authority: Dict[str, Any] = field(default_factory=lambda: {
+    authority: dict[str, Any] = field(default_factory=lambda: {
         "allowed": [], "prohibited": [], "expiry": ""
     })
     risk: RiskTier = RiskTier.R0
-    budget: Dict[str, Any] = field(default_factory=lambda: {
+    budget: dict[str, Any] = field(default_factory=lambda: {
         "money": None, "tokens": None, "time": None, "tool_calls": None
     })
     status: str = "active"
-    lineage: List[str] = field(default_factory=list)
-    counterfactuals: List[str] = field(default_factory=list)
-    evidence_requirements: List[str] = field(default_factory=list)
+    lineage: list[str] = field(default_factory=list)
+    counterfactuals: list[str] = field(default_factory=list)
+    evidence_requirements: list[str] = field(default_factory=list)
     verification_standard: str = "test"
-    assumptions: List[str] = field(default_factory=list)
-    unknowns: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
-    stakeholders: List[str] = field(default_factory=list)
+    assumptions: list[str] = field(default_factory=list)
+    unknowns: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
+    stakeholders: list[str] = field(default_factory=list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════════

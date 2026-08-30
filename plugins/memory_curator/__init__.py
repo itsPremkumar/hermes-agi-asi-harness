@@ -46,8 +46,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -59,11 +59,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -98,8 +98,8 @@ class Memory:
     created_at: str
     last_accessed: str
     access_count: int
-    embedding: List[float]
-    tags: List[str] = field(default_factory=list)
+    embedding: list[float]
+    tags: list[str] = field(default_factory=list)
     decay_rate: float = 0.01
 
 
@@ -107,15 +107,15 @@ class SimpleEmbedder:
     """TF-IDF based embedder for memory."""
     
     def __init__(self):
-        self.vocab: Dict[str, int] = {}
-        self.idf: Dict[str, float] = {}
+        self.vocab: dict[str, int] = {}
+        self.idf: dict[str, float] = {}
     
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         return re.findall(r'\b[a-z0-9_]+\b', text.lower())
     
-    def fit(self, documents: List[str]):
+    def fit(self, documents: list[str]):
         """Fit on corpus."""
-        doc_freq: Dict[str, int] = {}
+        doc_freq: dict[str, int] = {}
         for doc in documents:
             tokens = set(self._tokenize(doc))
             for token in tokens:
@@ -125,7 +125,7 @@ class SimpleEmbedder:
         for token, freq in doc_freq.items():
             self.idf[token] = math.log((len(documents) + 1) / (freq + 1)) + 1
     
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         """Embed text."""
         if not self.vocab:
             return []
@@ -152,7 +152,7 @@ class SimpleEmbedder:
         
         return vector
     
-    def similarity(self, a: List[float], b: List[float]) -> float:
+    def similarity(self, a: list[float], b: list[float]) -> float:
         """Cosine similarity."""
         if not a or not b or len(a) != len(b):
             return 0.0
@@ -170,7 +170,7 @@ class MemoryCurator:
     def __init__(self, db_path: str = ".hermes/memory.db"):
         self.db_path = Path(db_path)
         self.embedder = SimpleEmbedder()
-        self.memories: Dict[str, Memory] = {}
+        self.memories: dict[str, Memory] = {}
         self._loaded = False
     
     def load(self):
@@ -253,7 +253,7 @@ class MemoryCurator:
         conn.close()
     
     def add_memory(self, content: str, category: str = "general", 
-                   importance: float = 0.5, tags: List[str] = None) -> str:
+                   importance: float = 0.5, tags: list[str] | None = None) -> str:
         """Add a memory."""
         memory_id = f"mem_{hashlib.md5(content.encode()).hexdigest()[:12]}"
         
@@ -278,7 +278,7 @@ class MemoryCurator:
         self.memories[memory_id] = memory
         return memory_id
     
-    def search(self, query: str, top_k: int = 5, category: str = None) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5, category: str | None = None) -> list[dict[str, Any]]:
         """Search memories."""
         if not self.memories:
             return []
@@ -320,7 +320,7 @@ class MemoryCurator:
             for score, m in results[:top_k]
         ]
     
-    def get_memory(self, memory_id: str) -> Optional[Memory]:
+    def get_memory(self, memory_id: str) -> Memory | None:
         """Get a memory by ID."""
         memory = self.memories.get(memory_id)
         if memory:
@@ -328,7 +328,7 @@ class MemoryCurator:
             memory.access_count += 1
         return memory
     
-    def consolidate(self) -> Dict[str, Any]:
+    def consolidate(self) -> dict[str, Any]:
         """Consolidate memories: deduplicate and apply decay."""
         # Deduplicate by content hash
         seen_hashes = set()
@@ -350,7 +350,6 @@ class MemoryCurator:
             created = datetime.fromisoformat(memory.created_at)
             age_days = (now - created).days
             decay_factor = math.exp(-memory.decay_rate * age_days)
-            old_importance = memory.importance
             memory.importance = memory.importance * decay_factor
             if memory.importance < 0.05:
                 # Remove very low importance memories
@@ -363,9 +362,9 @@ class MemoryCurator:
             "remaining": len(self.memories),
         }
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get memory stats."""
-        categories: Dict[str, int] = {}
+        categories: dict[str, int] = {}
         for memory in self.memories.values():
             categories[memory.category] = categories.get(memory.category, 0) + 1
         
@@ -403,7 +402,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.curator: Optional[MemoryCurator] = None
+        self.curator: MemoryCurator | None = None
     
     async def load(self) -> bool:
         self.curator = MemoryCurator()
@@ -424,7 +423,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -436,13 +435,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def add_memory(self, content: str, category: str = "general", importance: float = 0.5, tags: List[str] = None) -> str:
+    def add_memory(self, content: str, category: str = "general", importance: float = 0.5, tags: list[str] | None = None) -> str:
         return self.curator.add_memory(content, category, importance, tags)
     
-    def search(self, query: str, top_k: int = 5, category: str = None) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5, category: str | None = None) -> list[dict[str, Any]]:
         return self.curator.search(query, top_k, category)
     
-    def get_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
+    def get_memory(self, memory_id: str) -> dict[str, Any] | None:
         memory = self.curator.get_memory(memory_id)
         if memory:
             return {
@@ -455,11 +454,11 @@ class Plugin(PluginBase):
             }
         return None
     
-    def consolidate(self) -> Dict[str, Any]:
+    def consolidate(self) -> dict[str, Any]:
         return self.curator.consolidate()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.curator.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

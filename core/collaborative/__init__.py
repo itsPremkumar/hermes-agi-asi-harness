@@ -16,8 +16,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_collaborative")
 
@@ -28,9 +29,9 @@ class SubTask:
     task_id: str
     description: str
     assigned_agent: str
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     status: str = "pending"
-    result: Optional[str] = None
+    result: str | None = None
     timestamp: float = field(default_factory=time.time)
 
 
@@ -49,10 +50,10 @@ class CollaborativeReasoning:
     """
     
     def __init__(self):
-        self._tasks: Dict[str, SubTask] = {}
-        self._results: Dict[str, Any] = {}
+        self._tasks: dict[str, SubTask] = {}
+        self._results: dict[str, Any] = {}
     
-    async def decompose(self, problem: str, num_agents: int = 3) -> List[SubTask]:
+    async def decompose(self, problem: str, num_agents: int = 3) -> list[SubTask]:
         """Decompose a problem into subtasks."""
         subtasks = []
         
@@ -75,7 +76,7 @@ class CollaborativeReasoning:
             return True
         return False
     
-    async def merge_results(self, task_ids: List[str]) -> Dict[str, Any]:
+    async def merge_results(self, task_ids: list[str]) -> dict[str, Any]:
         """Merge results from multiple subtasks."""
         results = []
         for task_id in task_ids:
@@ -88,7 +89,7 @@ class CollaborativeReasoning:
             "count": len(results)
         }
     
-    async def resolve_conflict(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def resolve_conflict(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         """Resolve conflicts between agent results."""
         if not results:
             return {"resolved": False, "reason": "No results"}
@@ -97,7 +98,7 @@ class CollaborativeReasoning:
         best = max(results, key=lambda r: r.get("confidence", 0))
         return {"resolved": True, "result": best}
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

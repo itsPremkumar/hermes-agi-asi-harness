@@ -1,12 +1,13 @@
 """MCP Client - Connect to any MCP server."""
 from __future__ import annotations
+
 import asyncio
 import json
 import subprocess
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 
 class MCPTransport(str, Enum):
@@ -19,7 +20,7 @@ class MCPTransport(str, Enum):
 class MCPTool:
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: dict[str, Any]
     server_name: str
 
 
@@ -36,13 +37,13 @@ class MCPClient:
     
     def __init__(self, transport: MCPTransport = MCPTransport.STDIO):
         self.transport_type = transport
-        self._process: Optional[subprocess.Popen] = None
-        self._session_id: Optional[str] = None
-        self._tools: Dict[str, MCPTool] = {}
-        self._capabilities: Optional[MCPCapabilities] = None
+        self._process: subprocess.Popen | None = None
+        self._session_id: str | None = None
+        self._tools: dict[str, MCPTool] = {}
+        self._capabilities: MCPCapabilities | None = None
         self._initialized = False
     
-    async def connect_stdio(self, command: str, args: List[str] = None, env: Dict = None):
+    async def connect_stdio(self, command: str, args: list[str] | None = None, env: dict | None = None):
         """Connect to an MCP server via stdio transport."""
         import os
         cmd = [command] + (args or [])
@@ -61,13 +62,13 @@ class MCPClient:
         self._initialized = True
         await self._refresh_tools()
     
-    async def connect_sse(self, url: str, headers: Dict = None):
+    async def connect_sse(self, url: str, headers: dict | None = None):
         """Connect to an MCP server via SSE transport."""
         self._sse_url = url
         self._sse_headers = headers or {}
         self._initialized = True
     
-    async def list_tools(self) -> List[MCPTool]:
+    async def list_tools(self) -> list[MCPTool]:
         """List all available tools from the MCP server."""
         if not self._initialized:
             raise RuntimeError("MCP client not connected")
@@ -83,14 +84,14 @@ class MCPClient:
         self._tools = {t.name: t for t in tools}
         return tools
     
-    async def call_tool(self, name: str, arguments: Dict[str, Any] = None) -> Any:
+    async def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> Any:
         """Call a tool on the MCP server."""
         if not self._initialized:
             raise RuntimeError("MCP client not connected")
         response = await self._send_request("tools/call", {"name": name, "arguments": arguments or {}})
         return response.get("content", [])
     
-    async def _send_request(self, method: str, params: Dict) -> Dict:
+    async def _send_request(self, method: str, params: dict) -> dict:
         """Send a JSON-RPC request."""
         request = {"jsonrpc": "2.0", "id": str(uuid.uuid4()), "method": method, "params": params}
         if self.transport_type == MCPTransport.STDIO and self._process:

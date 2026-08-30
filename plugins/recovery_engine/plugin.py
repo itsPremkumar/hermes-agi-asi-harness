@@ -37,10 +37,11 @@ import logging
 import re
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger("hermes.recovery_engine")
 
@@ -57,8 +58,8 @@ try:
         PluginState,
     )
 except ImportError:  # pragma: no cover - exercised only without core on path
-    from enum import Enum as _Enum
     from dataclasses import dataclass as _dc
+    from enum import Enum as _Enum
 
     class PluginState(_Enum):
         REGISTERED = "registered"
@@ -72,8 +73,8 @@ except ImportError:  # pragma: no cover - exercised only without core on path
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: int = 512
         max_cpu_percent: int = 50
@@ -85,14 +86,14 @@ except ImportError:  # pragma: no cover - exercised only without core on path
         description: str = ""
         license: str = "unknown"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
 
     class PluginBase:  # minimal duck-typed stand-in
-        def __init__(self, manifest: "PluginManifest" = None, kernel: Any = None):
+        def __init__(self, manifest: PluginManifest = None, kernel: Any = None):
             self.manifest = manifest or PluginManifest()
             self.kernel = kernel
             self.state = PluginState.REGISTERED
@@ -154,12 +155,12 @@ class Checkpoint:
     """A recovery checkpoint — captures task state for rollback/resume."""
     checkpoint_id: str
     task_id: str
-    state: Dict[str, Any]
+    state: dict[str, Any]
     created_at: float
     failure_class: str = ""
     strategy: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "checkpoint_id": self.checkpoint_id,
             "task_id": self.task_id,
@@ -179,11 +180,11 @@ class RecoveryRecord:
     error: str
     strategy: RecoveryStrategy
     status: str = "attempting"        # attempting | resolved | failed | escalated
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     started_at: float = field(default_factory=time.time)
     completed_at: float = 0.0
     error_detail: str = ""
-    result: Optional["StrategyResult"] = None
+    result: StrategyResult | None = None
     resolution: bool = False
 
     @property
@@ -202,9 +203,9 @@ class StrategyResult:
     attempts: int = 1
     error: str = ""
     recommendation: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "strategy": self.strategy.value,
             "outcome": self.outcome.value,
@@ -220,14 +221,14 @@ class StrategyResult:
 class RecoveryContext:
     """Structured context handed to ``recover()``."""
     task_id: str
-    error: Union[str, Exception]
-    operation: Optional[Callable[..., Any]] = None
-    alternatives: List[str] = field(default_factory=list)
+    error: str | Exception
+    operation: Callable[..., Any] | None = None
+    alternatives: list[str] = field(default_factory=list)
     severity: str = "medium"          # low | medium | high
     max_retries: int = 3
     backoff_base: float = 1.0
-    context: Dict[str, Any] = field(default_factory=dict)
-    strategies: Optional[List[str]] = None  # explicit allow-list override
+    context: dict[str, Any] = field(default_factory=dict)
+    strategies: list[str] | None = None  # explicit allow-list override
 
 
 # ===========================================================================
@@ -235,36 +236,36 @@ class RecoveryContext:
 # ===========================================================================
 
 # (compiled regex, FailureClass) — evaluated in order; first match wins.
-_FAILURE_PATTERNS: List[tuple] = [
+_FAILURE_PATTERNS: list[tuple] = [
     # SAFETY must be checked early: a blocked tool is a safety issue, not a tool error.
     (re.compile(r"\b(injection|prompt.?injection|safety|guardrail|policy|content.?filter|"
-                r"prohibited|blocked|sanitizer|tamper|unauthorized|forbidden|violation)\b", re.I),
+                r"prohibited|blocked|sanitizer|tamper|unauthorized|forbidden|violation)\b", re.IGNORECASE),
      FailureClass.SAFETY),
     # DEPENDENCY — module/import/package problems.
     (re.compile(r"\b(import|module not found|no module|dependency|package|requires?|version "
-                r"conflict|dependencyerror)\b", re.I), FailureClass.DEPENDENCY),
+                r"conflict|dependencyerror)\b", re.IGNORECASE), FailureClass.DEPENDENCY),
     # PLANNING — plan/step/goal generation.
     (re.compile(r"\b(plan|no plan|planning|steps|goal is empty|unable to plan|replan|trajectory)\b",
-                re.I), FailureClass.PLANNING),
+                re.IGNORECASE), FailureClass.PLANNING),
     # REASONING — inference/logic contradictions.
     (re.compile(r"\b(reason|reasoning|contradiction|inference|deduction|logical|inconsistent|"
-                r"paradox|invalid deduction)\b", re.I), FailureClass.REASONING),
+                r"paradox|invalid deduction)\b", re.IGNORECASE), FailureClass.REASONING),
     # ENVIRONMENT — infra/filesystem/config/resource.
     (re.compile(r"\b(environment|env var|disk (full|space)|memory|oom|out of memory|"
                 r"no such file|file not found|fileNotFoundError|path|directory|config "
-                r"file|missing configuration|resource)\b", re.I), FailureClass.ENVIRONMENT),
+                r"file|missing configuration|resource)\b", re.IGNORECASE), FailureClass.ENVIRONMENT),
     # TOOL — tool invocation/argument/execution problems.
     (re.compile(r"\b(tool|toolkit|invalid tool|tool not found|tool execution|tool call|"
-                r"invalid argument|argument error|toolerror)\b", re.I), FailureClass.TOOL),
+                r"invalid argument|argument error|toolerror)\b", re.IGNORECASE), FailureClass.TOOL),
     # TRANSIENT — retryable infrastructure errors.
     (re.compile(r"\b(timeout|timed out|rate limit|429|too many requests|temporarily "
                 r"unavailable|connection (reset|refused|aborted|closed)|deadlock|"
-                r"retry-after|5\d\d|transient|service unavailable|temporarily)\b", re.I),
+                r"retry-after|5\d\d|transient|service unavailable|temporarily)\b", re.IGNORECASE),
      FailureClass.TRANSIENT),
 ]
 
 # Default strategy per failure class. Safety & env are never auto-substituted.
-_DEFAULT_STRATEGY: Dict[FailureClass, RecoveryStrategy] = {
+_DEFAULT_STRATEGY: dict[FailureClass, RecoveryStrategy] = {
     FailureClass.TRANSIENT: RecoveryStrategy.RETRY,
     FailureClass.TOOL: RecoveryStrategy.SUBSTITUTE,
     FailureClass.PLANNING: RecoveryStrategy.REPLAN,
@@ -288,21 +289,21 @@ class RecoveryEngine(PluginBase):
     ``Plugin()`` (PluginManager contract).
     """
 
-    def __init__(self, kernel: Any = None, manifest: Optional[PluginManifest] = None):
+    def __init__(self, kernel: Any = None, manifest: PluginManifest | None = None):
         if manifest is None:
             manifest = self._default_manifest()
         super().__init__(manifest, kernel)
 
         # recovery state
-        self._checkpoints: Dict[str, Checkpoint] = {}
-        self._records: Dict[str, RecoveryRecord] = {}
-        self._escalation_log: List[Dict[str, Any]] = []
-        self._strategy_counts: Dict[str, int] = {s.value: 0 for s in RecoveryStrategy}
+        self._checkpoints: dict[str, Checkpoint] = {}
+        self._records: dict[str, RecoveryRecord] = {}
+        self._escalation_log: list[dict[str, Any]] = []
+        self._strategy_counts: dict[str, int] = {s.value: 0 for s in RecoveryStrategy}
         self._recovery_attempts: int = 0
         # configurable classification / strategy tables (instance-level so callers
         # can tune without touching the module globals).
-        self.classification_rules: List[tuple] = list(_FAILURE_PATTERNS)
-        self.default_strategy: Dict[FailureClass, RecoveryStrategy] = dict(_DEFAULT_STRATEGY)
+        self.classification_rules: list[tuple] = list(_FAILURE_PATTERNS)
+        self.default_strategy: dict[FailureClass, RecoveryStrategy] = dict(_DEFAULT_STRATEGY)
 
     # -- manifest -----------------------------------------------------------
     @staticmethod
@@ -367,7 +368,7 @@ class RecoveryEngine(PluginBase):
         return True
 
     # -- checkpoints (kept API-compatible with the legacy engine) -----------
-    def create_checkpoint(self, task_id: str, state: Dict[str, Any],
+    def create_checkpoint(self, task_id: str, state: dict[str, Any],
                           failure_class: str = "", strategy: str = "") -> str:
         """Create a checkpoint for a task. Returns the checkpoint id."""
         checkpoint_id = str(uuid.uuid4())
@@ -382,22 +383,22 @@ class RecoveryEngine(PluginBase):
         logger.debug("Checkpoint %s created for task %s", checkpoint_id, task_id)
         return checkpoint_id
 
-    def get_checkpoint(self, checkpoint_id: str) -> Optional[Checkpoint]:
+    def get_checkpoint(self, checkpoint_id: str) -> Checkpoint | None:
         return self._checkpoints.get(checkpoint_id)
 
-    def get_latest_checkpoint(self, task_id: str) -> Optional[Checkpoint]:
+    def get_latest_checkpoint(self, task_id: str) -> Checkpoint | None:
         """Get the most recent checkpoint for a task."""
         checkpoints = [c for c in self._checkpoints.values() if c.task_id == task_id]
         if not checkpoints:
             return None
         return max(checkpoints, key=lambda c: c.created_at)
 
-    def rollback(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def rollback(self, task_id: str) -> dict[str, Any] | None:
         """Return the state of the latest checkpoint for a task (rollback target)."""
         cp = self.get_latest_checkpoint(task_id)
         return cp.state if cp else None
 
-    def resume(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def resume(self, task_id: str) -> dict[str, Any] | None:
         """Resume from the latest checkpoint, clearing newer checkpoints."""
         cp = self.get_latest_checkpoint(task_id)
         if cp is None:
@@ -412,7 +413,7 @@ class RecoveryEngine(PluginBase):
         return cp.state
 
     # -- failure classification --------------------------------------------
-    def classify_failure(self, error: Union[Exception, str]) -> FailureClass:
+    def classify_failure(self, error: Exception | str) -> FailureClass:
         """Classify a failure into one of the seven canonical failure classes.
 
         Order matters: safety is checked first (a blocked tool is a safety
@@ -435,7 +436,7 @@ class RecoveryEngine(PluginBase):
                 return fclass
         return FailureClass.UNKNOWN
 
-    def select_strategy(self, failure_class: Union[FailureClass, str]) -> RecoveryStrategy:
+    def select_strategy(self, failure_class: FailureClass | str) -> RecoveryStrategy:
         """Pick the default recovery strategy for a given failure class."""
         if isinstance(failure_class, str):
             try:
@@ -455,7 +456,7 @@ class RecoveryEngine(PluginBase):
     async def retry(self, operation: Callable[..., Any], *,
                     max_attempts: int = 3, backoff_base: float = 1.0,
                     backoff_factor: float = 2.0,
-                    on_retry: Optional[Callable[[int, Exception], Any]] = None,
+                    on_retry: Callable[[int, Exception], Any] | None = None,
                     **op_kwargs) -> StrategyResult:
         """Re-attempt ``operation`` with exponential backoff.
 
@@ -463,7 +464,7 @@ class RecoveryEngine(PluginBase):
         plus ``op_kwargs``. Returns a ``StrategyResult`` describing the outcome.
         """
         self._strategy_counts[RecoveryStrategy.RETRY.value] += 1
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for attempt in range(1, max_attempts + 1):
             try:
                 await self._invoke(operation, attempt=attempt, **op_kwargs)
@@ -474,14 +475,14 @@ class RecoveryEngine(PluginBase):
                     recommendation="operation succeeded after retry",
                     details={"max_attempts": max_attempts, "attempt": attempt},
                 )
-            except Exception as e:  # noqa: BLE001 - we explicitly retry anything
+            except Exception as e:
                 last_error = e
                 if on_retry is not None:
                     try:
                         cb = on_retry(attempt, e)
                         if asyncio.iscoroutine(cb):
                             await cb
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         logger.debug("on_retry callback raised: %s", e, exc_info=True)
                 if attempt < max_attempts:
                     delay = backoff_base * (backoff_factor ** (attempt - 1))
@@ -496,8 +497,8 @@ class RecoveryEngine(PluginBase):
             details={"max_attempts": max_attempts},
         )
 
-    def replan(self, task_id: str, context: Optional[Dict[str, Any]] = None,
-               suggested_plan: Optional[str] = None) -> StrategyResult:
+    def replan(self, task_id: str, context: dict[str, Any] | None = None,
+               suggested_plan: str | None = None) -> StrategyResult:
         """Request a fresh plan/reasoning chain for the task.
 
         In a full system this would invoke the planning/reasoning engine; here
@@ -516,8 +517,8 @@ class RecoveryEngine(PluginBase):
             details={"context_keys": list(context.keys()), "suggested_plan": suggested_plan},
         )
 
-    def substitute(self, task_id: str, alternatives: List[str],
-                   preference: Optional[str] = None) -> StrategyResult:
+    def substitute(self, task_id: str, alternatives: list[str],
+                   preference: str | None = None) -> StrategyResult:
         """Swap a failed tool/resource for an alternative from ``alternatives``."""
         self._strategy_counts[RecoveryStrategy.SUBSTITUTE.value] += 1
         alternatives = list(alternatives or [])
@@ -557,14 +558,14 @@ class RecoveryEngine(PluginBase):
 
     # -- orchestrator -------------------------------------------------------
     async def recover(self, task_id: str,
-                      error: Union[Exception, str],
-                      *, operation: Optional[Callable[..., Any]] = None,
-                      context: Optional[Dict[str, Any]] = None,
-                      alternatives: Optional[List[str]] = None,
+                      error: Exception | str,
+                      *, operation: Callable[..., Any] | None = None,
+                      context: dict[str, Any] | None = None,
+                      alternatives: list[str] | None = None,
                       severity: str = "medium",
-                      strategies: Optional[List[str]] = None,
+                      strategies: list[str] | None = None,
                       max_retries: int = 3, backoff_base: float = 1.0,
-                      checkpoint_state: Optional[Dict[str, Any]] = None) -> RecoveryRecord:
+                      checkpoint_state: dict[str, Any] | None = None) -> RecoveryRecord:
         """Classify a failure and apply the appropriate recovery strategy.
 
         Returns a ``RecoveryRecord`` describing what was tried and the outcome.
@@ -612,7 +613,7 @@ class RecoveryEngine(PluginBase):
                 record.result = self.escalate(
                     task_id, str(error), severity="high",
                 )
-        except Exception as e:  # noqa: BLE001 - last-resort escalation
+        except Exception as e:
             record.error_detail = str(e)
             record.result = self.escalate(
                 task_id, f"{error} | recovery raised: {e}", severity="high",
@@ -632,16 +633,16 @@ class RecoveryEngine(PluginBase):
                     task_id, strategy.value, record.status)
         return record
 
-    def get_record(self, record_id: str) -> Optional[RecoveryRecord]:
+    def get_record(self, record_id: str) -> RecoveryRecord | None:
         return self._records.get(record_id)
 
-    def recovery_history(self, task_id: Optional[str] = None) -> List[RecoveryRecord]:
+    def recovery_history(self, task_id: str | None = None) -> list[RecoveryRecord]:
         records = self._records.values()
         if task_id:
             records = [r for r in records if r.task_id == task_id]
         return sorted(records, key=lambda r: r.started_at, reverse=True)
 
-    def get_escalations(self) -> List[Dict[str, Any]]:
+    def get_escalations(self) -> list[dict[str, Any]]:
         return list(self._escalation_log)
 
     async def flush(self):
@@ -652,10 +653,10 @@ class RecoveryEngine(PluginBase):
                       len(self._checkpoints), len(self._records))
 
     # -- capabilities & health ---------------------------------------------
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return list(getattr(self.manifest, "capabilities", []))
 
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Return health status. Contains a ``status`` key for the kernel."""
         healthy = self.state in (PluginState.LOADED, PluginState.RUNNING)
         status = "healthy" if healthy else "degraded"
@@ -676,7 +677,7 @@ class RecoveryEngine(PluginBase):
 # Factory
 # ===========================================================================
 
-async def create(kernel: Any = None) -> "RecoveryEngine":
+async def create(kernel: Any = None) -> RecoveryEngine:
     """Async factory — creates, loads and starts the recovery engine.
 
     Contract used by ``HermesKernel._load_core_plugins`` (``module.create(self)``).

@@ -50,9 +50,9 @@ class MemoryRecord:
     created_at: float = field(default_factory=time.time)
     last_accessed: float = field(default_factory=time.time)
     access_count: int = 0
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
-    related_to: List[str] = field(default_factory=list)
+    related_to: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -83,9 +83,9 @@ class MemorySystem:
     def __init__(self, db_path: str = "state/memory_system.db"):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._started = False
-        self._backends: Dict[str, MemoryBackend] = {}
+        self._backends: dict[str, MemoryBackend] = {}
         self._init_backends()
 
     def _init_backends(self):
@@ -142,8 +142,8 @@ class MemorySystem:
         return True
 
     def store(self, memory_type: MemoryType, content: str,
-              importance: float = 0.5, tags: List[str] = None,
-              metadata: dict = None, related_to: List[str] = None) -> str:
+              importance: float = 0.5, tags: list[str] | None = None,
+              metadata: dict | None = None, related_to: list[str] | None = None) -> str:
         """Store a memory of a specific type."""
         mem = MemoryRecord(
             id=str(uuid.uuid4()),
@@ -165,8 +165,8 @@ class MemorySystem:
         return mem.id
 
     def retrieve(self, query: str, top_k: int = 5,
-                 memory_types: List[MemoryType] = None,
-                 tags: List[str] = None) -> List[MemoryRecord]:
+                 memory_types: list[MemoryType] | None = None,
+                 tags: list[str] | None = None) -> list[MemoryRecord]:
         """Retrieve memories via keyword FTS5 search."""
         conn = self._get_conn()
         type_filter = ""
@@ -206,7 +206,7 @@ class MemorySystem:
             related_to=json.loads(row["related_to"]) if row["related_to"] else [],
         )
 
-    def consolidate(self, memory_types: List[MemoryType] = None) -> int:
+    def consolidate(self, memory_types: list[MemoryType] | None = None) -> int:
         """Merge similar memories (consolidation pass)."""
         conn = self._get_conn()
         cursor = conn.execute("SELECT id, type, content FROM memories ORDER BY created_at")
@@ -251,7 +251,7 @@ class MemorySystem:
             metadata={"task": task, "error": error, "root_cause": root_cause, "prevention": prevention},
         )
 
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return ["memory.store", "memory.retrieve", "memory.consolidate", "memory.decay"]
 
     async def start(self) -> bool:
@@ -283,7 +283,7 @@ class MemorySystem:
         }
 
 
-_instance: Optional[MemorySystem] = None
+_instance: MemorySystem | None = None
 
 
 async def create(kernel: Any) -> MemorySystem:
