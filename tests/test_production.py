@@ -223,12 +223,13 @@ eval(user_input)
         results.append(("CI/CD", False, str(e)))
         print(f"  ✗ Failed: {e}")
     
-    # Test 9: REST API
+    # Test REST API
     print("\n[9/10] Testing REST API...")
     try:
-        from httpx import AsyncClient
+        from httpx import AsyncClient, ASGITransport
         
-        async with AsyncClient(app=api_app, base_url="http://test") as client:
+        transport = ASGITransport(app=api_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Health check
             resp = await client.get("/health")
             assert resp.status_code == 200
