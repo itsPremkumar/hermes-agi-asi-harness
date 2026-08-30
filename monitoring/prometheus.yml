@@ -1,0 +1,19 @@
+# Prometheus monitoring configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "hermes-harness"
+    static_configs:
+      - targets: ["harness:8080"]
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis:6379"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

@@ -1,10 +1,12 @@
 # Hermes AGI/ASI Harness — Python dependencies
 # All dependencies are MIT/Apache-2.0/BSD licensed
+# For the full dependency tree, see pyproject.toml
 
 # Core runtime
-pyyaml>=6.0
+PyYAML>=6.0
 tomli>=2.0
 psutil>=5.9.0
+tenacity>=8.2.0
 
 # Async/concurrency
 aiofiles>=23.2.0
@@ -13,12 +15,36 @@ aiofiles>=23.2.0
 httpx>=0.25.0
 requests>=2.31.0
 
+# AI/Agent (core)
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langsmith>=0.1.0
+deepagents>=0.1.0
+
 # Testing
-pytest>=7.4.0
+pytest>=8.3.0
+pytest-cov>=4.0
 pytest-asyncio>=0.23.0
+pytest-xdist>=3.5.0
 
-# Type checking (optional)
-mypy>=1.5.0
+# Linting & Formatting
+ruff>=0.5.0
 
-# Linting (optional)
-flake8>=6.0.0
+# Type checking
+mypy>=1.10.0
+types-PyYAML
+types-requests
+types-psutil
+
+# Security
+bandit>=1.7.0
+pip-audit>=2.6.0
+
+# Documentation
+mkdocs>=1.6.0
+mkdocs-material>=9.5.0
+mkdocstrings[python]>=0.25.0
+
+# Build
+hatchling>=1.18.0

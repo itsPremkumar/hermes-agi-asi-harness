@@ -1,0 +1,83 @@
+# Hermes AGI/ASI Harness — Docker Compose for local development
+version: "3.9"
+
+services:
+  harness:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-harness
+    ports:
+      - "8080:8080"
+    environment:
+      - HERMES_HOME=/app/.hermes
+      - HERMES_ENV=development
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - harness-data:/app/.hermes
+      - ./config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - hermes-net
+
+  # Optional: Redis for caching/state
+  redis:
+    image: redis:7-alpine
+    container_name: hermes-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hermes-net
+
+  # Optional: Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hermes-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+    networks:
+      - hermes-net
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hermes-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=hermes
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - hermes-net
+    profiles:
+      - monitoring
+
+volumes:
+  harness-data:
+  redis-data:
+  grafana-data:
+
+networks:
+  hermes-net:
+    driver: bridge

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
 from harness.registry import PluginRegistry
