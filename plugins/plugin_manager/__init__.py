@@ -1,1 +1,1 @@
-from .plugin_manager import PluginManager, BasePlugin, create
+from .plugin_manager import BasePlugin, PluginManager, create

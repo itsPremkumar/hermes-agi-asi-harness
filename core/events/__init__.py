@@ -1,1 +1,1 @@
-from .event_bus import EventBus, Event, EventType, create
+from .event_bus import Event, EventBus, EventType, create

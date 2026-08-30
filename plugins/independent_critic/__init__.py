@@ -5,11 +5,11 @@ For high-value tasks, uses two independent critics + executive judge to reduce
 correlated reasoning failures.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
-from enum import Enum
-import time
 import hashlib
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class CriticVerdict(str, Enum):
@@ -23,13 +23,13 @@ class CriticReview:
     critic_id: str
     verdict: CriticVerdict
     rationale: str
-    strengths: List[str] = field(default_factory=list)
-    weaknesses: List[str] = field(default_factory=list)
+    strengths: list[str] = field(default_factory=list)
+    weaknesses: list[str] = field(default_factory=list)
     confidence: float = 0.0
     evidence_checked: int = 0
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "critic_id": self.critic_id,
             "verdict": self.verdict.value,
@@ -46,7 +46,7 @@ class CriticReview:
 class CriticDecision:
     decision: str  # "accept", "revise", "reject"
     consensus: bool
-    critic_reviews: List[CriticReview] = field(default_factory=list)
+    critic_reviews: list[CriticReview] = field(default_factory=list)
     reasoning: str = ""
     confidence: float = 0.0
     timestamp: float = field(default_factory=time.time)
@@ -56,10 +56,10 @@ class CriticEngine:
     """Dual-critic verification with executive judgment."""
 
     def __init__(self):
-        self._reviews: List[CriticReview] = []
-        self._decisions: List[CriticDecision] = []
+        self._reviews: list[CriticReview] = []
+        self._decisions: list[CriticDecision] = []
 
-    def critique(self, content: str, criteria: List[str], critic_id: str) -> CriticReview:
+    def critique(self, content: str, criteria: list[str], critic_id: str) -> CriticReview:
         """Run a single critic pass on content."""
         strengths = []
         weaknesses = []
@@ -101,7 +101,7 @@ class CriticEngine:
         self._reviews.append(review)
         return review
 
-    def dual_critique(self, content: str, criteria: List[str],
+    def dual_critique(self, content: str, criteria: list[str],
                       critic_a_id: str = "critic_a",
                       critic_b_id: str = "critic_b") -> CriticDecision:
         """Run two independent critics and combine verdicts."""
@@ -135,7 +135,7 @@ class CriticEngine:
         self._decisions.append(decision_obj)
         return decision_obj
 
-    def get_history(self) -> List[CriticDecision]:
+    def get_history(self) -> list[CriticDecision]:
         return self._decisions
 
 

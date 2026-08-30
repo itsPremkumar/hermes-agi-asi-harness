@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ def trajectory_summary(state: dict) -> str:
     nodes = list(state.get("tree", {}).values())
     recent = []
     for n in nodes[-8:]:
-        recent.append("- %s [%s] score=%s" % (
+        recent.append("- {} [{}] score={}".format(
             (n.get("hypothesis") or "")[:60],
             n.get("status"), n.get("score")))
     return (
@@ -62,13 +61,13 @@ def _apply(state: dict, parsed: dict) -> None:
     state.setdefault("shared_state", {})["supervisor_directive"] = parsed["directive"] or ""
 
 
-def supervisor_redirect(state: dict, brain) -> Optional[str]:
+def supervisor_redirect(state: dict, brain) -> str | None:
     """Ask the supervisor role to redirect; apply STRATEGY/SUBGOALS/DIRECTIVE."""
     if not hasattr(brain, "supervise"):
         return None
     summary = trajectory_summary(state)
     mem = state.get("shared_state", {}).get("memory", {})
-    mem_str = "\n".join("- %s: %s" % (k, v) for k, v in mem.items()) if isinstance(mem, dict) else str(mem)
+    mem_str = "\n".join(f"- {k}: {v}" for k, v in mem.items()) if isinstance(mem, dict) else str(mem)
     try:
         out = brain.supervise(
             state["goal"], state.get("goal_criterion", ""), summary, mem_str)

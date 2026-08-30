@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ObservationSource(str, Enum):
@@ -31,13 +31,13 @@ class Observation:
     action_id: str
     timestamp: float
     source: ObservationSource
-    state_before: Dict[str, Any]
+    state_before: dict[str, Any]
     raw_observation: Any
-    normalized_state: Dict[str, Any]
+    normalized_state: dict[str, Any]
     confidence: float
-    evidence: List[str] = field(default_factory=list)
-    anomalies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    evidence: list[str] = field(default_factory=list)
+    anomalies: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -46,12 +46,12 @@ class FusedObservation:
     id: str
     entity_id: str
     timestamp: float
-    fused_state: Dict[str, Any]
+    fused_state: dict[str, Any]
     confidence: float
-    sources: List[ObservationSource]
-    conflicts: List[Dict[str, Any]] = field(default_factory=list)
-    anomalies: List[str] = field(default_factory=list)
-    evidence_chain: List[str] = field(default_factory=list)
+    sources: list[ObservationSource]
+    conflicts: list[dict[str, Any]] = field(default_factory=list)
+    anomalies: list[str] = field(default_factory=list)
+    evidence_chain: list[str] = field(default_factory=list)
 
 
 class PerceptionFusion:
@@ -68,7 +68,7 @@ class PerceptionFusion:
     5. Reconcile
     """
 
-    SOURCE_RELIABILITY: Dict[ObservationSource, float] = {
+    SOURCE_RELIABILITY: dict[ObservationSource, float] = {
         ObservationSource.API: 0.9,
         ObservationSource.MONITORING: 0.85,
         ObservationSource.TOOL_RESPONSE: 0.8,
@@ -79,14 +79,14 @@ class PerceptionFusion:
     }
 
     def __init__(self):
-        self.observations: Dict[str, List[Observation]] = {}  # entity_id → observations
-        self.fused: Dict[str, FusedObservation] = {}
+        self.observations: dict[str, list[Observation]] = {}  # entity_id → observations
+        self.fused: dict[str, FusedObservation] = {}
 
     def add_observation(self, entity_id: str, source: ObservationSource,
-                        state_before: Dict[str, Any], raw_observation: Any,
-                        normalized_state: Dict[str, Any], confidence: float = 0.5,
-                        action_id: str = "", evidence: List[str] = None,
-                        anomalies: List[str] = None) -> Observation:
+                        state_before: dict[str, Any], raw_observation: Any,
+                        normalized_state: dict[str, Any], confidence: float = 0.5,
+                        action_id: str = "", evidence: list[str] | None = None,
+                        anomalies: list[str] | None = None) -> Observation:
         obs = Observation(
             id=str(uuid.uuid4()),
             action_id=action_id,
@@ -104,7 +104,7 @@ class PerceptionFusion:
         self.observations[entity_id].append(obs)
         return obs
 
-    def fuse(self, entity_id: str) -> Optional[FusedObservation]:
+    def fuse(self, entity_id: str) -> FusedObservation | None:
         """Fuse all observations for an entity into a single estimate."""
         obs_list = self.observations.get(entity_id, [])
         if not obs_list:
@@ -131,7 +131,7 @@ class PerceptionFusion:
             timestamp=time.time(),
             fused_state=fused_state,
             confidence=confidence,
-            sources=list(set(o.source for o in recent)),
+            sources=list({o.source for o in recent}),
             conflicts=conflicts,
             anomalies=[a for o in recent for a in o.anomalies],
             evidence_chain=[e for o in recent for e in o.evidence],
@@ -139,10 +139,10 @@ class PerceptionFusion:
         self.fused[entity_id] = fused_obs
         return fused_obs
 
-    def _weighted_fusion(self, observations: List[Observation]) -> Dict[str, Any]:
+    def _weighted_fusion(self, observations: list[Observation]) -> dict[str, Any]:
         """Weighted fusion of normalized states."""
-        fused: Dict[str, Any] = {}
-        weights: Dict[str, float] = {}
+        fused: dict[str, Any] = {}
+        weights: dict[str, float] = {}
 
         for obs in observations:
             reliability = self.SOURCE_RELIABILITY.get(obs.source, 0.5)
@@ -176,7 +176,7 @@ class PerceptionFusion:
             return 0.3
         return 0.1
 
-    def _detect_conflicts(self, observations: List[Observation]) -> List[Dict[str, Any]]:
+    def _detect_conflicts(self, observations: list[Observation]) -> list[dict[str, Any]]:
         """Detect when sources disagree."""
         conflicts = []
         for i, obs_a in enumerate(observations):
@@ -196,8 +196,8 @@ class PerceptionFusion:
                         })
         return conflicts
 
-    def _calculate_confidence(self, observations: List[Observation],
-                               conflicts: List[Dict]) -> float:
+    def _calculate_confidence(self, observations: list[Observation],
+                               conflicts: list[dict]) -> float:
         if not observations:
             return 0.0
 
@@ -208,13 +208,13 @@ class PerceptionFusion:
             confidences.append(reliability * freshness * obs.confidence)
 
         base = sum(confidences) / len(confidences)
-        unique_sources = len(set(o.source for o in observations))
+        unique_sources = len({o.source for o in observations})
         boost = min(0.2, unique_sources * 0.05)
         penalty = len(conflicts) * 0.15
 
         return max(0.0, min(1.0, base + boost - penalty))
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "entities_tracked": len(self.observations),
             "total_observations": sum(len(v) for v in self.observations.values()),

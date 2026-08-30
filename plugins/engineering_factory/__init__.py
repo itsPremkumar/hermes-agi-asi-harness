@@ -5,11 +5,11 @@ Capabilities: project scaffolding, code generation, test creation,
 refactoring, dependency management, CI/CD setup, documentation.
 """
 
-import time
 import hashlib
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ProjectType(str, Enum):
@@ -35,13 +35,13 @@ class EngineeringProject:
     project_id: str
     name: str
     project_type: str
-    stages_completed: List[str] = field(default_factory=list)
-    files_created: List[str] = field(default_factory=list)
+    stages_completed: list[str] = field(default_factory=list)
+    files_created: list[str] = field(default_factory=list)
     tests_run: int = 0
     tests_passed: int = 0
     created_at: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "project_id": self.project_id,
             "name": self.name,
@@ -58,10 +58,10 @@ class EngineeringFactory:
     """Engineering factory for software projects."""
 
     def __init__(self):
-        self._projects: Dict[str, EngineeringProject] = {}
-        self._templates: Dict[str, Dict[str, Any]] = self._default_templates()
+        self._projects: dict[str, EngineeringProject] = {}
+        self._templates: dict[str, dict[str, Any]] = self._default_templates()
 
-    def _default_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _default_templates(self) -> dict[str, dict[str, Any]]:
         return {
             ProjectType.WEB.value: {
                 "files": ["index.html", "app.js", "style.css", "package.json"],
@@ -127,13 +127,13 @@ class EngineeringFactory:
         project.stages_completed.append(Stage.DOCUMENT.value)
         return True
 
-    def get_project(self, project_id: str) -> Optional[EngineeringProject]:
+    def get_project(self, project_id: str) -> EngineeringProject | None:
         return self._projects.get(project_id)
 
-    def list_projects(self) -> List[EngineeringProject]:
+    def list_projects(self) -> list[EngineeringProject]:
         return list(self._projects.values())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_projects": len(self._projects),
             "by_type": {pt: sum(1 for p in self._projects.values() if p.project_type == pt)

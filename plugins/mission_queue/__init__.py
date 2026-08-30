@@ -11,8 +11,8 @@ import heapq
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class MissionStatus(str, Enum):
@@ -33,10 +33,10 @@ class MissionStatus(str, Enum):
 @dataclass(order=True)
 class MissionEntry:
     priority: float
-    deadline: Optional[float]
+    deadline: float | None
     retry_count: int
     mission_id: str
-    mission: Dict[str, Any] = field(compare=False)
+    mission: dict[str, Any] = field(compare=False)
     created_at: float = field(default_factory=time.time, compare=False)
 
     def __post_init__(self):
@@ -47,16 +47,16 @@ class MissionEntry:
 
 class MissionQueue:
     def __init__(self):
-        self._queue: List[MissionEntry] = []
-        self._entries: Dict[str, MissionEntry] = {}
-        self._history: List[Dict[str, Any]] = []
+        self._queue: list[MissionEntry] = []
+        self._entries: dict[str, MissionEntry] = {}
+        self._history: list[dict[str, Any]] = []
         self._counter = 0
 
     def submit(self, objective: str, priority: float = 1.0,
-               deadline: Optional[float] = None,
-               dependencies: List[str] = None,
+               deadline: float | None = None,
+               dependencies: list[str] | None = None,
                risk_level: str = "low",
-               budget: Dict[str, Any] = None,
+               budget: dict[str, Any] | None = None,
                owner: str = "system") -> str:
         """Submit a new mission to the queue."""
         mission_id = f"MISSION-{uuid.uuid4().hex[:8]}"
@@ -91,7 +91,7 @@ class MissionQueue:
         self._entries[mission_id] = entry
         return mission_id
 
-    def peek(self) -> Optional[Dict[str, Any]]:
+    def peek(self) -> dict[str, Any] | None:
         """Get next mission without removing it."""
         if not self._queue:
             return None
@@ -99,7 +99,7 @@ class MissionQueue:
         entry = max(self._queue)
         return entry.mission
 
-    def pop(self) -> Optional[Dict[str, Any]]:
+    def pop(self) -> dict[str, Any] | None:
         """Remove and return the highest-priority mission."""
         if not self._queue:
             return None
@@ -111,7 +111,7 @@ class MissionQueue:
         entry.mission["status"] = MissionStatus.RUNNING.value
         return entry.mission
 
-    def update_status(self, mission_id: str, status: str, evidence: str = None) -> bool:
+    def update_status(self, mission_id: str, status: str, evidence: str | None = None) -> bool:
         """Update a mission's status."""
         mission = self._get_by_id(mission_id)
         if mission is None:
@@ -124,11 +124,11 @@ class MissionQueue:
             self._history.append({**mission, "final_status": status})
         return True
 
-    def get_status(self, mission_id: str) -> Optional[str]:
+    def get_status(self, mission_id: str) -> str | None:
         mission = self._get_by_id(mission_id)
         return mission["status"] if mission else None
 
-    def _get_by_id(self, mission_id: str) -> Optional[Dict[str, Any]]:
+    def _get_by_id(self, mission_id: str) -> dict[str, Any] | None:
         # Check queue first
         for entry in self._queue:
             if entry.mission_id == mission_id:
@@ -139,7 +139,7 @@ class MissionQueue:
                 return mission
         return None
 
-    def retry(self, mission_id: str, new_priority: float = None) -> bool:
+    def retry(self, mission_id: str, new_priority: float | None = None) -> bool:
         """Re-queue a failed mission."""
         mission = self._get_by_id(mission_id)
         if mission is None:
@@ -163,16 +163,16 @@ class MissionQueue:
         self._entries[mission_id] = entry
         return True
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> list[dict[str, Any]]:
         return [entry.mission for entry in sorted(self._queue, reverse=True)]
 
-    def get_completed(self) -> List[Dict[str, Any]]:
+    def get_completed(self) -> list[dict[str, Any]]:
         return [m for m in self._history if m.get("final_status") == "completed"]
 
-    def get_failed(self) -> List[Dict[str, Any]]:
+    def get_failed(self) -> list[dict[str, Any]]:
         return [m for m in self._history if m.get("final_status") == "failed"]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "pending": len(self._queue),
             "completed": len(self.get_completed()),

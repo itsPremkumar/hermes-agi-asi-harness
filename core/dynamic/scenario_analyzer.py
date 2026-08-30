@@ -10,11 +10,10 @@ Analyzes goals, projects, and requirements to dynamically determine:
 
 from __future__ import annotations
 
-import re
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class ScenarioType(str, Enum):
@@ -68,17 +67,17 @@ class ScenarioProfile:
     requires_debugging: bool = False
     
     # Detected technologies
-    detected_languages: List[str] = field(default_factory=list)
-    detected_frameworks: List[str] = field(default_factory=list)
-    detected_databases: List[str] = field(default_factory=list)
-    detected_infrastructure: List[str] = field(default_factory=list)
+    detected_languages: list[str] = field(default_factory=list)
+    detected_frameworks: list[str] = field(default_factory=list)
+    detected_databases: list[str] = field(default_factory=list)
+    detected_infrastructure: list[str] = field(default_factory=list)
     
     # Estimated effort
     estimated_files_affected: int = 0
     estimated_time_minutes: int = 0
     
     # Required modules
-    required_modules: List[str] = field(default_factory=list)
+    required_modules: list[str] = field(default_factory=list)
     
     # Strategy
     recommended_workflow: str = ""
@@ -86,7 +85,7 @@ class ScenarioProfile:
     
     # Risk
     risk_score: float = 0.5
-    risk_factors: List[str] = field(default_factory=list)
+    risk_factors: list[str] = field(default_factory=list)
 
 
 class DynamicScenarioAnalyzer:
@@ -95,7 +94,7 @@ class DynamicScenarioAnalyzer:
     def __init__(self):
         self.id = str(uuid.uuid4())
     
-    def analyze(self, goal: str, project_context: Dict[str, Any] = None) -> ScenarioProfile:
+    def analyze(self, goal: str, project_context: dict[str, Any] | None = None) -> ScenarioProfile:
         """
         Perform complete analysis of a goal/project.
         
@@ -146,7 +145,7 @@ class DynamicScenarioAnalyzer:
         return profile
     
     def _classify_scenario(self, goal: str,
-                           project_context: Dict[str, Any] = None) -> ScenarioType:
+                           project_context: dict[str, Any] | None = None) -> ScenarioType:
         """Classify the scenario type from the goal text."""
         goal_lower = goal.lower()
         
@@ -236,7 +235,7 @@ class DynamicScenarioAnalyzer:
         return ScenarioType.FEATURE_ADDITION
     
     def _assess_complexity(self, goal: str,
-                           project_context: Dict[str, Any] = None) -> ComplexityLevel:
+                           project_context: dict[str, Any] | None = None) -> ComplexityLevel:
         """Assess the complexity of the scenario."""
         goal_lower = goal.lower()
         complexity_score = 0
@@ -281,7 +280,7 @@ class DynamicScenarioAnalyzer:
         return ComplexityLevel.SIMPLE
     
     def _determine_priority(self, goal: str,
-                            project_context: Dict[str, Any] = None) -> PriorityLevel:
+                            project_context: dict[str, Any] | None = None) -> PriorityLevel:
         """Determine priority from goal text."""
         goal_lower = goal.lower()
         
@@ -294,7 +293,7 @@ class DynamicScenarioAnalyzer:
         return PriorityLevel.MEDIUM
     
     def _detect_technologies(self, goal: str,
-                             project_context: Dict[str, Any] = None) -> Dict[str, List[str]]:
+                             project_context: dict[str, Any] | None = None) -> dict[str, list[str]]:
         """Detect technologies mentioned or present in the project."""
         detected = {"languages": [], "frameworks": [], "databases": [], "infrastructure": []}
         
@@ -529,7 +528,7 @@ class DynamicScenarioAnalyzer:
         
         return int(base_time * complexity_multiplier.get(profile.complexity, 1.0))
     
-    def _select_modules(self, profile: ScenarioProfile) -> List[str]:
+    def _select_modules(self, profile: ScenarioProfile) -> list[str]:
         """Dynamically select which modules are needed."""
         modules = []
         
@@ -606,7 +605,7 @@ class DynamicScenarioAnalyzer:
             return "hierarchical"
         return "sequential"
     
-    def _assess_risk(self, profile: ScenarioProfile) -> Dict[str, Any]:
+    def _assess_risk(self, profile: ScenarioProfile) -> dict[str, Any]:
         """Assess risk factors."""
         factors = []
         score = 0.0
@@ -640,5 +639,5 @@ class DynamicScenarioAnalyzer:
         
         return {"score": min(1.0, score), "factors": factors}
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"id": self.id}

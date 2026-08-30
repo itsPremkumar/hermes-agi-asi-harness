@@ -11,12 +11,12 @@ Makes decisions about:
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from core.dynamic.scenario_analyzer import ScenarioProfile, ComplexityLevel
-from core.dynamic.planning_engine import DynamicPlan, PlanStep, StepStatus
+from core.dynamic.planning_engine import PlanStep, StepStatus, StepType
+from core.dynamic.scenario_analyzer import ScenarioProfile
 
 
 class DecisionType(str, Enum):
@@ -44,7 +44,7 @@ class Decision:
     urgency: DecisionUrgency
     description: str
     rationale: str
-    action: Dict[str, Any]
+    action: dict[str, Any]
     timestamp: float
     applied: bool = False
 
@@ -59,10 +59,10 @@ class DynamicDecisionEngine:
     
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.decisions: List[Decision] = []
+        self.decisions: list[Decision] = []
     
     def evaluate_step_completion(self, step: PlanStep,
-                                   result: Any) -> List[Decision]:
+                                   result: Any) -> list[Decision]:
         """Evaluate a completed step and make decisions."""
         decisions = []
         
@@ -73,7 +73,7 @@ class DynamicDecisionEngine:
         
         return decisions
     
-    def _handle_failure(self, step: PlanStep, result: Any) -> List[Decision]:
+    def _handle_failure(self, step: PlanStep, result: Any) -> list[Decision]:
         """Handle step failure."""
         decisions = []
         
@@ -101,7 +101,7 @@ class DynamicDecisionEngine:
         
         return decisions
     
-    def _handle_success(self, step: PlanStep, result: Any) -> List[Decision]:
+    def _handle_success(self, step: PlanStep, result: Any) -> list[Decision]:
         """Handle step success."""
         decisions = []
         
@@ -121,7 +121,7 @@ class DynamicDecisionEngine:
     
     def should_switch_strategy(self, profile: ScenarioProfile,
                                  current_step: PlanStep,
-                                 metrics: Dict[str, Any]) -> Optional[Decision]:
+                                 metrics: dict[str, Any]) -> Decision | None:
         """Determine if we should switch strategies."""
         failure_rate = metrics.get("failure_rate", 0.0)
         
@@ -138,7 +138,7 @@ class DynamicDecisionEngine:
         
         return None
     
-    def should_rollback(self, step: PlanStep, result: Any) -> Optional[Decision]:
+    def should_rollback(self, step: PlanStep, result: Any) -> Decision | None:
         """Determine if we should rollback."""
         if step.status == StepStatus.FAILED and step.step_type.value == "deployment":
             return Decision(
@@ -153,7 +153,7 @@ class DynamicDecisionEngine:
         
         return None
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "decisions": len(self.decisions),
             "applied": sum(1 for d in self.decisions if d.applied),

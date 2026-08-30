@@ -14,13 +14,11 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.dynamic.scenario_analyzer import (
     ScenarioProfile,
     ScenarioType,
-    ComplexityLevel,
-    PriorityLevel,
 )
 
 
@@ -57,28 +55,28 @@ class PlanStep:
     status: StepStatus = StepStatus.PENDING
     
     # Dynamic configuration
-    required_modules: List[str] = field(default_factory=list)
+    required_modules: list[str] = field(default_factory=list)
     agent_role: str = "executor"
     agent_count: int = 1
     
     # Dependencies
-    depends_on: List[str] = field(default_factory=list)
-    parallel_with: List[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
+    parallel_with: list[str] = field(default_factory=list)
     
     # Quality
-    quality_gates: List[str] = field(default_factory=list)
-    acceptance_criteria: List[str] = field(default_factory=list)
+    quality_gates: list[str] = field(default_factory=list)
+    acceptance_criteria: list[str] = field(default_factory=list)
     
     # Estimation
     estimated_duration_min: int = 0
     
     # Results
-    output_artifacts: List[str] = field(default_factory=list)
+    output_artifacts: list[str] = field(default_factory=list)
     result: Any = None
     
     # Dynamic decisions
-    decision_points: List[Dict[str, Any]] = field(default_factory=list)
-    alternatives: List[Dict[str, Any]] = field(default_factory=list)
+    decision_points: list[dict[str, Any]] = field(default_factory=list)
+    alternatives: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -89,7 +87,7 @@ class DynamicPlan:
     scenario_profile: ScenarioProfile
     
     # Plan structure
-    steps: List[PlanStep] = field(default_factory=list)
+    steps: list[PlanStep] = field(default_factory=list)
     
     # Topology
     topology: str = "single"
@@ -99,15 +97,15 @@ class DynamicPlan:
     estimated_total_min: int = 0
     
     # Resources
-    required_capabilities: List[str] = field(default_factory=list)
-    required_modules: List[str] = field(default_factory=list)
+    required_capabilities: list[str] = field(default_factory=list)
+    required_modules: list[str] = field(default_factory=list)
     
     # Quality
-    global_quality_gates: List[str] = field(default_factory=list)
+    global_quality_gates: list[str] = field(default_factory=list)
     
     # Adaptation
-    adaptation_points: List[Dict[str, Any]] = field(default_factory=list)
-    contingency_plans: List[Dict[str, Any]] = field(default_factory=list)
+    adaptation_points: list[dict[str, Any]] = field(default_factory=list)
+    contingency_plans: list[dict[str, Any]] = field(default_factory=list)
 
 
 class AdvancedPlanningEngine:
@@ -158,7 +156,7 @@ class AdvancedPlanningEngine:
         
         return plan
     
-    def _generate_steps(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _generate_steps(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate plan steps based on scenario type."""
         workflow = profile.recommended_workflow
         
@@ -182,7 +180,7 @@ class AdvancedPlanningEngine:
         generator = step_generators.get(workflow, self._gen_understand_implement_test)
         return generator(profile)
     
-    def _gen_architecture_first(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_architecture_first(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for new project (architecture-first approach)."""
         return [
             self._create_step("Requirements Analysis", StepType.ANALYSIS,
@@ -230,7 +228,7 @@ class AdvancedPlanningEngine:
                             parallel_with=["Deployment Planning"]),
         ]
     
-    def _gen_understand_implement_test(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_understand_implement_test(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for feature addition (understand → implement → test)."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -271,7 +269,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Code Review"]),
         ]
     
-    def _gen_reproduce_diagnose_fix(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_reproduce_diagnose_fix(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for bug fix (reproduce → diagnose → fix)."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -306,11 +304,11 @@ class AdvancedPlanningEngine:
                             depends_on=["Code Review"]),
         ]
     
-    def _gen_reproduce_localize_fix(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_reproduce_localize_fix(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Alias for bug fix workflow."""
         return self._gen_reproduce_diagnose_fix(profile)
     
-    def _gen_analyze_design_implement(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_analyze_design_implement(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for refactor."""
         return [
             self._create_step("Deep Repository Analysis", StepType.ANALYSIS,
@@ -344,7 +342,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Behavioral Verification"]),
         ]
     
-    def _gen_explore_synthesize_report(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_explore_synthesize_report(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for research."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -366,7 +364,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Report Generation"]),
         ]
     
-    def _gen_test_stage_canary_production(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_test_stage_canary_production(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for deployment."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -405,7 +403,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Full Rollout"]),
         ]
     
-    def _gen_scan_analyze_remediate(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_scan_analyze_remediate(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for security audit."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -437,7 +435,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Remediation"]),
         ]
     
-    def _gen_profile_hypothesize_benchmark(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_profile_hypothesize_benchmark(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for performance optimization."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -469,7 +467,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Implementation"]),
         ]
     
-    def _gen_analyze_plan_execute_verify(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_analyze_plan_execute_verify(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for migration."""
         return [
             self._create_step("Source Analysis", StepType.ANALYSIS,
@@ -500,7 +498,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Migration Execution"]),
         ]
     
-    def _gen_read_structure_write(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_read_structure_write(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for documentation."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -519,7 +517,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Documentation Writing"]),
         ]
     
-    def _gen_analyze_write_execute(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_analyze_write_execute(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for testing."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -543,7 +541,7 @@ class AdvancedPlanningEngine:
                             depends_on=["Test Execution"]),
         ]
     
-    def _gen_read_analyze_report(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_read_analyze_report(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for code review."""
         return [
             self._create_step("Code Reading", StepType.ANALYSIS,
@@ -563,7 +561,7 @@ class AdvancedPlanningEngine:
                             [], "reviewer"),
         ]
     
-    def _gen_assess_execute_verify(self, profile: ScenarioProfile) -> List[PlanStep]:
+    def _gen_assess_execute_verify(self, profile: ScenarioProfile) -> list[PlanStep]:
         """Generate steps for maintenance."""
         return [
             self._create_step("Repository Analysis", StepType.ANALYSIS,
@@ -584,10 +582,10 @@ class AdvancedPlanningEngine:
     
     def _create_step(self, name: str, step_type: StepType,
                      description: str, profile: ScenarioProfile,
-                     duration: int, modules: List[str],
+                     duration: int, modules: list[str],
                      agent_role: str, agent_count: int = 1,
-                     depends_on: List[str] = None,
-                     parallel_with: List[str] = None) -> PlanStep:
+                     depends_on: list[str] | None = None,
+                     parallel_with: list[str] | None = None) -> PlanStep:
         """Create a plan step."""
         return PlanStep(
             id=str(uuid.uuid4()),
@@ -612,7 +610,7 @@ class AdvancedPlanningEngine:
         }
         return topology_map.get(profile.recommended_topology, 1)
     
-    def _generate_global_gates(self, profile: ScenarioProfile) -> List[str]:
+    def _generate_global_gates(self, profile: ScenarioProfile) -> list[str]:
         """Generate global quality gates."""
         gates = ["requirements_verified"]
         
@@ -630,7 +628,7 @@ class AdvancedPlanningEngine:
         return gates
     
     def _identify_adaptation_points(self, profile: ScenarioProfile,
-                                     steps: List[PlanStep]) -> List[Dict[str, Any]]:
+                                     steps: list[PlanStep]) -> list[dict[str, Any]]:
         """Identify points where the plan can adapt based on results."""
         points = []
         
@@ -652,7 +650,7 @@ class AdvancedPlanningEngine:
         
         return points
     
-    def _generate_contingencies(self, profile: ScenarioProfile) -> List[Dict[str, Any]]:
+    def _generate_contingencies(self, profile: ScenarioProfile) -> list[dict[str, Any]]:
         """Generate contingency plans for risk mitigation."""
         contingencies = []
         
@@ -676,9 +674,9 @@ class AdvancedPlanningEngine:
         
         return contingencies
     
-    def _load_plan_templates(self) -> Dict[str, Any]:
+    def _load_plan_templates(self) -> dict[str, Any]:
         """Load plan templates for different scenario types."""
         return {}
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"id": self.id}

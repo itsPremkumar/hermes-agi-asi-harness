@@ -14,9 +14,10 @@ import os
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class LLMProvider(str, Enum):
@@ -43,25 +44,25 @@ class MessageRole(str, Enum):
 class LLMMessage:
     role: MessageRole
     content: str
-    name: Optional[str] = None
-    tool_call_id: Optional[str] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    name: str | None = None
+    tool_call_id: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class LLMRequest:
-    messages: List[LLMMessage]
-    model: Optional[str] = None
+    messages: list[LLMMessage]
+    model: str | None = None
     temperature: float = 0.7
     max_tokens: int = 4096
     top_p: float = 1.0
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
-    stop: Optional[List[str]] = None
-    tools: Optional[List[Dict[str, Any]]] = None
-    response_format: Optional[Dict[str, str]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    stop: list[str] | None = None
+    tools: list[dict[str, Any]] | None = None
+    response_format: dict[str, str] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -70,9 +71,9 @@ class LLMResponse:
     model: str
     content: str
     finish_reason: str
-    usage: Dict[str, int]
-    tool_calls: Optional[List[Dict[str, Any]]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    usage: dict[str, int]
+    tool_calls: list[dict[str, Any]] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     @property
     def total_tokens(self) -> int:
@@ -86,17 +87,17 @@ class LLMResponse:
 @dataclass
 class LLMConfig:
     provider: LLMProvider
-    api_key: Optional[str] = None
-    api_base: Optional[str] = None
+    api_key: str | None = None
+    api_base: str | None = None
     model: str = "gpt-4o"
     temperature: float = 0.7
     max_tokens: int = 4096
     timeout: int = 120
     max_retries: int = 3
     retry_delay: float = 1.0
-    rate_limit: Optional[int] = None  # requests per minute
+    rate_limit: int | None = None  # requests per minute
     cost_per_1k_tokens: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseLLMProvider(ABC):
@@ -159,7 +160,7 @@ class BaseLLMProvider(ABC):
         
         self._last_request_time = time.time()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "provider": self.config.provider.value,
             "model": self.config.model,
@@ -396,26 +397,25 @@ class OllamaProvider(BaseLLMProvider):
             for m in request.messages
         ]
         
-        async with httpx.AsyncClient() as client:
-            async with client.stream(
-                "POST",
-                f"{self.api_base}/api/chat",
-                json={
-                    "model": request.model or self.config.model or "llama3",
-                    "messages": messages,
-                    "stream": True,
-                    "options": {
-                        "temperature": request.temperature or self.config.temperature,
-                        "num_predict": request.max_tokens or self.config.max_tokens,
-                    },
+        async with httpx.AsyncClient() as client, client.stream(
+            "POST",
+            f"{self.api_base}/api/chat",
+            json={
+                "model": request.model or self.config.model or "llama3",
+                "messages": messages,
+                "stream": True,
+                "options": {
+                    "temperature": request.temperature or self.config.temperature,
+                    "num_predict": request.max_tokens or self.config.max_tokens,
                 },
-                timeout=self.config.timeout,
-            ) as response:
-                async for line in response.aiter_lines():
-                    if line:
-                        data = json.loads(line)
-                        if data.get("message", {}).get("content"):
-                            yield data["message"]["content"]
+            },
+            timeout=self.config.timeout,
+        ) as response:
+            async for line in response.aiter_lines():
+                if line:
+                    data = json.loads(line)
+                    if data.get("message", {}).get("content"):
+                        yield data["message"]["content"]
     
     async def count_tokens(self, text: str) -> int:
         return len(text) // 4
@@ -427,9 +427,9 @@ class LLMProviderManager:
     """
     
     def __init__(self):
-        self._providers: Dict[LLMProvider, BaseLLMProvider] = {}
-        self._fallback_chain: List[LLMProvider] = []
-        self._cache: Dict[str, LLMResponse] = {}
+        self._providers: dict[LLMProvider, BaseLLMProvider] = {}
+        self._fallback_chain: list[LLMProvider] = []
+        self._cache: dict[str, LLMResponse] = {}
         self._cache_ttl = 300  # 5 minutes
     
     def register_provider(self, config: LLMConfig) -> BaseLLMProvider:
@@ -451,7 +451,7 @@ class LLMProviderManager:
         return provider
     
     async def generate(self, request: LLMRequest, 
-                       preferred: Optional[LLMProvider] = None) -> LLMResponse:
+                       preferred: LLMProvider | None = None) -> LLMResponse:
         """Generate with automatic fallback."""
         # Check cache first
         cache_key = self._get_cache_key(request)
@@ -489,7 +489,7 @@ class LLMProviderManager:
         ])
         return hashlib.md5(content.encode()).hexdigest()
     
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """Get stats from all providers."""
         return {
             provider_type.value: provider.get_stats()
@@ -497,5 +497,5 @@ class LLMProviderManager:
         }
     
     @property
-    def available_providers(self) -> List[LLMProvider]:
+    def available_providers(self) -> list[LLMProvider]:
         return list(self._providers.keys())

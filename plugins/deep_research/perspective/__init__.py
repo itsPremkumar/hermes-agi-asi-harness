@@ -16,9 +16,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_perspective")
 
@@ -41,8 +42,8 @@ class Perspective:
     perspective_type: PerspectiveType
     name: str
     description: str
-    questions: List[str] = field(default_factory=list)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
+    questions: list[str] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
     confidence: float = 0.0
     timestamp: float = field(default_factory=time.time)
 
@@ -54,8 +55,8 @@ class ExpertPersona:
     name: str
     expertise: str
     background: str
-    questions_asked: List[str] = field(default_factory=list)
-    insights: List[str] = field(default_factory=list)
+    questions_asked: list[str] = field(default_factory=list)
+    insights: list[str] = field(default_factory=list)
 
 
 class MultiPerspectiveResearch:
@@ -71,10 +72,10 @@ class MultiPerspectiveResearch:
     """
     
     def __init__(self):
-        self._perspectives: Dict[str, Perspective] = {}
-        self._personas: Dict[str, ExpertPersona] = {}
+        self._perspectives: dict[str, Perspective] = {}
+        self._personas: dict[str, ExpertPersona] = {}
     
-    async def discover_perspectives(self, topic: str) -> List[Perspective]:
+    async def discover_perspectives(self, topic: str) -> list[Perspective]:
         """Discover different perspectives on a topic."""
         perspectives = []
         
@@ -102,7 +103,7 @@ class MultiPerspectiveResearch:
         logger.info("Discovered %d perspectives for: %s", len(perspectives), topic[:50])
         return perspectives
     
-    async def _generate_questions(self, topic: str, perspective_type: PerspectiveType) -> List[str]:
+    async def _generate_questions(self, topic: str, perspective_type: PerspectiveType) -> list[str]:
         """Generate questions from a perspective."""
         question_templates = {
             PerspectiveType.TECHNICAL: [
@@ -172,7 +173,7 @@ class MultiPerspectiveResearch:
         self._personas[persona.persona_id] = persona
         return persona
     
-    async def curate_knowledge(self, topic: str) -> Dict[str, Any]:
+    async def curate_knowledge(self, topic: str) -> dict[str, Any]:
         """Curate knowledge from multiple perspectives."""
         # Discover perspectives
         perspectives = await self.discover_perspectives(topic)
@@ -200,7 +201,7 @@ class MultiPerspectiveResearch:
             "concept_map": self._build_concept_map(topic, perspectives)
         }
     
-    def _build_concept_map(self, topic: str, perspectives: List[Perspective]) -> Dict[str, Any]:
+    def _build_concept_map(self, topic: str, perspectives: list[Perspective]) -> dict[str, Any]:
         """Build a concept-oriented knowledge map."""
         concept_map = {
             "central_topic": topic,
@@ -217,7 +218,7 @@ class MultiPerspectiveResearch:
         
         return concept_map
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

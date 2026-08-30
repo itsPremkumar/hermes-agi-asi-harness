@@ -16,7 +16,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ def plan_hash(plan_md: str) -> str:
     return hashlib.sha256(plan_md.encode("utf-8")).hexdigest()[:16]
 
 
-def check_plan(state: dict, approved_hash: str) -> Tuple[bool, int]:
+def check_plan(state: dict, approved_hash: str) -> tuple[bool, int]:
     """Exit 4 if current plan text hash != approved hash."""
     cur = state.get("plan_hash", "")
     if not cur or not approved_hash:
@@ -43,14 +42,14 @@ def check_plan(state: dict, approved_hash: str) -> Tuple[bool, int]:
     return True, 0
 
 
-def require_goal(goal: str) -> Tuple[bool, int]:
+def require_goal(goal: str) -> tuple[bool, int]:
     """Exit 7 if empty/placeholder goal."""
     if not goal or not goal.strip() or goal.strip().lower() in {"todo", "tbd"}:
         return False, EXIT_GOAL_REQUIRED
     return True, 0
 
 
-def checklist_veto(checklist: List[Dict[str, str]]) -> Tuple[bool, int]:
+def checklist_veto(checklist: list[dict[str, str]]) -> tuple[bool, int]:
     """Every item must carry proof=pass to declare COMPLETE. Exit 6 otherwise."""
     for item in checklist:
         if item.get("proof") != "pass":
@@ -58,7 +57,7 @@ def checklist_veto(checklist: List[Dict[str, str]]) -> Tuple[bool, int]:
     return True, 0
 
 
-def supervise(state: dict) -> Optional[str]:
+def supervise(state: dict) -> str | None:
     """Returns an action for the kernel: None | 'replan' | 'await_human'."""
     if state["stagnation"] >= STAGNATION_LIMIT:
         return "await_human"

@@ -14,8 +14,9 @@ import os
 import re
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_rag")
 
@@ -26,8 +27,8 @@ class IndexedDocument:
     doc_id: str
     content: str
     source: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    embedding: Dict[str, float] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: dict[str, float] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -36,8 +37,8 @@ class RAGEngine:
     
     def __init__(self, index_path: str = "state/memory/rag_index.json"):
         self.index_path = index_path
-        self._documents: Dict[str, IndexedDocument] = {}
-        self._knowledge_graph: Dict[str, List[str]] = {}
+        self._documents: dict[str, IndexedDocument] = {}
+        self._knowledge_graph: dict[str, list[str]] = {}
         os.makedirs(os.path.dirname(index_path), exist_ok=True)
         self._load()
     
@@ -58,7 +59,7 @@ class RAGEngine:
                 "documents": [doc.__dict__ for doc in self._documents.values()]
             }, f, indent=2, default=str)
     
-    def index(self, content: str, source: str = "memory", metadata: Dict[str, Any] = None) -> str:
+    def index(self, content: str, source: str = "memory", metadata: dict[str, Any] | None = None) -> str:
         """Index a document."""
         doc_id = str(uuid.uuid4())
         doc = IndexedDocument(
@@ -72,7 +73,7 @@ class RAGEngine:
         self.save()
         return doc_id
     
-    def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Semantic search."""
         query_emb = self._embed(query)
         scored = []
@@ -93,7 +94,7 @@ class RAGEngine:
             for score, doc in scored[:limit]
         ]
     
-    def hybrid_search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def hybrid_search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Hybrid search: keyword + semantic."""
         keyword_results = self._keyword_search(query, limit)
         semantic_results = self.search(query, limit)
@@ -108,7 +109,7 @@ class RAGEngine:
         
         return merged[:limit]
     
-    def _keyword_search(self, query: str, limit: int) -> List[Dict[str, Any]]:
+    def _keyword_search(self, query: str, limit: int) -> list[dict[str, Any]]:
         """Keyword search."""
         query_lower = query.lower()
         results = []
@@ -124,7 +125,7 @@ class RAGEngine:
         
         return results[:limit]
     
-    def _embed(self, text: str) -> Dict[str, float]:
+    def _embed(self, text: str) -> dict[str, float]:
         """Simple token-based embedding."""
         vec = {}
         for token in re.findall(r'[a-z0-9_]+', text.lower()):
@@ -135,11 +136,11 @@ class RAGEngine:
         norm = math.sqrt(sum(v * v for v in vec.values())) or 1.0
         return {k: v / norm for k, v in vec.items()}
     
-    def _cosine(self, a: Dict[str, float], b: Dict[str, float]) -> float:
+    def _cosine(self, a: dict[str, float], b: dict[str, float]) -> float:
         """Cosine similarity."""
         if not a or not b:
             return 0.0
         return sum(a[k] * b[k] for k in (set(a) & set(b)))
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "documents": len(self._documents)}

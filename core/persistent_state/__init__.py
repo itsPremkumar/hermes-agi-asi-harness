@@ -1,13 +1,13 @@
 """Persistent State Store package — re-exports from persistent_state module."""
-import os
 import json
-import time
+import os
 import shutil
 import tempfile
+import time
 import uuid
-from typing import Dict, Any, Optional, List
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class StateFile(str, Enum):
@@ -48,10 +48,10 @@ class PersistentStateStore:
         StateFile.HEALTH_STATE: {"plugins": {}, "overall": "unknown", "updated_at": None},
     }
 
-    def __init__(self, state_dir: Optional[str] = None):
+    def __init__(self, state_dir: str | None = None):
         self.state_dir = Path(state_dir or os.environ.get("HERMES_STATE_DIR", "state"))
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        self._locks: Dict[str, bool] = {}
+        self._locks: dict[str, bool] = {}
         self._init_state_files()
 
     def _init_state_files(self):
@@ -60,7 +60,7 @@ class PersistentStateStore:
             if not filepath.exists():
                 self._write_atomic(state_file, default_data, skip_backup=True)
 
-    def _write_atomic(self, state_file: StateFile, data: Dict[str, Any], skip_backup: bool = False) -> Dict[str, Any]:
+    def _write_atomic(self, state_file: StateFile, data: dict[str, Any], skip_backup: bool = False) -> dict[str, Any]:
         self._validate_state(state_file, data)
 
         filepath = self.state_dir / state_file
@@ -77,7 +77,7 @@ class PersistentStateStore:
         os.replace(temp_path, filepath)
         return data
 
-    def _validate_state(self, state_file: StateFile, data: Dict[str, Any]) -> None:
+    def _validate_state(self, state_file: StateFile, data: dict[str, Any]) -> None:
         required_keys = {
             StateFile.WORLD_STATE: ["entities", "relations"],
             StateFile.SELF_MODEL: ["capabilities"],
@@ -96,25 +96,25 @@ class PersistentStateStore:
                 if req_key not in data:
                     raise StateValidationError(f"State file {state_file} missing required key: {req_key}")
 
-    def read(self, state_file: StateFile) -> Dict[str, Any]:
+    def read(self, state_file: StateFile) -> dict[str, Any]:
         filepath = self.state_dir / state_file
         if not filepath.exists():
             return self.DEFAULT_STATES[state_file].copy()
         with open(filepath, 'r') as f:
             return json.load(f)
 
-    def read_modify_write(self, state_file: StateFile, modifier) -> Dict[str, Any]:
+    def read_modify_write(self, state_file: StateFile, modifier) -> dict[str, Any]:
         data = self.read(state_file)
         modified = modifier(data)
         return self._write_atomic(state_file, modified)
 
-    def update_entity(self, entity_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_entity(self, entity_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             entities = state.get("entities", [])
             found = False
             for i, entity in enumerate(entities):
                 if entity.get("id") == entity_id:
-                    entities[i].update(data)
+                    entity.update(data)
                     entities[i]["updated_at"] = time.time()
                     found = True
                     break
@@ -124,8 +124,8 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.WORLD_STATE, modifier)
 
-    def add_mission(self, mission: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def add_mission(self, mission: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             nodes = state.get("nodes", [])
             active = state.get("active_missions", [])
             mission_id = mission.get("id", f"mission-{len(nodes)}")
@@ -139,8 +139,8 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.MISSION_GRAPH, modifier)
 
-    def add_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def add_task(self, task: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             tasks = state.get("tasks", [])
             task["created_at"] = time.time()
             task["status"] = task.get("status", "pending")
@@ -149,8 +149,8 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.ACTIVE_TASKS, modifier)
 
-    def update_task_status(self, task_id: str, status: str, result: Dict[str, Any] = None) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_task_status(self, task_id: str, status: str, result: dict[str, Any] | None = None) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             tasks = state.get("tasks", [])
             for task in tasks:
                 if task.get("id") == task_id:
@@ -163,8 +163,8 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.ACTIVE_TASKS, modifier)
 
-    def record_token_cost(self, model: str, tokens: int, cost: float) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def record_token_cost(self, model: str, tokens: int, cost: float) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             entry = {"model": model, "tokens": tokens, "cost": cost, "timestamp": time.time()}
             state["token_costs"].append(entry)
             state["total"] = state.get("total", 0.0) + cost
@@ -172,36 +172,36 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.FINANCIAL_LEDGER, modifier)
 
-    def update_capability(self, capability_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_capability(self, capability_name: str, data: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             caps = state.get("capabilities", {})
             caps[capability_name] = {**data, "updated_at": time.time()}
             state["capabilities"] = caps
             return state
         return self.read_modify_write(StateFile.CAPABILITY_REGISTRY, modifier)
 
-    def get_capability(self, capability_name: str) -> Optional[Dict[str, Any]]:
+    def get_capability(self, capability_name: str) -> dict[str, Any] | None:
         state = self.read(StateFile.CAPABILITY_REGISTRY)
         return state.get("capabilities", {}).get(capability_name)
 
-    def update_tool_registration(self, tool_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_tool_registration(self, tool_name: str, data: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             tools = state.get("tools", {})
             tools[tool_name] = {**data, "updated_at": time.time()}
             state["tools"] = tools
             return state
         return self.read_modify_write(StateFile.TOOL_REGISTRY, modifier)
 
-    def update_agent_registration(self, agent_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_agent_registration(self, agent_name: str, data: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             agents = state.get("agents", {})
             agents[agent_name] = {**data, "updated_at": time.time()}
             state["agents"] = agents
             return state
         return self.read_modify_write(StateFile.AGENT_REGISTRY, modifier)
 
-    def update_health(self, plugin_name: str, health_data: Dict[str, Any]) -> Dict[str, Any]:
-        def modifier(state: Dict[str, Any]) -> Dict[str, Any]:
+    def update_health(self, plugin_name: str, health_data: dict[str, Any]) -> dict[str, Any]:
+        def modifier(state: dict[str, Any]) -> dict[str, Any]:
             plugins = state.get("plugins", {})
             plugins[plugin_name] = {**health_data, "updated_at": time.time()}
             state["plugins"] = plugins
@@ -211,10 +211,10 @@ class PersistentStateStore:
             return state
         return self.read_modify_write(StateFile.HEALTH_STATE, modifier)
 
-    def get_all_state_files(self) -> List[str]:
+    def get_all_state_files(self) -> list[str]:
         return [f.value for f in StateFile]
 
-    def get_state_summary(self) -> Dict[str, Any]:
+    def get_state_summary(self) -> dict[str, Any]:
         return {
             "state_dir": str(self.state_dir),
             "files": {f.value: (self.state_dir / f.value).exists() for f in StateFile},

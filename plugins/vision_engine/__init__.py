@@ -40,8 +40,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -53,11 +53,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -92,7 +92,7 @@ class ImageInfo:
     mode: str
     size_bytes: int
     has_alpha: bool
-    dominant_colors: List[str] = field(default_factory=list)
+    dominant_colors: list[str] = field(default_factory=list)
 
 
 class VisionEngine:
@@ -109,7 +109,7 @@ class VisionEngine:
         except ImportError:
             return False
     
-    def analyze(self, image_path: str) -> Dict[str, Any]:
+    def analyze(self, image_path: str) -> dict[str, Any]:
         """Analyze an image."""
         path = Path(image_path)
         
@@ -162,7 +162,7 @@ class VisionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def _get_dominant_colors(self, img, count: int = 5) -> List[str]:
+    def _get_dominant_colors(self, img, count: int = 5) -> list[str]:
         """Get dominant colors from image."""
         try:
             # Resize for speed
@@ -182,7 +182,7 @@ class VisionEngine:
         except Exception:
             return []
     
-    def resize(self, image_path: str, output_path: str, width: int, height: int = None) -> Dict[str, Any]:
+    def resize(self, image_path: str, output_path: str, width: int, height: int | None = None) -> dict[str, Any]:
         """Resize an image."""
         if not self._has_pil:
             return {"success": False, "error": "PIL not available"}
@@ -208,7 +208,7 @@ class VisionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def create_thumbnail(self, image_path: str, output_path: str, size: int = 128) -> Dict[str, Any]:
+    def create_thumbnail(self, image_path: str, output_path: str, size: int = 128) -> dict[str, Any]:
         """Create a thumbnail."""
         if not self._has_pil:
             return {"success": False, "error": "PIL not available"}
@@ -228,7 +228,7 @@ class VisionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def convert_format(self, image_path: str, output_path: str, fmt: str = "PNG") -> Dict[str, Any]:
+    def convert_format(self, image_path: str, output_path: str, fmt: str = "PNG") -> dict[str, Any]:
         """Convert image format."""
         if not self._has_pil:
             return {"success": False, "error": "PIL not available"}
@@ -248,7 +248,7 @@ class VisionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def encode_base64(self, image_path: str) -> Dict[str, Any]:
+    def encode_base64(self, image_path: str) -> dict[str, Any]:
         """Encode image as base64."""
         try:
             with open(image_path, "rb") as f:
@@ -262,7 +262,7 @@ class VisionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def analyze_colors(self, image_path: str) -> Dict[str, Any]:
+    def analyze_colors(self, image_path: str) -> dict[str, Any]:
         """Analyze color distribution."""
         if not self._has_pil:
             return {"success": False, "error": "PIL not available"}
@@ -274,7 +274,7 @@ class VisionEngine:
                 img = img.convert("RGB")
             
             # Sample colors
-            colors: Dict[str, int] = {}
+            colors: dict[str, int] = {}
             for pixel in img.getdata()[::100]:  # Sample every 100th pixel
                 r, g, b = pixel
                 bucket = f"#{r//32*32:02x}{g//32*32:02x}{b//32*32:02x}"
@@ -319,7 +319,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.engine: Optional[VisionEngine] = None
+        self.engine: VisionEngine | None = None
     
     async def load(self) -> bool:
         self.engine = VisionEngine()
@@ -336,7 +336,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -348,23 +348,23 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def analyze(self, image_path: str) -> Dict[str, Any]:
+    def analyze(self, image_path: str) -> dict[str, Any]:
         return self.engine.analyze(image_path)
     
-    def resize(self, image_path: str, output_path: str, width: int, height: int = None) -> Dict[str, Any]:
+    def resize(self, image_path: str, output_path: str, width: int, height: int | None = None) -> dict[str, Any]:
         return self.engine.resize(image_path, output_path, width, height)
     
-    def create_thumbnail(self, image_path: str, output_path: str, size: int = 128) -> Dict[str, Any]:
+    def create_thumbnail(self, image_path: str, output_path: str, size: int = 128) -> dict[str, Any]:
         return self.engine.create_thumbnail(image_path, output_path, size)
     
-    def convert_format(self, image_path: str, output_path: str, fmt: str = "PNG") -> Dict[str, Any]:
+    def convert_format(self, image_path: str, output_path: str, fmt: str = "PNG") -> dict[str, Any]:
         return self.engine.convert_format(image_path, output_path, fmt)
     
-    def encode_base64(self, image_path: str) -> Dict[str, Any]:
+    def encode_base64(self, image_path: str) -> dict[str, Any]:
         return self.engine.encode_base64(image_path)
     
-    def analyze_colors(self, image_path: str) -> Dict[str, Any]:
+    def analyze_colors(self, image_path: str) -> dict[str, Any]:
         return self.engine.analyze_colors(image_path)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

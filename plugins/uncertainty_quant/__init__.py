@@ -11,7 +11,7 @@ Rationale: Critical for ASI-grade reliability; SOUL.md emphasizes precise uncert
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 class Uncertainty_quantPlugin:
     """Plugin for Uncertainty Quantification Engine."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._initialized = False
-        self._stats: Dict[str, Any] = {"operations": 0, "errors": 0}
+        self._stats: dict[str, Any] = {"operations": 0, "errors": 0}
 
     async def load(self):
         """Load plugin configuration."""
@@ -37,7 +37,7 @@ class Uncertainty_quantPlugin:
         """Stop plugin operations."""
         logger.info("Uncertainty Quantification Engine plugin stopping")
 
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Return health status."""
         return {
             "status": "healthy",
@@ -46,7 +46,7 @@ class Uncertainty_quantPlugin:
             "stats": self._stats,
         }
 
-    async def execute(self, *args, **kwargs) -> Dict[str, Any]:
+    async def execute(self, *args, **kwargs) -> dict[str, Any]:
         """Main execution method."""
         self._stats["operations"] += 1
         try:

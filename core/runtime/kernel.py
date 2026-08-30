@@ -17,11 +17,12 @@ import logging
 import os
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -65,90 +66,90 @@ class HermesKernel:
     Everything else is delegated to plugins.
     """
 
-    def __init__(self, config: Optional[KernelConfig] = None):
+    def __init__(self, config: KernelConfig | None = None):
         self.config = config or KernelConfig()
         self.state = KernelState.INITIALIZED
         self.kernel_id = str(uuid.uuid4())
         self.started_at = datetime.utcnow()
         
         # Core components (loaded from plugins)
-        self.plugin_manager: Optional[Any] = None
-        self.event_bus: Optional[Any] = None
-        self.state_manager: Optional[Any] = None
-        self.model_router: Optional[Any] = None
-        self.security_core: Optional[Any] = None
-        self.memory_system: Optional[Any] = None
-        self.execution_engine: Optional[Any] = None
-        self.verification_engine: Optional[Any] = None
-        self.recovery_engine: Optional[Any] = None
-        self.evolution_engine: Optional[Any] = None
-        self.ecosystem_intel: Optional[Any] = None
-        self.supervisor: Optional[Any] = None
-        self.world_model: Optional[Any] = None
-        self.jit_harness: Optional[Any] = None
-        self.self_healing: Optional[Any] = None
+        self.plugin_manager: Any | None = None
+        self.event_bus: Any | None = None
+        self.state_manager: Any | None = None
+        self.model_router: Any | None = None
+        self.security_core: Any | None = None
+        self.memory_system: Any | None = None
+        self.execution_engine: Any | None = None
+        self.verification_engine: Any | None = None
+        self.recovery_engine: Any | None = None
+        self.evolution_engine: Any | None = None
+        self.ecosystem_intel: Any | None = None
+        self.supervisor: Any | None = None
+        self.world_model: Any | None = None
+        self.jit_harness: Any | None = None
+        self.self_healing: Any | None = None
         
         # Phase 1: Executive Foundation
-        self.goal_contract: Optional[Any] = None
-        self.context_os: Optional[Any] = None
-        self.safety_gates: Optional[Any] = None
-        self.completion_proof: Optional[Any] = None
+        self.goal_contract: Any | None = None
+        self.context_os: Any | None = None
+        self.safety_gates: Any | None = None
+        self.completion_proof: Any | None = None
 
         # Phase 2: Persistent Intelligence
-        self.persistent_state: Optional[Any] = None
-        self.mission_queue: Optional[Any] = None
-        self.belief_engine: Optional[Any] = None
-        self.capability_registry: Optional[Any] = None
+        self.persistent_state: Any | None = None
+        self.mission_queue: Any | None = None
+        self.belief_engine: Any | None = None
+        self.capability_registry: Any | None = None
         
         # v9: Universal Environment Intelligence & Action Plane
-        self.environment_model: Optional[Any] = None
-        self.affordance_model: Optional[Any] = None
-        self.state_estimator: Optional[Any] = None
-        self.consequence_simulator: Optional[Any] = None
-        self.universal_action_protocol: Optional[Any] = None
-        self.universal_observation_protocol: Optional[Any] = None
-        self.event_bus_v9: Optional[Any] = None
-        self.transaction_model: Optional[Any] = None
-        self.safety_envelope_manager: Optional[Any] = None
-        self.master_orchestrator: Optional[Any] = None
+        self.environment_model: Any | None = None
+        self.affordance_model: Any | None = None
+        self.state_estimator: Any | None = None
+        self.consequence_simulator: Any | None = None
+        self.universal_action_protocol: Any | None = None
+        self.universal_observation_protocol: Any | None = None
+        self.event_bus_v9: Any | None = None
+        self.transaction_model: Any | None = None
+        self.safety_envelope_manager: Any | None = None
+        self.master_orchestrator: Any | None = None
         
         # v10: Closed-Loop Self-Improving System
-        self.closed_loop_orchestrator: Optional[Any] = None
-        self.policy_bridge: Optional[Any] = None
-        self.rsi_engine: Optional[Any] = None
-        self.action_explainer: Optional[Any] = None
-        self.audit_trail: Optional[Any] = None
-        self.continuous_benchmark: Optional[Any] = None
-        self.collaboration_protocol: Optional[Any] = None
+        self.closed_loop_orchestrator: Any | None = None
+        self.policy_bridge: Any | None = None
+        self.rsi_engine: Any | None = None
+        self.action_explainer: Any | None = None
+        self.audit_trail: Any | None = None
+        self.continuous_benchmark: Any | None = None
+        self.collaboration_protocol: Any | None = None
         
         # v9: Learning Plane
-        self.trajectory_store: Optional[Any] = None
-        self.trajectory_replay: Optional[Any] = None
-        self.policy_learner: Optional[Any] = None
-        self.counterfactual_evaluator: Optional[Any] = None
-        self.skill_transfer: Optional[Any] = None
+        self.trajectory_store: Any | None = None
+        self.trajectory_replay: Any | None = None
+        self.policy_learner: Any | None = None
+        self.counterfactual_evaluator: Any | None = None
+        self.skill_transfer: Any | None = None
         
         # v9: Computer Use v2
-        self.ui_state_memory: Optional[Any] = None
-        self.environment_discovery: Optional[Any] = None
-        self.digital_twins: Optional[Any] = None
+        self.ui_state_memory: Any | None = None
+        self.environment_discovery: Any | None = None
+        self.digital_twins: Any | None = None
         
         # v11: Coding Intelligence
-        self.coding_modules: Optional[Dict[str, Any]] = None
+        self.coding_modules: dict[str, Any] | None = None
         
         # v11: Dynamic Planning
-        self.scenario_analyzer: Optional[Any] = None
-        self.planning_engine: Optional[Any] = None
-        self.decision_engine: Optional[Any] = None
-        self.workflow_executor: Optional[Any] = None
+        self.scenario_analyzer: Any | None = None
+        self.planning_engine: Any | None = None
+        self.decision_engine: Any | None = None
+        self.workflow_executor: Any | None = None
         
         # Store HERMES_HOME for state directory
         self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
         
         # Runtime state
-        self._active_tasks: Dict[str, asyncio.Task] = {}
-        self._plugins: Dict[str, Any] = {}
-        self._hooks: Dict[str, List[Callable]] = {}
+        self._active_tasks: dict[str, asyncio.Task] = {}
+        self._plugins: dict[str, Any] = {}
+        self._hooks: dict[str, list[Callable]] = {}
         
         logger.info("Hermes Kernel initialized (id=%s)", self.kernel_id)
 
@@ -231,11 +232,11 @@ class HermesKernel:
     async def _init_v9_learning_plane(self):
         """Initialize the v9 Learning Plane."""
         try:
-            from core.learning.trajectory_store import TrajectoryStore
-            from core.learning.trajectory_replay import TrajectoryReplay
-            from core.learning.policy_learning import PolicyLearner
             from core.learning.counterfactual import CounterfactualEvaluator
+            from core.learning.policy_learning import PolicyLearner
             from core.learning.skill_transfer import SkillTransfer
+            from core.learning.trajectory_replay import TrajectoryReplay
+            from core.learning.trajectory_store import TrajectoryStore
 
             self.trajectory_store = TrajectoryStore()
             self.trajectory_replay = TrajectoryReplay()
@@ -250,8 +251,8 @@ class HermesKernel:
     async def _init_v9_computer_use_v2(self):
         """Initialize the v9 Computer Use v2."""
         try:
-            from core.computer_use_v2.ui_memory import UIStateMemory
             from core.computer_use_v2.discovery import EnvironmentDiscovery
+            from core.computer_use_v2.ui_memory import UIStateMemory
 
             self.ui_state_memory = UIStateMemory()
             self.environment_discovery = EnvironmentDiscovery()
@@ -264,13 +265,13 @@ class HermesKernel:
     async def _init_v10_closed_loop(self):
         """Initialize the v10 Closed-Loop Self-Improving System."""
         try:
-            from core.learning.policy_learning import PolicyLearner
-            from core.orchestrator.policy_bridge import PolicyBridge
-            from core.orchestrator.closed_loop import ClosedLoopOrchestrator
-            from core.rsi.integration import RSIIntegrationEngine
-            from core.explanation.explainer import ActionExplainer, AuditTrail
             from core.benchmark.continuous import ContinuousBenchmark
             from core.collaboration.protocol import AgentCollaborationProtocol
+            from core.explanation.explainer import ActionExplainer, AuditTrail
+            from core.learning.policy_learning import PolicyLearner
+            from core.orchestrator.closed_loop import ClosedLoopOrchestrator
+            from core.orchestrator.policy_bridge import PolicyBridge
+            from core.rsi.integration import RSIIntegrationEngine
 
             # Policy learner should already be initialized from v9
             if not hasattr(self, 'policy_learner') or self.policy_learner is None:
@@ -304,42 +305,42 @@ class HermesKernel:
         """Initialize the v11 Coding Intelligence."""
         try:
             from core.coding import (
-                RepositoryDigitalTwin,
+                ADRRegistry,
+                AgentSpecialist,
+                APIContractManager,
+                ArchitectureRiskAnalyzer,
+                ArchitectureSynthesizer,
+                ArtifactRegistry,
+                Blackboard,
+                CodeGenerationLoop,
                 CodeGraph,
-                SemanticCodeIndex,
-                RepositoryRecon,
+                CodingRSI,
+                ContextEngineer,
+                ContractManager,
+                CrossRepoReasoning,
+                DatabaseChangeManager,
+                EngineeringCurriculum,
+                EvaluationPyramid,
                 HistoricalMemory,
+                MergeController,
+                MetaRSI,
+                OracleManager,
+                ParallelScheduler,
+                PerformanceLoop,
+                PopulationEvolution,
+                QualityGates,
+                RepositoryDigitalTwin,
+                RepositoryRecon,
                 RequirementsCompiler,
                 RequirementTraceGraph,
-                ArchitectureSynthesizer,
-                ADRRegistry,
-                ArchitectureRiskAnalyzer,
+                SecurityLoop,
+                SemanticCodeIndex,
+                SkillForge,
                 StrategySearcher,
                 TaskGraph,
-                ParallelScheduler,
-                AgentSpecialist,
-                ContractManager,
-                ArtifactRegistry,
-                CodeGenerationLoop,
                 TestFirstPlanner,
                 TestPyramid,
-                OracleManager,
-                SecurityLoop,
-                SkillForge,
-                EngineeringCurriculum,
                 TransferLearning,
-                CodingRSI,
-                PopulationEvolution,
-                MetaRSI,
-                EvaluationPyramid,
-                QualityGates,
-                MergeController,
-                CrossRepoReasoning,
-                APIContractManager,
-                DatabaseChangeManager,
-                PerformanceLoop,
-                ContextEngineer,
-                Blackboard,
             )
             
             # Create instances (not twin - needs repo_path)
@@ -392,7 +393,12 @@ class HermesKernel:
     async def _init_v11_dynamic_planning(self):
         """Initialize the v11 Dynamic Planning Engine."""
         try:
-            from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicDecisionEngine, DynamicWorkflowExecutor
+            from core.dynamic import (
+                AdvancedPlanningEngine,
+                DynamicDecisionEngine,
+                DynamicScenarioAnalyzer,
+                DynamicWorkflowExecutor,
+            )
             
             self.scenario_analyzer = DynamicScenarioAnalyzer()
             self.planning_engine = AdvancedPlanningEngine()
@@ -405,7 +411,7 @@ class HermesKernel:
             import traceback
             traceback.print_exc()
     
-    async def plan_and_execute_dynamic(self, goal: str) -> Dict[str, Any]:
+    async def plan_and_execute_dynamic(self, goal: str) -> dict[str, Any]:
         """
         Dynamically analyze, plan, and execute a goal.
         
@@ -445,16 +451,16 @@ class HermesKernel:
     async def _init_v9_environment_plane(self):
         """Initialize the v9 Universal Environment Intelligence & Action Plane."""
         try:
-            from core.environment.model import EnvironmentModel
+            from core.action.safety_envelope import SafetyEnvelopeManager
+            from core.action.transaction import TransactionModel
             from core.environment.affordances import AffordanceModel
-            from core.environment.state_estimation import StateEstimator
             from core.environment.consequence import ConsequenceSimulator
+            from core.environment.model import EnvironmentModel
+            from core.environment.state_estimation import StateEstimator
+            from core.orchestrator.master_loop import MasterOrchestrator
+            from core.protocols.event_algebra import EventBus
             from core.protocols.uap import UniversalActionProtocol
             from core.protocols.uop import PerceptionFusion
-            from core.protocols.event_algebra import EventBus
-            from core.action.transaction import TransactionModel
-            from core.action.safety_envelope import SafetyEnvelopeManager
-            from core.orchestrator.master_loop import MasterOrchestrator
 
             self.environment_model = EnvironmentModel()
             self.affordance_model = AffordanceModel()
@@ -535,7 +541,6 @@ class HermesKernel:
         """
         import importlib
         import importlib.util
-        from pathlib import Path
 
         tools_root = self.config.plugins_root
         if not tools_root.exists():
@@ -652,7 +657,7 @@ class HermesKernel:
                                 except TypeError:
                                     # Method may take a single positional arg
                                     if isinstance(kwargs, dict) and len(kwargs) == 1:
-                                        val = list(kwargs.values())[0]
+                                        val = next(iter(kwargs.values()))
                                         result = _func(val)
                                         if asyncio.iscoroutine(result):
                                             result = await result
@@ -666,7 +671,7 @@ class HermesKernel:
         
         logger.info("Registered %d tools from plugins", registered)
 
-    async def submit_task(self, task: "Task") -> str:
+    async def submit_task(self, task: Task) -> str:
         """Submit a task for execution."""
         
         # Persist task to state_manager if available, use its ID
@@ -700,12 +705,12 @@ class HermesKernel:
         
         return task_id
 
-    async def emit(self, event_type: str, data: Dict[str, Any]):
+    async def emit(self, event_type: str, data: dict[str, Any]):
         """Emit an event on the event bus."""
         if self.event_bus:
             await self.event_bus.emit_async(event_type, data)
 
-    async def plan_and_execute(self, goal: str, **kwargs) -> Dict[str, Any]:
+    async def plan_and_execute(self, goal: str, **kwargs) -> dict[str, Any]:
         """Plan a task from a natural-language goal and execute it.
         
         Uses the planning engine (if available) or a simple fallback
@@ -748,7 +753,7 @@ class HermesKernel:
             except Exception as e:
                 logger.error("Health monitor error: %s", e)
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Run health checks on all plugins."""
         results = {}
         for name, plugin in self._plugins.items():
@@ -789,8 +794,8 @@ class Task:
     """A task submitted to the kernel."""
     goal: str
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    parent_id: Optional[str] = None
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    budget: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    parent_id: str | None = None
+    constraints: dict[str, Any] = field(default_factory=dict)
+    budget: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)

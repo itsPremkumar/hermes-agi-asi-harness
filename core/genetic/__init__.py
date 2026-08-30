@@ -12,8 +12,9 @@ import logging
 import random
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_genetic")
 
@@ -22,10 +23,10 @@ logger = logging.getLogger("hermes_genetic")
 class Individual:
     """An individual in the population."""
     individual_id: str
-    genes: Dict[str, Any]
+    genes: dict[str, Any]
     fitness: float = 0.0
     generation: int = 0
-    parent_ids: List[str] = field(default_factory=list)
+    parent_ids: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -35,11 +36,11 @@ class GeneticEvolution:
     def __init__(self, population_size: int = 50, mutation_rate: float = 0.1):
         self.population_size = population_size
         self.mutation_rate = mutation_rate
-        self._population: List[Individual] = []
+        self._population: list[Individual] = []
         self._generation = 0
         self._best_fitness = 0.0
     
-    def initialize_population(self, gene_template: Dict[str, Any]) -> List[Individual]:
+    def initialize_population(self, gene_template: dict[str, Any]) -> list[Individual]:
         """Initialize population with random genes."""
         self._population = []
         for _ in range(self.population_size):
@@ -106,9 +107,9 @@ class GeneticEvolution:
             parent_ids=[parent1.individual_id, parent2.individual_id]
         )
     
-    def mutate(self, individual: Individual, gene_template: Dict[str, Any]) -> Individual:
+    def mutate(self, individual: Individual, gene_template: dict[str, Any]) -> Individual:
         """Mutate an individual."""
-        for key, value in individual.genes.items():
+        for key in individual.genes:
             if random.random() < self.mutation_rate:
                 if isinstance(gene_template.get(key), list):
                     individual.genes[key] = random.choice(gene_template[key])
@@ -117,7 +118,7 @@ class GeneticEvolution:
         
         return individual
     
-    async def evolve(self, fitness_fn: Callable, gene_template: Dict[str, Any],
+    async def evolve(self, fitness_fn: Callable, gene_template: dict[str, Any],
                      generations: int = 10) -> Individual:
         """Run evolution for specified generations."""
         if not self._population:
@@ -134,8 +135,7 @@ class GeneticEvolution:
             self._population.sort(key=lambda i: i.fitness, reverse=True)
             
             # Update best
-            if self._population[0].fitness > self._best_fitness:
-                self._best_fitness = self._population[0].fitness
+            self._best_fitness = max(self._best_fitness, self._population[0].fitness)
             
             # Create next generation
             new_population = self._population[:5]  # Elitism
@@ -151,7 +151,7 @@ class GeneticEvolution:
         
         return self._population[0]
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "generation": self._generation,

@@ -11,12 +11,13 @@ This is the full cognitive execution loop that integrates:
 - EventBus (event streaming)
 """
 
-import time
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Callable
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +38,12 @@ class ThoughtStep:
     step_number: int
     status: StepStatus
     thought: str
-    action: Optional[str] = None
-    action_input: Optional[Dict[str, Any]] = None
-    observation: Optional[str] = None
+    action: str | None = None
+    action_input: dict[str, Any] | None = None
+    observation: str | None = None
     confidence: float = 0.5
-    verification: Optional[Dict[str, Any]] = None
-    repair_attempt: Optional[str] = None
+    verification: dict[str, Any] | None = None
+    repair_attempt: str | None = None
     timestamp: float = field(default_factory=time.time)
 
 
@@ -72,19 +73,18 @@ class AdvancedReActLoop:
         self.world_model = world_model
         self.jit_harness = jit_harness
         self.max_steps = max_steps
-        self.tools: Dict[str, Callable] = {}
-        self.step_history: List[ThoughtStep] = []
+        self.tools: dict[str, Callable] = {}
+        self.step_history: list[ThoughtStep] = []
 
     def register_tool(self, name: str, func: Callable):
         """Registers a tool for the agent to use."""
         self.tools[name] = func
 
-    async def run(self, task: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
+    async def run(self, task: str, system_prompt: str | None = None) -> dict[str, Any]:
         """
         Executes the advanced ReAct loop until task completion or max steps.
         """
         loop_start = time.time()
-        goal = task
         task_profile = None
 
         # 1. Generate task profile using JIT Harness
@@ -119,7 +119,7 @@ class AdvancedReActLoop:
 
         while step < max_steps and not done:
             step += 1
-            step_start = time.time()
+            time.time()
 
             # 4. Select cognitive mode for this step
             if self.metacognition:
@@ -263,7 +263,7 @@ class AdvancedReActLoop:
             "self_healing_stats": self.self_healing.get_stats() if self.self_healing else None,
         }
 
-    def _select_action(self, task: str, step: int) -> Optional[str]:
+    def _select_action(self, task: str, step: int) -> str | None:
         """Selects the appropriate action based on task keywords."""
         task_lower = task.lower()
 
@@ -286,7 +286,7 @@ class AdvancedReActLoop:
 
         return None
 
-    def _build_action_input(self, tool_name: str, task: str) -> Dict[str, Any]:
+    def _build_action_input(self, tool_name: str, task: str) -> dict[str, Any]:
         """Builds action input for a tool based on the task."""
         task_lower = task.lower()
 
@@ -298,7 +298,7 @@ class AdvancedReActLoop:
                 if len(parts) > 1:
                     words = parts[0].strip().split()
                     for w in words:
-                        if w.endswith(".txt") or w.endswith(".py") or w.endswith(".md"):
+                        if w.endswith((".txt", ".py", ".md")):
                             path = w
                             break
                     else:
@@ -322,7 +322,7 @@ class AdvancedReActLoop:
 
         return {"query": task}
 
-    def _step_to_dict(self, step: ThoughtStep) -> Dict[str, Any]:
+    def _step_to_dict(self, step: ThoughtStep) -> dict[str, Any]:
         """Converts a ThoughtStep to a dictionary."""
         return {
             "step": step.step_number,

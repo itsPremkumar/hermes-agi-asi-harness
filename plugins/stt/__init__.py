@@ -20,9 +20,9 @@ class STTEngine:
     """Speech-to-text engine."""
     
     def __init__(self):
-        self._languages: List[str] = ["en", "es", "fr", "de"]
+        self._languages: list[str] = ["en", "es", "fr", "de"]
     
-    async def transcribe(self, audio_path: str, language: str = "auto") -> Dict[str, Any]:
+    async def transcribe(self, audio_path: str, language: str = "auto") -> dict[str, Any]:
         """Transcribe audio to text."""
         return {
             "audio_path": audio_path,
@@ -31,5 +31,5 @@ class STTEngine:
             "confidence": 0.95
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "languages": len(self._languages)}

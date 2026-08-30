@@ -21,9 +21,9 @@ class NeuralArchitectureSearch:
     """Neural architecture search for agent optimization."""
     
     def __init__(self):
-        self._architectures: List[Dict[str, Any]] = []
+        self._architectures: list[dict[str, Any]] = []
     
-    def generate_architecture(self) -> Dict[str, Any]:
+    def generate_architecture(self) -> dict[str, Any]:
         """Generate a random architecture."""
         return {
             "id": str(uuid.uuid4()),
@@ -33,5 +33,5 @@ class NeuralArchitectureSearch:
             "learning_rate": random.uniform(0.0001, 0.01)
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "architectures": len(self._architectures)}

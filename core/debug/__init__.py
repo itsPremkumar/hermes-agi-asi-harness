@@ -13,8 +13,9 @@ import re
 import subprocess
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_debug")
 
@@ -27,7 +28,7 @@ class BugReport:
     file_path: str
     line_number: int = 0
     root_cause: str = ""
-    fix_candidates: List[str] = field(default_factory=list)
+    fix_candidates: list[str] = field(default_factory=list)
     status: str = "open"
     timestamp: float = field(default_factory=time.time)
 
@@ -36,8 +37,8 @@ class DebugEngine:
     """Autonomous debugging engine."""
     
     def __init__(self):
-        self._bugs: Dict[str, BugReport] = {}
-        self._patterns: Dict[str, int] = {}
+        self._bugs: dict[str, BugReport] = {}
+        self._patterns: dict[str, int] = {}
     
     async def reproduce(self, error_trace: str, file_path: str) -> BugReport:
         """Reproduce a bug from error trace."""
@@ -50,7 +51,7 @@ class DebugEngine:
         self._bugs[bug.bug_id] = bug
         return bug
     
-    async def analyze_root_cause(self, bug_id: str) -> Dict[str, Any]:
+    async def analyze_root_cause(self, bug_id: str) -> dict[str, Any]:
         """Analyze root cause of a bug."""
         bug = self._bugs.get(bug_id)
         if not bug:
@@ -75,5 +76,5 @@ class DebugEngine:
         match = re.search(r'line\s+(\d+)', error_trace)
         return int(match.group(1)) if match else 0
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "bugs": len(self._bugs)}

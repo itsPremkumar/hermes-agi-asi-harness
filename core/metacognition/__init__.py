@@ -17,9 +17,10 @@ import logging
 import math
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_metacognition")
 
@@ -46,8 +47,8 @@ class MetacognitiveState:
     confusion: float = 0.0
     overconfidence: float = 0.0
     underconfidence: float = 0.0
-    stale_assumptions: List[str] = field(default_factory=list)
-    missing_evidence: List[str] = field(default_factory=list)
+    stale_assumptions: list[str] = field(default_factory=list)
+    missing_evidence: list[str] = field(default_factory=list)
     premature_convergence: bool = False
     confirmation_bias: float = 0.0
     repetition: float = 0.0
@@ -60,7 +61,7 @@ class MetacognitiveState:
     self_model_inaccuracy: float = 0.0
     strategic_myopia: float = 0.0
     uncertainty: float = 0.5
-    known_unknowns: List[str] = field(default_factory=list)
+    known_unknowns: list[str] = field(default_factory=list)
     unknown_unknowns_estimate: float = 0.5
 
 
@@ -72,11 +73,11 @@ class MetacognitiveAssessment:
     mode: CognitiveMode
     confidence: float
     uncertainty: float
-    issues: List[str]
-    recommendations: List[str]
+    issues: list[str]
+    recommendations: list[str]
     should_escalate: bool
     should_replan: bool
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -105,15 +106,15 @@ class MetacognitiveMonitor:
     
     def __init__(self):
         self.state = MetacognitiveState()
-        self._calibration_history: List[CalibrationRecord] = []
-        self._assessment_history: List[MetacognitiveAssessment] = []
-        self._error_patterns: Dict[str, int] = {}
-        self._improvement_suggestions: List[str] = []
+        self._calibration_history: list[CalibrationRecord] = []
+        self._assessment_history: list[MetacognitiveAssessment] = []
+        self._error_patterns: dict[str, int] = {}
+        self._improvement_suggestions: list[str] = []
     
     async def assess(
         self,
         mode: CognitiveMode,
-        context: Dict[str, Any] = None
+        context: dict[str, Any] | None = None
     ) -> MetacognitiveAssessment:
         """Assess the current cognitive state."""
         issues = []
@@ -263,10 +264,10 @@ class MetacognitiveMonitor:
     
     def quantify_uncertainty(
         self,
-        known_unknowns: List[str] = None,
-        evidence_gaps: List[str] = None,
+        known_unknowns: list[str] | None = None,
+        evidence_gaps: list[str] | None = None,
         model_disagreement: float = 0.0
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Quantify uncertainty."""
         # Epistemic uncertainty (lack of knowledge)
         epistemic = len(known_unknowns or []) * 0.1 + len(evidence_gaps or []) * 0.05
@@ -288,7 +289,7 @@ class MetacognitiveMonitor:
             "evidence_gaps_count": len(evidence_gaps or [])
         }
     
-    def should_request_help(self, threshold: float = 0.7) -> Tuple[bool, str]:
+    def should_request_help(self, threshold: float = 0.7) -> tuple[bool, str]:
         """Determine if human help should be requested."""
         reasons = []
         
@@ -319,11 +320,11 @@ class MetacognitiveMonitor:
             self._improvement_suggestions.append(suggestion)
             logger.warning("Metacognitive learning: %s", suggestion)
     
-    def get_improvement_suggestions(self) -> List[str]:
+    def get_improvement_suggestions(self) -> list[str]:
         """Get improvement suggestions based on patterns."""
         return self._improvement_suggestions[-10:]  # Last 10 suggestions
     
-    def get_calibration_report(self) -> Dict[str, Any]:
+    def get_calibration_report(self) -> dict[str, Any]:
         """Get calibration report."""
         if not self._calibration_history:
             return {"status": "no_data"}
@@ -340,7 +341,7 @@ class MetacognitiveMonitor:
             "recommendation": "Well calibrated" if self.state.calibration_error < 0.2 else "Needs recalibration"
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

@@ -13,7 +13,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,10 @@ class CausalRelation:
     target: str
     relation_type: str  # "causes", "correlates", "inhibits", "enables"
     strength: float  # 0-1
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    expires_at: Optional[float] = None
+    expires_at: float | None = None
     confidence: float = 0.5
 
 
@@ -37,10 +37,10 @@ class CausalRelation:
 class WorldStateSnapshot:
     """A snapshot of world state at a point in time."""
     timestamp: float
-    state: Dict[str, Any]
+    state: dict[str, Any]
     source: str = "observed"  # observed, inferred, assumed, predicted
     confidence: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -48,9 +48,9 @@ class CounterfactualSimulation:
     """A what-if simulation result."""
     id: str
     description: str
-    original_state: Dict[str, Any]
-    intervention: Dict[str, Any]
-    predicted_outcome: Dict[str, Any]
+    original_state: dict[str, Any]
+    intervention: dict[str, Any]
+    predicted_outcome: dict[str, Any]
     confidence: float = 0.5
     created_at: float = field(default_factory=time.time)
 
@@ -59,10 +59,10 @@ class CausalModelEngine:
     """Temporal and causal world modeling engine."""
 
     def __init__(self):
-        self._causal_relations: Dict[str, CausalRelation] = {}
-        self._temporal_states: Dict[str, List[WorldStateSnapshot]] = {}
-        self._variables: Dict[str, Any] = {}
-        self._counterfactuals: List[CounterfactualSimulation] = []
+        self._causal_relations: dict[str, CausalRelation] = {}
+        self._temporal_states: dict[str, list[WorldStateSnapshot]] = {}
+        self._variables: dict[str, Any] = {}
+        self._counterfactuals: list[CounterfactualSimulation] = []
 
     def add_causal_relation(
         self,
@@ -70,7 +70,7 @@ class CausalModelEngine:
         target: str,
         relation_type: str,
         strength: float = 0.5,
-        evidence: List[str] = None,
+        evidence: list[str] | None = None,
     ) -> CausalRelation:
         """Add a causal or correlational relation."""
         relation = CausalRelation(
@@ -103,12 +103,12 @@ class CausalModelEngine:
         if len(self._temporal_states[variable]) > 100:
             self._temporal_states[variable] = self._temporal_states[variable][-100:]
 
-    def get_temporal_chain(self, variable: str, n: int = 5) -> List[WorldStateSnapshot]:
+    def get_temporal_chain(self, variable: str, n: int = 5) -> list[WorldStateSnapshot]:
         """Get the last n state snapshots for a variable."""
         states = self._temporal_states.get(variable, [])
         return states[-n:]
 
-    def get_causal_relations(self, variable: str = None, relation_type: str = None) -> List[CausalRelation]:
+    def get_causal_relations(self, variable: str | None = None, relation_type: str | None = None) -> list[CausalRelation]:
         """Get causal relations, optionally filtered."""
         results = list(self._causal_relations.values())
         if variable:
@@ -117,7 +117,7 @@ class CausalModelEngine:
             results = [r for r in results if r.relation_type == relation_type]
         return results
 
-    def simulate_intervention(self, intervention: Dict[str, Any], description: str = "") -> CounterfactualSimulation:
+    def simulate_intervention(self, intervention: dict[str, Any], description: str = "") -> CounterfactualSimulation:
         """
         Simulate "What happens if we change variable A?"
         Uses causal graph to propagate effects.
@@ -157,7 +157,7 @@ class CausalModelEngine:
         self._counterfactuals.append(sim)
         return sim
 
-    def get_downstream_effects(self, variable: str, max_depth: int = 3) -> Dict[str, float]:
+    def get_downstream_effects(self, variable: str, max_depth: int = 3) -> dict[str, float]:
         """Get all downstream effects of a variable through causal chain."""
         effects = {}
         visited = set()
@@ -177,7 +177,7 @@ class CausalModelEngine:
         
         return effects
 
-    def detect_correlation_vs_causation(self, var_a: str, var_b: str) -> Dict[str, Any]:
+    def detect_correlation_vs_causation(self, var_a: str, var_b: str) -> dict[str, Any]:
         """Analyze whether relation between A and B is causal or correlational."""
         a_states = self._temporal_states.get(var_a, [])
         b_states = self._temporal_states.get(var_b, [])
@@ -203,7 +203,7 @@ class CausalModelEngine:
             "note": "No explicit causal relation recorded",
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get engine statistics."""
         return {
             "causal_relations": len(self._causal_relations),
@@ -212,7 +212,7 @@ class CausalModelEngine:
             "counterfactuals_run": len(self._counterfactuals),
             "by_relation_type": {
                 rtype: sum(1 for r in self._causal_relations.values() if r.relation_type == rtype)
-                for rtype in set(r.relation_type for r in self._causal_relations.values())
+                for rtype in {r.relation_type for r in self._causal_relations.values()}
             },
         }
 

@@ -18,10 +18,12 @@ import json
 import logging
 import re
 import time
+import uuid
 import urllib.parse
 import urllib.request
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_web_research")
 
@@ -36,7 +38,7 @@ class SearchResult:
     source: str
     relevance_score: float = 0.0
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -46,8 +48,8 @@ class CrawledPage:
     url: str
     title: str
     content: str
-    links: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    links: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -61,7 +63,7 @@ class ExtractedEvidence:
     evidence: str
     confidence: float = 0.5
     source_text: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class WebResearchAgent:
@@ -79,11 +81,11 @@ class WebResearchAgent:
     def __init__(self, max_pages: int = 50, max_depth: int = 3):
         self.max_pages = max_pages
         self.max_depth = max_depth
-        self._search_cache: Dict[str, List[SearchResult]] = {}
-        self._crawled_pages: Dict[str, CrawledPage] = {}
-        self._evidence: List[ExtractedEvidence] = []
+        self._search_cache: dict[str, list[SearchResult]] = {}
+        self._crawled_pages: dict[str, CrawledPage] = {}
+        self._evidence: list[ExtractedEvidence] = []
     
-    async def search(self, query: str, num_results: int = 10, source: str = "duckduckgo") -> List[SearchResult]:
+    async def search(self, query: str, num_results: int = 10, source: str = "duckduckgo") -> list[SearchResult]:
         """Search the web."""
         cache_key = f"{source}:{query}"
         if cache_key in self._search_cache:
@@ -102,7 +104,7 @@ class WebResearchAgent:
         logger.info("Search '%s': %d results from %s", query[:50], len(results), source)
         return results
     
-    async def _search_duckduckgo(self, query: str, num_results: int) -> List[SearchResult]:
+    async def _search_duckduckgo(self, query: str, num_results: int) -> list[SearchResult]:
         """Search using DuckDuckGo."""
         results = []
         
@@ -154,7 +156,7 @@ class WebResearchAgent:
         
         return results
     
-    async def _search_searxng(self, query: str, num_results: int) -> List[SearchResult]:
+    async def _search_searxng(self, query: str, num_results: int) -> list[SearchResult]:
         """Search using SearXNG."""
         results = []
         
@@ -183,7 +185,7 @@ class WebResearchAgent:
         
         return results
     
-    async def _search_fallback(self, query: str, num_results: int) -> List[SearchResult]:
+    async def _search_fallback(self, query: str, num_results: int) -> list[SearchResult]:
         """Fallback search using multiple sources."""
         results = []
         
@@ -196,7 +198,7 @@ class WebResearchAgent:
         
         return results
     
-    async def crawl(self, url: str, depth: int = 0) -> Optional[CrawledPage]:
+    async def crawl(self, url: str, depth: int = 0) -> CrawledPage | None:
         """Crawl a web page."""
         if url in self._crawled_pages:
             return self._crawled_pages[url]
@@ -255,7 +257,7 @@ class WebResearchAgent:
         
         return text
     
-    def _extract_links(self, html: str, base_url: str) -> List[str]:
+    def _extract_links(self, html: str, base_url: str) -> list[str]:
         """Extract links from HTML."""
         links = []
         
@@ -276,7 +278,7 @@ class WebResearchAgent:
         
         return links
     
-    async def extract_evidence(self, page: CrawledPage, question: str) -> List[ExtractedEvidence]:
+    async def extract_evidence(self, page: CrawledPage, question: str) -> list[ExtractedEvidence]:
         """Extract evidence from a crawled page."""
         evidence = []
         
@@ -317,7 +319,7 @@ class WebResearchAgent:
         overlap = len(question_words & text_words)
         return min(1.0, overlap / len(question_words))
     
-    async def research_topic(self, topic: str, max_results: int = 10) -> Dict[str, Any]:
+    async def research_topic(self, topic: str, max_results: int = 10) -> dict[str, Any]:
         """Research a topic comprehensively."""
         # Search
         search_results = await self.search(topic, max_results)
@@ -343,7 +345,7 @@ class WebResearchAgent:
             "evidence": all_evidence
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

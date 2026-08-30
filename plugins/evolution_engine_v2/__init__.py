@@ -9,14 +9,14 @@ Implements:
 - Benchmark comparison and regression detection
 """
 
-import time
 import json
-import random
 import logging
+import random
+import time
 import uuid
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field
 from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +25,15 @@ logger = logging.getLogger(__name__)
 class EvolutionCandidate:
     """A candidate solution in the evolution population."""
     variant_id: str
-    genotype: Dict[str, Any]  # Prompt, strategy, parameters
+    genotype: dict[str, Any]  # Prompt, strategy, parameters
     generation: int
     fitness: float = 0.0
     accuracy: float = 0.0
     latency_ms: float = 0.0
     token_cost: int = 0
     is_pareto_optimal: bool = False
-    parent_id: Optional[str] = None
-    evidence: List[Dict[str, Any]] = field(default_factory=list)
+    parent_id: str | None = None
+    evidence: list[dict[str, Any]] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
 
 
@@ -44,7 +44,7 @@ class EvaluationProof:
     candidate_id: str
     passed: bool
     score: float
-    evidence: List[str]
+    evidence: list[str]
     timestamp: float = field(default_factory=time.time)
 
 
@@ -55,7 +55,7 @@ class EvolutionResult:
     population_size: int
     pareto_front_size: int
     best_candidate: EvolutionCandidate
-    improvements: List[str]
+    improvements: list[str]
     duration_ms: float
 
 
@@ -75,19 +75,19 @@ class GEPAOptimizer:
         "strengthen_verification",
     ]
 
-    def __init__(self, base_prompt: str, base_params: Optional[Dict[str, Any]] = None):
+    def __init__(self, base_prompt: str, base_params: dict[str, Any] | None = None):
         self.base_prompt = base_prompt
         self.base_params = base_params or {}
-        self.population: List[EvolutionCandidate] = [
+        self.population: list[EvolutionCandidate] = [
             EvolutionCandidate(
                 variant_id="gen_0_base",
                 genotype={"prompt": base_prompt, "params": self.base_params},
                 generation=0,
             )
         ]
-        self.pareto_front: List[EvolutionCandidate] = []
+        self.pareto_front: list[EvolutionCandidate] = []
         self.generation = 0
-        self.evaluation_history: List[EvaluationProof] = []
+        self.evaluation_history: list[EvaluationProof] = []
 
     def mutate(self, candidate: EvolutionCandidate, strategy: str) -> EvolutionCandidate:
         """Creates a mutated offspring from a candidate."""
@@ -118,7 +118,7 @@ class GEPAOptimizer:
     def evaluate_candidate(
         self,
         candidate: EvolutionCandidate,
-        evaluator_fn: Optional[callable] = None,
+        evaluator_fn: Optional[Callable] = None,
     ) -> EvolutionCandidate:
         """
         Evaluates a candidate. If evaluator_fn is provided, uses it.
@@ -155,7 +155,7 @@ class GEPAOptimizer:
         self,
         generations: int = 5,
         population_size: int = 10,
-        evaluator_fn: Optional[callable] = None,
+        evaluator_fn: Optional[Callable] = None,
     ) -> EvolutionResult:
         """Runs the GEPA evolution for specified generations."""
         start = time.time()
@@ -217,7 +217,7 @@ class GEPAOptimizer:
         """Records an evaluation proof."""
         self.evaluation_history.append(proof)
 
-    def should_promote(self, threshold: float = 0.05) -> Tuple[bool, EvolutionCandidate]:
+    def should_promote(self, threshold: float = 0.05) -> tuple[bool, EvolutionCandidate]:
         """
         Evidence-gated promotion check.
         Returns (should_promote, best_candidate).
@@ -237,8 +237,8 @@ class TrajectoryRLExporter:
     """
 
     def __init__(self):
-        self.trajectories: List[Dict[str, Any]] = []
-        self._current_trajectory: Optional[Dict[str, Any]] = None
+        self.trajectories: list[dict[str, Any]] = []
+        self._current_trajectory: dict[str, Any] | None = None
 
     def start_trajectory(self, task: str) -> str:
         """Starts recording a new trajectory."""
@@ -255,7 +255,7 @@ class TrajectoryRLExporter:
         self,
         thought: str,
         action: str,
-        action_input: Dict[str, Any],
+        action_input: dict[str, Any],
         observation: str,
         reward: float = 0.0,
     ):
@@ -270,7 +270,7 @@ class TrajectoryRLExporter:
                 "timestamp": time.time(),
             })
 
-    def end_trajectory(self, final_reward: float, success: bool) -> Dict[str, Any]:
+    def end_trajectory(self, final_reward: float, success: bool) -> dict[str, Any]:
         """Ends the current trajectory and saves it."""
         if not self._current_trajectory:
             return {}
@@ -292,7 +292,7 @@ class TrajectoryRLExporter:
         with open(filepath, 'w') as f:
             json.dump(self.trajectories, f, indent=2)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         if not self.trajectories:
             return {"total_trajectories": 0, "avg_reward": 0}
         total = len(self.trajectories)
@@ -324,7 +324,7 @@ class EvolutionEngineV2:
         self._last_evolution = 0
         self._evolution_interval = 3600  # 1 hour
 
-    async def evolve(self, evaluator_fn: Optional[callable] = None) -> EvolutionResult:
+    async def evolve(self, evaluator_fn: Optional[Callable] = None) -> EvolutionResult:
         """Runs a single evolution step."""
         result = self.gepa.evolve(generations=5, evaluator_fn=evaluator_fn)
         self.generation = result.generation
@@ -341,11 +341,11 @@ class EvolutionEngineV2:
         self._last_evolution = now
         await self.evolve()
 
-    def should_promote(self, threshold: float = 0.05) -> Tuple[bool, EvolutionCandidate]:
+    def should_promote(self, threshold: float = 0.05) -> tuple[bool, EvolutionCandidate]:
         """Checks if the best candidate should be promoted."""
         return self.gepa.should_promote(threshold)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "generation": self.generation,
             "best_fitness": round(self.best_fitness, 4),

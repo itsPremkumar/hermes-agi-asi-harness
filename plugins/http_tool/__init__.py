@@ -43,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -91,7 +91,7 @@ class HTTPTool:
     def __init__(self, timeout: int = 30, max_retries: int = 3):
         self.timeout = timeout
         self.max_retries = max_retries
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
     
     def _cache_key(self, url: str, method: str, data: Any = None) -> str:
         """Generate cache key."""
@@ -104,15 +104,15 @@ class HTTPTool:
         self,
         url: str,
         method: str = "GET",
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] | None = None,
         data: Any = None,
-        json_data: Dict = None,
-        timeout: int = None,
+        json_data: dict | None = None,
+        timeout: int | None = None,
         use_cache: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Make an HTTP request."""
-        import urllib.request
         import urllib.error
+        import urllib.request
         
         cache_key = self._cache_key(url, method, json_data or data)
         
@@ -182,19 +182,19 @@ class HTTPTool:
             "method": method,
         }
     
-    async def get(self, url: str, headers: Dict = None) -> Dict[str, Any]:
+    async def get(self, url: str, headers: dict | None = None) -> dict[str, Any]:
         """GET request."""
         return await self.request(url, "GET", headers=headers)
     
-    async def post(self, url: str, json_data: Dict = None, data: Any = None, headers: Dict = None) -> Dict[str, Any]:
+    async def post(self, url: str, json_data: dict | None = None, data: Any = None, headers: dict | None = None) -> dict[str, Any]:
         """POST request."""
         return await self.request(url, "POST", headers=headers, data=data, json_data=json_data)
     
-    async def put(self, url: str, json_data: Dict = None, headers: Dict = None) -> Dict[str, Any]:
+    async def put(self, url: str, json_data: dict | None = None, headers: dict | None = None) -> dict[str, Any]:
         """PUT request."""
         return await self.request(url, "PUT", headers=headers, json_data=json_data)
     
-    async def delete(self, url: str, headers: Dict = None) -> Dict[str, Any]:
+    async def delete(self, url: str, headers: dict | None = None) -> dict[str, Any]:
         """DELETE request."""
         return await self.request(url, "DELETE", headers=headers)
     
@@ -230,7 +230,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.tool: Optional[HTTPTool] = None
+        self.tool: HTTPTool | None = None
     
     async def load(self) -> bool:
         self.tool = HTTPTool()
@@ -247,7 +247,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -258,23 +258,23 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    async def get(self, url: str, headers: Dict = None) -> Dict[str, Any]:
+    async def get(self, url: str, headers: dict | None = None) -> dict[str, Any]:
         return await self.tool.get(url, headers)
     
-    async def post(self, url: str, json_data: Dict = None, data: Any = None, headers: Dict = None) -> Dict[str, Any]:
+    async def post(self, url: str, json_data: dict | None = None, data: Any = None, headers: dict | None = None) -> dict[str, Any]:
         return await self.tool.post(url, json_data, data, headers)
     
-    async def put(self, url: str, json_data: Dict = None, headers: Dict = None) -> Dict[str, Any]:
+    async def put(self, url: str, json_data: dict | None = None, headers: dict | None = None) -> dict[str, Any]:
         return await self.tool.put(url, json_data, headers)
     
-    async def delete(self, url: str, headers: Dict = None) -> Dict[str, Any]:
+    async def delete(self, url: str, headers: dict | None = None) -> dict[str, Any]:
         return await self.tool.delete(url, headers)
     
-    async def request(self, url: str, method: str = "GET", **kwargs) -> Dict[str, Any]:
+    async def request(self, url: str, method: str = "GET", **kwargs) -> dict[str, Any]:
         return await self.tool.request(url, method, **kwargs)
     
     def clear_cache(self):
         self.tool.clear_cache()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

@@ -13,7 +13,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class EnvelopeViolation(str, Enum):
@@ -31,15 +31,15 @@ class EnvelopeViolation(str, Enum):
 class SafetyEnvelope:
     id: str
     name: str
-    allowed_targets: List[str] = field(default_factory=list)
-    allowed_operations: List[str] = field(default_factory=list)
+    allowed_targets: list[str] = field(default_factory=list)
+    allowed_operations: list[str] = field(default_factory=list)
     max_frequency_per_minute: int = 60
     max_cost_per_action: float = 0.0
     max_data_volume_mb: float = 100.0
-    allowed_time_window: Optional[tuple] = None  # (start_hour, end_hour) UTC
+    allowed_time_window: tuple | None = None  # (start_hour, end_hour) UTC
     max_risk_score: float = 0.7
     emergency_stop: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -47,7 +47,7 @@ class EnvelopeCheck:
     action_id: str
     envelope_id: str
     passed: bool
-    violations: List[EnvelopeViolation]
+    violations: list[EnvelopeViolation]
     timestamp: float
     escalated: bool = False
 
@@ -60,19 +60,19 @@ class SafetyEnvelopeManager:
     """
 
     def __init__(self):
-        self.envelopes: Dict[str, SafetyEnvelope] = {}
-        self.checks: List[EnvelopeCheck] = []
-        self._action_counts: Dict[str, List[float]] = {}  # target → timestamps
+        self.envelopes: dict[str, SafetyEnvelope] = {}
+        self.checks: list[EnvelopeCheck] = []
+        self._action_counts: dict[str, list[float]] = {}  # target → timestamps
 
     def create_envelope(
         self,
         name: str,
-        allowed_targets: List[str] = None,
-        allowed_operations: List[str] = None,
+        allowed_targets: list[str] | None = None,
+        allowed_operations: list[str] | None = None,
         max_frequency_per_minute: int = 60,
         max_cost_per_action: float = 0.0,
         max_data_volume_mb: float = 100.0,
-        allowed_time_window: tuple = None,
+        allowed_time_window: tuple | None = None,
         max_risk_score: float = 0.7,
     ) -> SafetyEnvelope:
         env = SafetyEnvelope(
@@ -111,7 +111,7 @@ class SafetyEnvelopeManager:
                 escalated=True,
             )
 
-        violations: List[EnvelopeViolation] = []
+        violations: list[EnvelopeViolation] = []
 
         # Check emergency stop
         if env.emergency_stop:
@@ -182,7 +182,7 @@ class SafetyEnvelopeManager:
         if env:
             env.emergency_stop = False
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "envelopes": len(self.envelopes),
             "total_checks": len(self.checks),

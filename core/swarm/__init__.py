@@ -13,9 +13,10 @@ import logging
 import random
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_swarm")
 
@@ -35,11 +36,11 @@ class SwarmAgent:
     agent_id: str
     role: AgentRole
     status: str = "active"
-    task: Optional[str] = None
-    result: Optional[Any] = None
+    task: str | None = None
+    result: Any | None = None
     spawned_at: float = field(default_factory=time.time)
     last_heartbeat: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -50,7 +51,7 @@ class BlackboardEntry:
     content: str
     entry_type: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class SwarmOrchestrator:
@@ -68,12 +69,12 @@ class SwarmOrchestrator:
     
     def __init__(self, max_agents: int = 100):
         self.max_agents = max_agents
-        self._agents: Dict[str, SwarmAgent] = {}
-        self._blackboard: List[BlackboardEntry] = []
+        self._agents: dict[str, SwarmAgent] = {}
+        self._blackboard: list[BlackboardEntry] = []
         self._task_queue: asyncio.Queue = asyncio.Queue()
-        self._results: Dict[str, Any] = {}
+        self._results: dict[str, Any] = {}
     
-    async def spawn_agent(self, role: AgentRole, task: str = None) -> str:
+    async def spawn_agent(self, role: AgentRole, task: str | None = None) -> str:
         """Spawn a new agent."""
         if len(self._agents) >= self.max_agents:
             logger.warning("Max agents reached: %d", self.max_agents)
@@ -93,7 +94,7 @@ class SwarmOrchestrator:
         logger.info("Agent spawned: %s (%s)", agent_id[:8], role.value)
         return agent_id
     
-    async def spawn_swarm(self, task: str, num_agents: int = 5) -> List[str]:
+    async def spawn_swarm(self, task: str, num_agents: int = 5) -> list[str]:
         """Spawn a swarm of agents for a task."""
         roles = [AgentRole.WORKER, AgentRole.EXPLORER, AgentRole.COORDINATOR, AgentRole.MONITOR]
         agent_ids = []
@@ -117,11 +118,11 @@ class SwarmOrchestrator:
         )
         self._blackboard.append(entry)
     
-    async def read_blackboard(self, agent_id: str, limit: int = 10) -> List[BlackboardEntry]:
+    async def read_blackboard(self, agent_id: str, limit: int = 10) -> list[BlackboardEntry]:
         """Read from the blackboard."""
         return self._blackboard[-limit:]
     
-    async def reach_consensus(self, proposal: str, agent_ids: List[str]) -> Dict[str, Any]:
+    async def reach_consensus(self, proposal: str, agent_ids: list[str]) -> dict[str, Any]:
         """Reach consensus among agents."""
         votes = {}
         for agent_id in agent_ids:
@@ -140,7 +141,7 @@ class SwarmOrchestrator:
             "approval_rate": approve_count / len(votes) if votes else 0
         }
     
-    async def coordinate_task(self, task: str, agent_ids: List[str]) -> Dict[str, Any]:
+    async def coordinate_task(self, task: str, agent_ids: list[str]) -> dict[str, Any]:
         """Coordinate a task across multiple agents."""
         # Decompose task
         subtasks = [
@@ -163,7 +164,7 @@ class SwarmOrchestrator:
             "status": "completed"
         }
     
-    async def execute_subtask(self, agent_id: str, subtask: str) -> Dict[str, Any]:
+    async def execute_subtask(self, agent_id: str, subtask: str) -> dict[str, Any]:
         """Execute a subtask by an agent."""
         await asyncio.sleep(0.01)
         return {
@@ -173,7 +174,7 @@ class SwarmOrchestrator:
             "status": "success"
         }
     
-    def get_swarm_status(self) -> Dict[str, Any]:
+    def get_swarm_status(self) -> dict[str, Any]:
         """Get swarm status."""
         active = sum(1 for a in self._agents.values() if a.status == "active")
         return {
@@ -183,7 +184,7 @@ class SwarmOrchestrator:
             "max_agents": self.max_agents
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

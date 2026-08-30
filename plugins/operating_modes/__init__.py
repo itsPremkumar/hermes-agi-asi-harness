@@ -7,8 +7,8 @@ Each mode configures tools, tone, expertise, and decision-making.
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class OperatingMode(str, Enum):
@@ -26,8 +26,8 @@ class OperatingMode(str, Enum):
 class ModeConfig:
     name: str
     description: str
-    allowed_tools: List[str] = field(default_factory=list)
-    expertise_areas: List[str] = field(default_factory=list)
+    allowed_tools: list[str] = field(default_factory=list)
+    expertise_areas: list[str] = field(default_factory=list)
     tone: str = "professional"
     risk_tolerance: float = 0.3  # 0-1
     require_approval_above: float = 0.5  # risk threshold
@@ -39,11 +39,11 @@ class OperatingModes:
     """Specialized operating modes."""
 
     def __init__(self):
-        self._modes: Dict[str, ModeConfig] = self._default_modes()
+        self._modes: dict[str, ModeConfig] = self._default_modes()
         self._current_mode: str = OperatingMode.CODING.value
-        self._mode_history: List[Dict[str, Any]] = []
+        self._mode_history: list[dict[str, Any]] = []
 
-    def _default_modes(self) -> Dict[str, ModeConfig]:
+    def _default_modes(self) -> dict[str, ModeConfig]:
         return {
             OperatingMode.CODING.value: ModeConfig(
                 name="coding",
@@ -160,7 +160,7 @@ class OperatingModes:
         self._current_mode = mode_name
         return True
 
-    def get_current_mode(self) -> Optional[ModeConfig]:
+    def get_current_mode(self) -> ModeConfig | None:
         return self._modes.get(self._current_mode)
 
     def is_tool_allowed(self, tool_name: str) -> bool:
@@ -176,13 +176,13 @@ class OperatingModes:
             return True
         return risk_score >= mode.require_approval_above
 
-    def list_modes(self) -> List[str]:
+    def list_modes(self) -> list[str]:
         return list(self._modes.keys())
 
-    def get_mode_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_mode_history(self, limit: int = 10) -> list[dict[str, Any]]:
         return list(reversed(self._mode_history[-limit:]))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "current_mode": self._current_mode,
             "total_modes": len(self._modes),

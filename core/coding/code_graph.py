@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class NodeType(str, Enum):
@@ -47,7 +47,7 @@ class GraphNode:
     name: str
     node_type: NodeType
     file_path: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -56,17 +56,17 @@ class GraphEdge:
     source_id: str
     target_id: str
     relation: RelationType
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class BlastRadius:
     """Result of blast radius analysis."""
     changed_node: str
-    affected_nodes: List[str]
-    affected_files: List[str]
-    affected_services: List[str]
-    affected_tests: List[str]
+    affected_nodes: list[str]
+    affected_files: list[str]
+    affected_services: list[str]
+    affected_tests: list[str]
     risk_score: float
 
 
@@ -75,11 +75,11 @@ class CodeGraph:
     
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.nodes: Dict[str, GraphNode] = {}
-        self.edges: List[GraphEdge] = []
+        self.nodes: dict[str, GraphNode] = {}
+        self.edges: list[GraphEdge] = []
     
     def add_node(self, name: str, node_type: NodeType,
-                 file_path: str, metadata: Dict[str, Any] = None) -> GraphNode:
+                 file_path: str, metadata: dict[str, Any] | None = None) -> GraphNode:
         node = GraphNode(
             id=str(uuid.uuid4()),
             name=name,
@@ -91,7 +91,7 @@ class CodeGraph:
         return node
     
     def add_edge(self, source_id: str, target_id: str,
-                 relation: RelationType, metadata: Dict[str, Any] = None) -> GraphEdge:
+                 relation: RelationType, metadata: dict[str, Any] | None = None) -> GraphEdge:
         edge = GraphEdge(
             id=str(uuid.uuid4()),
             source_id=source_id,
@@ -102,14 +102,14 @@ class CodeGraph:
         self.edges.append(edge)
         return edge
     
-    def get_dependents(self, node_id: str) -> List[GraphNode]:
+    def get_dependents(self, node_id: str) -> list[GraphNode]:
         """Get all nodes that depend on this node."""
         dependent_ids = {
             e.source_id for e in self.edges if e.target_id == node_id
         }
         return [self.nodes[nid] for nid in dependent_ids if nid in self.nodes]
     
-    def get_dependencies(self, node_id: str) -> List[GraphNode]:
+    def get_dependencies(self, node_id: str) -> list[GraphNode]:
         """Get all nodes this node depends on."""
         dependency_ids = {
             e.target_id for e in self.edges if e.source_id == node_id
@@ -158,7 +158,7 @@ class CodeGraph:
             risk_score=risk_score,
         )
     
-    def find_path(self, source_id: str, target_id: str) -> List[GraphNode]:
+    def find_path(self, source_id: str, target_id: str) -> list[GraphNode]:
         """Find path between two nodes using BFS."""
         if source_id == target_id:
             return [self.nodes[source_id]]
@@ -178,7 +178,7 @@ class CodeGraph:
         
         return []
     
-    def get_orphaned_nodes(self) -> List[GraphNode]:
+    def get_orphaned_nodes(self) -> list[GraphNode]:
         """Find nodes with no connections."""
         connected_ids = set()
         for edge in self.edges:
@@ -187,7 +187,7 @@ class CodeGraph:
         
         return [node for node_id, node in self.nodes.items() if node_id not in connected_ids]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "nodes": len(self.nodes),
             "edges": len(self.edges),

@@ -11,7 +11,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +24,15 @@ class AgentMessage:
     receiver: str
     message_type: str  # result, request, handoff, review, alert
     status: str = "pending"  # pending, processing, complete, failed
-    artifact_refs: List[str] = field(default_factory=list)
+    artifact_refs: list[str] = field(default_factory=list)
     confidence: float = 0.5
-    evidence: List[str] = field(default_factory=list)
-    limitations: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     message_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "message_id": self.message_id,
             "task_id": self.task_id,
@@ -53,9 +53,9 @@ class AgentCommunicationBus:
     """Structured inter-agent messaging."""
 
     def __init__(self):
-        self._messages: List[AgentMessage] = []
-        self._inboxes: Dict[str, List[AgentMessage]] = {}
-        self._handlers: Dict[str, Any] = {}
+        self._messages: list[AgentMessage] = []
+        self._inboxes: dict[str, list[AgentMessage]] = {}
+        self._handlers: dict[str, Any] = {}
 
     def send(self, message: AgentMessage):
         """Send a structured message."""
@@ -68,18 +68,18 @@ class AgentCommunicationBus:
         
         logger.debug(f"Message: {message.sender} -> {message.receiver} ({message.message_type})")
 
-    def get_inbox(self, agent_id: str, limit: int = 10) -> List[AgentMessage]:
+    def get_inbox(self, agent_id: str, limit: int = 10) -> list[AgentMessage]:
         """Get messages for an agent."""
         return self._inboxes.get(agent_id, [])[-limit:]
 
     def get_messages(
         self,
-        task_id: str = None,
-        sender: str = None,
-        receiver: str = None,
-        message_type: str = None,
+        task_id: str | None = None,
+        sender: str | None = None,
+        receiver: str | None = None,
+        message_type: str | None = None,
         limit: int = 50,
-    ) -> List[AgentMessage]:
+    ) -> list[AgentMessage]:
         """Query messages with filters."""
         results = self._messages
         if task_id:
@@ -97,8 +97,8 @@ class AgentCommunicationBus:
         task_id: str,
         from_agent: str,
         to_agent: str,
-        artifact_refs: List[str],
-        context: Dict[str, Any],
+        artifact_refs: list[str],
+        context: dict[str, Any],
     ) -> AgentMessage:
         """Create a structured handoff message."""
         return AgentMessage(
@@ -115,7 +115,7 @@ class AgentCommunicationBus:
         task_id: str,
         from_agent: str,
         to_agent: str,
-        artifact_refs: List[str],
+        artifact_refs: list[str],
     ) -> AgentMessage:
         """Create a review request."""
         return AgentMessage(
@@ -126,13 +126,13 @@ class AgentCommunicationBus:
             artifact_refs=artifact_refs,
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_messages": len(self._messages),
             "agents": len(self._inboxes),
             "by_type": {
                 mtype: sum(1 for m in self._messages if m.message_type == mtype)
-                for mtype in set(m.message_type for m in self._messages)
+                for mtype in {m.message_type for m in self._messages}
             },
         }
 

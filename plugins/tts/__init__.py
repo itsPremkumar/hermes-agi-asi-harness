@@ -20,10 +20,10 @@ class TTSEngine:
     """Text-to-speech engine."""
     
     def __init__(self):
-        self._voices: List[str] = []
+        self._voices: list[str] = []
     
     async def synthesize(self, text: str, voice: str = "default",
-                         emotion: str = "neutral") -> Dict[str, Any]:
+                         emotion: str = "neutral") -> dict[str, Any]:
         """Synthesize text to speech."""
         return {
             "text": text[:100],
@@ -33,5 +33,5 @@ class TTSEngine:
             "status": "synthesized"
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "voices": len(self._voices)}

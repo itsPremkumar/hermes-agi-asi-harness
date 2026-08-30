@@ -1,9 +1,11 @@
 """Architecture Risk Analysis."""
 from __future__ import annotations
+
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
+
 
 class RiskCategory(str, Enum):
     FAILURE_MODE = "failure_mode"
@@ -37,7 +39,7 @@ class Risk:
 class ArchitectureRiskAnalyzer:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.risks: List[Risk] = []
+        self.risks: list[Risk] = []
     
     def add_risk(self, category: RiskCategory, description: str,
                  severity: RiskSeverity, likelihood: float = 0.5,
@@ -48,12 +50,12 @@ class ArchitectureRiskAnalyzer:
         self.risks.append(risk)
         return risk
     
-    def get_high_risks(self) -> List[Risk]:
+    def get_high_risks(self) -> list[Risk]:
         return [r for r in self.risks if r.severity in (RiskSeverity.HIGH, RiskSeverity.CRITICAL)]
     
     def get_overall_risk(self) -> float:
         return sum(r.risk_score for r in self.risks) / max(len(self.risks), 1)
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"total_risks": len(self.risks), "high": len(self.get_high_risks()),
                 "overall_risk": self.get_overall_risk()}

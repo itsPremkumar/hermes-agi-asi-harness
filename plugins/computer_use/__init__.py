@@ -5,12 +5,12 @@ Enables: window management, application launching, screenshot analysis,
 mouse/keyboard control, clipboard, file dialogs, multi-monitor.
 """
 
-import time
 import os
 import platform
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class OSType(str, Enum):
@@ -38,16 +38,16 @@ class ActionType(str, Enum):
 @dataclass
 class ComputerAction:
     action_type: str
-    target: Optional[str] = None
-    coordinates: Optional[Tuple[int, int]] = None
-    text: Optional[str] = None
-    key: Optional[str] = None
+    target: str | None = None
+    coordinates: tuple[int, int] | None = None
+    text: str | None = None
+    key: str | None = None
     duration_ms: int = 0
     timestamp: float = field(default_factory=time.time)
-    result: Optional[str] = None
+    result: str | None = None
     success: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "action_type": self.action_type,
             "target": self.target,
@@ -65,9 +65,9 @@ class ComputerUse:
     """Computer use and automation."""
 
     def __init__(self):
-        self._actions: List[ComputerAction] = []
+        self._actions: list[ComputerAction] = []
         self._os = self._detect_os()
-        self._apps: Dict[str, Dict[str, Any]] = {}
+        self._apps: dict[str, dict[str, Any]] = {}
 
     def _detect_os(self) -> OSType:
         sys = platform.system().lower()
@@ -82,7 +82,7 @@ class ComputerUse:
     def get_os(self) -> str:
         return self._os.value
 
-    def register_app(self, name: str, path: str, args: List[str] = None):
+    def register_app(self, name: str, path: str, args: list[str] | None = None):
         """Register an application for use."""
         self._apps[name] = {
             "path": path,
@@ -147,10 +147,10 @@ class ComputerUse:
             target=name,
         ))
 
-    def get_action_history(self, limit: int = 20) -> List[ComputerAction]:
+    def get_action_history(self, limit: int = 20) -> list[ComputerAction]:
         return list(reversed(self._actions[-limit:]))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         successful = sum(1 for a in self._actions if a.success)
         return {
             "os": self._os.value,

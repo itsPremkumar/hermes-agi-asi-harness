@@ -7,11 +7,8 @@ All 6 agent roles fully implemented with specialized prompts and tools.
 
 from __future__ import annotations
 
-import json
 import logging
-import time
-import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
@@ -47,7 +44,7 @@ class ResearcherAgent(PluginBase):
         logger.info("Researcher agent stopped")
         return True
     
-    async def research(self, question: str, depth: int = 3) -> Dict[str, Any]:
+    async def research(self, question: str, depth: int = 3) -> dict[str, Any]:
         """Conduct research on a question."""
         return {
             "question": question,
@@ -86,7 +83,7 @@ class CoderAgent(PluginBase):
         logger.info("Coder agent stopped")
         return True
     
-    async def generate_code(self, spec: str, language: str = "python") -> Dict[str, Any]:
+    async def generate_code(self, spec: str, language: str = "python") -> dict[str, Any]:
         """Generate code from a specification."""
         return {
             "spec": spec,
@@ -95,7 +92,7 @@ class CoderAgent(PluginBase):
             "tests": [],
         }
     
-    async def review_code(self, code: str) -> Dict[str, Any]:
+    async def review_code(self, code: str) -> dict[str, Any]:
         """Review code for quality and correctness."""
         return {
             "code": code,
@@ -134,7 +131,7 @@ class PlannerAgent(PluginBase):
         logger.info("Planner agent stopped")
         return True
     
-    async def create_plan(self, goal: str) -> Dict[str, Any]:
+    async def create_plan(self, goal: str) -> dict[str, Any]:
         """Create an execution plan for a goal."""
         return {
             "goal": goal,
@@ -173,7 +170,7 @@ class ReviewerAgent(PluginBase):
         logger.info("Reviewer agent stopped")
         return True
     
-    async def review(self, work_product: str, criteria: List[str]) -> Dict[str, Any]:
+    async def review(self, work_product: str, criteria: list[str]) -> dict[str, Any]:
         """Review a work product against criteria."""
         return {
             "work_product": work_product,
@@ -213,7 +210,7 @@ class VerifierAgent(PluginBase):
         logger.info("Verifier agent stopped")
         return True
     
-    async def verify(self, artifact: str, acceptance_criteria: List[str]) -> Dict[str, Any]:
+    async def verify(self, artifact: str, acceptance_criteria: list[str]) -> dict[str, Any]:
         """Verify an artifact against acceptance criteria."""
         return {
             "artifact": artifact,
@@ -252,7 +249,7 @@ class ExecutorAgent(PluginBase):
         logger.info("Executor agent stopped")
         return True
     
-    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task."""
         return {
             "task_id": task.get("id"),

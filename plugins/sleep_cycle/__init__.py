@@ -18,9 +18,10 @@ Steps:
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Callable
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class SleepStepStatus(str, Enum):
@@ -36,14 +37,14 @@ class SleepStep:
     step_number: int
     name: str
     description: str
-    handler: Optional[Callable] = None
+    handler: Callable | None = None
     status: SleepStepStatus = SleepStepStatus.PENDING
     duration_seconds: float = 0.0
     result: Any = None
     started_at: float = 0.0
     completed_at: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "step_number": self.step_number,
             "name": self.name,
@@ -59,12 +60,12 @@ class SleepCycle:
     """13-step dream cycle for memory consolidation."""
 
     def __init__(self):
-        self._steps: List[SleepStep] = self._build_default_steps()
+        self._steps: list[SleepStep] = self._build_default_steps()
         self._last_run: float = 0.0
         self._cycle_count: int = 0
-        self._handlers: Dict[int, Callable] = {}
+        self._handlers: dict[int, Callable] = {}
 
-    def _build_default_steps(self) -> List[SleepStep]:
+    def _build_default_steps(self) -> list[SleepStep]:
         return [
             SleepStep(1, "index_recent_work", "Index all work since last sleep cycle"),
             SleepStep(2, "identify_patterns", "Identify recurring patterns in work"),
@@ -87,7 +88,7 @@ class SleepCycle:
             self._handlers[step_number] = handler
             self._steps[step_number - 1].handler = handler
 
-    async def run_cycle(self, kernel=None) -> Dict[str, Any]:
+    async def run_cycle(self, kernel=None) -> dict[str, Any]:
         """Run a full 13-step sleep cycle."""
         self._cycle_count += 1
         cycle_start = time.time()
@@ -120,7 +121,7 @@ class SleepCycle:
             "all_completed": all(s.status == SleepStepStatus.COMPLETED for s in self._steps),
         }
 
-    def get_progress(self) -> Dict[str, Any]:
+    def get_progress(self) -> dict[str, Any]:
         completed = sum(1 for s in self._steps if s.status == SleepStepStatus.COMPLETED)
         return {
             "cycle_count": self._cycle_count,

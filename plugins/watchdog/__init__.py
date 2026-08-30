@@ -8,12 +8,13 @@ queue overload, security anomalies.
 """
 
 import os
-import time
 import threading
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Callable
-from enum import Enum
+import time
 from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 try:
     import resource  # POSIX only
@@ -47,10 +48,10 @@ class Anomaly:
     severity: str
     message: str
     detected_at: float = field(default_factory=time.time)
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     resolved: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "severity": self.severity,
@@ -82,18 +83,18 @@ class Watchdog:
     LOOP_DETECTION_THRESHOLD = 5
 
     def __init__(self):
-        self._anomalies: List[Anomaly] = []
+        self._anomalies: list[Anomaly] = []
         self._metrics = WatchdogMetrics()
         self._start_time = time.time()
         self._recent_events: deque = deque(maxlen=100)
-        self._loop_counter: Dict[str, List[float]] = {}
-        self._check_callbacks: List[Callable] = []
+        self._loop_counter: dict[str, list[float]] = {}
+        self._check_callbacks: list[Callable] = []
 
     def register_check(self, callback: Callable):
         """Register a health check callback."""
         self._check_callbacks.append(callback)
 
-    def record_event(self, event_type: str, data: Dict[str, Any] = None):
+    def record_event(self, event_type: str, data: dict[str, Any] | None = None):
         """Record an event for loop/anomaly detection."""
         self._recent_events.append({
             "type": event_type,
@@ -112,7 +113,7 @@ class Watchdog:
             t for t in self._loop_counter[event_type] if t > cutoff
         ]
 
-    def detect_anomalies(self) -> List[Anomaly]:
+    def detect_anomalies(self) -> list[Anomaly]:
         """Run all anomaly detection checks."""
         new_anomalies = []
 
@@ -161,7 +162,7 @@ class Watchdog:
                     anomaly = Anomaly(**result["anomaly"])
                     self._anomalies.append(anomaly)
                     new_anomalies.append(anomaly)
-            except Exception as e:
+            except Exception:
                 pass  # Don't let check failures crash the watchdog
 
         self._metrics.checks_run += 1
@@ -174,14 +175,14 @@ class Watchdog:
         self._metrics.anomalies_resolved = sum(1 for a in self._anomalies if a.resolved)
         return self._metrics
 
-    def get_recent_anomalies(self, limit: int = 10) -> List[Anomaly]:
+    def get_recent_anomalies(self, limit: int = 10) -> list[Anomaly]:
         return list(reversed(self._anomalies[-limit:]))
 
     def resolve_anomaly(self, index: int):
         if 0 <= index < len(self._anomalies):
             self._anomalies[index].resolved = True
 
-    def get_health_report(self) -> Dict[str, Any]:
+    def get_health_report(self) -> dict[str, Any]:
         metrics = self.get_metrics()
         return {
             "status": "healthy" if metrics.anomalies_detected == 0 or metrics.anomalies_resolved == metrics.anomalies_detected else "degraded",
@@ -223,7 +224,7 @@ class WatchdogPlugin:
     async def health(self):
         return self.engine.get_health_report()
 
-    def record_event(self, event_type: str, data: Dict[str, Any] = None):
+    def record_event(self, event_type: str, data: dict[str, Any] | None = None):
         self.engine.record_event(event_type, data)
 
     def register_check(self, callback: Callable):

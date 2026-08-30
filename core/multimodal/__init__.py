@@ -1,5 +1,6 @@
 """Multimodal Input - Image, screenshot, and diagram processing."""
 from __future__ import annotations
+
 import base64
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -10,14 +11,14 @@ class ImageInput:
     data: bytes
     mime_type: str
     description: str = ""
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
 
 @dataclass
 class OCRResult:
     text: str
     confidence: float
-    bounding_boxes: List[Dict[str, Any]] = None
+    bounding_boxes: list[dict[str, Any]] = None
 
 
 class ImageProcessor:
@@ -65,7 +66,7 @@ class OCRProcessor:
 class ScreenshotAnalyzer:
     """Analyze screenshots for UI/UX feedback."""
     
-    async def analyze(self, image: ImageInput) -> Dict[str, Any]:
+    async def analyze(self, image: ImageInput) -> dict[str, Any]:
         """Analyze a screenshot."""
         return {
             "type": "screenshot",

@@ -17,9 +17,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_research_director")
 
@@ -40,9 +41,9 @@ class ResearchQuestion:
     """A research question."""
     question_id: str
     question: str
-    sub_questions: List[str] = field(default_factory=list)
+    sub_questions: list[str] = field(default_factory=list)
     status: str = "pending"
-    findings: List[Dict[str, Any]] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
     confidence: float = 0.0
     depth: int = 0
     max_depth: int = 3
@@ -53,12 +54,12 @@ class ResearchPlan:
     """A research plan."""
     plan_id: str
     topic: str
-    questions: List[ResearchQuestion] = field(default_factory=list)
-    perspectives: List[str] = field(default_factory=list)
-    search_queries: List[str] = field(default_factory=list)
+    questions: list[ResearchQuestion] = field(default_factory=list)
+    perspectives: list[str] = field(default_factory=list)
+    search_queries: list[str] = field(default_factory=list)
     status: str = "draft"
     created_at: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ResearchDirector:
@@ -76,7 +77,7 @@ class ResearchDirector:
     def __init__(self, max_depth: int = 3, max_questions: int = 20):
         self.max_depth = max_depth
         self._max_questions = max_questions
-        self._plans: Dict[str, ResearchPlan] = {}
+        self._plans: dict[str, ResearchPlan] = {}
     
     async def create_plan(self, topic: str, context: str = "") -> ResearchPlan:
         """Create a research plan for a topic."""
@@ -100,7 +101,7 @@ class ResearchDirector:
         logger.info("Research plan created: %s (%d questions)", topic[:50], len(plan.questions))
         return plan
     
-    async def _generate_questions(self, topic: str, context: str = "") -> List[ResearchQuestion]:
+    async def _generate_questions(self, topic: str, context: str = "") -> list[ResearchQuestion]:
         """Generate research questions from a topic."""
         questions = []
         
@@ -131,7 +132,7 @@ class ResearchDirector:
         
         return questions[:self._max_questions]
     
-    async def _generate_perspectives(self, topic: str) -> List[str]:
+    async def _generate_perspectives(self, topic: str) -> list[str]:
         """Generate different perspectives to investigate."""
         return [
             f"Technical perspective on {topic}",
@@ -142,7 +143,7 @@ class ResearchDirector:
             f"Future outlook for {topic}",
         ]
     
-    async def _generate_search_queries(self, topic: str, questions: List[ResearchQuestion]) -> List[str]:
+    async def _generate_search_queries(self, topic: str, questions: list[ResearchQuestion]) -> list[str]:
         """Generate search queries from questions."""
         queries = [topic]
         
@@ -159,7 +160,7 @@ class ResearchDirector:
         
         return queries
     
-    async def decompose_question(self, question: str, depth: int = 0) -> List[ResearchQuestion]:
+    async def decompose_question(self, question: str, depth: int = 0) -> list[ResearchQuestion]:
         """Decompose a question into sub-questions."""
         sub_questions = []
         
@@ -178,11 +179,11 @@ class ResearchDirector:
         
         return sub_questions
     
-    def get_plan(self, plan_id: str) -> Optional[ResearchPlan]:
+    def get_plan(self, plan_id: str) -> ResearchPlan | None:
         """Get a research plan."""
         return self._plans.get(plan_id)
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

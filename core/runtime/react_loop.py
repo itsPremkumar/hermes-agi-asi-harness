@@ -20,11 +20,11 @@ import ast
 import logging
 import re
 import time
-import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
-from core.runtime.event_bus import EventBus, Event
+from core.runtime.event_bus import EventBus
 
 logger = logging.getLogger("hermes.react_loop")
 
@@ -38,7 +38,7 @@ class ReliabilityVerifier:
         r"(sk-[A-Za-z0-9]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})"
     )
 
-    def verify_python_code(self, code: str) -> Dict[str, Any]:
+    def verify_python_code(self, code: str) -> dict[str, Any]:
         """AST syntax + secret scan."""
         result = {"passed": True, "checks": {}, "details": []}
         try:
@@ -58,7 +58,7 @@ class ReliabilityVerifier:
 
         return result
 
-    def verify_earned_completion(self, proofs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def verify_earned_completion(self, proofs: list[dict[str, Any]]) -> dict[str, Any]:
         """All proof items must have status='PASS'."""
         if not proofs:
             return {"passed": False, "confidence": 0.0, "details": ["No proofs provided"]}
@@ -77,9 +77,9 @@ class RedTeamCritic:
     """Critiques plans and extracts failure lessons."""
 
     def __init__(self):
-        self.lessons: List[Dict[str, Any]] = []
+        self.lessons: list[dict[str, Any]] = []
 
-    def critique_plan(self, steps: List[str]) -> List[str]:
+    def critique_plan(self, steps: list[str]) -> list[str]:
         """Return critique messages for common failure modes."""
         critiques = []
         has_verify = any("verify" in s.lower() or "test" in s.lower() for s in steps)
@@ -92,7 +92,7 @@ class RedTeamCritic:
             critiques.append("CRITIQUE: Multi-step plan lacks rollback strategy")
         return critiques
 
-    def extract_lesson(self, task: str, error: str) -> Dict[str, Any]:
+    def extract_lesson(self, task: str, error: str) -> dict[str, Any]:
         """Extract structured lesson from a failure."""
         lesson = {
             "id": f"lesson_{int(time.time() * 1000)}",
@@ -120,9 +120,9 @@ class RedTeamCritic:
 class StepResult:
     step: int
     thought: str
-    action: Optional[str] = None
-    action_input: Optional[Dict[str, Any]] = None
-    observation: Optional[str] = None
+    action: str | None = None
+    action_input: dict[str, Any] | None = None
+    observation: str | None = None
     verified: bool = False
     done: bool = False
 
@@ -133,9 +133,9 @@ class LoopResult:
     success: bool
     steps: int
     final_answer: str
-    step_results: List[StepResult] = field(default_factory=list)
-    critiques: List[str] = field(default_factory=list)
-    lessons: List[Dict[str, Any]] = field(default_factory=list)
+    step_results: list[StepResult] = field(default_factory=list)
+    critiques: list[str] = field(default_factory=list)
+    lessons: list[dict[str, Any]] = field(default_factory=list)
 
 
 class ReActLoop:
@@ -143,14 +143,14 @@ class ReActLoop:
 
     def __init__(
         self,
-        event_bus: Optional[EventBus] = None,
+        event_bus: EventBus | None = None,
         max_steps: int = 25,
     ):
         self.bus = event_bus or EventBus()
         self.max_steps = max_steps
         self.verifier = ReliabilityVerifier()
         self.critic = RedTeamCritic()
-        self.tools: Dict[str, Callable] = {}
+        self.tools: dict[str, Callable] = {}
 
     def register_tool(self, name: str, func: Callable):
         """Register a tool callable."""
@@ -179,7 +179,7 @@ class ReActLoop:
         self.bus.emit("agent.loop_start", {"task": task})
         
         step = 0
-        history: List[StepResult] = []
+        history: list[StepResult] = []
         final_answer = None
 
         while step < self.max_steps:

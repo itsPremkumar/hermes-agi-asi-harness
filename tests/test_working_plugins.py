@@ -19,7 +19,7 @@ sys.path.insert(0, '.')
 # Set a temp HOME so state/memory/audit don't pollute the repo
 _TMP = tempfile.mkdtemp(prefix="hermes_test_")
 os.environ["HERMES_HOME"] = _TMP
-os.chdir(Path(__file__).parent)
+pass  # cwd handled by tests/conftest.py _restore_cwd fixture
 
 RESULTS = []
 

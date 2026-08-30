@@ -1,9 +1,11 @@
 """Test Oracle Strategy — Define how correctness is known."""
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class OracleType(str, Enum):
     EXACT = "exact"
@@ -24,12 +26,12 @@ class TestOracle:
     name: str
     expected: Any = None
     tolerance: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class OracleManager:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.oracles: Dict[str, TestOracle] = {}
+        self.oracles: dict[str, TestOracle] = {}
     
     def create_oracle(self, oracle_type: OracleType, name: str,
                       expected: Any = None, tolerance: float = 0.0,
@@ -40,7 +42,7 @@ class OracleManager:
         self.oracles[oracle.id] = oracle
         return oracle
     
-    def verify(self, oracle_id: str, actual: Any) -> Dict[str, Any]:
+    def verify(self, oracle_id: str, actual: Any) -> dict[str, Any]:
         oracle = self.oracles.get(oracle_id)
         if not oracle:
             return {"status": "error", "message": "Oracle not found"}
@@ -54,5 +56,5 @@ class OracleManager:
         
         return {"status": "pass" if passed else "fail", "oracle_id": oracle_id}
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"oracles": len(self.oracles)}

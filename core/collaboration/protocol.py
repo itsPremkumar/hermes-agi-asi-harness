@@ -15,7 +15,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class AgentRole(str, Enum):
@@ -32,18 +32,18 @@ class Agent:
     id: str
     name: str
     role: AgentRole
-    capabilities: List[str]
+    capabilities: list[str]
     status: str = "idle"
-    current_task: Optional[str] = None
+    current_task: str | None = None
 
 
 @dataclass
 class SubGoal:
     id: str
     description: str
-    assigned_agent: Optional[str] = None
+    assigned_agent: str | None = None
     status: str = "pending"
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     result: Any = None
 
 
@@ -53,15 +53,15 @@ class Conflict:
     agent_a: str
     agent_b: str
     description: str
-    resolution: Optional[str] = None
+    resolution: str | None = None
 
 
 @dataclass
 class CollaborationResult:
     success: bool
-    sub_goals: List[SubGoal]
-    conflicts: List[Conflict]
-    results: Dict[str, Any]
+    sub_goals: list[SubGoal]
+    conflicts: list[Conflict]
+    results: dict[str, Any]
     duration_ms: float
 
 
@@ -69,12 +69,12 @@ class AgentCollaborationProtocol:
     """Enable agents to collaborate on shared goals."""
     
     def __init__(self):
-        self.agents: Dict[str, Agent] = {}
-        self.sub_goals: Dict[str, SubGoal] = {}
-        self.conflicts: List[Conflict] = []
+        self.agents: dict[str, Agent] = {}
+        self.sub_goals: dict[str, SubGoal] = {}
+        self.conflicts: list[Conflict] = []
     
     def register_agent(self, name: str, role: AgentRole,
-                       capabilities: List[str]) -> Agent:
+                       capabilities: list[str]) -> Agent:
         agent = Agent(
             id=str(uuid.uuid4()),
             name=name,
@@ -84,8 +84,8 @@ class AgentCollaborationProtocol:
         self.agents[agent.id] = agent
         return agent
     
-    def coordinate(self, agents: List[Agent], goal: str,
-                   world_state: Dict[str, Any]) -> CollaborationResult:
+    def coordinate(self, agents: list[Agent], goal: str,
+                   world_state: dict[str, Any]) -> CollaborationResult:
         """Coordinate multiple agents on a shared goal."""
         start_time = time.time()
         
@@ -114,7 +114,7 @@ class AgentCollaborationProtocol:
             duration_ms=(time.time() - start_time) * 1000,
         )
     
-    def _decompose_goal(self, goal: str) -> Dict[str, SubGoal]:
+    def _decompose_goal(self, goal: str) -> dict[str, SubGoal]:
         """Decompose a goal into sub-goals."""
         # Simple decomposition based on goal keywords
         sub_goals = {}
@@ -161,8 +161,8 @@ class AgentCollaborationProtocol:
         self.sub_goals = sub_goals
         return sub_goals
     
-    def _assign_agents(self, agents: List[Agent], sub_goals: Dict[str, SubGoal],
-                       world_state: Dict[str, Any]) -> Dict[str, str]:
+    def _assign_agents(self, agents: list[Agent], sub_goals: dict[str, SubGoal],
+                       world_state: dict[str, Any]) -> dict[str, str]:
         """Match agents to sub-goals by capability."""
         assignments = {}
         available_agents = {a.id: a for a in agents}
@@ -202,12 +202,12 @@ class AgentCollaborationProtocol:
         
         return assignments
     
-    def _detect_conflicts(self, assignments: Dict[str, str]) -> List[Conflict]:
+    def _detect_conflicts(self, assignments: dict[str, str]) -> list[Conflict]:
         """Detect conflicts between agent assignments."""
         conflicts = []
         
         # Check for resource conflicts (same agent assigned to conflicting tasks)
-        agent_tasks: Dict[str, List[str]] = {}
+        agent_tasks: dict[str, list[str]] = {}
         for sg_id, agent_id in assignments.items():
             if agent_id not in agent_tasks:
                 agent_tasks[agent_id] = []
@@ -229,8 +229,8 @@ class AgentCollaborationProtocol:
         self.conflicts = conflicts
         return conflicts
     
-    def _resolve_conflicts(self, assignments: Dict[str, str],
-                           conflicts: List[Conflict]) -> Dict[str, str]:
+    def _resolve_conflicts(self, assignments: dict[str, str],
+                           conflicts: list[Conflict]) -> dict[str, str]:
         """Resolve conflicts by reassigning tasks."""
         for conflict in conflicts:
             # Simple resolution: reassign the later task to a different agent
@@ -243,8 +243,8 @@ class AgentCollaborationProtocol:
         
         return assignments
     
-    def _execute_coordinated(self, assignments: Dict[str, str],
-                             sub_goals: Dict[str, SubGoal]) -> Dict[str, Any]:
+    def _execute_coordinated(self, assignments: dict[str, str],
+                             sub_goals: dict[str, SubGoal]) -> dict[str, Any]:
         """Execute assigned sub-goals."""
         results = {}
         
@@ -273,7 +273,7 @@ class AgentCollaborationProtocol:
         
         return results
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "agents": len(self.agents),
             "sub_goals": len(self.sub_goals),

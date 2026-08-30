@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger("hermes_permission_system")
 
@@ -42,8 +42,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +55,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -103,7 +103,7 @@ class PermissionRule:
     description: str
     allowed: bool = True
     requires_approval: bool = False
-    conditions: Dict[str, Any] = field(default_factory=dict)
+    conditions: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
 
 
@@ -116,7 +116,7 @@ class ElevationRequest:
     duration_seconds: int = 300
     approved: bool = False
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    expires_at: Optional[str] = None
+    expires_at: str | None = None
 
 
 class PermissionSystem:
@@ -125,7 +125,7 @@ class PermissionSystem:
     """
     
     # Default permission rules
-    DEFAULT_RULES: List[PermissionRule] = [
+    DEFAULT_RULES: list[PermissionRule] = [
         PermissionRule("read_file", RiskTier.R0, "Read files from workspace"),
         PermissionRule("search_web", RiskTier.R0, "Search the web"),
         PermissionRule("fetch_url", RiskTier.R1, "Fetch public URLs"),
@@ -143,15 +143,15 @@ class PermissionSystem:
     ]
     
     def __init__(self):
-        self._rules: Dict[str, PermissionRule] = {}
-        self._elevations: List[ElevationRequest] = []
-        self._audit: List[Dict[str, Any]] = []
+        self._rules: dict[str, PermissionRule] = {}
+        self._elevations: list[ElevationRequest] = []
+        self._audit: list[dict[str, Any]] = []
         
         # Load default rules
         for rule in self.DEFAULT_RULES:
             self._rules[rule.action] = rule
     
-    def check_permission(self, action: str, context: Dict[str, Any] = None) -> Tuple[bool, str]:
+    def check_permission(self, action: str, context: dict[str, Any] | None = None) -> Tuple[bool, str]:
         """
         Check if an action is permitted.
         
@@ -195,7 +195,7 @@ class PermissionSystem:
         
         return True, f"Action '{action}' permitted (risk tier: {rule.risk_tier.value})"
     
-    def _get_active_elevation(self, action: str) -> Optional[ElevationRequest]:
+    def _get_active_elevation(self, action: str) -> ElevationRequest | None:
         """Check if there's an active elevation for an action."""
         now = datetime.utcnow()
         for elevation in self._elevations:
@@ -253,20 +253,20 @@ class PermissionSystem:
         """Remove a permission rule."""
         self._rules.pop(action, None)
     
-    def get_rule(self, action: str) -> Optional[PermissionRule]:
+    def get_rule(self, action: str) -> PermissionRule | None:
         """Get a permission rule."""
         return self._rules.get(action)
     
-    def list_rules(self) -> List[PermissionRule]:
+    def list_rules(self) -> list[PermissionRule]:
         """List all permission rules."""
         return list(self._rules.values())
     
-    def get_risk_tier(self, action: str) -> Optional[RiskTier]:
+    def get_risk_tier(self, action: str) -> RiskTier | None:
         """Get the risk tier for an action."""
         rule = self._rules.get(action)
         return rule.risk_tier if rule else None
     
-    def get_audit_log(self, limit: int = 100) -> List[Dict]:
+    def get_audit_log(self, limit: int = 100) -> list[dict]:
         """Get audit log entries."""
         return self._audit[-limit:]
     
@@ -309,7 +309,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.system: Optional[PermissionSystem] = None
+        self.system: PermissionSystem | None = None
     
     async def load(self) -> bool:
         self.system = PermissionSystem()
@@ -326,7 +326,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -338,7 +338,7 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def check(self, action: str, context: Dict[str, Any] = None) -> Tuple[bool, str]:
+    def check(self, action: str, context: dict[str, Any] | None = None) -> Tuple[bool, str]:
         """Check if an action is permitted."""
         return self.system.check_permission(action, context)
     
@@ -356,7 +356,7 @@ class Plugin(PluginBase):
     
     def add_rule(self, action: str, risk_tier: str, description: str, requires_approval: bool = False):
         """Add a permission rule."""
-        from plugins.permission_system import RiskTier, PermissionRule
+        from plugins.permission_system import PermissionRule, RiskTier
         rule = PermissionRule(
             action=action,
             risk_tier=RiskTier(risk_tier),
@@ -365,7 +365,7 @@ class Plugin(PluginBase):
         )
         self.system.add_rule(rule)
     
-    def list_rules(self) -> List[Dict]:
+    def list_rules(self) -> list[dict]:
         """List all permission rules."""
         return [
             {
@@ -377,9 +377,9 @@ class Plugin(PluginBase):
             for r in self.system.list_rules()
         ]
     
-    def get_audit_log(self, limit: int = 100) -> List[Dict]:
+    def get_audit_log(self, limit: int = 100) -> list[dict]:
         """Get audit log entries."""
         return self.system.get_audit_log(limit)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

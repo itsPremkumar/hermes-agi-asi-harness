@@ -1,25 +1,27 @@
 """Long Autonomous Terminal Runs - Persistent terminal sessions."""
 from __future__ import annotations
+
 import asyncio
 import subprocess
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class TerminalSession:
     """Persistent terminal session for long-running tasks."""
     
     def __init__(self, session_id: str, command: str, cwd: str = ".",
-                 env: Dict = None, timeout: int = 3600):
+                 env: dict | None = None, timeout: int = 3600):
         self.session_id = session_id
         self.command = command
         self.cwd = cwd
         self.env = env or {}
         self.timeout = timeout
-        self._process: Optional[subprocess.Popen] = None
-        self._output: List[str] = []
+        self._process: subprocess.Popen | None = None
+        self._output: list[str] = []
         self._running = False
         self._start_time: float = 0
     
@@ -61,7 +63,7 @@ class TerminalSession:
             self._process.stdin.write(data + "\n")
             self._process.stdin.flush()
     
-    async def get_output(self, clear: bool = False) -> List[str]:
+    async def get_output(self, clear: bool = False) -> list[str]:
         """Get current output."""
         output = self._output.copy()
         if clear:
@@ -88,11 +90,11 @@ class BackgroundTaskManager:
     """Manage background tasks and long-running processes."""
     
     def __init__(self):
-        self._tasks: Dict[str, TerminalSession] = {}
-        self._results: Dict[str, Any] = {}
+        self._tasks: dict[str, TerminalSession] = {}
+        self._results: dict[str, Any] = {}
     
     async def start_task(self, command: str, cwd: str = ".",
-                         env: Dict = None, timeout: int = 3600) -> str:
+                         env: dict | None = None, timeout: int = 3600) -> str:
         """Start a background task."""
         session_id = str(uuid.uuid4())
         session = TerminalSession(session_id, command, cwd, env, timeout)
@@ -102,7 +104,7 @@ class BackgroundTaskManager:
             return session_id
         return ""
     
-    async def get_output(self, task_id: str, clear: bool = False) -> List[str]:
+    async def get_output(self, task_id: str, clear: bool = False) -> list[str]:
         """Get output from a task."""
         session = self._tasks.get(task_id)
         if session:
@@ -115,7 +117,7 @@ class BackgroundTaskManager:
         if session:
             await session.stop()
     
-    def get_running_tasks(self) -> List[Dict[str, Any]]:
+    def get_running_tasks(self) -> list[dict[str, Any]]:
         """Get all running tasks."""
         return [
             {

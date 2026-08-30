@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 class EventType(str, Enum):
@@ -56,16 +57,16 @@ class Event:
     type: EventType
     source: str
     timestamp: float
-    payload: Dict[str, Any] = field(default_factory=dict)
-    affected_resources: List[str] = field(default_factory=list)
+    payload: dict[str, Any] = field(default_factory=dict)
+    affected_resources: list[str] = field(default_factory=list)
     processed: bool = False
-    subscribers_notified: List[str] = field(default_factory=list)
+    subscribers_notified: list[str] = field(default_factory=list)
 
 
 @dataclass
 class EventSubscription:
     subscriber_id: str
-    event_filter: Dict[str, Any]  # e.g., {"type": "deployed", "source": "ci"}
+    event_filter: dict[str, Any]  # e.g., {"type": "deployed", "source": "ci"}
     callback: Any = None
     created_at: float = field(default_factory=time.time)
 
@@ -80,12 +81,12 @@ class EventBus:
     """
 
     def __init__(self):
-        self.events: List[Event] = []
-        self.subscriptions: List[EventSubscription] = []
-        self._handlers: Dict[EventType, List[Callable]] = {}
+        self.events: list[Event] = []
+        self.subscriptions: list[EventSubscription] = []
+        self._handlers: dict[EventType, list[Callable]] = {}
 
-    def subscribe(self, subscriber_id: str, event_filter: Dict[str, Any],
-                  callback: Callable = None) -> EventSubscription:
+    def subscribe(self, subscriber_id: str, event_filter: dict[str, Any],
+                  callback: Callable | None = None) -> EventSubscription:
         sub = EventSubscription(
             subscriber_id=subscriber_id,
             event_filter=event_filter,
@@ -97,8 +98,8 @@ class EventBus:
     def unsubscribe(self, subscriber_id: str):
         self.subscriptions = [s for s in self.subscriptions if s.subscriber_id != subscriber_id]
 
-    def emit(self, type: EventType, source: str, payload: Dict[str, Any],
-             affected_resources: List[str] = None) -> List[str]:
+    def emit(self, type: EventType, source: str, payload: dict[str, Any],
+             affected_resources: list[str] | None = None) -> list[str]:
         """Emit a event and notify matching subscribers. Returns list of notified subscriber IDs."""
         event = Event(
             id=str(uuid.uuid4()),
@@ -124,7 +125,7 @@ class EventBus:
         
         return notified
 
-    def _matches_filter(self, event: Event, filter: Dict[str, Any]) -> bool:
+    def _matches_filter(self, event: Event, filter: dict[str, Any]) -> bool:
         for key, value in filter.items():
             if key == "type":
                 if isinstance(value, list):
@@ -144,7 +145,7 @@ class EventBus:
         return True
 
     def get_events(self, limit: int = 50, event_type: EventType = None,
-                   source: str = None, resource: str = None) -> List[Event]:
+                   source: str | None = None, resource: str | None = None) -> list[Event]:
         events = self.events
         if event_type:
             events = [e for e in events if e.type == event_type]
@@ -154,7 +155,7 @@ class EventBus:
             events = [e for e in events if resource in e.affected_resources]
         return events[-limit:]
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total_events": len(self.events),
             "subscriptions": len(self.subscriptions),

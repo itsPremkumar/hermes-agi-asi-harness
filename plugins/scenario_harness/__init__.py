@@ -14,7 +14,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +26,12 @@ class Scenario:
     category: str  # nominal, long_horizon, failure_recovery, etc.
     name: str
     description: str
-    inputs: Dict[str, Any] = field(default_factory=dict)
-    expected_outcome: Dict[str, Any] = field(default_factory=dict)
-    evaluation_criteria: List[str] = field(default_factory=list)
+    inputs: dict[str, Any] = field(default_factory=dict)
+    expected_outcome: dict[str, Any] = field(default_factory=dict)
+    evaluation_criteria: list[str] = field(default_factory=list)
     split: str = "dev"  # dev, validation, holdout, novel, redteam
     difficulty: float = 0.5  # 0-1
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -40,7 +40,7 @@ class ScenarioResult:
     scenario_id: str
     passed: bool
     score: float  # 0-1
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     duration_seconds: float = 0.0
     timestamp: float = field(default_factory=time.time)
 
@@ -49,8 +49,8 @@ class ScenarioHarness:
     """Scenario-based evaluation harness."""
 
     def __init__(self):
-        self._scenarios: Dict[str, Scenario] = {}
-        self._results: List[ScenarioResult] = []
+        self._scenarios: dict[str, Scenario] = {}
+        self._results: list[ScenarioResult] = []
         self._register_default_scenarios()
 
     def _register_default_scenarios(self):
@@ -153,7 +153,7 @@ class ScenarioHarness:
         """Register a new scenario."""
         self._scenarios[scenario.id] = scenario
 
-    def get_scenarios(self, category: str = None, split: str = None) -> List[Scenario]:
+    def get_scenarios(self, category: str | None = None, split: str | None = None) -> list[Scenario]:
         """Get scenarios filtered by category and/or split."""
         results = list(self._scenarios.values())
         if category:
@@ -181,7 +181,7 @@ class ScenarioHarness:
                 result = await executor(scenario)
                 passed = result.get("passed", False)
                 score = result.get("score", 0.0)
-            except Exception as e:
+            except Exception:
                 passed = False
                 score = 0.0
         
@@ -195,7 +195,7 @@ class ScenarioHarness:
         self._results.append(result)
         return result
 
-    async def run_suite(self, category: str = None, split: str = None) -> Dict[str, Any]:
+    async def run_suite(self, category: str | None = None, split: str | None = None) -> dict[str, Any]:
         """Run a suite of scenarios."""
         scenarios = self.get_scenarios(category=category, split=split)
         results = []
@@ -214,7 +214,7 @@ class ScenarioHarness:
             "results": [{"scenario": r.scenario_id, "passed": r.passed, "score": r.score} for r in results],
         }
 
-    def get_evaluation_splits(self) -> Dict[str, List[str]]:
+    def get_evaluation_splits(self) -> dict[str, list[str]]:
         """Get scenarios organized by evaluation split."""
         splits = {}
         for scenario in self._scenarios.values():
@@ -223,11 +223,11 @@ class ScenarioHarness:
             splits[scenario.split].append(scenario.id)
         return splits
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         """Get all scenario categories."""
-        return list(set(s.category for s in self._scenarios.values()))
+        return list({s.category for s in self._scenarios.values()})
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_scenarios": len(self._scenarios),
             "categories": len(self.get_categories()),

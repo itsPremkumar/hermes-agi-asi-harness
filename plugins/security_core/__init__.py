@@ -1,1 +1,1 @@
-from .plugin import SecurityCore, RiskLevel, TrustLevel, create
+from .plugin import RiskLevel, SecurityCore, TrustLevel, create

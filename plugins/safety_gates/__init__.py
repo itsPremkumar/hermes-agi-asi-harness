@@ -5,11 +5,12 @@ Every meaningful action passes an appropriate gate:
 R0=Parse, R1=Understand, R2=Validate, R3=Safety, R4=Execute, R5=Verify, R6=Commit/Publish
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Callable
-from enum import Enum
-import time
 import re
+import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class RiskLevel(str, Enum):
@@ -20,14 +21,14 @@ class RiskLevel(str, Enum):
 
 
 class GateResult:
-    def __init__(self, passed: bool, gate: str, message: str, details: Dict[str, Any] = None):
+    def __init__(self, passed: bool, gate: str, message: str, details: dict[str, Any] | None = None):
         self.passed = passed
         self.gate = gate
         self.message = message
         self.details = details or {}
         self.timestamp = time.time()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "passed": self.passed,
             "gate": self.gate,
@@ -86,7 +87,7 @@ class SafetyGatesPlugin:
     ]
 
     def __init__(self):
-        self._gate_log: List[GateResult] = []
+        self._gate_log: list[GateResult] = []
 
     async def load(self):
         pass
@@ -100,7 +101,7 @@ class SafetyGatesPlugin:
     async def health(self):
         return {"status": "healthy", "gate_checks": len(self._gate_log)}
 
-    def check_gate(self, gate: str, action: str, context: Dict[str, Any] = None) -> GateResult:
+    def check_gate(self, gate: str, action: str, context: dict[str, Any] | None = None) -> GateResult:
         """Run a specific gate check."""
         context = context or {}
 
@@ -121,25 +122,25 @@ class SafetyGatesPlugin:
         else:
             return GateResult(False, gate, f"Unknown gate: {gate}")
 
-    def _gate_r0(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r0(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R0: Parse — Input is syntactically valid."""
         if not action or not isinstance(action, str):
             return GateResult(False, "R0", "Empty or invalid input")
         return GateResult(True, "R0", "Input parsed successfully")
 
-    def _gate_r1(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r1(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R1: Understand — Intent is clear."""
         if len(action.strip()) < 3:
             return GateResult(False, "R1", "Intent too vague or too short")
         return GateResult(True, "R1", "Intent understood")
 
-    def _gate_r2(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r2(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R2: Validate — Inputs meet requirements."""
         if ctx.get("required_input") and not ctx.get("provided_input"):
             return GateResult(False, "R2", f"Missing required input: {ctx['required_input']}")
         return GateResult(True, "R2", "All inputs validated")
 
-    def _gate_r3(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r3(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R3: Safety — No unsafe actions detected."""
         action_lower = action.lower()
         for pattern in self.DANGEROUS_PATTERNS:
@@ -149,7 +150,7 @@ class SafetyGatesPlugin:
             return GateResult(False, "R3", "Potential secret exposure detected")
         return GateResult(True, "R3", "No unsafe actions detected")
 
-    def _gate_r4(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r4(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R4: Execute — Action is authorized."""
         permissions = ctx.get("permissions", [])
         required = ctx.get("required_permission")
@@ -157,7 +158,7 @@ class SafetyGatesPlugin:
             return GateResult(False, "R4", f"Missing permission: {required}")
         return GateResult(True, "R4", "Action authorized")
 
-    def _gate_r5(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r5(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R5: Verify — Result meets acceptance criteria."""
         criteria = ctx.get("success_criteria", [])
         results = ctx.get("verification_results", {})
@@ -167,7 +168,7 @@ class SafetyGatesPlugin:
             return GateResult(False, "R5", "Verification failed")
         return GateResult(True, "R5", "Result verified")
 
-    def _gate_r6(self, action: str, ctx: Dict[str, Any]) -> GateResult:
+    def _gate_r6(self, action: str, ctx: dict[str, Any]) -> GateResult:
         """R6: Commit/Publish — Final human approval for high-risk."""
         if not ctx.get("human_approved", False):
             return GateResult(False, "R6", "Human approval required for this action")
@@ -195,7 +196,7 @@ class SafetyGatesPlugin:
                 return RiskLevel.CRITICAL
         return RiskLevel.LOW
 
-    def run_all_gates(self, action: str, action_type: str, context: Dict[str, Any] = None) -> List[GateResult]:
+    def run_all_gates(self, action: str, action_type: str, context: dict[str, Any] | None = None) -> list[GateResult]:
         """Run all gates up to the minimum required for an action type."""
         context = context or {}
         min_gate = self.get_minimum_gate(action_type)
@@ -212,7 +213,7 @@ class SafetyGatesPlugin:
 
         return results
 
-    def get_gate_log(self) -> List[Dict[str, Any]]:
+    def get_gate_log(self) -> list[dict[str, Any]]:
         return [r.to_dict() for r in self._gate_log]
 
 

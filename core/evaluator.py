@@ -10,12 +10,11 @@ AVO law: f(candidate) must be deterministic.
 
 from __future__ import annotations
 
-import logging
 import json
+import logging
 import os
-import re
 import subprocess
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,16 +22,16 @@ logger = logging.getLogger(__name__)
 class EvalResult:
     __slots__ = ("ok", "score", "trace")
 
-    def __init__(self, ok: bool, score: Optional[float], trace: Dict[str, Any]):
+    def __init__(self, ok: bool, score: float | None, trace: dict[str, Any]):
         self.ok = ok
         self.score = score
         self.trace = trace
 
     def __repr__(self) -> str:
-        return "EvalResult(ok=%r, score=%r)" % (self.ok, self.score)
+        return f"EvalResult(ok={self.ok!r}, score={self.score!r})"
 
 
-def parse_metric(stdout: str, metric_name: str) -> Tuple[bool, Optional[float]]:
+def parse_metric(stdout: str, metric_name: str) -> tuple[bool, float | None]:
     """Parse metric from stdout."""
     lines = [ln.strip() for ln in (stdout or "").splitlines() if ln.strip()]
     if not lines:
@@ -74,14 +73,14 @@ def _quote_exe(cmd: str) -> str:
     return cmd
 
 
-def evaluate(bench_cmd: str, cwd: Optional[str], metric_name: str = "score",
+def evaluate(bench_cmd: str, cwd: str | None, metric_name: str = "score",
              timeout: int = 1800) -> EvalResult:
     """Run the deterministic benchmark. Never raises; failures become traces."""
     try:
         r = subprocess.run(_quote_exe(bench_cmd), shell=True, cwd=cwd,
                            capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return EvalResult(False, None, {"error": "bench timeout after %ss" % timeout})
+        return EvalResult(False, None, {"error": f"bench timeout after {timeout}s"})
     except Exception as e:
         return EvalResult(False, None, {"error": repr(e)})
     

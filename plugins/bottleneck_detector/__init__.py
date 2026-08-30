@@ -7,7 +7,7 @@ Telemetry → Capability profile → Failure clustering → Bottleneck ranking �
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +16,8 @@ class BottleneckDetector:
     """Detect performance bottlenecks from telemetry."""
 
     def __init__(self):
-        self._capability_scores: Dict[str, float] = {}
-        self._failure_counts: Dict[str, int] = {}
+        self._capability_scores: dict[str, float] = {}
+        self._failure_counts: dict[str, int] = {}
 
     def set_capability_score(self, capability: str, score: float):
         """Set measured capability score."""
@@ -27,7 +27,7 @@ class BottleneckDetector:
         """Record a failure for a capability."""
         self._failure_counts[capability] = self._failure_counts.get(capability, 0) + 1
 
-    def detect_bottlenecks(self) -> List[Dict[str, Any]]:
+    def detect_bottlenecks(self) -> list[dict[str, Any]]:
         """Rank bottlenecks by priority."""
         bottlenecks = []
         
@@ -44,14 +44,14 @@ class BottleneckDetector:
         bottlenecks.sort(key=lambda b: b["priority"], reverse=True)
         return bottlenecks
 
-    def get_improvement_target(self) -> Optional[str]:
+    def get_improvement_target(self) -> str | None:
         """Get the primary improvement target."""
         bottlenecks = self.detect_bottlenecks()
         if bottlenecks:
             return bottlenecks[0]["capability"]
         return None
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "capabilities": len(self._capability_scores),
             "failure_counts": dict(self._failure_counts),

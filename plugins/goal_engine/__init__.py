@@ -9,13 +9,13 @@ Builds on the reference's GoalEngine to provide:
 - Integration with the supervisor for 24/7 operation
 """
 
-import time
-import uuid
 import asyncio
 import logging
-from typing import Dict, List, Set, Any, Optional
+import time
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +35,14 @@ class SubTask:
     title: str
     description: str
     role: str = "general_specialist"
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     status: TaskStatus = TaskStatus.PENDING
-    result: Optional[Any] = None
-    error: Optional[str] = None
+    result: Any | None = None
+    error: str | None = None
     retries: int = 0
     max_retries: int = 3
     created_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
+    completed_at: float | None = None
 
 
 @dataclass
@@ -50,10 +50,10 @@ class Goal:
     goal_id: str
     title: str
     description: str
-    subtasks: Dict[str, SubTask] = field(default_factory=dict)
+    subtasks: dict[str, SubTask] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    completed_at: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class GoalEngine:
@@ -63,11 +63,11 @@ class GoalEngine:
     """
 
     def __init__(self):
-        self.active_goals: Dict[str, Goal] = {}
-        self.completed_goals: Dict[str, Goal] = {}
-        self._execution_traces: Dict[str, List[Dict[str, Any]]] = {}
+        self.active_goals: dict[str, Goal] = {}
+        self.completed_goals: dict[str, Goal] = {}
+        self._execution_traces: dict[str, list[dict[str, Any]]] = {}
 
-    def create_goal(self, title: str, description: str, goal_id: Optional[str] = None) -> Goal:
+    def create_goal(self, title: str, description: str, goal_id: str | None = None) -> Goal:
         """Creates a new goal with optional custom ID."""
         gid = goal_id or f"goal_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
         goal = Goal(goal_id=gid, title=title, description=description)
@@ -83,7 +83,7 @@ class GoalEngine:
         title: str,
         description: str,
         role: str = "general_specialist",
-        dependencies: Optional[List[str]] = None,
+        dependencies: list[str] | None = None,
     ) -> SubTask:
         """Adds a subtask to a goal with dependency tracking."""
         deps = dependencies or []
@@ -99,7 +99,7 @@ class GoalEngine:
         goal.subtasks[task_id] = subtask
         return subtask
 
-    def auto_decompose(self, goal: Goal, strategy: str = "standard") -> List[SubTask]:
+    def auto_decompose(self, goal: Goal, strategy: str = "standard") -> list[SubTask]:
         """
         Automatically decomposes a goal into subtasks.
         
@@ -118,7 +118,7 @@ class GoalEngine:
         else:
             return self._decompose_standard(goal)
 
-    def _decompose_standard(self, goal: Goal) -> List[SubTask]:
+    def _decompose_standard(self, goal: Goal) -> list[SubTask]:
         """Standard 4-stage pipeline."""
         t1 = self.add_subtask(
             goal=goal,
@@ -153,7 +153,7 @@ class GoalEngine:
         )
         return [t1, t2, t3, t4]
 
-    def _decompose_research(self, goal: Goal) -> List[SubTask]:
+    def _decompose_research(self, goal: Goal) -> list[SubTask]:
         """Research-focused decomposition."""
         t1 = self.add_subtask(
             goal=goal,
@@ -180,7 +180,7 @@ class GoalEngine:
         )
         return [t1, t2, t3]
 
-    def _decompose_engineering(self, goal: Goal) -> List[SubTask]:
+    def _decompose_engineering(self, goal: Goal) -> list[SubTask]:
         """Engineering-focused decomposition."""
         t1 = self.add_subtask(
             goal=goal,
@@ -215,7 +215,7 @@ class GoalEngine:
         )
         return [t1, t2, t3, t4]
 
-    def _decompose_minimal(self, goal: Goal) -> List[SubTask]:
+    def _decompose_minimal(self, goal: Goal) -> list[SubTask]:
         """Minimal 2-stage decomposition."""
         t1 = self.add_subtask(
             goal=goal,
@@ -234,7 +234,7 @@ class GoalEngine:
         )
         return [t1, t2]
 
-    def get_ready_tasks(self, goal: Goal) -> List[SubTask]:
+    def get_ready_tasks(self, goal: Goal) -> list[SubTask]:
         """Returns all subtasks whose dependencies have successfully completed."""
         ready = []
         for task in goal.subtasks.values():
@@ -290,7 +290,7 @@ class GoalEngine:
             return False
         return all(t.status == TaskStatus.COMPLETED for t in goal.subtasks.values())
 
-    def get_progress(self, goal: Goal) -> Dict[str, Any]:
+    def get_progress(self, goal: Goal) -> dict[str, Any]:
         """Returns progress statistics for a goal."""
         total = len(goal.subtasks)
         completed = sum(1 for t in goal.subtasks.values() if t.status == TaskStatus.COMPLETED)
@@ -307,7 +307,7 @@ class GoalEngine:
             "is_complete": self.is_goal_complete(goal),
         }
 
-    def get_execution_trace(self, goal_id: str) -> List[Dict[str, Any]]:
+    def get_execution_trace(self, goal_id: str) -> list[dict[str, Any]]:
         """Returns the execution trace for a goal."""
         return self._execution_traces.get(goal_id, [])
 

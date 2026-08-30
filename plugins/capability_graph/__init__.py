@@ -13,7 +13,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,17 +25,16 @@ class CapabilityNode:
     success_rate: float = 0.0
     sample_count: int = 0
     calibration: float = 0.5
-    failure_modes: List[str] = field(default_factory=list)
+    failure_modes: list[str] = field(default_factory=list)
     best_strategy: str = ""
     best_model: str = ""
-    resource_profile: Dict[str, float] = field(default_factory=dict)
+    resource_profile: dict[str, float] = field(default_factory=dict)
     evaluated_at: float = 0.0
-    requires: List[str] = field(default_factory=list)
-    improves: List[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
+    improves: list[str] = field(default_factory=list)
 
     def update(self, success: bool):
         """Update capability measurement with new observation."""
-        n = self.sample_count
         if self.sample_count == 0:
             self.success_rate = 1.0 if success else 0.0
         else:
@@ -47,7 +46,7 @@ class CapabilityNode:
         self.evaluated_at = time.time()
         self.calibration = min(1.0, self.sample_count / 50.0)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "success_rate": round(self.success_rate, 4),
@@ -66,8 +65,8 @@ class CapabilityGraph:
     """Graph of measured capabilities with dependencies."""
 
     def __init__(self):
-        self._capabilities: Dict[str, CapabilityNode] = {}
-        self._edges: List[tuple] = []  # (cap_a, cap_b, relation_type)
+        self._capabilities: dict[str, CapabilityNode] = {}
+        self._edges: list[tuple] = []  # (cap_a, cap_b, relation_type)
 
     def get_or_create(self, name: str) -> CapabilityNode:
         """Get or create a capability node."""
@@ -87,7 +86,7 @@ class CapabilityGraph:
         if failure_mode and failure_mode not in cap.failure_modes:
             cap.failure_modes.append(failure_mode)
 
-    def set_dependency(self, capability: str, requires: str = None, improves: str = None):
+    def set_dependency(self, capability: str, requires: str | None = None, improves: str | None = None):
         """Set capability dependencies."""
         cap = self.get_or_create(capability)
         if requires:
@@ -97,27 +96,27 @@ class CapabilityGraph:
             cap.improves.append(improves)
             self._edges.append((capability, improves, "improves"))
 
-    def get_capability(self, name: str) -> Optional[CapabilityNode]:
+    def get_capability(self, name: str) -> CapabilityNode | None:
         """Get a capability node."""
         return self._capabilities.get(name)
 
-    def get_all(self) -> Dict[str, CapabilityNode]:
+    def get_all(self) -> dict[str, CapabilityNode]:
         """Get all capability nodes."""
         return dict(self._capabilities)
 
-    def get_weakest(self, n: int = 3) -> List[CapabilityNode]:
+    def get_weakest(self, n: int = 3) -> list[CapabilityNode]:
         """Get the n weakest capabilities (by success rate)."""
         caps = list(self._capabilities.values())
         caps.sort(key=lambda c: (c.success_rate, c.sample_count))
         return caps[:n]
 
-    def get_strongest(self, n: int = 3) -> List[CapabilityNode]:
+    def get_strongest(self, n: int = 3) -> list[CapabilityNode]:
         """Get the n strongest capabilities."""
         caps = list(self._capabilities.values())
         caps.sort(key=lambda c: c.success_rate, reverse=True)
         return caps[:n]
 
-    def get_gap_analysis(self) -> Dict[str, Any]:
+    def get_gap_analysis(self) -> dict[str, Any]:
         """Identify capability gaps for curriculum targeting."""
         gaps = []
         for cap in self._capabilities.values():
@@ -131,7 +130,7 @@ class CapabilityGraph:
         gaps.sort(key=lambda g: g["priority"], reverse=True)
         return {"gaps": gaps, "total": len(self._capabilities)}
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get overall statistics."""
         if not self._capabilities:
             return {"total": 0}
@@ -172,7 +171,7 @@ class CapabilityGraphPlugin:
         else:
             self.graph.record_failure(capability, failure_mode)
 
-    async def get_profile(self) -> Dict[str, Any]:
+    async def get_profile(self) -> dict[str, Any]:
         """Get the full capability profile."""
         return {
             name: cap.to_dict()

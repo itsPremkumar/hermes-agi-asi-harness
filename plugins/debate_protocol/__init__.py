@@ -5,11 +5,11 @@ For difficult decisions: proposal → agent A → B → C → critic → counter
 → evidence check → executive decision.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
-from enum import Enum
 import time
 import uuid
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class Position(str, Enum):
@@ -23,11 +23,11 @@ class DebateArgument:
     agent_id: str
     position: Position
     argument: str
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
     confidence: float = 0.5
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "agent_id": self.agent_id,
             "position": self.position.value,
@@ -42,15 +42,15 @@ class DebateArgument:
 class DebateOutcome:
     debate_id: str
     topic: str
-    arguments: List[DebateArgument] = field(default_factory=list)
-    winner: Optional[Position] = None
+    arguments: list[DebateArgument] = field(default_factory=list)
+    winner: Position | None = None
     consensus_reached: bool = False
     executive_decision: str = ""
     final_confidence: float = 0.0
     duration_seconds: float = 0.0
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "debate_id": self.debate_id,
             "topic": self.topic,
@@ -68,7 +68,7 @@ class DebateProtocol:
     """Structured multi-agent debate protocol."""
 
     def __init__(self):
-        self._debates: Dict[str, DebateOutcome] = {}
+        self._debates: dict[str, DebateOutcome] = {}
         self._max_rounds = 3
 
     def start_debate(self, topic: str, initial_proposal: str, proposer: str = "executive") -> str:
@@ -92,7 +92,7 @@ class DebateProtocol:
         return debate_id
 
     def add_argument(self, debate_id: str, agent_id: str, position: str,
-                     argument: str, evidence: List[str] = None,
+                     argument: str, evidence: list[str] | None = None,
                      confidence: float = 0.5) -> bool:
         """Add an argument to an ongoing debate."""
         outcome = self._debates.get(debate_id)
@@ -160,7 +160,7 @@ class DebateProtocol:
             outcome.winner = Position.ABSTAIN
 
         # Check consensus
-        positions = set(a.position for a in outcome.arguments)
+        positions = {a.position for a in outcome.arguments}
         outcome.consensus_reached = len(positions) == 1
 
         outcome.final_confidence = abs(pro_score - con_score) / max(pro_score + con_score, 0.001)
@@ -184,14 +184,14 @@ class DebateProtocol:
         outcome = self.executive_judgment(debate_id)
         return outcome
 
-    def get_debate(self, debate_id: str) -> Optional[DebateOutcome]:
+    def get_debate(self, debate_id: str) -> DebateOutcome | None:
         return self._debates.get(debate_id)
 
     @property
-    def debates(self) -> Dict[str, DebateOutcome]:
+    def debates(self) -> dict[str, DebateOutcome]:
         return self._debates
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         total = len(self._debates)
         return {
             "total_debates": total,

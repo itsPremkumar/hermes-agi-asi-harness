@@ -1,8 +1,10 @@
 """Quality Gates - 7 gates from requirement to production verification."""
 from __future__ import annotations
+
 import uuid
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
+
 
 class Gate(str, Enum):
     REQUIREMENT = "requirement"
@@ -16,7 +18,7 @@ class Gate(str, Enum):
 class QualityGates:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.gates: Dict[str, bool] = {g.value: False for g in Gate}
+        self.gates: dict[str, bool] = {g.value: False for g in Gate}
     
     def pass_gate(self, gate: Gate):
         self.gates[gate.value] = True
@@ -24,8 +26,8 @@ class QualityGates:
     def all_passed(self) -> bool:
         return all(self.gates.values())
     
-    def get_pending(self) -> List[str]:
+    def get_pending(self) -> list[str]:
         return [g for g, passed in self.gates.items() if not passed]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"passed": sum(1 for v in self.gates.values() if v), "pending": self.get_pending()}

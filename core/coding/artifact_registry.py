@@ -1,10 +1,12 @@
 """Artifact Registry — Artifact-centric engineering communication."""
 from __future__ import annotations
+
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class ArtifactType(str, Enum):
     PATCH = "patch"
@@ -27,11 +29,11 @@ class Artifact:
     content: Any
     producer: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class ArtifactRegistry:
     def __init__(self):
-        self.artifacts: Dict[str, Artifact] = {}
+        self.artifacts: dict[str, Artifact] = {}
     
     def register(self, artifact_type: ArtifactType, name: str,
                  content: Any, producer: str, **kwargs) -> Artifact:
@@ -43,11 +45,11 @@ class ArtifactRegistry:
         self.artifacts[artifact.id] = artifact
         return artifact
     
-    def get_by_type(self, artifact_type: ArtifactType) -> List[Artifact]:
+    def get_by_type(self, artifact_type: ArtifactType) -> list[Artifact]:
         return [a for a in self.artifacts.values() if a.artifact_type == artifact_type]
     
-    def get_by_producer(self, producer: str) -> List[Artifact]:
+    def get_by_producer(self, producer: str) -> list[Artifact]:
         return [a for a in self.artifacts.values() if a.producer == producer]
     
-    def get_state(self) -> Dict[str, Any]:
-        return {"total": len(self.artifacts), "types": list(set(a.artifact_type.value for a in self.artifacts.values()))}
+    def get_state(self) -> dict[str, Any]:
+        return {"total": len(self.artifacts), "types": list({a.artifact_type.value for a in self.artifacts.values()})}

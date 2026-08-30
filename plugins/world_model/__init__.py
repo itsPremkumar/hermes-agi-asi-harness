@@ -4,13 +4,13 @@ world_model.py — Dynamic Causal Graph & World State Representation
 Tracks entities, relations, and predictive causal branches in the agent environment.
 """
 
-import time
 import json
-import sqlite3
-import pathlib
 import logging
-from typing import Dict, List, Any, Optional, Set
+import pathlib
+import sqlite3
+import time
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Entity:
     id: str
     entity_type: str
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
     last_updated: float = field(default_factory=time.time)
 
 
@@ -38,7 +38,7 @@ class WorldModel:
     Uses SQLite for persistence with FTS5 full-text search.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         if db_path is None:
             self.db_path = ":memory:"
         else:
@@ -47,8 +47,8 @@ class WorldModel:
             self.db_path = str(p)
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._has_fts = False
-        self.entities: Dict[str, Entity] = {}
-        self.causal_graph: Dict[str, List[CausalRelation]] = {}
+        self.entities: dict[str, Entity] = {}
+        self.causal_graph: dict[str, list[CausalRelation]] = {}
         self._init_db()
 
     def _init_db(self):
@@ -83,7 +83,7 @@ class WorldModel:
             except Exception:
                 self._has_fts = False
 
-    def upsert_entity(self, entity_id: str, entity_type: str, properties: Dict[str, Any]) -> Entity:
+    def upsert_entity(self, entity_id: str, entity_type: str, properties: dict[str, Any]) -> Entity:
         """Adds or updates an entity."""
         if entity_id in self.entities:
             ent = self.entities[entity_id]
@@ -121,12 +121,12 @@ class WorldModel:
             """, (cause, effect, strength, 1, description))
         return new_rel
 
-    def predict_effects(self, action_or_event: str, min_strength: float = 0.5) -> List[CausalRelation]:
+    def predict_effects(self, action_or_event: str, min_strength: float = 0.5) -> list[CausalRelation]:
         """Predicts probable downstream effects of a given action or event."""
         relations = self.causal_graph.get(action_or_event, [])
         return [r for r in relations if r.strength >= min_strength]
 
-    def get_world_summary(self) -> Dict[str, Any]:
+    def get_world_summary(self) -> dict[str, Any]:
         """Returns a summary of the world model."""
         cursor = self._conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM entities")

@@ -11,14 +11,14 @@ from __future__ import annotations
 import random
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
 class PolicyUsageRecord:
     policy_id: str
-    action: Dict[str, Any]
+    action: dict[str, Any]
     success: bool
     reward: float
     timestamp: float
@@ -30,10 +30,10 @@ class PolicyVersion:
     id: str
     policy_id: str
     version: int
-    preferences: Dict[str, float]
+    preferences: dict[str, float]
     created_at: float
     promoted: bool = False
-    rollback_reason: Optional[str] = None
+    rollback_reason: str | None = None
 
 
 class PolicyBridge:
@@ -42,11 +42,11 @@ class PolicyBridge:
     def __init__(self, policy_learner: Any, epsilon: float = 0.1):
         self.policy_learner = policy_learner
         self.epsilon = epsilon
-        self.usage_records: List[PolicyUsageRecord] = []
-        self.policy_versions: List[PolicyVersion] = []
-        self._version_counter: Dict[str, int] = {}
+        self.usage_records: list[PolicyUsageRecord] = []
+        self.policy_versions: list[PolicyVersion] = []
+        self._version_counter: dict[str, int] = {}
     
-    def select_action_with_policy(self, goal: str, context: Dict[str, Any],
+    def select_action_with_policy(self, goal: str, context: dict[str, Any],
                                    explore: bool = True) -> tuple:
         """Select action using learned policy, with exploration."""
         task_type = context.get("task_type", "unknown")
@@ -81,7 +81,7 @@ class PolicyBridge:
         
         return action, policy
     
-    def _random_action(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _random_action(self, context: dict[str, Any]) -> dict[str, Any]:
         """Generate a random action for exploration."""
         available = context.get("available_actions", ["read", "create", "update", "delete"])
         return {
@@ -90,7 +90,7 @@ class PolicyBridge:
             "timestamp": time.time(),
         }
     
-    def record_outcome(self, policy_id: str, action: Dict[str, Any],
+    def record_outcome(self, policy_id: str, action: dict[str, Any],
                        success: bool, reward: float):
         """Feed outcome back to policy learner."""
         record = PolicyUsageRecord(
@@ -114,7 +114,7 @@ class PolicyBridge:
             )
     
     def create_policy_version(self, policy_id: str,
-                               preferences: Dict[str, float]) -> PolicyVersion:
+                               preferences: dict[str, float]) -> PolicyVersion:
         """Create a new policy version."""
         version_num = self._version_counter.get(policy_id, 0) + 1
         self._version_counter[policy_id] = version_num
@@ -149,7 +149,7 @@ class PolicyBridge:
     def set_exploration_rate(self, epsilon: float):
         self.epsilon = max(0.0, min(1.0, epsilon))
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         total = len(self.usage_records)
         if total == 0:
             return {"total": 0, "epsilon": self.epsilon}

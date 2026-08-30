@@ -15,11 +15,10 @@ import json
 import logging
 import os
 import re
-import time
 import subprocess
 import threading
-from typing import Dict, List, Optional, Protocol
 from dataclasses import dataclass
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ class ModelResponse:
 
 class PlannerBrain(Protocol):
     """Protocol for brain implementations."""
-    def hypothesize(self, goal: str, context_bullets: List[str], **kw) -> str: ...
+    def hypothesize(self, goal: str, context_bullets: list[str], **kw) -> str: ...
     def implement(self, hypothesis: str, goal: str, **kw) -> str: ...
     def plan(self, goal: str, criterion: str) -> dict: ...
     def research(self, goal: str, strategy: str, **kw) -> str: ...
@@ -47,7 +46,7 @@ class PlannerBrain(Protocol):
     def supervise(self, goal: str, criterion: str, trajectory: str, memory: str) -> str: ...
 
 
-def _build_hermes_cmd(prompt: str, model: Optional[str] = None, toolset: Optional[str] = None) -> List[str]:
+def _build_hermes_cmd(prompt: str, model: str | None = None, toolset: str | None = None) -> list[str]:
     """Assemble the Hermes CLI invocation."""
     cmd = ["hermes", "-z", prompt, "--accept-hooks"]
     if model:
@@ -62,9 +61,9 @@ _ERROR_RE = re.compile(
     r"model .* not|rate[ _-]?limit|forbidden)(\b|$)")
 
 
-def _hermes(prompt: str, timeout: int = 600, model: Optional[str] = None, toolset: Optional[str] = None) -> str:
+def _hermes(prompt: str, timeout: int = 600, model: str | None = None, toolset: str | None = None) -> str:
     """One shot through the Hermes CLI."""
-    last_err: Optional[str] = None
+    last_err: str | None = None
     for _ in range(2):
         try:
             r = subprocess.run(_build_hermes_cmd(prompt, model, toolset),
@@ -76,20 +75,20 @@ def _hermes(prompt: str, timeout: int = 600, model: Optional[str] = None, toolse
         except FileNotFoundError:
             raise BrainError("hermes CLI not on PATH")
         except subprocess.TimeoutExpired:
-            last_err = "timeout after %ss" % timeout
-    raise BrainError("hermes brain failed twice: %s" % last_err)
+            last_err = f"timeout after {timeout}s"
+    raise BrainError(f"hermes brain failed twice: {last_err}")
 
 
 class HermesBrain:
     """Default brain: zero-key, free-model routing via Hermes CLI."""
     
-    def __init__(self, max_hypothesis_chars: int = 400, model: Optional[str] = None,
-                 research_toolset: Optional[str] = "web"):
+    def __init__(self, max_hypothesis_chars: int = 400, model: str | None = None,
+                 research_toolset: str | None = "web"):
         self.max_hypothesis_chars = max_hypothesis_chars
         self.model = model or os.environ.get("AGX_HERMES_MODEL")
         self.research_toolset = research_toolset
     
-    def _ask(self, role: str, toolset: Optional[str] = None, **kw) -> str:
+    def _ask(self, role: str, toolset: str | None = None, **kw) -> str:
         prompt = self._build_prompt(role, **kw)
         return _hermes(prompt, model=self.model, toolset=toolset)
     
@@ -109,7 +108,7 @@ class HermesBrain:
         except (KeyError, IndexError):
             return template
     
-    def hypothesize(self, goal: str, context_bullets: List[str] = None, **kw) -> str:
+    def hypothesize(self, goal: str, context_bullets: list[str] | None = None, **kw) -> str:
         ctx = "\n".join("- " + b for b in (context_bullets or [])[:12]) or "- (fresh start)"
         out = self._ask("implementer", goal=goal, criterion=kw.get("criterion", "(none)"),
                         context=ctx, research=kw.get("research", "(none)"))
@@ -131,7 +130,7 @@ class HermesBrain:
         except json.JSONDecodeError:
             return {"goal": goal, "sub_goals": []}
     
-    def research(self, goal: str, strategy: str, prior: str = "", toolset: Optional[str] = None) -> str:
+    def research(self, goal: str, strategy: str, prior: str = "", toolset: str | None = None) -> str:
         return self._ask("researcher", toolset=toolset or self.research_toolset,
                          goal=goal, strategy=strategy, prior=prior or "(none)")
     
@@ -147,14 +146,14 @@ class HermesBrain:
 class EchoBrain:
     """Deterministic test brain — NEVER ships to production runs."""
     
-    def __init__(self, hypotheses: List[str]):
+    def __init__(self, hypotheses: list[str]):
         if os.environ.get("AGX_ALLOW_ECHO_BRAIN") != "1":
             raise BrainError("EchoBrain refused: set AGX_ALLOW_ECHO_BRAIN=1 (tests only)")
         self.hypotheses = hypotheses
         self._i = 0
         self._lock = threading.Lock()
     
-    def hypothesize(self, goal: str, context_bullets: List[str] = None, **kw) -> str:
+    def hypothesize(self, goal: str, context_bullets: list[str] | None = None, **kw) -> str:
         with self._lock:
             h = self.hypotheses[self._i % len(self.hypotheses)]
             self._i += 1

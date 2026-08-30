@@ -6,16 +6,13 @@ monitors health, and triggers daily development + verification cycles.
 """
 
 import asyncio
+import logging
 import os
 import sys
 import time
-import json
-import signal
-import subprocess
-import logging
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -48,11 +45,11 @@ class DaemonHealth:
     running: bool = True
     kernel_healthy: bool = False
     last_heartbeat: float = 0.0
-    last_verification: Optional[float] = None
-    last_daily_dev: Optional[float] = None
-    last_real_env_check: Optional[float] = None
+    last_verification: float | None = None
+    last_daily_dev: float | None = None
+    last_real_env_check: float | None = None
     restart_count: int = 0
-    failures: List[str] = field(default_factory=list)
+    failures: list[str] = field(default_factory=list)
     uptime_seconds: float = 0.0
     start_time: float = 0.0
 
@@ -63,9 +60,9 @@ class SupervisorDaemon:
     def __init__(self, config: SupervisionConfig = None):
         self.config = config or SupervisionConfig()
         self.health = DaemonHealth()
-        self._kernel: Optional[HermesKernel] = None
+        self._kernel: HermesKernel | None = None
         self._running = False
-        self._restart_times: List[float] = []
+        self._restart_times: list[float] = []
         self._start_time = 0.0
         self._last_health_check = 0.0
         self._last_verification = 0.0
@@ -188,14 +185,14 @@ class SupervisorDaemon:
         plan = verifier.create_plan(test_files, num_rounds=3)
         result = await verifier.run_verification(plan)
         if not result["overall_passed"]:
-            logger.warning(f"Verification failed")
+            logger.warning("Verification failed")
             self.health.failures.append(f"{time.time()}: Verification failed")
 
     async def _run_daily_development(self):
         """Run daily development cycle."""
         logger.info("Starting daily development cycle")
         try:
-            from core.runtime.daily_dev import DailyDevEngine, DailyDevConfig
+            from core.runtime.daily_dev import DailyDevConfig, DailyDevEngine
             config = DailyDevConfig(project_root=self.config.project_root)
             engine = DailyDevEngine(config)
             result = await engine.run_daily_cycle()
@@ -207,7 +204,7 @@ class SupervisorDaemon:
         """Run real-environment validation."""
         logger.info("Running real-environment validation")
         try:
-            from core.runtime.daily_dev import DailyDevEngine, DailyDevConfig
+            from core.runtime.daily_dev import DailyDevConfig, DailyDevEngine
             config = DailyDevConfig(project_root=self.config.project_root)
             engine = DailyDevEngine(config)
             result = await engine.run_real_env_check()
@@ -223,7 +220,7 @@ class SupervisorDaemon:
             await self._kernel.shutdown()
         logger.info("Supervisor stopped.")
 
-    def get_health(self) -> Dict[str, Any]:
+    def get_health(self) -> dict[str, Any]:
         """Get current health status."""
         return {
             "running": self.health.running,
@@ -242,7 +239,7 @@ class SupervisorDaemonPlugin:
     """Plugin wrapper for the supervisor daemon."""
 
     def __init__(self):
-        self._daemon: Optional[SupervisorDaemon] = None
+        self._daemon: SupervisorDaemon | None = None
         self._config = SupervisionConfig()
 
     async def load(self):

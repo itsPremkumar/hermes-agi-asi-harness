@@ -6,9 +6,8 @@ Inspired by: Hermes Agent verification, ClawEnvKit evaluation.
 """
 
 import logging
-import subprocess
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ class VerificationEngine:
     async def stop(self) -> bool:
         return True
     
-    async def verify_code(self, code: str, language: str = "python") -> List[VerificationResult]:
+    async def verify_code(self, code: str, language: str = "python") -> list[VerificationResult]:
         """Verify code through multiple layers."""
         results = []
         
@@ -62,7 +61,7 @@ class VerificationEngine:
         
         return results
     
-    async def verify_research(self, claims: List[str]) -> List[VerificationResult]:
+    async def verify_research(self, claims: list[str]) -> list[VerificationResult]:
         """Verify research claims."""
         results = []
         
@@ -92,7 +91,7 @@ class VerificationEngine:
         # Placeholder for actual linting
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "type": "verification_engine"}
 
 

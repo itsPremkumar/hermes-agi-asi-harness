@@ -17,11 +17,12 @@ import asyncio
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_multi_agent_orchestrator")
 
@@ -43,8 +44,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +57,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -98,23 +99,23 @@ class AgentTask:
     id: str
     name: str
     func: Callable
-    args: Tuple = ()
-    kwargs: Dict[str, Any] = field(default_factory=dict)
+    args: tuple = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
     priority: TaskPriority = TaskPriority.MEDIUM
     timeout: float = 30.0
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     status: str = "pending"
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
 
 
 class Agent:
     """A single agent worker."""
     
-    def __init__(self, agent_id: str, name: str, capabilities: List[str] = None):
+    def __init__(self, agent_id: str, name: str, capabilities: list[str] | None = None):
         self.agent_id = agent_id
         self.name = name
         self.capabilities = capabilities or []
@@ -129,13 +130,13 @@ class MultiAgentOrchestrator:
     
     def __init__(self, max_concurrent: int = 4):
         self.max_concurrent = max_concurrent
-        self.agents: Dict[str, Agent] = {}
-        self.tasks: Dict[str, AgentTask] = {}
-        self.task_queue: List[str] = []
+        self.agents: dict[str, Agent] = {}
+        self.tasks: dict[str, AgentTask] = {}
+        self.task_queue: list[str] = []
         self._lock = asyncio.Lock()
         self._running = False
     
-    def register_agent(self, name: str, capabilities: List[str] = None) -> str:
+    def register_agent(self, name: str, capabilities: list[str] | None = None) -> str:
         """Register an agent."""
         agent_id = f"agent_{uuid.uuid4().hex[:8]}"
         self.agents[agent_id] = Agent(agent_id, name, capabilities)
@@ -146,11 +147,11 @@ class MultiAgentOrchestrator:
         self,
         name: str,
         func: Callable,
-        args: Tuple = (),
-        kwargs: Dict[str, Any] = None,
+        args: tuple = (),
+        kwargs: dict[str, Any] | None = None,
         priority: TaskPriority = TaskPriority.MEDIUM,
         timeout: float = 30.0,
-        dependencies: List[str] = None,
+        dependencies: list[str] | None = None,
     ) -> str:
         """Submit a task."""
         task_id = f"task_{uuid.uuid4().hex[:8]}"
@@ -217,7 +218,7 @@ class MultiAgentOrchestrator:
                 return False
         return True
     
-    async def run(self) -> Dict[str, Any]:
+    async def run(self) -> dict[str, Any]:
         """Run the orchestrator until all tasks complete."""
         self._running = True
         start_time = time.time()
@@ -280,7 +281,7 @@ class MultiAgentOrchestrator:
             "agents": len(self.agents),
         }
     
-    def get_task_result(self, task_id: str) -> Optional[Any]:
+    def get_task_result(self, task_id: str) -> Any | None:
         """Get task result."""
         task = self.tasks.get(task_id)
         if task:
@@ -293,7 +294,7 @@ class MultiAgentOrchestrator:
             }
         return None
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get orchestrator stats."""
         return {
             "agents": len(self.agents),
@@ -330,7 +331,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=30,
             ),
         )
-        self.orchestrator: Optional[MultiAgentOrchestrator] = None
+        self.orchestrator: MultiAgentOrchestrator | None = None
     
     async def load(self) -> bool:
         self.orchestrator = MultiAgentOrchestrator()
@@ -347,7 +348,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -359,7 +360,7 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def register_agent(self, name: str, capabilities: List[str] = None) -> str:
+    def register_agent(self, name: str, capabilities: list[str] | None = None) -> str:
         return self.orchestrator.register_agent(name, capabilities)
     
     def submit_task(self, name: str, func: Callable, *args, **kwargs) -> str:
@@ -371,14 +372,14 @@ class Plugin(PluginBase):
             name, func, args, kwargs, priority, timeout, dependencies
         )
     
-    async def run(self) -> Dict[str, Any]:
+    async def run(self) -> dict[str, Any]:
         return await self.orchestrator.run()
     
-    def get_task_result(self, task_id: str) -> Optional[Any]:
+    def get_task_result(self, task_id: str) -> Any | None:
         return self.orchestrator.get_task_result(task_id)
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.orchestrator.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

@@ -43,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -94,9 +94,9 @@ class AuditRecord:
     action: str
     target: str
     result: str
-    details: Dict[str, Any]
-    hash: Optional[str] = None
-    prev_hash: Optional[str] = None
+    details: dict[str, Any]
+    hash: str | None = None
+    prev_hash: str | None = None
 
 
 class AuditLogger:
@@ -105,8 +105,8 @@ class AuditLogger:
     def __init__(self, log_dir: str = ".hermes/audit"):
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.current_chain_hash: Optional[str] = None
-        self._buffer: List[AuditRecord] = []
+        self.current_chain_hash: str | None = None
+        self._buffer: list[AuditRecord] = []
         self._last_flush = time.time()
         # Seed chain hash from the most recent record already on disk (per-day file)
         self._seed_chain_hash()
@@ -142,7 +142,7 @@ class AuditLogger:
         return hashlib.sha256(data.encode()).hexdigest()
     
     def log(self, event_type: str, actor: str, action: str, target: str, 
-            result: str, details: Dict[str, Any] = None) -> AuditRecord:
+            result: str, details: dict[str, Any] | None = None) -> AuditRecord:
         """Log an audit event."""
         record = AuditRecord(
             timestamp=datetime.utcnow().isoformat(),
@@ -175,8 +175,7 @@ class AuditLogger:
         log_file = self.log_dir / f"audit_{today}.jsonl"
         
         with open(log_file, "a", encoding="utf-8") as f:
-            for record in self._buffer:
-                f.write(json.dumps({
+            f.writelines(json.dumps({
                     "timestamp": record.timestamp,
                     "event_type": record.event_type,
                     "actor": record.actor,
@@ -186,18 +185,18 @@ class AuditLogger:
                     "details": record.details,
                     "hash": record.hash,
                     "prev_hash": record.prev_hash,
-                }) + "\n")
+                }) + "\n" for record in self._buffer)
         
         self._buffer.clear()
         self._last_flush = time.time()
     
     def query(self, 
-              event_type: str = None,
-              actor: str = None,
-              action: str = None,
-              start_time: str = None,
-              end_time: str = None,
-              limit: int = 100) -> List[Dict[str, Any]]:
+              event_type: str | None = None,
+              actor: str | None = None,
+              action: str | None = None,
+              start_time: str | None = None,
+              end_time: str | None = None,
+              limit: int = 100) -> list[dict[str, Any]]:
         """Query audit records."""
         results = []
         
@@ -232,7 +231,7 @@ class AuditLogger:
         
         return results[-limit:] if limit else results
     
-    def verify_chain(self) -> Dict[str, Any]:
+    def verify_chain(self) -> dict[str, Any]:
         """Verify the hash chain integrity."""
         all_records = []
         
@@ -272,11 +271,11 @@ class AuditLogger:
             "errors": errors,
         }
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get audit statistics."""
         total = 0
-        by_type: Dict[str, int] = {}
-        by_result: Dict[str, int] = {}
+        by_type: dict[str, int] = {}
+        by_result: dict[str, int] = {}
         
         for log_file in self.log_dir.glob("audit_*.jsonl"):
             with open(log_file, "r", encoding="utf-8") as f:
@@ -325,11 +324,10 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.logger: Optional[AuditLogger] = None
+        self.logger: AuditLogger | None = None
     
     def _resolve_log_dir(self) -> str:
         """Resolve the audit log directory, honoring HERMES_HOME for isolation."""
-        import os
         home = os.environ.get("HERMES_HOME")
         if home:
             return os.path.join(home, "audit")
@@ -352,7 +350,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -364,7 +362,7 @@ class Plugin(PluginBase):
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
     def log(self, event_type: str, actor: str, action: str, target: str, 
-            result: str, details: Dict[str, Any] = None) -> Dict[str, Any]:
+            result: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
         record = self.logger.log(event_type, actor, action, target, result, details)
         # Flush immediately so records are queryable without waiting for buffer threshold
         self.logger.flush()
@@ -378,14 +376,14 @@ class Plugin(PluginBase):
         """Flush buffered audit records to disk."""
         self.logger.flush()
     
-    def query(self, **kwargs) -> List[Dict[str, Any]]:
+    def query(self, **kwargs) -> list[dict[str, Any]]:
         return self.logger.query(**kwargs)
     
-    def verify_chain(self) -> Dict[str, Any]:
+    def verify_chain(self) -> dict[str, Any]:
         return self.logger.verify_chain()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.logger.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -28,7 +28,7 @@ class UIElementMemory:
     success_count: int = 0
     failure_count: int = 0
     last_used: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -37,7 +37,7 @@ class NavigationPattern:
     id: str
     app_name: str
     name: str  # e.g., "create_new_event"
-    steps: List[Dict[str, Any]]  # [{action, element_label, expected_state}]
+    steps: list[dict[str, Any]]  # [{action, element_label, expected_state}]
     success_count: int = 0
     failure_count: int = 0
     average_time_ms: float = 0.0
@@ -48,15 +48,15 @@ class UIStateMemory:
     """Remember UI patterns across sessions."""
 
     def __init__(self):
-        self.elements: Dict[str, UIElementMemory] = {}  # element_id → memory
-        self.patterns: Dict[str, NavigationPattern] = {}  # pattern_id → pattern
-        self._app_elements: Dict[str, List[str]] = {}  # app_name → [element_ids]
-        self._app_patterns: Dict[str, List[str]] = {}  # app_name → [pattern_ids]
+        self.elements: dict[str, UIElementMemory] = {}  # element_id → memory
+        self.patterns: dict[str, NavigationPattern] = {}  # pattern_id → pattern
+        self._app_elements: dict[str, list[str]] = {}  # app_name → [element_ids]
+        self._app_patterns: dict[str, list[str]] = {}  # app_name → [pattern_ids]
 
     def remember_element(self, app_name: str, element_label: str,
                          element_type: str, location: tuple,
                          semantic_role: str, interaction_method: str,
-                         metadata: Dict[str, Any] = None) -> UIElementMemory:
+                         metadata: dict[str, Any] | None = None) -> UIElementMemory:
         mem = UIElementMemory(
             id=str(uuid.uuid4()),
             app_name=app_name,
@@ -77,7 +77,7 @@ class UIStateMemory:
         return mem
 
     def remember_pattern(self, app_name: str, name: str,
-                         steps: List[Dict[str, Any]]) -> NavigationPattern:
+                         steps: list[dict[str, Any]]) -> NavigationPattern:
         pattern = NavigationPattern(
             id=str(uuid.uuid4()),
             app_name=app_name,
@@ -93,7 +93,7 @@ class UIStateMemory:
         
         return pattern
 
-    def find_element(self, app_name: str, semantic_role: str) -> Optional[UIElementMemory]:
+    def find_element(self, app_name: str, semantic_role: str) -> UIElementMemory | None:
         """Find a remembered element by semantic role."""
         element_ids = self._app_elements.get(app_name, [])
         for eid in element_ids:
@@ -102,7 +102,7 @@ class UIStateMemory:
                 return elem
         return None
 
-    def find_pattern(self, app_name: str, name: str) -> Optional[NavigationPattern]:
+    def find_pattern(self, app_name: str, name: str) -> NavigationPattern | None:
         """Find a remembered navigation pattern."""
         pattern_ids = self._app_patterns.get(app_name, [])
         for pid in pattern_ids:
@@ -131,7 +131,7 @@ class UIStateMemory:
             pattern.average_time_ms = (pattern.average_time_ms * (total - 1) + time_ms) / total
             pattern.last_used = time.time()
 
-    def get_best_element(self, app_name: str, semantic_role: str) -> Optional[UIElementMemory]:
+    def get_best_element(self, app_name: str, semantic_role: str) -> UIElementMemory | None:
         """Get the most reliable element for a semantic role."""
         element_ids = self._app_elements.get(app_name, [])
         candidates = []
@@ -151,7 +151,7 @@ class UIStateMemory:
         
         return max(candidates, key=reliability)
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "elements": len(self.elements),
             "patterns": len(self.patterns),

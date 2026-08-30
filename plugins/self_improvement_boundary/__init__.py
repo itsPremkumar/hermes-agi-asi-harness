@@ -7,8 +7,8 @@ which require human approval, the safety perimeter.
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Set
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 
 class ChangeLevel(str, Enum):
@@ -29,10 +29,10 @@ class SelfImprovementBoundary:
     """Defines the safety perimeter for self-modification."""
 
     def __init__(self):
-        self._rules: List[BoundaryRule] = self._default_rules()
-        self._change_log: List[Dict[str, Any]] = []
+        self._rules: list[BoundaryRule] = self._default_rules()
+        self._change_log: list[dict[str, Any]] = []
 
-    def _default_rules(self) -> List[BoundaryRule]:
+    def _default_rules(self) -> list[BoundaryRule]:
         return [
             # Procedural improvements — safe
             BoundaryRule("workflow_procedure", ChangeLevel.AUTONOMOUS,
@@ -67,7 +67,7 @@ class SelfImprovementBoundary:
                         "Cannot disable shutdown"),
         ]
 
-    def can_change(self, target: str, level: Optional[ChangeLevel] = None) -> bool:
+    def can_change(self, target: str, level: ChangeLevel | None = None) -> bool:
         """Check if a target can be changed at the given level."""
         for rule in self._rules:
             if rule.target == target:
@@ -101,11 +101,11 @@ class SelfImprovementBoundary:
             "timestamp": time.time(),
         })
 
-    def get_change_log(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_change_log(self, limit: int = 50) -> list[dict[str, Any]]:
         return list(reversed(self._change_log[-limit:]))
 
-    def get_stats(self) -> Dict[str, Any]:
-        by_level: Dict[str, int] = {}
+    def get_stats(self) -> dict[str, Any]:
+        by_level: dict[str, int] = {}
         for rule in self._rules:
             by_level[rule.level.value] = by_level.get(rule.level.value, 0) + 1
         return {

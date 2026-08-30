@@ -12,7 +12,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class Source:
     trust_level: float = 0.5
     fetched_at: float = field(default_factory=time.time)
     content: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -36,11 +36,11 @@ class EvidenceClaim:
     id: str
     proposition: str
     confidence: float = 0.5
-    supported_by: List[str] = field(default_factory=list)  # source IDs
-    contradicted_by: List[str] = field(default_factory=list)  # source IDs
-    derived_from: List[str] = field(default_factory=list)  # claim IDs
-    tested_by: List[str] = field(default_factory=list)  # experiment IDs
-    expires_at: Optional[float] = None
+    supported_by: list[str] = field(default_factory=list)  # source IDs
+    contradicted_by: list[str] = field(default_factory=list)  # source IDs
+    derived_from: list[str] = field(default_factory=list)  # claim IDs
+    tested_by: list[str] = field(default_factory=list)  # experiment IDs
+    expires_at: float | None = None
     created_at: float = field(default_factory=time.time)
     status: str = "unverified"  # unverified, verified, contradicted, expired
 
@@ -52,10 +52,10 @@ class ResearchReport:
     question: str
     answer: str
     confidence: float
-    sources: List[Source]
-    evidence_graph: List[EvidenceClaim]
-    contradictions: List[Dict[str, Any]]
-    passes_completed: List[str]
+    sources: list[Source]
+    evidence_graph: list[EvidenceClaim]
+    contradictions: list[dict[str, Any]]
+    passes_completed: list[str]
     created_at: float = field(default_factory=time.time)
 
 
@@ -63,8 +63,8 @@ class EvidenceGraph:
     """Graph of claims, sources, and their relationships."""
 
     def __init__(self):
-        self._claims: Dict[str, EvidenceClaim] = {}
-        self._sources: Dict[str, Source] = {}
+        self._claims: dict[str, EvidenceClaim] = {}
+        self._sources: dict[str, Source] = {}
 
     def add_source(self, url: str, title: str, authority: str = "none", content: str = "") -> Source:
         """Add a source."""
@@ -83,8 +83,8 @@ class EvidenceGraph:
         self,
         proposition: str,
         confidence: float = 0.5,
-        supported_by: List[str] = None,
-        derived_from: List[str] = None,
+        supported_by: list[str] | None = None,
+        derived_from: list[str] | None = None,
     ) -> EvidenceClaim:
         """Add a claim to the graph."""
         claim = EvidenceClaim(
@@ -116,7 +116,7 @@ class EvidenceGraph:
             if len(claim.contradicted_by) > len(claim.supported_by):
                 claim.status = "contradicted"
 
-    def find_contradictions(self) -> List[Dict[str, Any]]:
+    def find_contradictions(self) -> list[dict[str, Any]]:
         """Find contradictions in the graph."""
         contradictions = []
         for claim in self._claims.values():
@@ -129,14 +129,14 @@ class EvidenceGraph:
                 })
         return contradictions
 
-    def get_claims_for_source(self, source_id: str) -> List[EvidenceClaim]:
+    def get_claims_for_source(self, source_id: str) -> list[EvidenceClaim]:
         """Get all claims supported or contradicted by a source."""
         return [
             c for c in self._claims.values()
             if source_id in c.supported_by or source_id in c.contradicted_by
         ]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "claims": len(self._claims),
             "sources": len(self._sources),
@@ -150,13 +150,13 @@ class ResearchEngineV2:
 
     def __init__(self):
         self._graph = EvidenceGraph()
-        self._reports: List[ResearchReport] = []
+        self._reports: list[ResearchReport] = []
 
     @property
     def graph(self) -> EvidenceGraph:
         return self._graph
 
-    def research(self, question: str, sources: List[Dict[str, str]] = None) -> ResearchReport:
+    def research(self, question: str, sources: list[dict[str, str]] | None = None) -> ResearchReport:
         """
         Execute multi-pass research.
         In a real implementation, this would call web_search and LLMs.
@@ -192,7 +192,7 @@ class ResearchEngineV2:
         self._reports.append(report)
         return report
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "reports": len(self._reports),
             **self._graph.get_stats(),

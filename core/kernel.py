@@ -12,9 +12,9 @@ core/runtime/kernel.py (HermesKernel) used by hermes_agi.py.
 from __future__ import annotations
 
 from core.runtime.agent_kernel import (
+    WORKING_PLUGINS,
     AgentKernel,
     build_kernel,
-    WORKING_PLUGINS,
 )
 
-__all__ = ["AgentKernel", "build_kernel", "WORKING_PLUGINS"]
+__all__ = ["WORKING_PLUGINS", "AgentKernel", "build_kernel"]

@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class EntityType(str, Enum):
@@ -43,12 +43,12 @@ class Entity:
     id: str
     name: str
     type: EntityType
-    state: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    state: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     confidence: float = 0.5
-    source_of_truth: Optional[str] = None
+    source_of_truth: str | None = None
     freshness: float = 0.0  # seconds since last update
 
 
@@ -57,7 +57,7 @@ class Relationship:
     source_id: str
     target_id: str
     type: RelationshipType
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.5
 
 
@@ -66,10 +66,10 @@ class Resource:
     id: str
     type: str
     owner: str = ""
-    state: Dict[str, Any] = field(default_factory=dict)
-    permissions: List[str] = field(default_factory=list)
-    capabilities: List[str] = field(default_factory=list)
-    relationships: List[Dict[str, str]] = field(default_factory=list)
+    state: dict[str, Any] = field(default_factory=dict)
+    permissions: list[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
+    relationships: list[dict[str, str]] = field(default_factory=list)
     source_of_truth: str = ""
     freshness: float = 0.0
     risk: float = 0.5
@@ -82,8 +82,8 @@ class EnvironmentEvent:
     type: str
     source: str
     timestamp: float
-    payload: Dict[str, Any]
-    affected_entities: List[str] = field(default_factory=list)
+    payload: dict[str, Any]
+    affected_entities: list[str] = field(default_factory=list)
     processed: bool = False
 
 
@@ -104,8 +104,8 @@ class Permission:
     action: str
     granted: bool
     scope: str = ""
-    expires_at: Optional[float] = None
-    conditions: Dict[str, Any] = field(default_factory=dict)
+    expires_at: float | None = None
+    conditions: dict[str, Any] = field(default_factory=dict)
 
 
 class EnvironmentModel:
@@ -121,13 +121,13 @@ class EnvironmentModel:
     """
 
     def __init__(self):
-        self.entities: Dict[str, Entity] = {}
-        self.resources: Dict[str, Resource] = {}
-        self.relationships: List[Relationship] = []
-        self.events: List[EnvironmentEvent] = []
-        self.constraints: Dict[str, Constraint] = {}
-        self.permissions: Dict[str, Permission] = {}
-        self.metadata: Dict[str, Any] = {
+        self.entities: dict[str, Entity] = {}
+        self.resources: dict[str, Resource] = {}
+        self.relationships: list[Relationship] = []
+        self.events: list[EnvironmentEvent] = []
+        self.constraints: dict[str, Constraint] = {}
+        self.permissions: dict[str, Permission] = {}
+        self.metadata: dict[str, Any] = {
             "created_at": time.time(),
             "version": "9.0",
         }
@@ -138,9 +138,9 @@ class EnvironmentModel:
         self,
         name: str,
         type: EntityType,
-        state: Dict[str, Any] = None,
-        metadata: Dict[str, Any] = None,
-        source_of_truth: str = None,
+        state: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        source_of_truth: str | None = None,
     ) -> Entity:
         entity = Entity(
             id=str(uuid.uuid4()),
@@ -154,16 +154,16 @@ class EnvironmentModel:
         self.entities[entity.id] = entity
         return entity
 
-    def get_entity(self, entity_id: str) -> Optional[Entity]:
+    def get_entity(self, entity_id: str) -> Entity | None:
         return self.entities.get(entity_id)
 
-    def find_entities_by_name(self, name: str) -> List[Entity]:
+    def find_entities_by_name(self, name: str) -> list[Entity]:
         return [e for e in self.entities.values() if name.lower() in e.name.lower()]
 
-    def find_entities_by_type(self, type: EntityType) -> List[Entity]:
+    def find_entities_by_type(self, type: EntityType) -> list[Entity]:
         return [e for e in self.entities.values() if e.type == type]
 
-    def update_entity_state(self, entity_id: str, state_update: Dict[str, Any]) -> bool:
+    def update_entity_state(self, entity_id: str, state_update: dict[str, Any]) -> bool:
         entity = self.entities.get(entity_id)
         if not entity:
             return False
@@ -174,8 +174,8 @@ class EnvironmentModel:
 
     # ── Resource Management ────────────────────────────────────────────────
 
-    def add_resource(self, type: str, state: Dict[str, Any] = None,
-                     capabilities: List[str] = None, owner: str = "",
+    def add_resource(self, type: str, state: dict[str, Any] | None = None,
+                     capabilities: list[str] | None = None, owner: str = "",
                      criticality: float = 0.5) -> Resource:
         resource = Resource(
             id=str(uuid.uuid4()),
@@ -188,16 +188,16 @@ class EnvironmentModel:
         self.resources[resource.id] = resource
         return resource
 
-    def get_resource(self, resource_id: str) -> Optional[Resource]:
+    def get_resource(self, resource_id: str) -> Resource | None:
         return self.resources.get(resource_id)
 
-    def find_resources_by_capability(self, capability: str) -> List[Resource]:
+    def find_resources_by_capability(self, capability: str) -> list[Resource]:
         return [r for r in self.resources.values() if capability in r.capabilities]
 
     # ── Relationship Management ────────────────────────────────────────────
 
     def add_relationship(self, source_id: str, target_id: str,
-                         type: RelationshipType, metadata: Dict[str, Any] = None) -> Relationship:
+                         type: RelationshipType, metadata: dict[str, Any] | None = None) -> Relationship:
         rel = Relationship(
             source_id=source_id,
             target_id=target_id,
@@ -207,24 +207,24 @@ class EnvironmentModel:
         self.relationships.append(rel)
         return rel
 
-    def get_relationships_for(self, entity_id: str) -> List[Relationship]:
+    def get_relationships_for(self, entity_id: str) -> list[Relationship]:
         return [r for r in self.relationships
                 if r.source_id == entity_id or r.target_id == entity_id]
 
-    def get_dependents(self, entity_id: str) -> List[str]:
+    def get_dependents(self, entity_id: str) -> list[str]:
         """Get all entities that depend on the given entity."""
         return [r.source_id for r in self.relationships
                 if r.target_id == entity_id and r.type == RelationshipType.DEPENDS_ON]
 
-    def get_dependencies(self, entity_id: str) -> List[str]:
+    def get_dependencies(self, entity_id: str) -> list[str]:
         """Get all entities the given entity depends on."""
         return [r.target_id for r in self.relationships
                 if r.source_id == entity_id and r.type == RelationshipType.DEPENDS_ON]
 
     # ── Event Management ───────────────────────────────────────────────────
 
-    def add_event(self, type: str, source: str, payload: Dict[str, Any],
-                  affected_entities: List[str] = None) -> EnvironmentEvent:
+    def add_event(self, type: str, source: str, payload: dict[str, Any],
+                  affected_entities: list[str] | None = None) -> EnvironmentEvent:
         event = EnvironmentEvent(
             id=str(uuid.uuid4()),
             type=type,
@@ -236,10 +236,10 @@ class EnvironmentModel:
         self.events.append(event)
         return event
 
-    def get_events_for_entity(self, entity_id: str) -> List[EnvironmentEvent]:
+    def get_events_for_entity(self, entity_id: str) -> list[EnvironmentEvent]:
         return [e for e in self.events if entity_id in e.affected_entities]
 
-    def get_unprocessed_events(self) -> List[EnvironmentEvent]:
+    def get_unprocessed_events(self) -> list[EnvironmentEvent]:
         return [e for e in self.events if not e.processed]
 
     def mark_event_processed(self, event_id: str):
@@ -276,7 +276,7 @@ class EnvironmentModel:
     # ── Permission Management ──────────────────────────────────────────────
 
     def add_permission(self, resource_id: str, action: str, granted: bool,
-                       scope: str = "", expires_at: float = None) -> Permission:
+                       scope: str = "", expires_at: float | None = None) -> Permission:
         perm = Permission(
             id=str(uuid.uuid4()),
             resource_id=resource_id,
@@ -298,7 +298,7 @@ class EnvironmentModel:
 
     # ── Query & Summary ────────────────────────────────────────────────────
 
-    def query(self, query: str) -> Dict[str, Any]:
+    def query(self, query: str) -> dict[str, Any]:
         query_lower = query.lower()
         return {
             "entities": [e for e in self.entities.values()
@@ -309,7 +309,7 @@ class EnvironmentModel:
                        if query_lower in str(e.payload).lower()],
         }
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "entities_count": len(self.entities),
             "resources_count": len(self.resources),
@@ -320,5 +320,5 @@ class EnvironmentModel:
             "unprocessed_events": len(self.get_unprocessed_events()),
         }
 
-    def get_critical_resources(self, threshold: float = 0.7) -> List[Resource]:
+    def get_critical_resources(self, threshold: float = 0.7) -> list[Resource]:
         return [r for r in self.resources.values() if r.criticality >= threshold]

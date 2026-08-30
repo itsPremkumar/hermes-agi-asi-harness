@@ -12,9 +12,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_protocol")
 
@@ -45,7 +46,7 @@ class Message:
     content: Any
     priority: MessagePriority = MessagePriority.NORMAL
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CommunicationProtocol:
@@ -63,9 +64,9 @@ class CommunicationProtocol:
     
     def __init__(self):
         self._message_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
-        self._channels: Dict[str, List[str]] = {}  # channel -> agent_ids
-        self._message_log: List[Message] = []
-        self._handlers: Dict[MessageType, List[Callable]] = {}
+        self._channels: dict[str, list[str]] = {}  # channel -> agent_ids
+        self._message_log: list[Message] = []
+        self._handlers: dict[MessageType, list[Callable]] = {}
     
     async def send(self, sender: str, receiver: str, content: Any,
                    msg_type: MessageType = MessageType.REQUEST,
@@ -118,12 +119,12 @@ class CommunicationProtocol:
             for agent_id in self._channels[channel]:
                 await self.send(sender, agent_id, content, MessageType.EVENT)
     
-    async def process_messages(self, timeout: float = 0.1) -> List[Message]:
+    async def process_messages(self, timeout: float = 0.1) -> list[Message]:
         """Process messages from the queue."""
         messages = []
         try:
             while True:
-                priority, msg = await asyncio.wait_for(
+                _priority, msg = await asyncio.wait_for(
                     self._message_queue.get(), timeout=timeout
                 )
                 messages.append(msg)
@@ -138,7 +139,7 @@ class CommunicationProtocol:
             self._handlers[msg_type] = []
         self._handlers[msg_type].append(handler)
     
-    def get_message_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_message_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get message history."""
         return [
             {
@@ -152,7 +153,7 @@ class CommunicationProtocol:
             for msg in self._message_log[-limit:]
         ]
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

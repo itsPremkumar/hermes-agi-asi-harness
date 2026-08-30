@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ActionType(str, Enum):
@@ -50,23 +50,23 @@ class Action:
     id: str
     type: ActionType
     target: str
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     status: ActionStatus = ActionStatus.PENDING
-    parent_id: Optional[str] = None
-    dependencies: List[str] = field(default_factory=list)
-    consequences: List[str] = field(default_factory=list)  # action IDs this causes
-    invalidates: List[str] = field(default_factory=list)  # action IDs this invalidates
-    enables: List[str] = field(default_factory=list)      # action IDs this enables
-    blocks: List[str] = field(default_factory=list)       # action IDs this blocks
+    parent_id: str | None = None
+    dependencies: list[str] = field(default_factory=list)
+    consequences: list[str] = field(default_factory=list)  # action IDs this causes
+    invalidates: list[str] = field(default_factory=list)  # action IDs this invalidates
+    enables: list[str] = field(default_factory=list)      # action IDs this enables
+    blocks: list[str] = field(default_factory=list)       # action IDs this blocks
     reversibility: str = "high"
-    compensation_action: Optional[str] = None
+    compensation_action: str | None = None
     requires_approval: bool = False
     risk_score: float = 0.0
     created_at: float = field(default_factory=time.time)
-    executed_at: Optional[float] = None
-    completed_at: Optional[float] = None
+    executed_at: float | None = None
+    completed_at: float | None = None
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -75,8 +75,8 @@ class ActionEvent:
     type: str  # created, updated, deleted, failed, completed, expired, changed, alert
     source: str
     timestamp: float
-    payload: Dict[str, Any]
-    affected_resources: List[str] = field(default_factory=list)
+    payload: dict[str, Any]
+    affected_resources: list[str] = field(default_factory=list)
 
 
 class UniversalActionProtocol:
@@ -95,9 +95,9 @@ class UniversalActionProtocol:
     META_TYPES = {ActionType.WAIT, ActionType.SUBSCRIBE, ActionType.TRANSFORM}
 
     def __init__(self):
-        self.actions: Dict[str, Action] = {}
-        self.events: List[ActionEvent] = []
-        self._action_graph: Dict[str, List[str]] = {}  # action_id → dependent action ids
+        self.actions: dict[str, Action] = {}
+        self.events: list[ActionEvent] = []
+        self._action_graph: dict[str, list[str]] = {}  # action_id → dependent action ids
 
     # ── Action Creation ────────────────────────────────────────────────────
 
@@ -105,9 +105,9 @@ class UniversalActionProtocol:
         self,
         type: ActionType,
         target: str,
-        parameters: Dict[str, Any] = None,
-        parent_id: str = None,
-        dependencies: List[str] = None,
+        parameters: dict[str, Any] | None = None,
+        parent_id: str | None = None,
+        dependencies: list[str] | None = None,
     ) -> Action:
         action = Action(
             id=str(uuid.uuid4()),
@@ -127,7 +127,7 @@ class UniversalActionProtocol:
         
         return action
 
-    def get_action(self, action_id: str) -> Optional[Action]:
+    def get_action(self, action_id: str) -> Action | None:
         return self.actions.get(action_id)
 
     # ── Action Graph ───────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ class UniversalActionProtocol:
         elif relation == "blocks":
             source.blocks.append(target_id)
 
-    def get_causal_chain(self, action_id: str) -> List[str]:
+    def get_causal_chain(self, action_id: str) -> list[str]:
         """Get all actions causally downstream of the given action."""
         chain = []
         to_process = [action_id]
@@ -164,7 +164,7 @@ class UniversalActionProtocol:
                 to_process.extend(action.consequences)
         return chain
 
-    def get_blocked_actions(self, action_id: str) -> List[str]:
+    def get_blocked_actions(self, action_id: str) -> list[str]:
         """Get all actions blocked by the given action."""
         action = self.actions.get(action_id)
         if not action:
@@ -173,8 +173,8 @@ class UniversalActionProtocol:
 
     # ── Event Model ───────────────────────────────────────────────────────
 
-    def emit_event(self, type: str, source: str, payload: Dict[str, Any],
-                   affected_resources: List[str] = None) -> ActionEvent:
+    def emit_event(self, type: str, source: str, payload: dict[str, Any],
+                   affected_resources: list[str] | None = None) -> ActionEvent:
         event = ActionEvent(
             id=str(uuid.uuid4()),
             type=type,
@@ -186,15 +186,15 @@ class UniversalActionProtocol:
         self.events.append(event)
         return event
 
-    def get_events_for_resource(self, resource: str) -> List[ActionEvent]:
+    def get_events_for_resource(self, resource: str) -> list[ActionEvent]:
         return [e for e in self.events if resource in e.affected_resources]
 
-    def get_events_by_type(self, event_type: str) -> List[ActionEvent]:
+    def get_events_by_type(self, event_type: str) -> list[ActionEvent]:
         return [e for e in self.events if e.type == event_type]
 
     # ── Action Composition ─────────────────────────────────────────────────
 
-    def compose(self, *actions: Action, mode: str = "sequence") -> List[Action]:
+    def compose(self, *actions: Action, mode: str = "sequence") -> list[Action]:
         """Compose multiple actions into a sequence or parallel batch."""
         if mode == "sequence":
             for i in range(len(actions) - 1):
@@ -228,7 +228,7 @@ class UniversalActionProtocol:
 
     # ── Query & Summary ────────────────────────────────────────────────────
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         status_counts = {}
         for action in self.actions.values():
             status_counts[action.status.value] = status_counts.get(action.status.value, 0) + 1
@@ -239,8 +239,8 @@ class UniversalActionProtocol:
             "graph_edges": sum(len(v) for v in self._action_graph.values()),
         }
 
-    def get_pending_actions(self) -> List[Action]:
+    def get_pending_actions(self) -> list[Action]:
         return [a for a in self.actions.values() if a.status == ActionStatus.PENDING]
 
-    def get_actions_by_type(self, action_type: ActionType) -> List[Action]:
+    def get_actions_by_type(self, action_type: ActionType) -> list[Action]:
         return [a for a in self.actions.values() if a.type == action_type]

@@ -43,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -91,15 +91,15 @@ class Skill:
     id: str
     name: str
     description: str
-    trigger_patterns: List[str]
-    steps: List[str]
+    trigger_patterns: list[str]
+    steps: list[str]
     success_count: int = 0
     failure_count: int = 0
     avg_duration: float = 0.0
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    last_used: Optional[str] = None
+    last_used: str | None = None
     version: int = 1
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class SkillLearner:
@@ -107,7 +107,7 @@ class SkillLearner:
     
     def __init__(self, storage_path: str = ".hermes/skills"):
         self.storage_path = Path(storage_path)
-        self.skills: Dict[str, Skill] = {}
+        self.skills: dict[str, Skill] = {}
         self._loaded = False
     
     def load(self):
@@ -134,7 +134,7 @@ class SkillLearner:
             skill_file = self.storage_path / f"{skill.id}.json"
             skill_file.write_text(json.dumps(skill.__dict__, indent=2), encoding="utf-8")
     
-    def learn_skill(self, name: str, description: str, trigger_patterns: List[str], steps: List[str]) -> str:
+    def learn_skill(self, name: str, description: str, trigger_patterns: list[str], steps: list[str]) -> str:
         """Learn a new skill."""
         skill_id = f"skill_{hashlib.md5(name.encode()).hexdigest()[:12]}"
         
@@ -152,7 +152,7 @@ class SkillLearner:
         logger.info(f"Learned skill: {name} ({skill_id})")
         return skill_id
     
-    def match_skill(self, task_description: str) -> Optional[Skill]:
+    def match_skill(self, task_description: str) -> Skill | None:
         """Match a task to the best skill."""
         best_skill = None
         best_score = 0.0
@@ -198,10 +198,10 @@ class SkillLearner:
         
         self.save()
     
-    def get_skill(self, skill_id: str) -> Optional[Skill]:
+    def get_skill(self, skill_id: str) -> Skill | None:
         return self.skills.get(skill_id)
     
-    def list_skills(self) -> List[Dict[str, Any]]:
+    def list_skills(self) -> list[dict[str, Any]]:
         """List all skills."""
         return [
             {
@@ -217,7 +217,7 @@ class SkillLearner:
             for s in self.skills.values()
         ]
     
-    def improve_skill(self, skill_id: str, new_steps: List[str]) -> bool:
+    def improve_skill(self, skill_id: str, new_steps: list[str]) -> bool:
         """Improve a skill with new steps."""
         skill = self.skills.get(skill_id)
         if not skill:
@@ -239,7 +239,7 @@ class SkillLearner:
             return True
         return False
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get skill library stats."""
         total_success = sum(s.success_count for s in self.skills.values())
         total_failure = sum(s.failure_count for s in self.skills.values())
@@ -279,7 +279,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.learner: Optional[SkillLearner] = None
+        self.learner: SkillLearner | None = None
     
     async def load(self) -> bool:
         self.learner = SkillLearner()
@@ -298,7 +298,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -310,10 +310,10 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def learn_skill(self, name: str, description: str, trigger_patterns: List[str], steps: List[str]) -> str:
+    def learn_skill(self, name: str, description: str, trigger_patterns: list[str], steps: list[str]) -> str:
         return self.learner.learn_skill(name, description, trigger_patterns, steps)
     
-    def match_skill(self, task_description: str) -> Optional[Dict[str, Any]]:
+    def match_skill(self, task_description: str) -> dict[str, Any] | None:
         skill = self.learner.match_skill(task_description)
         if skill:
             return {
@@ -328,17 +328,17 @@ class Plugin(PluginBase):
     def record_outcome(self, skill_id: str, success: bool, duration: float = 0.0):
         self.learner.record_outcome(skill_id, success, duration)
     
-    def list_skills(self) -> List[Dict[str, Any]]:
+    def list_skills(self) -> list[dict[str, Any]]:
         return self.learner.list_skills()
     
-    def improve_skill(self, skill_id: str, new_steps: List[str]) -> bool:
+    def improve_skill(self, skill_id: str, new_steps: list[str]) -> bool:
         return self.learner.improve_skill(skill_id, new_steps)
     
     def remove_skill(self, skill_id: str) -> bool:
         return self.learner.remove_skill(skill_id)
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.learner.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

@@ -1,9 +1,11 @@
 """Code Generation Loop — Spec → Context → Design → Implement → Static Check → Test → Review → Commit."""
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class GenerationStage(str, Enum):
     INIT = "init"
@@ -22,16 +24,16 @@ class GenerationResult:
     id: str
     stage: GenerationStage
     code: str = ""
-    errors: List[str] = field(default_factory=list)
-    test_results: Dict[str, Any] = field(default_factory=dict)
-    review_comments: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    test_results: dict[str, Any] = field(default_factory=dict)
+    review_comments: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class CodeGenerationLoop:
     def __init__(self):
         self.id = str(uuid.uuid4())
     
-    def generate(self, spec: str, context: Dict[str, Any]) -> GenerationResult:
+    def generate(self, spec: str, context: dict[str, Any]) -> GenerationResult:
         result = GenerationResult(id=str(uuid.uuid4()), stage=GenerationStage.INIT)
         
         # Stage 1: Context Retrieval
@@ -72,23 +74,23 @@ class CodeGenerationLoop:
         result.stage = GenerationStage.COMMIT
         return result
     
-    def _retrieve_context(self, spec: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _retrieve_context(self, spec: str, context: dict[str, Any]) -> dict[str, Any]:
         return {"files": context.get("files", []), "symbols": context.get("symbols", [])}
     
-    def _design(self, spec: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _design(self, spec: str, context: dict[str, Any]) -> dict[str, Any]:
         return {"approach": "direct_implementation", "files_to_modify": []}
     
-    def _implement(self, spec: str, design: Dict[str, Any], context: Dict[str, Any]) -> str:
+    def _implement(self, spec: str, design: dict[str, Any], context: dict[str, Any]) -> str:
         return f"# Implementation for: {spec}\n"
     
-    def _static_check(self, code: str) -> List[str]:
+    def _static_check(self, code: str) -> list[str]:
         return []
     
-    def _run_unit_tests(self, code: str) -> Dict[str, Any]:
+    def _run_unit_tests(self, code: str) -> dict[str, Any]:
         return {"passed": 1, "failed": 0, "total": 1}
     
-    def _review(self, code: str, spec: str) -> Dict[str, Any]:
+    def _review(self, code: str, spec: str) -> dict[str, Any]:
         return {"passed": True, "comments": []}
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"id": self.id}

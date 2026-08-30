@@ -12,7 +12,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +24,12 @@ class SelfModelCapability:
     success_rate: float = 0.0
     sample_count: int = 0
     calibration: float = 0.5
-    failure_modes: List[str] = field(default_factory=list)
+    failure_modes: list[str] = field(default_factory=list)
     best_strategy: str = ""
     best_model: str = ""
-    resource_profile: Dict[str, float] = field(default_factory=dict)
+    resource_profile: dict[str, float] = field(default_factory=dict)
     evaluated_at: float = 0.0
-    history: List[Dict[str, Any]] = field(default_factory=list)
+    history: list[dict[str, Any]] = field(default_factory=list)
 
     def update(self, success: bool, strategy: str = "", model: str = "", resource_cost: float = 0.0):
         """Update capability measurement."""
@@ -43,9 +43,8 @@ class SelfModelCapability:
         self.calibration = min(1.0, self.sample_count / 50.0)
         
         # Track best strategy
-        if success and strategy:
-            if not self.best_strategy:
-                self.best_strategy = strategy
+        if success and strategy and not self.best_strategy:
+            self.best_strategy = strategy
         
         # Track resource profile
         if resource_cost > 0:
@@ -66,7 +65,7 @@ class SelfModelCapability:
         if len(self.history) > 100:
             self.history = self.history[-100:]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "success_rate": round(self.success_rate, 4),
@@ -84,8 +83,8 @@ class SelfModelEngine:
     """Engine for empirical self-measurement."""
 
     def __init__(self):
-        self._capabilities: Dict[str, SelfModelCapability] = {}
-        self._bottlenecks: List[Dict[str, Any]] = []
+        self._capabilities: dict[str, SelfModelCapability] = {}
+        self._bottlenecks: list[dict[str, Any]] = []
 
     def get_or_create(self, name: str) -> SelfModelCapability:
         if name not in self._capabilities:
@@ -108,24 +107,24 @@ class SelfModelEngine:
         if failure_mode and failure_mode not in cap.failure_modes:
             cap.failure_modes.append(failure_mode)
 
-    def get_capability(self, name: str) -> Optional[SelfModelCapability]:
+    def get_capability(self, name: str) -> SelfModelCapability | None:
         return self._capabilities.get(name)
 
-    def get_all(self) -> Dict[str, SelfModelCapability]:
+    def get_all(self) -> dict[str, SelfModelCapability]:
         return dict(self._capabilities)
 
-    def get_weakest(self, n: int = 3) -> List[SelfModelCapability]:
+    def get_weakest(self, n: int = 3) -> list[SelfModelCapability]:
         """Get weakest capabilities — primary improvement targets."""
         caps = [c for c in self._capabilities.values() if c.sample_count >= 3]
         caps.sort(key=lambda c: c.success_rate)
         return caps[:n]
 
-    def get_strongest(self, n: int = 3) -> List[SelfModelCapability]:
+    def get_strongest(self, n: int = 3) -> list[SelfModelCapability]:
         caps = [c for c in self._capabilities.values() if c.sample_count >= 3]
         caps.sort(key=lambda c: c.success_rate, reverse=True)
         return caps[:n]
 
-    def detect_bottlenecks(self) -> List[Dict[str, Any]]:
+    def detect_bottlenecks(self) -> list[dict[str, Any]]:
         """Detect performance bottlenecks for RSI targeting."""
         bottlenecks = []
         for cap in self._capabilities.values():
@@ -141,7 +140,7 @@ class SelfModelEngine:
         self._bottlenecks = bottlenecks
         return bottlenecks
 
-    def get_recommendation(self, task_class: str) -> Dict[str, Any]:
+    def get_recommendation(self, task_class: str) -> dict[str, Any]:
         """Get model/strategy recommendation for a task class."""
         cap = self._capabilities.get(task_class)
         if not cap or cap.sample_count < 3:
@@ -154,7 +153,7 @@ class SelfModelEngine:
             "confidence": cap.calibration,
         }
 
-    def get_profile(self) -> Dict[str, Any]:
+    def get_profile(self) -> dict[str, Any]:
         """Get complete self-profile."""
         return {
             "capabilities": {name: cap.to_dict() for name, cap in self._capabilities.items()},
@@ -163,7 +162,7 @@ class SelfModelEngine:
             "total_samples": sum(c.sample_count for c in self._capabilities.values()),
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         if not self._capabilities:
             return {"total": 0}
         rates = [c.success_rate for c in self._capabilities.values()]

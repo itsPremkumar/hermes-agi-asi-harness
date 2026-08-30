@@ -7,10 +7,9 @@ Detect unauthorized agent spawning, resource limits, kill switch.
 
 from __future__ import annotations
 
-import json
 import logging
 import time
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger("hermes_safety")
 
@@ -41,5 +40,5 @@ class SelfReplicationGuard:
         
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "spawn_count": self._spawn_count}
