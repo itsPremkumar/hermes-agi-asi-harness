@@ -181,7 +181,7 @@ class Artifact(Base):
     name = Column(String, nullable=False)
     artifact_type = Column(String)
     content = Column(Text)
-    metadata = Column(JSON, default={})
+    artifact_metadata = Column("metadata", JSON, default={})
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -193,7 +193,7 @@ class Artifact(Base):
             "name": self.name,
             "artifact_type": self.artifact_type,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "metadata": self.metadata,
+            "artifact_metadata": self.artifact_metadata,
         }
 
 
@@ -209,7 +209,7 @@ class SkillModel(Base):
     benchmark_score = Column(Float, default=0.0)
     verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    metadata = Column(JSON, default={})
+    skill_metadata = Column("metadata", JSON, default={})
     
     def to_dict(self):
         return {
