@@ -17,6 +17,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.benchmarks.llm_client import LLMClient, LLMConfig, PromptBuilder
+
 
 # ---------------------------------------------------------------------------
 # Benchmark registry
@@ -482,10 +484,11 @@ class MBPPAdapter(BenchmarkAdapter):
 class MultiBenchmarkEngine:
     """Engine that can run any benchmark through the AVO-style agent."""
 
-    def __init__(self, agent: Any | None = None, verbose: bool = False):
+    def __init__(self, agent: Any | None = None, verbose: bool = False, llm: LLMClient | None = None):
         self._adapters: Dict[BenchmarkType, BenchmarkAdapter] = {}
         self._agent = agent
         self._verbose = verbose
+        self._llm = llm or LLMClient()
 
     def register_adapter(self, adapter: BenchmarkAdapter) -> None:
         """Register a benchmark adapter."""
@@ -542,18 +545,17 @@ class MultiBenchmarkEngine:
         return benchmark_result
 
     def _run_task(self, adapter: BenchmarkAdapter, task: BenchmarkTask) -> TaskResult:
-        """Run a single task."""
+        """Run a single task using the LLM client."""
         start_time = time.time()
 
-        # In a full implementation, this would use the AVO agent to:
-        # 1. Explore the task using benchmark-specific tools
-        # 2. Form hypotheses about the solution
-        # 3. Generate a prediction
-        # 4. Evaluate against ground truth
+        # Build prompt based on benchmark type
+        system, user = self._build_prompt(adapter, task)
 
-        # For now, use the adapter's evaluate method with an empty prediction
-        # (placeholder - real run would invoke the agent)
-        prediction = ""
+        # Generate prediction via LLM
+        response = self._llm.generate(system, user)
+        prediction = response.content
+
+        # Evaluate the prediction
         score = adapter.evaluate(task, prediction)
 
         return TaskResult(
@@ -563,9 +565,26 @@ class MultiBenchmarkEngine:
             score=score,
             predicted=prediction,
             expected=task.ground_truth,
-            actions_used=0,
+            actions_used=1,
             time_elapsed=time.time() - start_time,
         )
+
+    def _build_prompt(self, adapter: BenchmarkAdapter, task: BenchmarkTask) -> tuple[str, str]:
+        """Build system/user prompts for a task."""
+        if isinstance(adapter, HumanEvalAdapter):
+            return PromptBuilder.human_eval(task)
+        elif isinstance(adapter, MBPPAdapter):
+            return PromptBuilder.mbpp(task)
+        elif isinstance(adapter, SWEBenchAdapter):
+            return PromptBuilder.swe_bench(task)
+        elif isinstance(adapter, GAIAAdapter):
+            return PromptBuilder.gaia(task)
+        elif isinstance(adapter, TerminalBenchAdapter):
+            return PromptBuilder.terminal_bench(task)
+        elif isinstance(adapter, GPQAAdapter):
+            return PromptBuilder.gpqa(task)
+        else:
+            return ("You are an expert assistant. Solve the task.", task.prompt)
 
     def run_all_benchmarks(self) -> Dict[BenchmarkType, BenchmarkResult]:
         """Run all registered benchmarks."""
