@@ -99,7 +99,31 @@ class HermesKernel:
         self.mission_queue: Optional[Any] = None
         self.belief_engine: Optional[Any] = None
         self.capability_registry: Optional[Any] = None
-
+        
+        # v9: Universal Environment Intelligence & Action Plane
+        self.environment_model: Optional[Any] = None
+        self.affordance_model: Optional[Any] = None
+        self.state_estimator: Optional[Any] = None
+        self.consequence_simulator: Optional[Any] = None
+        self.universal_action_protocol: Optional[Any] = None
+        self.universal_observation_protocol: Optional[Any] = None
+        self.event_bus_v9: Optional[Any] = None
+        self.transaction_model: Optional[Any] = None
+        self.safety_envelope_manager: Optional[Any] = None
+        self.master_orchestrator: Optional[Any] = None
+        
+        # v9: Learning Plane
+        self.trajectory_store: Optional[Any] = None
+        self.trajectory_replay: Optional[Any] = None
+        self.policy_learner: Optional[Any] = None
+        self.counterfactual_evaluator: Optional[Any] = None
+        self.skill_transfer: Optional[Any] = None
+        
+        # v9: Computer Use v2
+        self.ui_state_memory: Optional[Any] = None
+        self.environment_discovery: Optional[Any] = None
+        self.digital_twins: Optional[Any] = None
+        
         # Store HERMES_HOME for state directory
         self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
         
@@ -160,6 +184,11 @@ class HermesKernel:
         if self.capability_registry and hasattr(self.capability_registry, 'registry'):
             self.capability_registry = self.capability_registry.registry
         
+        # v9: Initialize Universal Environment Intelligence & Action Plane
+        await self._init_v9_environment_plane()
+        await self._init_v9_learning_plane()
+        await self._init_v9_computer_use_v2()
+        
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
         
@@ -171,6 +200,69 @@ class HermesKernel:
         
         # Emit boot event
         await self.emit("kernel.booted", {"kernel_id": self.kernel_id})
+
+    async def _init_v9_learning_plane(self):
+        """Initialize the v9 Learning Plane."""
+        try:
+            from core.learning.trajectory_store import TrajectoryStore
+            from core.learning.trajectory_replay import TrajectoryReplay
+            from core.learning.policy_learning import PolicyLearner
+            from core.learning.counterfactual import CounterfactualEvaluator
+            from core.learning.skill_transfer import SkillTransfer
+
+            self.trajectory_store = TrajectoryStore()
+            self.trajectory_replay = TrajectoryReplay()
+            self.policy_learner = PolicyLearner()
+            self.counterfactual_evaluator = CounterfactualEvaluator()
+            self.skill_transfer = SkillTransfer()
+
+            logger.info("v9 Learning Plane initialized")
+        except Exception as e:
+            logger.warning("v9 Learning Plane initialization failed: %s", e)
+
+    async def _init_v9_computer_use_v2(self):
+        """Initialize the v9 Computer Use v2."""
+        try:
+            from core.computer_use_v2.ui_memory import UIStateMemory
+            from core.computer_use_v2.discovery import EnvironmentDiscovery
+
+            self.ui_state_memory = UIStateMemory()
+            self.environment_discovery = EnvironmentDiscovery()
+            self.digital_twins = {}
+
+            logger.info("v9 Computer Use v2 initialized")
+        except Exception as e:
+            logger.warning("v9 Computer Use v2 initialization failed: %s", e)
+
+    async def _init_v9_environment_plane(self):
+        """Initialize the v9 Universal Environment Intelligence & Action Plane."""
+        try:
+            from core.environment.model import EnvironmentModel
+            from core.environment.affordances import AffordanceModel
+            from core.environment.state_estimation import StateEstimator
+            from core.environment.consequence import ConsequenceSimulator
+            from core.protocols.uap import UniversalActionProtocol
+            from core.protocols.uop import PerceptionFusion
+            from core.protocols.event_algebra import EventBus
+            from core.action.transaction import TransactionModel
+            from core.action.safety_envelope import SafetyEnvelopeManager
+            from core.orchestrator.master_loop import MasterOrchestrator
+
+            self.environment_model = EnvironmentModel()
+            self.affordance_model = AffordanceModel()
+            self.state_estimator = StateEstimator()
+            self.consequence_simulator = ConsequenceSimulator()
+            self.consequence_simulator.load_default_rules()
+            self.universal_action_protocol = UniversalActionProtocol()
+            self.universal_observation_protocol = PerceptionFusion()
+            self.event_bus_v9 = EventBus()
+            self.transaction_model = TransactionModel()
+            self.safety_envelope_manager = SafetyEnvelopeManager()
+            self.master_orchestrator = MasterOrchestrator()
+
+            logger.info("v9 Environment Intelligence Plane initialized")
+        except Exception as e:
+            logger.warning("v9 Environment Plane initialization failed: %s", e)
 
     async def shutdown(self):
         """Graceful shutdown."""
@@ -273,6 +365,10 @@ class HermesKernel:
             # Phase 10: Infrastructure & Safety
             "event_sourced_state", "rollback", "scenario_harness",
             "agent_communication", "research_engine_v2", "sandbox_architecture",
+            # Phase 11: Intelligence Scaling
+            "model_router_v2", "compute_scaling", "agent_fabric",
+            "failure_intelligence", "calibration", "anti_goodhart",
+            "bottleneck_detector", "evolution_archive",
         ]
 
         loaded_count = 0
