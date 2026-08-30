@@ -118,7 +118,7 @@ class GEPAOptimizer:
     def evaluate_candidate(
         self,
         candidate: EvolutionCandidate,
-        evaluator_fn: Optional[Callable] = None,
+        evaluator_fn: Callable | None = None,
     ) -> EvolutionCandidate:
         """
         Evaluates a candidate. If evaluator_fn is provided, uses it.
@@ -155,7 +155,7 @@ class GEPAOptimizer:
         self,
         generations: int = 5,
         population_size: int = 10,
-        evaluator_fn: Optional[Callable] = None,
+        evaluator_fn: Callable | None = None,
     ) -> EvolutionResult:
         """Runs the GEPA evolution for specified generations."""
         start = time.time()
@@ -324,7 +324,7 @@ class EvolutionEngineV2:
         self._last_evolution = 0
         self._evolution_interval = 3600  # 1 hour
 
-    async def evolve(self, evaluator_fn: Optional[Callable] = None) -> EvolutionResult:
+    async def evolve(self, evaluator_fn: Callable | None = None) -> EvolutionResult:
         """Runs a single evolution step."""
         result = self.gepa.evolve(generations=5, evaluator_fn=evaluator_fn)
         self.generation = result.generation
