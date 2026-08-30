@@ -133,6 +133,9 @@ class HermesKernel:
         self.environment_discovery: Optional[Any] = None
         self.digital_twins: Optional[Any] = None
         
+        # v11: Coding Intelligence
+        self.coding_modules: Optional[Dict[str, Any]] = None
+        
         # Store HERMES_HOME for state directory
         self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
         
@@ -200,6 +203,9 @@ class HermesKernel:
         
         # v10: Initialize Closed-Loop Self-Improving System
         await self._init_v10_closed_loop()
+        
+        # v11: Initialize Coding Intelligence
+        await self._init_v11_coding_intelligence()
         
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
@@ -284,6 +290,95 @@ class HermesKernel:
             logger.info("v10 Closed-Loop Self-Improving System initialized")
         except Exception as e:
             logger.warning("v10 Closed-Loop initialization failed: %s", e)
+    
+    async def _init_v11_coding_intelligence(self):
+        """Initialize the v11 Coding Intelligence."""
+        try:
+            from core.coding import (
+                RepositoryDigitalTwin,
+                CodeGraph,
+                SemanticCodeIndex,
+                RepositoryRecon,
+                HistoricalMemory,
+                RequirementsCompiler,
+                RequirementTraceGraph,
+                ArchitectureSynthesizer,
+                ADRRegistry,
+                ArchitectureRiskAnalyzer,
+                StrategySearcher,
+                TaskGraph,
+                ParallelScheduler,
+                AgentSpecialist,
+                ContractManager,
+                ArtifactRegistry,
+                CodeGenerationLoop,
+                TestFirstPlanner,
+                TestPyramid,
+                OracleManager,
+                SecurityLoop,
+                SkillForge,
+                EngineeringCurriculum,
+                TransferLearning,
+                CodingRSI,
+                PopulationEvolution,
+                MetaRSI,
+                EvaluationPyramid,
+                QualityGates,
+                MergeController,
+                CrossRepoReasoning,
+                APIContractManager,
+                DatabaseChangeManager,
+                PerformanceLoop,
+                ContextEngineer,
+                Blackboard,
+            )
+            
+            # Create instances (not twin - needs repo_path)
+            coding_modules = {
+                "repository_twin_class": RepositoryDigitalTwin,
+                "code_graph": CodeGraph(),
+                "semantic_index": SemanticCodeIndex(),
+                "recon": RepositoryRecon(),
+                "history_memory": HistoricalMemory(),
+                "requirements_compiler": RequirementsCompiler(),
+                "requirement_trace": RequirementTraceGraph(),
+                "architecture_synthesizer": ArchitectureSynthesizer(),
+                "adr_registry": ADRRegistry(),
+                "risk_analyzer": ArchitectureRiskAnalyzer(),
+                "strategy_searcher": StrategySearcher(),
+                "task_graph": TaskGraph(),
+                "parallel_scheduler": ParallelScheduler(),
+                "agent_specialist": AgentSpecialist(),
+                "contract_manager": ContractManager(),
+                "artifact_registry": ArtifactRegistry(),
+                "code_generation": CodeGenerationLoop(),
+                "test_first_planner": TestFirstPlanner(),
+                "test_pyramid": TestPyramid(),
+                "oracle_manager": OracleManager(),
+                "security_loop": SecurityLoop(),
+                "skill_forge": SkillForge(),
+                "curriculum": EngineeringCurriculum(),
+                "transfer_learning": TransferLearning(),
+                "coding_rsi": CodingRSI(),
+                "population_evolution": PopulationEvolution(),
+                "meta_rsi": MetaRSI(),
+                "evaluation_pyramid": EvaluationPyramid(),
+                "quality_gates": QualityGates(),
+                "merge_controller": MergeController(),
+                "cross_repo": CrossRepoReasoning(),
+                "api_contract_manager": APIContractManager(),
+                "database_change_manager": DatabaseChangeManager(),
+                "performance_loop": PerformanceLoop(),
+                "context_engineer": ContextEngineer(),
+                "blackboard": Blackboard(),
+            }
+            
+            self.coding_modules = coding_modules
+            logger.info(f"v11 Coding Intelligence initialized ({len(coding_modules)} modules)")
+        except Exception as e:
+            logger.warning(f"v11 Coding Intelligence initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def _init_v9_environment_plane(self):
         """Initialize the v9 Universal Environment Intelligence & Action Plane."""
