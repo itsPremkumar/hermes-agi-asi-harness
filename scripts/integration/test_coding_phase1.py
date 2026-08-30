@@ -1,7 +1,6 @@
 """Test Repository Intelligence Layer."""
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,7 +13,7 @@ async def main():
     # Test Repository Twin
     print("[1/4] Repository Digital Twin...")
     try:
-        from core.coding.repository_twin import RepositoryDigitalTwin, SymbolType
+        from core.coding.repository_twin import RepositoryDigitalTwin
         
         twin = RepositoryDigitalTwin(".")
         twin.discover()
@@ -57,7 +56,7 @@ async def main():
     # Test Semantic Index
     print("\n[3/4] Semantic Index...")
     try:
-        from core.coding.semantic_index import SemanticCodeIndex, IndexLevel, SearchQuery
+        from core.coding.semantic_index import SemanticCodeIndex, SearchQuery
         
         idx = SemanticCodeIndex()
         

@@ -13,7 +13,6 @@ All tests run WITHOUT network. Uses real plugins from the harness.
 
 import asyncio
 import sys
-import os
 
 sys.path.insert(0, ".")
 
@@ -30,7 +29,7 @@ def check(name, condition, detail=""):
         print(f"  ❌ FAIL  {name} {detail}")
 
 async def main():
-    from core.runtime.event_bus import EventBus, Event
+    from core.runtime.event_bus import EventBus
     from core.runtime.react_loop import ReActLoop, ReliabilityVerifier, RedTeamCritic
 
     # ─── 1. Event Bus ─────────────────────────────────────────────────

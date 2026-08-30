@@ -1,5 +1,4 @@
 """Tests for ARC-AGI-3 Rule Inference."""
-import pytest
 from core.arc_agi_3.rule_inference import (
     RuleInferenceEngine, Rule, RuleType, Example
 )

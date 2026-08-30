@@ -154,8 +154,8 @@ async def main():
         qg.pass_gate(Gate.DEPLOYMENT)
         qg.pass_gate(Gate.PRODUCTION)
         assert qg.all_passed()
-        results.append(("Quality Gates", True, f"passed=7/7"))
-        print(f"  ✓ All gates passed")
+        results.append(("Quality Gates", True, "passed=7/7"))
+        print("  ✓ All gates passed")
     except Exception as e:
         results.append(("Quality Gates", False, str(e)[:80]))
         print(f"  ✗ {e}")
@@ -230,7 +230,7 @@ async def main():
         assert len(tg.tasks) == 2
         
         results.append(("Full Integration", True, "all modules wired"))
-        print(f"  ✓ Full v11 workflow completed successfully")
+        print("  ✓ Full v11 workflow completed successfully")
     except Exception as e:
         import traceback; traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:80]))

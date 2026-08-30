@@ -1,5 +1,4 @@
 """Tests for MessageRouter."""
-import pytest
 from src.mesh.message_router import MessageRouter, MessageType, MessagePriority
 
 

@@ -35,7 +35,7 @@ async def test_1_computer_use():
     """Test 1: Computer Use."""
     header("Test 1: Computer Use")
 
-    from plugins.computer_use import create as cu_create, OSType
+    from plugins.computer_use import create as cu_create
     plugin = await cu_create()
     await plugin.load()
 
@@ -99,11 +99,11 @@ async def test_2_engineering_factory():
     plugin.engine.add_tests(p1.project_id, count=5)
     project = plugin.engine.get_project(p1.project_id)
     assert project.tests_run == 5
-    test_pass(f"Added 5 tests (4 passed, 1 failed)")
+    test_pass("Added 5 tests (4 passed, 1 failed)")
 
     # Add documentation
     plugin.engine.add_documentation(p1.project_id)
-    test_pass(f"Added documentation")
+    test_pass("Added documentation")
 
     # Verify stages
     assert Stage.SCAFFOLD.value in project.stages_completed
@@ -140,7 +140,7 @@ async def test_3_operating_modes():
     assert plugin.engine.set_mode(OperatingMode.RESEARCH.value)
     current = plugin.engine.get_current_mode()
     assert current.name == "research"
-    test_pass(f"Switched to research mode")
+    test_pass("Switched to research mode")
 
     # Tool allowance
     assert plugin.engine.is_tool_allowed("http_get")

@@ -1,5 +1,4 @@
 """Tests for NodeManager."""
-import pytest
 from src.mesh import NodeManager, NodeStatus
 
 

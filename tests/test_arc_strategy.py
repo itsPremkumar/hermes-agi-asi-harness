@@ -1,7 +1,6 @@
 """Tests for ARC-AGI-3 Strategy Optimizer."""
-import pytest
 from core.arc_agi_3.strategy import (
-    StrategyOptimizer, Strategy, StrategyType, StrategyResult
+    StrategyOptimizer, StrategyType
 )
 
 

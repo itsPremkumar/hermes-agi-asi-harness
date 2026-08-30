@@ -1,5 +1,4 @@
 """Tests for MissionController."""
-import pytest
 from core.dashboard.missions import MissionController, MissionStatus
 
 

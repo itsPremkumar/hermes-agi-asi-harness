@@ -1,5 +1,4 @@
 """Tests for PluginManager."""
-import pytest
 from core.dashboard.plugins import PluginManager, PluginStatus
 
 

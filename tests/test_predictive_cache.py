@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 async def main():
     """Run all tests for predictive_cache plugin."""
-    from plugins.predictive_cache import create as predictive_cache_create, Predictive_cachePlugin
+    from plugins.predictive_cache import create as predictive_cache_create
 
     results = []
     

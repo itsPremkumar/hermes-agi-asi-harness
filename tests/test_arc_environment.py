@@ -1,7 +1,6 @@
 """Tests for ARC-AGI-3 Environment Connector."""
-import pytest
 from core.arc_agi_3.environment import (
-    EnvironmentConnector, ConnectionStatus, ActionType, Action, Observation, Task
+    EnvironmentConnector, ConnectionStatus, ActionType, Action, Task
 )
 
 

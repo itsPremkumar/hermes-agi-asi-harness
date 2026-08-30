@@ -1,5 +1,4 @@
 """Tests for EventLog."""
-import pytest
 from core.dashboard.events import EventLog, EventLevel
 
 

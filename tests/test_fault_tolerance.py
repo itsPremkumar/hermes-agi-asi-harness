@@ -1,5 +1,4 @@
 """Tests for FaultTolerance."""
-import pytest
 from src.mesh.fault_tolerance import FaultTolerance, FailureType, RecoveryAction
 
 

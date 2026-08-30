@@ -249,7 +249,7 @@ async def test_5_e2e():
         rollback_plan="rollback procedure",
     )
     assert mod.approved
-    test_pass(f"Evolution safety: e2e mod approved")
+    test_pass("Evolution safety: e2e mod approved")
 
     # Use benchmark_db
     bdb = kernel._plugins["benchmark_db"]

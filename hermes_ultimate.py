@@ -24,17 +24,12 @@ import hashlib
 import json
 import logging
 import os
-import re
-import subprocess
-import sys
-import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # SETUP & LOGGING
@@ -117,7 +112,7 @@ class Task:
     objective: str
     dependencies: List[str] = field(default_factory=list)
     status: str = "pending"
-    result: Optional[str] = None
+    result: str | None = None
 
 
 @dataclass
@@ -344,7 +339,7 @@ class RecoveryEngine:
         }
         return checkpoint_id
     
-    def get_latest_checkpoint(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_latest_checkpoint(self, task_id: str) -> Dict[str, Any] | None:
         checkpoints = [c for c in self._checkpoints.values() if c["task_id"] == task_id]
         if not checkpoints:
             return None
@@ -378,7 +373,7 @@ class Governance:
             return False, self.EXIT_GOAL_REQUIRED
         return True, 0
     
-    def supervise(self, state: Dict[str, Any]) -> Optional[str]:
+    def supervise(self, state: Dict[str, Any]) -> str | None:
         if state.get("stagnation", 0) >= self.STAGNATION_LIMIT:
             return "await_human"
         if state.get("stagnation", 0) >= 2:
@@ -447,7 +442,7 @@ class ToolRisk(str, Enum):
 class ToolResult:
     success: bool
     output: str
-    error: Optional[str] = None
+    error: str | None = None
     execution_time_ms: float = 0.0
     tool_name: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -463,7 +458,7 @@ class ToolRegistry:
     def register(self, name: str, func: Callable):
         self._tools[name] = func
     
-    def get(self, name: str) -> Optional[Callable]:
+    def get(self, name: str) -> Callable | None:
         return self._tools.get(name)
     
     def list_tools(self) -> List[str]:
@@ -511,7 +506,7 @@ class HermesEngine:
     7. Repeat
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Dict[str, Any] | None = None):
         self.config = config or {}
         self.state = EngineState.INITIALIZED
         self.engine_id = str(uuid.uuid4())

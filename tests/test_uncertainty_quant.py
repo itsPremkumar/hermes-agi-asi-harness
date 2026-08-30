@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 async def main():
     """Run all tests for uncertainty_quant plugin."""
-    from plugins.uncertainty_quant import create as uncertainty_quant_create, Uncertainty_quantPlugin
+    from plugins.uncertainty_quant import create as uncertainty_quant_create
 
     results = []
     

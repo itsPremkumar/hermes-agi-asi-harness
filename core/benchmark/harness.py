@@ -15,7 +15,7 @@ from __future__ import annotations
 import statistics
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 @dataclass
@@ -75,7 +75,7 @@ class ScoringFunction:
 class BenchmarkRunner:
     """Runs a suite of local tasks and returns measured scores."""
 
-    def __init__(self, scoring_fn: Optional[ScoringFunction] = None) -> None:
+    def __init__(self, scoring_fn: ScoringFunction | None = None) -> None:
         self.scoring_fn = scoring_fn or ScoringFunction()
         self._results: List[BenchmarkResult] = []
 

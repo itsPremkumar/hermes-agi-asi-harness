@@ -11,10 +11,8 @@ Tests:
 """
 
 import asyncio
-import os
 import sys
 import tempfile
-import shutil
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -131,7 +129,6 @@ async def test_persistent_state():
 async def test_mission_queue():
     """Test persistent priority-based mission queue."""
     from core.runtime.kernel import HermesKernel, KernelConfig
-    from plugins.mission_queue import MissionStatus
 
     k = HermesKernel(config=KernelConfig(zero_cost=True, offline=True))
     await k.boot()

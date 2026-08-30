@@ -11,7 +11,6 @@ Includes:
 
 import asyncio
 import sys
-import time
 
 # Add project to path
 sys.path.insert(0, '.')
@@ -32,7 +31,7 @@ async def test_all():
         results.append(("ReasoningEngine", False, str(e)))
     
     try:
-        from core.swarm import SwarmOrchestrator, AgentRole
+        from core.swarm import SwarmOrchestrator
         swarm = SwarmOrchestrator()
         agent_ids = await swarm.spawn_swarm("test task", 3)
         results.append(("SwarmOrchestrator", True, len(agent_ids)))

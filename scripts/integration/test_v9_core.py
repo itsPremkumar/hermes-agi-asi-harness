@@ -82,7 +82,7 @@ async def main():
     # ── Test 2: Affordance Model ───────────────────────────────────────────
     print("\n[2/10] Affordance Model...")
     try:
-        from core.environment.affordances import AffordanceModel, Reversibility, BlastRadius, Consequence
+        from core.environment.affordances import AffordanceModel
 
         aff_model = AffordanceModel()
 
@@ -178,7 +178,7 @@ async def main():
     # ── Test 5: Universal Action Protocol ──────────────────────────────────
     print("\n[5/10] Universal Action Protocol...")
     try:
-        from core.protocols.uap import UniversalActionProtocol, ActionType, ActionStatus
+        from core.protocols.uap import UniversalActionProtocol, ActionType
 
         uap = UniversalActionProtocol()
 

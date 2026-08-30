@@ -1,7 +1,6 @@
 """Tests for ARC-AGI-3 Level Tracker."""
-import pytest
 from core.arc_agi_3.level_tracker import (
-    LevelTracker, Level, LevelStatus, Difficulty, LevelAttempt
+    LevelTracker, LevelStatus, Difficulty
 )
 
 

@@ -148,7 +148,7 @@ def test_4_install_script():
         capture_output=True, text=True
     )
     assert result.returncode == 0, f"install.py invalid: {result.stderr}"
-    test_pass(f"install.py syntactically valid")
+    test_pass("install.py syntactically valid")
 
     # Run in dry mode (just check it doesn't crash on imports)
     # We won't actually install, just verify the script can be parsed

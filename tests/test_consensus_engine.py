@@ -1,5 +1,4 @@
 """Tests for ConsensusEngine."""
-import pytest
 from src.mesh.consensus_engine import ConsensusEngine, ProposalStatus
 
 

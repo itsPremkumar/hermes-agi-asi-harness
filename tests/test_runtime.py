@@ -10,7 +10,6 @@ import asyncio
 import os
 import sys
 import tempfile
-import json
 
 sys.path.insert(0, '.')
 

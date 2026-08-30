@@ -250,7 +250,7 @@ async def main():
         assert health["status"] == "healthy"
 
         results.append(("Sandbox Architecture", True, f"executed={result.success}"))
-        print(f"  ✓ Sandbox Architecture: static_check OK, execution OK")
+        print("  ✓ Sandbox Architecture: static_check OK, execution OK")
     except Exception as e:
         import traceback
         traceback.print_exc()

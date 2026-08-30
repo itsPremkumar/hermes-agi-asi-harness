@@ -12,13 +12,11 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
-import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger("hermes.continuous")
 
@@ -29,7 +27,7 @@ class EvolutionRound:
     started_at: str = ""
     finished_at: str = ""
     iterations: int = 0
-    best_version: Optional[str] = None
+    best_version: str | None = None
     mean_score: float = 0.0
     accepted: int = 0
     stagnation_events: int = 0
@@ -56,7 +54,7 @@ class ContinuousEngine:
         max_no_improve: int = 10,
         sleep_seconds: float = 60.0,
         store_dir: str = ".evo_continuous",
-        max_rounds: Optional[int] = None,
+        max_rounds: int | None = None,
     ) -> None:
         self.goal = goal
         self.max_iterations = max_iterations

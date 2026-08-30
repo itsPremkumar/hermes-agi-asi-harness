@@ -1,6 +1,5 @@
 """Tests for Release Manager."""
-import pytest
-from core.release import ReleaseManager, ReleaseStatus, VersionBump, Release
+from core.release import ReleaseManager, ReleaseStatus, VersionBump
 
 
 class TestReleaseManager:

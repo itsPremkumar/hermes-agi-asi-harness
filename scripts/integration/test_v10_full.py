@@ -194,7 +194,7 @@ async def main():
     # ── Test 6: Continuous Benchmark ───────────────────────────────────────
     print("\n[6/7] Continuous Benchmark...")
     try:
-        from core.benchmark.continuous import ContinuousBenchmark, TestResult
+        from core.benchmark.continuous import ContinuousBenchmark
 
         bench = ContinuousBenchmark()
         
@@ -280,7 +280,7 @@ async def main():
         assert bench_result.summary["total"] == 1
 
         results.append(("Full Integration", True, "all v10 components"))
-        print(f"  ✓ Full Integration: All v10 components working together")
+        print("  ✓ Full Integration: All v10 components working together")
     except Exception as e:
         import traceback; traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:100]))

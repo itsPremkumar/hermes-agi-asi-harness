@@ -16,7 +16,7 @@ async def main():
     # Test 1: Scenario Analysis
     print("\n[1/6] Dynamic Scenario Analyzer...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, ScenarioType, ComplexityLevel, PriorityLevel
+        from core.dynamic import DynamicScenarioAnalyzer, ScenarioType, ComplexityLevel
         
         analyzer = DynamicScenarioAnalyzer()
         
@@ -31,8 +31,8 @@ async def main():
         
         for scenario in scenarios:
             profile = analyzer.analyze(scenario)
-            assert profile.scenario_type != None
-            assert profile.complexity != None
+            assert profile.scenario_type is not None
+            assert profile.complexity is not None
             assert len(profile.required_modules) > 0
             assert profile.recommended_workflow != ""
         
@@ -49,8 +49,8 @@ async def main():
         assert research_profile.scenario_type == ScenarioType.RESEARCH
         assert research_profile.requires_research == True
         
-        results.append(("Scenario Analyzer", True, f"5 scenarios classified"))
-        print(f"  ✓ 5 scenarios classified correctly")
+        results.append(("Scenario Analyzer", True, "5 scenarios classified"))
+        print("  ✓ 5 scenarios classified correctly")
     except Exception as e:
         import traceback; traceback.print_exc()
         results.append(("Scenario Analyzer", False, str(e)[:80]))
@@ -172,7 +172,7 @@ async def main():
             profile = analyzer.analyze(goal)
             plan = engine.generate_plan(profile)
             
-            assert profile.scenario_type != None
+            assert profile.scenario_type is not None
             assert len(plan.steps) > 0
             assert plan.topology != ""
             

@@ -1,5 +1,4 @@
 """Tests for HealthMonitor."""
-import pytest
 from core.dashboard.health import HealthMonitor, HealthStatus
 
 

@@ -93,7 +93,7 @@ async def main():
     # ── Test 3: Policy Learning ───────────────────────────────────────────
     print("\n[3/10] Policy Learning...")
     try:
-        from core.learning.policy_learning import PolicyLearner, PolicySource
+        from core.learning.policy_learning import PolicyLearner
 
         learner = PolicyLearner()
         
@@ -373,12 +373,12 @@ async def main():
     print("\n[10/10] Full Integration...")
     try:
         from core.environment.model import EnvironmentModel, EntityType
-        from core.environment.affordances import AffordanceModel, Reversibility, BlastRadius
-        from core.environment.state_estimation import StateEstimator, ObservationSource
+        from core.environment.affordances import AffordanceModel
+        from core.environment.state_estimation import StateEstimator
         from core.environment.consequence import ConsequenceSimulator
         from core.protocols.uap import UniversalActionProtocol, ActionType
         from core.protocols.uop import PerceptionFusion
-        from core.protocols.event_algebra import EventBus, EventType
+        from core.protocols.event_algebra import EventBus
         from core.action.transaction import TransactionModel, RollbackType
         from core.action.safety_envelope import SafetyEnvelopeManager
         from core.orchestrator.master_loop import MasterOrchestrator
@@ -456,7 +456,7 @@ async def main():
         assert result["success"]
 
         results.append(("Full Integration", True, "all components wired"))
-        print(f"  ✓ Full Integration: All 10+ components wired and working together")
+        print("  ✓ Full Integration: All 10+ components wired and working together")
     except Exception as e:
         import traceback; traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:100]))

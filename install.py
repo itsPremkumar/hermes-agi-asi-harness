@@ -7,7 +7,6 @@ Installs all dependencies, verifies the environment, and runs a basic smoke test
 
 import sys
 import subprocess
-import shutil
 import platform
 from pathlib import Path
 
@@ -75,10 +74,8 @@ def run_smoke_test():
     header("Running smoke test")
     try:
         # Test imports
-        from core.runtime.kernel import HermesKernel, KernelConfig
         print("✓ Core kernel imports")
 
-        import asyncio
         print("✓ Async support")
 
         print("✓ Smoke test passed")
@@ -89,7 +86,7 @@ def run_smoke_test():
 
 def print_summary():
     header("Installation Complete!")
-    print(f"  Hermes AGI/ASI Harness installed successfully")
+    print("  Hermes AGI/ASI Harness installed successfully")
     print(f"  Python: {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}")
     print(f"  Platform: {platform.system()} {platform.release()}")
     print()

@@ -15,7 +15,6 @@ os.environ.setdefault("HERMES_HOME", "/tmp/hermes_phase3_4_test")
 import sys
 import asyncio
 from pathlib import Path
-from unittest.mock import patch as mock_patch
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -40,7 +39,7 @@ async def test_1_watchdog():
     """Test 1: Watchdog anomaly detection."""
     header("Test 1: Watchdog Anomaly Detection")
 
-    from plugins.watchdog import WatchdogPlugin, AnomalyType, create as wd_create
+    from plugins.watchdog import AnomalyType, create as wd_create
     plugin = await wd_create()
     await plugin.load()
     await plugin.start()
@@ -102,7 +101,7 @@ async def test_2_economic_ledger():
     # Expected value
     ev = plugin.engine.expected_value(expected_benefit=100.0, cost=10.0, probability=0.5)
     assert ev == 40.0, f"EV should be 40.0, got {ev}"
-    test_pass(f"Expected value: $40.0 (0.5 * $100 - $10)")
+    test_pass("Expected value: $40.0 (0.5 * $100 - $10)")
 
     # Test budget exhaustion
     plugin.engine.record_token_usage("mission_001", 600, cost=5.0)

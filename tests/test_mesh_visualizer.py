@@ -1,6 +1,5 @@
 """Tests for MeshVisualizer."""
-import pytest
-from src.mesh.mesh_visualizer import MeshVisualizer, LayoutType
+from src.mesh.mesh_visualizer import MeshVisualizer
 
 
 class TestMeshVisualizer:
