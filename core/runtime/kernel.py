@@ -136,6 +136,11 @@ class HermesKernel:
         # v11: Coding Intelligence
         self.coding_modules: Optional[Dict[str, Any]] = None
         
+        # v11: Dynamic Planning
+        self.scenario_analyzer: Optional[Any] = None
+        self.planning_engine: Optional[Any] = None
+        self.decision_engine: Optional[Any] = None
+        
         # Store HERMES_HOME for state directory
         self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
         
@@ -206,6 +211,9 @@ class HermesKernel:
         
         # v11: Initialize Coding Intelligence
         await self._init_v11_coding_intelligence()
+        
+        # v11: Initialize Dynamic Planning
+        await self._init_v11_dynamic_planning()
         
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
@@ -377,6 +385,21 @@ class HermesKernel:
             logger.info(f"v11 Coding Intelligence initialized ({len(coding_modules)} modules)")
         except Exception as e:
             logger.warning(f"v11 Coding Intelligence initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    async def _init_v11_dynamic_planning(self):
+        """Initialize the v11 Dynamic Planning Engine."""
+        try:
+            from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicDecisionEngine
+            
+            self.scenario_analyzer = DynamicScenarioAnalyzer()
+            self.planning_engine = AdvancedPlanningEngine()
+            self.decision_engine = DynamicDecisionEngine()
+            
+            logger.info("v11 Dynamic Planning Engine initialized")
+        except Exception as e:
+            logger.warning(f"v11 Dynamic Planning initialization failed: {e}")
             import traceback
             traceback.print_exc()
 
