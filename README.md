@@ -1,56 +1,32 @@
-# 🚀 Hermes AGI/ASI Master v11 — Complete Setup Guide
+# 🚀 Hermes AGI/ASI Master v11 — Complete Architecture & Workflow
 
-**Production-grade, free-first, modular, model-agnostic autonomous agent harness with advanced coding intelligence.**
+**Production-grade, free-first, modular, model-agnostic autonomous agent harness with advanced coding intelligence and dynamic workflow execution.**
 
-[![Tests](https://img.shields.io/badge/tests-45%2F45%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-51%2F51%20passing-brightgreen)]()
 [![Core](https://img.shields.io/badge/core-172%20modules-blue)]()
 [![Coding](https://img.shields.io/badge/coding-39%20modules-blue)]()
+[![Dynamic](https://img.shields.io/badge/dynamic-4%20modules-blue)]()
 [![Plugins](https://img.shields.io/badge/plugins-82%20loaded-blue)]()
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
 ---
 
-## 📋 Quick Start
+## 📊 Current State
 
-### Option 1: Direct Installation (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/itsPremkumar/hermes-agi-asi-harness.git
-cd hermes-agi-asi-harness
-
-# Run the installer
-python install.py
-
-# Or install dependencies manually
-pip install -r requirements.txt
-
-# Run health check
-python hermes_agi.py --health
-
-# Execute a goal
-python hermes_agi.py --goal "write file hello.txt containing HELLO WORLD"
-
-# Interactive mode
-python hermes_agi.py
-```
-
-### Option 2: Use with Hermes Agent
-
-```bash
-# Install the project
-git clone https://github.com/itsPremkumar/hermes-agi-asi-harness.git
-cd hermes-agi-asi-harness
-pip install -e .
-
-# Run with Hermes
-python -m hermes_agi --goal "your goal here"
-```
+| Metric | Value |
+|--------|-------|
+| **Total Commits** | 19 |
+| **Core Files** | 172+ Python files |
+| **Total Lines** | ~32,000+ |
+| **Coding Modules** | 39 |
+| **Dynamic Modules** | 4 |
+| **Tests Passing** | 51/51 |
+| **Kernel Plugins** | 82 |
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Master Architecture
 
 ```
                          HERMES INTELLIGENCE OS v11
@@ -90,12 +66,19 @@ python -m hermes_agi --goal "your goal here"
                     │   CODING PLANE (v11)    │
                     │  Repository Twin        │
                     │  Code Graph             │
-  ORCHESTRATOR      │  Architecture           │
+                    │  Architecture           │
                     │  Task Graph             │
                     │  Code Generation        │
-                    │  Test Pyramid           │
                     │  Quality Gates          │
                     │  Coding-RSI             │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │    DYNAMIC PLANE        │
+                    │  Scenario Analyzer      │
+                    │  Planning Engine        │
+                    │  Decision Engine        │
+                    │  Workflow Executor      │
                     └────────────┬────────────┘
                                  │
                     ┌────────────▼────────────┐
@@ -105,19 +88,6 @@ python -m hermes_agi --goal "your goal here"
                     │  Skill Transfer         │
                     └─────────────────────────┘
 ```
-
----
-
-## 📊 Current State
-
-| Metric | Value |
-|--------|-------|
-| **Total Commits** | 17 (Phase 2→10 + v9 + v10 + v11 + dynamic) |
-| **Core Files** | 172+ Python files |
-| **Total Lines** | ~30,000+ |
-| **Coding Modules** | 39 |
-| **Tests Passing** | 45/45 |
-| **Kernel Plugins** | 82 |
 
 ---
 
@@ -169,6 +139,69 @@ python -m hermes_agi --goal "your goal here"
                    CANARY / PROMOTION
                            │
                            └──────────────↺
+```
+
+---
+
+## 🧠 Dynamic Workflow System
+
+### How It Works
+
+1. **Scenario Analysis** — Analyzes goal to determine type, complexity, technologies, required modules
+2. **Dynamic Planning** — Generates optimal plan with steps, dependencies, quality gates
+3. **Execution** — Executes plan with full orchestrator capacity using appropriate topology
+4. **Decision Making** — Real-time decisions on step completion/failure, rollback if needed
+
+### Dynamic Scenario Analyzer
+
+```python
+from core.dynamic import DynamicScenarioAnalyzer
+
+analyzer = DynamicScenarioAnalyzer()
+profile = analyzer.analyze("Build a REST API with authentication")
+
+print(f"Type: {profile.scenario_type}")        # new_project
+print(f"Complexity: {profile.complexity}")      # moderate
+print(f"Modules: {profile.required_modules}")   # ['repository_twin', ...]
+print(f"Workflow: {profile.recommended_workflow}")  # architecture_first
+print(f"Topology: {profile.recommended_topology}")  # sequential
+```
+
+### Dynamic Planning Engine
+
+```python
+from core.dynamic import AdvancedPlanningEngine
+
+engine = AdvancedPlanningEngine()
+plan = engine.generate_plan(profile)
+
+print(f"Steps: {len(plan.steps)}")
+print(f"Topology: {plan.topology}")
+print(f"Duration: {plan.estimated_total_min} minutes")
+```
+
+### Dynamic Workflow Executor
+
+```python
+from core.dynamic import DynamicWorkflowExecutor
+
+executor = DynamicWorkflowExecutor()
+result = await executor.execute_plan(plan)
+
+print(f"Completed: {len([r for r in result.step_results if r.status.value == 'completed'])}")
+print(f"Duration: {result.total_duration_ms}ms")
+```
+
+### Kernel Integration
+
+```python
+from core.runtime.kernel import HermesKernel, KernelConfig
+
+kernel = HermesKernel(config)
+await kernel.boot()
+
+# One-call dynamic execution
+result = await kernel.plan_and_execute_dynamic("Build a REST API")
 ```
 
 ---
@@ -226,51 +259,23 @@ hermes-agi-asi-harness/
 │   │   ├── blackboard.py
 │   │   └── __init__.py
 │   │
+│   ├── dynamic/                 ← 4 v11 Dynamic Modules
+│   │   ├── scenario_analyzer.py
+│   │   ├── planning_engine.py
+│   │   ├── decision_engine.py
+│   │   ├── workflow_executor.py
+│   │   └── __init__.py
+│   │
 │   ├── environment/             ← 4 v9 Environment Modules
-│   │   ├── model.py
-│   │   ├── affordances.py
-│   │   ├── state_estimation.py
-│   │   └── consequence.py
-│   │
 │   ├── protocols/               ← 3 v9 Protocol Modules
-│   │   ├── uap.py
-│   │   ├── uop.py
-│   │   └── event_algebra.py
-│   │
 │   ├── action/                  ← 2 v9 Action Modules
-│   │   ├── transaction.py
-│   │   └── safety_envelope.py
-│   │
 │   ├── orchestrator/            ← 3 v10 Orchestrator Modules
-│   │   ├── master_loop.py
-│   │   ├── closed_loop.py
-│   │   └── policy_bridge.py
-│   │
 │   ├── learning/                ← 5 v9 Learning Modules
-│   │   ├── trajectory_store.py
-│   │   ├── trajectory_replay.py
-│   │   ├── policy_learning.py
-│   │   ├── counterfactual.py
-│   │   └── skill_transfer.py
-│   │
 │   ├── rsi/                     ← 1 v10 RSI Module
-│   │   └── integration.py
-│   │
 │   ├── explanation/             ← 1 v10 Explanation Module
-│   │   └── explainer.py
-│   │
 │   ├── benchmark/               ← 1 v10 Benchmark Module
-│   │   └── continuous.py
-│   │
 │   ├── collaboration/           ← 1 v10 Collaboration Module
-│   │   └── protocol.py
-│   │
 │   ├── computer_use_v2/         ← 4 v9 Computer Use Modules
-│   │   ├── ui_state_graph.py
-│   │   ├── ui_memory.py
-│   │   ├── app_digital_twin.py
-│   │   └── discovery.py
-│   │
 │   └── runtime/
 │       └── kernel.py            ← Main Kernel (wires everything)
 │
@@ -280,6 +285,7 @@ hermes-agi-asi-harness/
 │   ├── test_v10_full.py         ← 7 tests
 │   ├── test_v11_coding.py       ← 12 tests
 │   ├── test_v11_dynamic.py      ← 6 tests
+│   ├── test_v11_workflow.py     ← 5 tests
 │   └── test_coding_phase1.py    ← 4 tests
 │
 ├── plugins/                     ← 82 loaded plugins
@@ -297,109 +303,10 @@ hermes-agi-asi-harness/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-└── pyproject.toml
+├── pyproject.toml
+├── install_for_hermes.py        ← Hermes Agent installer
+└── setup_package.py
 ```
-
----
-
-## 🧠 Core Subsystems
-
-### 1. Cognition Plane
-
-| Module | Purpose |
-|--------|---------|
-| `world_model.py` | Dynamic causal graph, entity tracking, effect prediction |
-| `memory.py` | 9-type hybrid memory (working→identity) |
-| `belief_engine/` | Belief graph with confidence tracking |
-| `research/` | Research pipeline for knowledge discovery |
-| `planning.py` | Multi-mode planning (fast/hierarchical/adaptive/long-horizon) |
-| `cognition.py` | Cognitive mode selection and deliberation |
-
-### 2. Environment Plane (v9)
-
-| Module | Purpose |
-|--------|---------|
-| `model.py` | Entities, resources, relationships, events, constraints, permissions |
-| `affordances.py` | What can I do with it? What happens? Risk scoring |
-| `state_estimation.py` | Multi-source observation fusion with confidence |
-| `consequence.py` | Pre-action simulation with rule-based predictions |
-
-### 3. Universal Action Plane (v9)
-
-| Module | Purpose |
-|--------|---------|
-| `uap.py` | Universal Action Protocol (READ, CREATE, UPDATE, DELETE, etc.) |
-| `uop.py` | Universal Observation Protocol (normalized observations) |
-| `event_algebra.py` | Event types, subscription-based agents |
-| `transaction.py` | PREPARE → VALIDATE → COMMIT → VERIFY with rollback |
-| `safety_envelope.py` | Safe operating boundaries with emergency stop |
-
-### 4. Coding Plane (v11 — 39 Modules)
-
-| Module | Purpose |
-|--------|---------|
-| `repository_twin.py` | Parse any codebase, build digital twin with symbols/edges |
-| `code_graph.py` | Import/call/inheritance dependency graph with blast radius |
-| `semantic_index.py` | Multi-level code indexing (repo→package→module→class→function→symbol) |
-| `recon.py` | Discover build system, test framework, CI/CD, conventions |
-| `history_memory.py` | Ingest git history, query commits/PRs/issues |
-| `requirements.py` | Natural language → functional/non-functional requirements + acceptance criteria |
-| `architecture.py` | Generate competing architectures, tradeoff analysis, selection |
-| `adr.py` | Architecture Decision Records (ADR-001, AADR-002, etc.) |
-| `task_graph.py` | Product goal → dependency-aware task DAG |
-| `code_generation.py` | Spec → Context → Design → Implement → Static Check → Test → Review → Commit |
-| `test_pyramid.py` | 11 test types (unit, integration, system, E2E, contract, property, fuzz, performance, security, migration, recovery) |
-| `quality_gates.py` | 7 gates (requirement → architecture → implementation → test → security → deployment → production) |
-| `merge_controller.py` | Tests, security, review, conflicts, architecture, rollback checks |
-| `evaluation_pyramid.py` | 10 levels (syntax → unit → integration → repository → refactor → migration → long-horizon → production-sim → novel-repos → cross-domain) |
-| `coding_rsi.py` | Bottleneck → Hypothesis → Candidate → Dev → Holdout → Novel → Red Team → Canary → Promote |
-| ... 23 more | |
-
-### 5. Learning Plane (v9)
-
-| Module | Purpose |
-|--------|---------|
-| `trajectory_store.py` | Record action sequences (STATE₀ → ACTION₀ → OBSERVATION₀ → ...) |
-| `trajectory_replay.py` | Replay with modified policies, generate counterfactuals |
-| `policy_learning.py` | Learn when tool X beats tool Y |
-| `counterfactual.py` | What if we had done Z instead? |
-| `skill_transfer.py` | Cross-domain skill abstraction |
-
-### 6. RSI Plane (v10)
-
-| Module | Purpose |
-|--------|---------|
-| `integration.py` | Bottleneck → Hypothesis → Candidate → A/B Test → Holdout → Promote/Rollback |
-| `closed_loop.py` | Full 15-step closed-loop execution engine |
-| `policy_bridge.py` | Epsilon-greedy exploration, policy versioning, rollback |
-
-### 7. Explanation & Audit (v10)
-
-| Module | Purpose |
-|--------|---------|
-| `explainer.py` | Why was this action chosen? What alternatives? What evidence? |
-| `audit_trail.py` | Tamper-evident audit log with full history |
-
-### 8. Continuous Benchmark (v10)
-
-| Module | Purpose |
-|--------|---------|
-| `continuous.py` | Run evaluation suites, detect regressions, maintain leaderboards |
-
-### 9. Multi-Agent Collaboration (v10)
-
-| Module | Purpose |
-|--------|---------|
-| `protocol.py` | Agent registration, goal decomposition, task assignment, conflict resolution |
-
-### 10. Computer Use v2 (v9)
-
-| Module | Purpose |
-|--------|---------|
-| `ui_state_graph.py` | Model app UI as state machine |
-| `ui_memory.py` | Remember navigation patterns |
-| `app_digital_twin.py` | Model before acting against reality |
-| `discovery.py` | Discover interfaces, capabilities, state, permissions, risks |
 
 ---
 
@@ -420,44 +327,14 @@ python hermes_agi.py --goal "write file hello.txt containing HELLO WORLD"
 python hermes_agi.py
 ```
 
-### Run Tests
+### Run All Tests
 ```bash
 PYTHONPATH=. python tests/test_v9_core.py
 PYTHONPATH=. python tests/test_v9_full.py
 PYTHONPATH=. python tests/test_v10_full.py
 PYTHONPATH=. python tests/test_v11_coding.py
 PYTHONPATH=. python tests/test_v11_dynamic.py
-```
-
----
-
-## 📋 CLI Reference
-
-### hermes_agi.py (Full Kernel)
-```bash
-python hermes_agi.py                          # Interactive REPL
-python hermes_agi.py --health                 # Health check
-python hermes_agi.py --list-plugins           # List all plugins
-python hermes_agi.py --goal "Research AI"     # Execute a goal
-python hermes_agi.py --zero-cost             # Enforce free-only mode
-python hermes_agi.py --offline                # Offline mode
-python hermes_agi.py --profile default        # Use profile
-python hermes_agi.py --verbose                # Verbose output
-```
-
-### hermes.py (Simple Runtime)
-```bash
-python hermes.py run "write file test.txt containing HELLO"
-python hermes.py run "compute 2**10 + 5"
-python hermes.py interactive
-```
-
-### hermes_supervisor.py (24/7 Daemon)
-```bash
-python hermes_supervisor.py                   # Run 24/7 daemon
-python hermes_supervisor.py --task "Do X"     # Execute single task
-python hermes_supervisor.py --health          # Health check
-python hermes_supervisor.py --once            # Run one processing cycle
+PYTHONPATH=. python tests/test_v11_workflow.py
 ```
 
 ---
@@ -471,7 +348,8 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | `test_v10_full.py` | 7 | Policy Bridge, Closed-Loop Orchestrator, RSI Integration, Multi-Agent Collaboration, Explanation, Continuous Benchmark, Full Integration |
 | `test_v11_coding.py` | 12 | Repository Twin, Code Graph, Semantic Index, Recon, Requirements, Architecture, ADR, Task Graph, Quality Gates, Merge Controller, Eval Pyramid, Full Integration |
 | `test_v11_dynamic.py` | 6 | Scenario Analyzer, Planning Engine, Decision Engine |
-| **Total** | **45** | |
+| `test_v11_workflow.py` | 5 | Full workflow execution, kernel integration, topologies |
+| **Total** | **51** | |
 
 ---
 
@@ -482,7 +360,7 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | v2.0 | 1-10 | 15-plane architecture, 50 plugins, 72 tests, ReAct loop |
 | v9 | 11-12 | Environment Intelligence, Universal Protocols, Learning Plane, Computer Use v2 |
 | v10 | 13 | Closed-Loop Orchestrator, Policy Bridge, RSI Integration, Explanation, Benchmark |
-| v11 | 14-17 | 39 Coding Modules, Dynamic Planning, Scenario Analysis, Decision Engine |
+| v11 | 14-19 | 39 Coding Modules, Dynamic Planning, Scenario Analysis, Decision Engine, Workflow Executor |
 
 ---
 
@@ -519,6 +397,7 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | Environment (v9) | 4 | ~1,200 |
 | Universal Action (v9) | 5 | ~1,000 |
 | Coding (v11) | 39 | ~8,000 |
+| Dynamic (v11) | 4 | ~1,700 |
 | Learning (v9) | 5 | ~1,500 |
 | RSI (v10) | 3 | ~1,200 |
 | Explanation (v10) | 2 | ~800 |
@@ -526,7 +405,7 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | Collaboration (v10) | 1 | ~300 |
 | Computer Use v2 (v9) | 4 | ~1,700 |
 | Runtime | 1 | ~700 |
-| **Total** | **79** | **~22,100** |
+| **Total** | **83** | **~23,800** |
 
 ---
 
