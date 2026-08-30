@@ -1,0 +1,21 @@
+name: autonomous_research
+version: 1.0.0
+description: "Autonomous research capabilities"
+license: MIT
+source: internal
+capabilities:
+  - question_formulation
+  - experiment_design
+  - report_generation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

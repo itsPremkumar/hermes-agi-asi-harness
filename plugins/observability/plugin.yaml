@@ -1,0 +1,22 @@
+name: observability
+version: 1.0.0
+description: "Observability — tracing, metrics, logging, dashboards"
+license: MIT
+source: internal
+capabilities:
+  - tracing
+  - metrics
+  - logging
+  - dashboard
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

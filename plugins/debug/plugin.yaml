@@ -1,0 +1,21 @@
+name: debug
+version: 1.0.0
+description: "Autonomous debugging and root cause analysis"
+license: MIT
+source: internal
+capabilities:
+  - bug_reproduction
+  - root_cause_analysis
+  - fix_generation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

@@ -1,0 +1,21 @@
+name: temporal
+version: 1.0.0
+description: "Temporal reasoning and planning"
+license: MIT
+source: internal
+capabilities:
+  - task_scheduling
+  - schedule_optimization
+  - duration_prediction
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

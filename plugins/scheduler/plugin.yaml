@@ -1,0 +1,21 @@
+name: scheduler
+version: 1.0.0
+description: "Job scheduler — one-time, recurring, delayed, event-triggered jobs"
+license: MIT
+source: internal
+capabilities:
+  - scheduling
+  - cron
+  - delayed_jobs
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

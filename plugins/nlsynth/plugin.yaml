@@ -1,0 +1,21 @@
+name: nlsynth
+version: 1.0.0
+description: "Natural language program synthesis"
+license: MIT
+source: internal
+capabilities:
+  - nl_to_code
+  - code_explanation
+  - test_generation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

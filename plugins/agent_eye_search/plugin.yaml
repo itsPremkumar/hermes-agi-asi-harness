@@ -1,0 +1,32 @@
+name: agent_eye_search
+version: 1.0.0
+description: "AgentEye Search — 80+ free search backends via AgentEye (DDGS, Google, Bing, Wikipedia, arXiv, GitHub, etc.) Zero API keys."
+license: MIT
+source: internal
+capabilities:
+  - web_search
+  - search_fallback
+  - content_extraction
+  - seo_extraction
+  - crawl
+  - research_topic
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed:
+      - "*"
+  shell:
+    allowed: []
+  secrets:
+    access: none
+  max_memory_mb: 512
+  max_cpu_percent: 50
+dependencies:
+  - ddgs>=9.0.0
+  - httpx>=0.27.0
+  - beautifulsoup4>=4.12.0
+  - trafilatura>=1.12.0

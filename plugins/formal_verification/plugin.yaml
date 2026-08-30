@@ -1,0 +1,21 @@
+name: formal_verification
+version: 1.0.0
+description: "Formal specification and verification"
+license: MIT
+source: internal
+capabilities:
+  - spec_generation
+  - property_proving
+  - invariant_checking
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

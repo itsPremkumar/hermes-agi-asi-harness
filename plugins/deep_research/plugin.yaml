@@ -1,0 +1,25 @@
+name: deep_research
+version: 1.0.0
+description: "Deep Research Engine — autonomous web research, evidence synthesis, and citation-backed report generation"
+license: MIT
+source: internal
+capabilities:
+  - web_research
+  - evidence_synthesis
+  - citation_verification
+  - multi_perspective_analysis
+  - report_generation
+  - contradiction_detection
+  - source_ranking
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: ["*"]
+  shell:
+    allowed: []
+  secrets:
+    access: none

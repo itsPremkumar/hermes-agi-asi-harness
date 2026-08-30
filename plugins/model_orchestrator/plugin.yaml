@@ -1,0 +1,21 @@
+name: model_orchestrator
+version: 1.0.0
+description: "Multi-model orchestration and routing"
+license: MIT
+source: internal
+capabilities:
+  - model_routing
+  - model_ensembling
+  - model_chaining
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none
