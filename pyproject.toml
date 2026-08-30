@@ -3,16 +3,16 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hermes-agi-asi-harness"
-version = "2.1.0"
-description = "Hermes AGI/ASI Harness — free-first, modular, model-agnostic agent harness"
+name = "harnix"
+version = "1.0.0"
+description = "Harness Runtime Kernel — LangGraph StateGraph + Agent Lifecycle"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "Hermes AGI/ASI Contributors"},
 ]
-keywords = ["agi", "asi", "agent", "harness", "llm", "ai"]
+keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -25,13 +25,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "pyyaml>=6.0",
-    "httpx>=0.27.0",
-    "beautifulsoup4>=4.12.0",
-    "trafilatura>=1.12.0",
-    "ddgs>=9.0.0",
-    "psutil>=5.9.0",
-    "aiofiles>=23.2.0",
+    "langgraph>=1.0.0",
+    "langchain-core>=0.3.0",
 ]
 
 [project.optional-dependencies]
@@ -40,164 +35,12 @@ dev = [
     "pytest-asyncio>=0.21",
     "black",
     "ruff",
-    "mypy",
 ]
-research = [
-    "ddgs>=9.0.0",
-    "httpx>=0.27.0",
-    "beautifulsoup4>=4.12.0",
-    "trafilatura>=1.12.0",
-]
-langgraph = [
-    "langgraph>=0.3.0",
-    "langchain-core>=0.3.0",
-]
-deepagents = [
-    "langgraph>=0.3.0",
-    "langchain>=0.3.0",
-]
-ollama = ["ollama>=0.2"]
-openai = ["openai>=1.0"]
-anthropic = ["anthropic>=0.30"]
-huggingface = ["transformers>=4.0", "torch>=2.0"]
-browser = ["playwright>=1.40"]
-all = [
-    "ollama>=0.2",
-    "openai>=1.0",
-    "anthropic>=0.30",
-    "transformers>=4.0",
-    "playwright>=1.40",
-    "ddgs>=9.0.0",
-    "httpx>=0.27.0",
-    "beautifulsoup4>=4.12.0",
-    "trafilatura>=1.12.0",
-    "langgraph>=0.3.0",
-    "langchain>=0.3.0",
-]
-
-[project.scripts]
-hermes-agi = "hermes_agi:main"
-
-[tool.setuptools]
-py-modules = ["hermes_agi"]
 
 [tool.setuptools.packages.find]
-include = ["core*", "plugins*", "agents*", "tools*"]
-
-[tool.black]
-line-length = 100
-
-[tool.ruff]
-line-length = 100
-exclude = [".github/workflows"]
-
-[tool.ruff.lint]
-# Pragmatic ruleset: catch real bugs, ignore style noise for a research codebase.
-select = ["F", "E7", "E9", "UP", "SIM", "S", "ASYNC", "DTZ", "BLE", "PLW", "PERF", "RUF", "S506"]
-ignore = [
-    "BLE001",   # blind except is intentional at plugin boundaries
-    "S110",     # try/except/pass used deliberately for best-effort cleanup
-    "S112",     # try/except/continue likewise
-    "S301",     # pickle usage audited & gated behind trusted-store flags
-    "PLW1510",  # subprocess without check is intentional for non-critical probes
-    "DTZ003",   # datetime.utcnow used for epoch math everywhere
-    "DTZ006",   # fromtimestamp without tz likewise
-    "ASYNC210", # blocking calls in async wrapped/to-thread at call sites
-    "ASYNC221", # subprocess run in async wrappers
-    "RUF012",   # mutable class defaults on annotated fields are dataclass-standard
-    "SIM102", "SIM105", "SIM108", "PERF402",  # cosmetic simplifications
-    "UP035",    # py3.10 compat: keep typing.Dict/List for now
-    "UP015", "PERF401", "PERF203", "RUF005", "PLW2901", "RUF006",
-    "S311", "S310", "S324", "S602", "S603",  # audited: hashlib md5 for caching only; no untrusted URLs
-    "S404", "S605", "S607",                  # subprocess imports & shell calls in tool wrappers
-    "ASYNC240",                              # blocking path methods in async helpers
-    "E701", "E722", "E741",                  # compact/bare-except style kept deliberate
-    "UP031",    # %-format logging kept uniform across the codebase
-    "UP006",    # py3.10: keep Tuple/typing aliases for now
-    "S104",     # host=0.0.0.0 is opt-in via config, flagged and documented
-    "S108",     # /tmp usage is sandbox-gated
-    "S105", "S102", "S307",                  # exec/eval only inside the python-execution tool, intentional
-    "S608",     # SQL is parameterized (set_clause built from whitelist); ruff can't see it
-    "SIM115", "SIM116", "ASYNC230", "ASYNC110", "ASYNC220",  # targeted non-issues
-    "PLW0603",  # singleton modules use module-level mutation deliberately
-    "F811",     # method redefinition used for overload-by-name in state stores
-    "E501",     # line length handled by formatter
-    "F841",     # unused locals (intentional staging vars)
-    "E701",     # multiple statements on one line in YAML steps (false positive)
-    "G004",     # logging f-strings are idiomatic in Python logging
-    "RUF059",   # unpacked variables never used (agent delegation pattern)
-    "RUF013",   # implicit Optional is idiomatic in this codebase
-    "RUF015",   # single-element slice is idiomatic
-    "ASYNC250", # blocking input() calls are intentional CLI entry points
-    "PLW0108",  # lambdas are used for one-off callbacks
-    "PLW0602",  # module-level globals used for configuration constants
-    "PLW1641",  # __hash__ intentional for frozen dataclasses
-    "E702",     # semicolons in legacy scripts (integration tests)
-    "E712",     # truthiness checks (legacy scripts use == True/False)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"**/__init__.py" = ["F401", "F403"]
-"**/plugin.py" = ["F401"]
-"test_*.py" = ["S101", "E731"]
-"scripts/*" = ["S"]
-".github/workflows/*.yml" = ["E501", "F401", "F403", "F811", "F821", "F823", "E302", "E305", "E111", "E114", "E117", "E721", "E731", "E999"]
-"install_for_hermes.py" = ["F401", "F403"]
+include = ["harnix*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-asyncio_default_test_loop_scope = "function"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-python_functions = ["test_*"]
-# These files contain helper funcs named `test_pass`/`test_fail` that pytest
-# mistakes for tests. conftest.py filters them out.
-addopts = ["-p", "no:cacheprovider"]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-    "ignore::pytest.PytestReturnNotNoneWarning",
-    "ignore::pytest.PytestUnraisableExceptionWarning",
-]
-
-[tool.coverage.run]
-source = ["src/harness"]
-branch = true
-omit = [
-    "tests/*",
-    "*/__pycache__/*",
-]
-
-[tool.coverage.report]
-show_missing = true
-fail_under = 80
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if __name__ == .__main__.",
-    "raise NotImplementedError",
-    "if TYPE_CHECKING:",
-    "pass",
-]
-
-[tool.bumpversion]
-current_version = "2.1.0"
-parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
-serialize = ["{major}.{minor}.{patch}"]
-search = "{current_version}"
-replace = "{new_version}"
-regex = false
-ignore_missing_version = false
-ignore_missing_files = false
-tag = true
-sign_tags = false
-tag_name = "v{new_version}"
-tag_message = "Release v{new_version}"
-allow_dirty = false
-commit = true
-message = "chore(release): bump version {current_version} → {new_version}"
-commit_args = ""
-
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
