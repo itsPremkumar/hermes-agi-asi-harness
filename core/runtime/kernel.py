@@ -112,6 +112,15 @@ class HermesKernel:
         self.safety_envelope_manager: Optional[Any] = None
         self.master_orchestrator: Optional[Any] = None
         
+        # v10: Closed-Loop Self-Improving System
+        self.closed_loop_orchestrator: Optional[Any] = None
+        self.policy_bridge: Optional[Any] = None
+        self.rsi_engine: Optional[Any] = None
+        self.action_explainer: Optional[Any] = None
+        self.audit_trail: Optional[Any] = None
+        self.continuous_benchmark: Optional[Any] = None
+        self.collaboration_protocol: Optional[Any] = None
+        
         # v9: Learning Plane
         self.trajectory_store: Optional[Any] = None
         self.trajectory_replay: Optional[Any] = None
@@ -189,6 +198,9 @@ class HermesKernel:
         await self._init_v9_learning_plane()
         await self._init_v9_computer_use_v2()
         
+        # v10: Initialize Closed-Loop Self-Improving System
+        await self._init_v10_closed_loop()
+        
         # Register plugin capabilities as tools on the execution engine
         await self._register_plugin_tools()
         
@@ -233,6 +245,45 @@ class HermesKernel:
             logger.info("v9 Computer Use v2 initialized")
         except Exception as e:
             logger.warning("v9 Computer Use v2 initialization failed: %s", e)
+
+    async def _init_v10_closed_loop(self):
+        """Initialize the v10 Closed-Loop Self-Improving System."""
+        try:
+            from core.learning.policy_learning import PolicyLearner
+            from core.orchestrator.policy_bridge import PolicyBridge
+            from core.orchestrator.closed_loop import ClosedLoopOrchestrator
+            from core.rsi.integration import RSIIntegrationEngine
+            from core.explanation.explainer import ActionExplainer, AuditTrail
+            from core.benchmark.continuous import ContinuousBenchmark
+            from core.collaboration.protocol import AgentCollaborationProtocol
+
+            # Policy learner should already be initialized from v9
+            if not hasattr(self, 'policy_learner') or self.policy_learner is None:
+                self.policy_learner = PolicyLearner()
+            
+            self.policy_bridge = PolicyBridge(self.policy_learner)
+            self.closed_loop_orchestrator = ClosedLoopOrchestrator(
+                self.policy_bridge,
+                self.trajectory_store,
+                self.policy_learner,
+                self.safety_envelope_manager,
+                self.consequence_simulator,
+                self.environment_model,
+            )
+            self.rsi_engine = RSIIntegrationEngine(
+                self.policy_learner,
+                self.policy_bridge,
+                self.trajectory_store,
+                self.trajectory_replay,
+            )
+            self.action_explainer = ActionExplainer()
+            self.audit_trail = AuditTrail()
+            self.continuous_benchmark = ContinuousBenchmark()
+            self.collaboration_protocol = AgentCollaborationProtocol()
+
+            logger.info("v10 Closed-Loop Self-Improving System initialized")
+        except Exception as e:
+            logger.warning("v10 Closed-Loop initialization failed: %s", e)
 
     async def _init_v9_environment_plane(self):
         """Initialize the v9 Universal Environment Intelligence & Action Plane."""
