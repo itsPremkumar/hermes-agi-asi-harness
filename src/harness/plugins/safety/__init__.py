@@ -155,10 +155,10 @@ class AlignmentPlugin(Plugin):
 
 
 __all__ = [
-    "GuardrailsPlugin",
-    "BiasDetectionPlugin",
     "AdversarialDefensePlugin",
-    "PrivacyPlugin",
-    "ExplainabilityPlugin",
     "AlignmentPlugin",
+    "BiasDetectionPlugin",
+    "ExplainabilityPlugin",
+    "GuardrailsPlugin",
+    "PrivacyPlugin",
 ]

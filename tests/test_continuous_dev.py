@@ -3,18 +3,14 @@ from __future__ import annotations
 
 import asyncio
 import sys
-import time
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from continuous_dev import (
-    ABStatus,
     ABTestingFramework,
-    ABTest,
     CanaryDeploymentManager,
-    CanaryRelease,
     CanaryStatus,
     CronStatus,
     CronTask,
@@ -22,8 +18,6 @@ from continuous_dev import (
     DashboardMetric,
     ProgressDashboard,
     RollbackManager,
-    RollbackPoint,
-    RollbackStatus,
 )
 
 

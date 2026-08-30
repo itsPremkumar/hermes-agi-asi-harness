@@ -168,10 +168,10 @@ class CurriculumPlugin(Plugin):
 
 
 __all__ = [
+    "CurriculumPlugin",
+    "MetaLearningPlugin",
     "RLPlugin",
     "SupervisedPlugin",
-    "UnsupervisedPlugin",
-    "MetaLearningPlugin",
     "TransferLearningPlugin",
-    "CurriculumPlugin",
+    "UnsupervisedPlugin",
 ]

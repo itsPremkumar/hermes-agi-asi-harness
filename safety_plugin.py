@@ -9,18 +9,16 @@ Advanced safety plugin for the harness:
 
 from __future__ import annotations
 
-import asyncio
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from dataclasses import dataclass
+from typing import Any, Callable
 
 from harness_control_plane import (
     IPlugin,
     SafetyLevel,
     TaskRequest,
     TaskResult,
-    SafetyReport,
 )
 
 
@@ -49,14 +47,14 @@ class SafetyPlugin(IPlugin):
     version = "1.0.0"
     capabilities = ["safety_check", "rate_limit", "quota_enforce", "anomaly_detect"]
     
-    def __init__(self, rate_limit: Optional[RateLimitConfig] = None,
-                 quota: Optional[ResourceQuota] = None):
+    def __init__(self, rate_limit: RateLimitConfig | None = None,
+                 quota: ResourceQuota | None = None):
         self._rate_limit = rate_limit or RateLimitConfig()
         self._quota = quota or ResourceQuota()
         self._request_log: dict[str, list[float]] = defaultdict(list)
         self._active_tasks: dict[str, float] = {}
         self._anomaly_callbacks: list[Callable] = []
-        self._custom_rules: list[Callable[[TaskRequest], Optional[str]]] = []
+        self._custom_rules: list[Callable[[TaskRequest], str | None]] = []
         self._initialized = False
     
     @property
@@ -131,7 +129,7 @@ class SafetyPlugin(IPlugin):
         """Check plugin health."""
         return self._initialized
     
-    def add_custom_rule(self, rule: Callable[[TaskRequest], Optional[str]]) -> None:
+    def add_custom_rule(self, rule: Callable[[TaskRequest], str | None]) -> None:
         """Add a custom safety rule."""
         self._custom_rules.append(rule)
     
@@ -217,7 +215,7 @@ class AnomalyDetector:
         if not success:
             self._error_counts[task_type] += 1
     
-    def detect_anomaly(self) -> Optional[dict[str, Any]]:
+    def detect_anomaly(self) -> dict[str, Any] | None:
         """Detect if current behavior is anomalous."""
         if len(self._execution_times) < 10:
             return None

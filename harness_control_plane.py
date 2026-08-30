@@ -13,17 +13,14 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import logging
-import os
-import sys
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +65,7 @@ class TaskResult:
     task_id: str
     success: bool
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     execution_time_ms: float = 0.0
     safety_violations: list[str] = field(default_factory=list)
     completed_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -235,7 +232,7 @@ class SafetyGuard:
         """Register a human approval callback for a task type."""
         self._human_approval_callbacks[task_type] = callback
     
-    def get_violations(self, task_id: Optional[str] = None) -> list[SafetyReport]:
+    def get_violations(self, task_id: str | None = None) -> list[SafetyReport]:
         """Get violation log, optionally filtered by task."""
         if task_id:
             return [v for v in self._violation_log if v.task_id == task_id]
@@ -249,7 +246,7 @@ class SafetyGuard:
 class ExecutiveControlPlane:
     """The main executive control plane for the harness."""
     
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self._state = HarnessState.INITIALIZING
         self._plugin_registry = PluginRegistry()
@@ -340,7 +337,7 @@ class ExecutiveControlPlane:
                 error=str(e),
             )
     
-    async def get_result(self, task_id: str) -> Optional[TaskResult]:
+    async def get_result(self, task_id: str) -> TaskResult | None:
         """Get the result of a completed task."""
         return self._results.get(task_id)
     

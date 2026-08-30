@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import Any, Optional
 
-from .plugin_base import Plugin, PluginMetadata, PluginStatus
+from harness.plugin_base import Plugin, PluginStatus
 
 
 class PluginRegistry:
@@ -61,14 +60,14 @@ class PluginRegistry:
                         cap_list.remove(key)
             return True
 
-    def get(self, plugin_id: str) -> Optional[Plugin]:
+    def get(self, plugin_id: str) -> Plugin | None:
         with self._lock:
             key = self._by_id.get(plugin_id)
             if key:
                 return self._plugins.get(key)
             return None
 
-    def get_by_name(self, name: str) -> Optional[Plugin]:
+    def get_by_name(self, name: str) -> Plugin | None:
         with self._lock:
             key = self._by_name.get(name)
             if key:

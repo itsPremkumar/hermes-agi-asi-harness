@@ -174,10 +174,10 @@ class AttentionPlugin(Plugin):
 
 
 __all__ = [
-    "VisionPlugin",
-    "AudioPlugin",
-    "TextPlugin",
-    "SensorPlugin",
-    "MultimodalPlugin",
     "AttentionPlugin",
+    "AudioPlugin",
+    "MultimodalPlugin",
+    "SensorPlugin",
+    "TextPlugin",
+    "VisionPlugin",
 ]

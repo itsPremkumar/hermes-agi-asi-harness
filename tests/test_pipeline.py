@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import sys
-import time
 import unittest
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from src.training.pipeline import (
     PipelineStatus,
     TrainingConfig,
     TrainingPipeline,
-    TrainingResult,
 )
 
 

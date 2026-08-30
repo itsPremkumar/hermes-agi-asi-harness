@@ -6,7 +6,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class HealthStatus(Enum):
@@ -74,7 +74,7 @@ class HealthMonitor:
 
         return result
 
-    def get_status(self, plugin_id: str) -> Optional[HealthCheckResult]:
+    def get_status(self, plugin_id: str) -> HealthCheckResult | None:
         with self._lock:
             return self._results.get(plugin_id)
 

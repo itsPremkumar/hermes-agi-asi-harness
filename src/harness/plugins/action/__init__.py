@@ -174,10 +174,10 @@ class APIPlugin(Plugin):
 
 
 __all__ = [
-    "ToolUsePlugin",
+    "APIPlugin",
     "CodeGenPlugin",
-    "WebPlugin",
     "FileSystemPlugin",
     "ShellPlugin",
-    "APIPlugin",
+    "ToolUsePlugin",
+    "WebPlugin",
 ]

@@ -188,11 +188,11 @@ class DecisionPlugin(Plugin):
 
 
 __all__ = [
+    "AbductivePlugin",
+    "AnalogicalPlugin",
+    "CausalPlugin",
+    "DecisionPlugin",
     "DeductivePlugin",
     "InductivePlugin",
-    "AbductivePlugin",
-    "CausalPlugin",
-    "AnalogicalPlugin",
     "PlanningPlugin",
-    "DecisionPlugin",
 ]
