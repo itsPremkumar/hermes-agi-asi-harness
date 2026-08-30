@@ -1,8 +1,8 @@
-# 🚀 Hermes AGI/ASI Master v11 — Complete Architecture & Workflow
+# 🚀 Hermes AGI/ASI Master v11 — Complete Setup Guide
 
 **Production-grade, free-first, modular, model-agnostic autonomous agent harness with advanced coding intelligence.**
 
-[![Tests](https://img.shields.io/badge/tests-39%2F39%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-45%2F45%20passing-brightgreen)]()
 [![Core](https://img.shields.io/badge/core-172%20modules-blue)]()
 [![Coding](https://img.shields.io/badge/coding-39%20modules-blue)]()
 [![Plugins](https://img.shields.io/badge/plugins-82%20loaded-blue)]()
@@ -11,20 +11,46 @@
 
 ---
 
-## 📊 Current State
+## 📋 Quick Start
 
-| Metric | Value |
-|--------|-------|
-| **Total Commits** | 16 (Phase 2→10 + v9 + v10 + v11) |
-| **Core Files** | 172 Python files |
-| **Total Lines** | ~28,600+ |
-| **Coding Modules** | 39 |
-| **Tests Passing** | 39/39 |
-| **Kernel Plugins** | 82 |
+### Option 1: Direct Installation (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/itsPremkumar/hermes-agi-asi-harness.git
+cd hermes-agi-asi-harness
+
+# Run the installer
+python install.py
+
+# Or install dependencies manually
+pip install -r requirements.txt
+
+# Run health check
+python hermes_agi.py --health
+
+# Execute a goal
+python hermes_agi.py --goal "write file hello.txt containing HELLO WORLD"
+
+# Interactive mode
+python hermes_agi.py
+```
+
+### Option 2: Use with Hermes Agent
+
+```bash
+# Install the project
+git clone https://github.com/itsPremkumar/hermes-agi-asi-harness.git
+cd hermes-agi-asi-harness
+pip install -e .
+
+# Run with Hermes
+python -m hermes_agi --goal "your goal here"
+```
 
 ---
 
-## 🏗️ Master Architecture
+## 🏗️ Architecture Overview
 
 ```
                          HERMES INTELLIGENCE OS v11
@@ -47,64 +73,51 @@
                                  │
                     ┌────────────▼────────────┐
                     │   ENVIRONMENT PLANE     │
-                    │                         │
                     │  Environment Model      │
                     │  Affordance Model       │
                     │  State Estimation       │
-                    │  Digital Twins          │
                     │  Consequence Simulator  │
                     └────────────┬────────────┘
                                  │
                     ┌────────────▼────────────┐
                     │  UNIVERSAL ACTION PLANE │
-                    │                         │
-                    │  Universal Action Prot. │
-                    │  Universal Observ. Prot.│
-                    │  Action Algebra         │
-                    │  Event Algebra          │
+                    │  UAP / UOP / Event Alg. │
                     │  Transaction Model      │
                     │  Safety Envelope        │
                     └────────────┬────────────┘
                                  │
                     ┌────────────▼────────────┐
                     │   CODING PLANE (v11)    │
-                    │                         │
                     │  Repository Twin        │
                     │  Code Graph             │
-                    │  Semantic Index         │
-                    │  Requirements           │
-                    │  Architecture           │
+  ORCHESTRATOR      │  Architecture           │
                     │  Task Graph             │
                     │  Code Generation        │
                     │  Test Pyramid           │
-                    │  Security Loop          │
                     │  Quality Gates          │
-                    │  Merge Controller       │
-                    │  Evaluation Pyramid     │
                     │  Coding-RSI             │
-                    │  ... 25 more            │
                     └────────────┬────────────┘
                                  │
                     ┌────────────▼────────────┐
                     │    LEARNING PLANE       │
-                    │                         │
                     │  Trajectory Store       │
                     │  Policy Learning        │
-                    │  Counterfactual Eval    │
                     │  Skill Transfer         │
-                    │  Skill Forge            │
-                    │  Curriculum             │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │  VERIFICATION PLANE     │
-                    │                         │
-                    │  Action Verification    │
-                    │  Mission Verification   │
-                    │  Trajectory Verification│
-                    │  Human Approval         │
                     └─────────────────────────┘
 ```
+
+---
+
+## 📊 Current State
+
+| Metric | Value |
+|--------|-------|
+| **Total Commits** | 17 (Phase 2→10 + v9 + v10 + v11 + dynamic) |
+| **Core Files** | 172+ Python files |
+| **Total Lines** | ~30,000+ |
+| **Coding Modules** | 39 |
+| **Tests Passing** | 45/45 |
+| **Kernel Plugins** | 82 |
 
 ---
 
@@ -220,8 +233,8 @@ hermes-agi-asi-harness/
 │   │   └── consequence.py
 │   │
 │   ├── protocols/               ← 3 v9 Protocol Modules
-│   │   ├── uap.py               (Universal Action Protocol)
-│   │   ├── uop.py               (Universal Observation Protocol)
+│   │   ├── uap.py
+│   │   ├── uop.py
 │   │   └── event_algebra.py
 │   │
 │   ├── action/                  ← 2 v9 Action Modules
@@ -266,6 +279,7 @@ hermes-agi-asi-harness/
 │   ├── test_v9_full.py          ← 10 tests
 │   ├── test_v10_full.py         ← 7 tests
 │   ├── test_v11_coding.py       ← 12 tests
+│   ├── test_v11_dynamic.py      ← 6 tests
 │   └── test_coding_phase1.py    ← 4 tests
 │
 ├── plugins/                     ← 82 loaded plugins
@@ -322,8 +336,6 @@ hermes-agi-asi-harness/
 
 ### 4. Coding Plane (v11 — 39 Modules)
 
-#### Repository Intelligence
-
 | Module | Purpose |
 |--------|---------|
 | `repository_twin.py` | Parse any codebase, build digital twin with symbols/edges |
@@ -331,73 +343,17 @@ hermes-agi-asi-harness/
 | `semantic_index.py` | Multi-level code indexing (repo→package→module→class→function→symbol) |
 | `recon.py` | Discover build system, test framework, CI/CD, conventions |
 | `history_memory.py` | Ingest git history, query commits/PRs/issues |
-
-#### Requirements & Architecture
-
-| Module | Purpose |
-|--------|---------|
 | `requirements.py` | Natural language → functional/non-functional requirements + acceptance criteria |
-| `requirement_trace.py` | Requirement → Design → Implementation → Test → Evidence traceability |
 | `architecture.py` | Generate competing architectures, tradeoff analysis, selection |
-| `adr.py` | Architecture Decision Records (ADR-001, ADR-002, etc.) |
-| `architecture_risk.py` | Failure modes, coupling, scaling, security risk analysis |
-| `strategy_search.py` | Search across architecture/implementation/testing strategies |
-
-#### Task Orchestration
-
-| Module | Purpose |
-|--------|---------|
+| `adr.py` | Architecture Decision Records (ADR-001, AADR-002, etc.) |
 | `task_graph.py` | Product goal → dependency-aware task DAG |
-| `dynamic_parallelism.py` | Parallelize independent tasks with conflict detection |
-| `agent_specialization.py` | 15+ specialist roles (Requirements, Architect, Backend, etc.) |
-| `worker_contract.py` | Bounded context: objective, files, constraints, tools, risk |
-| `worktree_isolation.py` | Git worktree per agent for isolated development |
-| `artifact_registry.py` | Artifact-first communication (patch, commit, branch, ADR, etc.) |
-
-#### Code Generation & Verification
-
-| Module | Purpose |
-|--------|---------|
 | `code_generation.py` | Spec → Context → Design → Implement → Static Check → Test → Review → Commit |
-| `test_first.py` | Requirement → Acceptance Criteria → Test Design → Implementation |
 | `test_pyramid.py` | 11 test types (unit, integration, system, E2E, contract, property, fuzz, performance, security, migration, recovery) |
-| `test_oracle.py` | 10 oracle types (exact, schema, compiler, unit, integration, snapshot, property, invariant, external, human) |
-| `security_loop.py` | Threat model → Static analysis → Dependency audit → Secret scan → Fuzz → Review |
-
-#### Learning & Skills
-
-| Module | Purpose |
-|--------|---------|
-| `skill_forge.py` | Extract reusable skills from trajectories |
-| `curriculum.py` | Capability graph with measurable subskills |
-| `transfer_learning.py` | Test patterns across languages, frameworks, repos |
-
-#### RSI & Evolution
-
-| Module | Purpose |
-|--------|---------|
-| `coding_rsi.py` | Bottleneck → Hypothesis → Candidate → Dev → Holdout → Novel → Red Team → Canary → Promote |
-| `population_evolution.py` | Archive → Mutate/Combine → Evaluate → Reject/Archive |
-| `meta_rsi.py` | Improve the evolution process itself |
-
-#### Evaluation & Quality Gates
-
-| Module | Purpose |
-|--------|---------|
-| `evaluation_pyramid.py` | 10 levels (syntax → unit → integration → repository → refactor → migration → long-horizon → production-sim → novel-repos → cross-domain) |
 | `quality_gates.py` | 7 gates (requirement → architecture → implementation → test → security → deployment → production) |
 | `merge_controller.py` | Tests, security, review, conflicts, architecture, rollback checks |
-
-#### Cross-Cutting Concerns
-
-| Module | Purpose |
-|--------|---------|
-| `cross_repo.py` | Cross-repository dependency reasoning |
-| `api_contract.py` | Producer/consumer/schema/version tracking |
-| `database_change.py` | Expand/compatibility/contract migration phases |
-| `performance_loop.py` | Baseline → Profile → Hypothesize → Benchmark |
-| `context_engineering.py` | Optimize context for relevance/completeness/freshness/cost |
-| `blackboard.py` | Shared workspace for agent communication |
+| `evaluation_pyramid.py` | 10 levels (syntax → unit → integration → repository → refactor → migration → long-horizon → production-sim → novel-repos → cross-domain) |
+| `coding_rsi.py` | Bottleneck → Hypothesis → Candidate → Dev → Holdout → Novel → Red Team → Canary → Promote |
+| ... 23 more | |
 
 ### 5. Learning Plane (v9)
 
@@ -470,6 +426,7 @@ PYTHONPATH=. python tests/test_v9_core.py
 PYTHONPATH=. python tests/test_v9_full.py
 PYTHONPATH=. python tests/test_v10_full.py
 PYTHONPATH=. python tests/test_v11_coding.py
+PYTHONPATH=. python tests/test_v11_dynamic.py
 ```
 
 ---
@@ -513,7 +470,8 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | `test_v9_full.py` | 10 | Trajectory Store, Policy Learning, Counterfactual, UI State Graph, Digital Twin, Environment Discovery, Skill Transfer, Full Integration |
 | `test_v10_full.py` | 7 | Policy Bridge, Closed-Loop Orchestrator, RSI Integration, Multi-Agent Collaboration, Explanation, Continuous Benchmark, Full Integration |
 | `test_v11_coding.py` | 12 | Repository Twin, Code Graph, Semantic Index, Recon, Requirements, Architecture, ADR, Task Graph, Quality Gates, Merge Controller, Eval Pyramid, Full Integration |
-| **Total** | **39** | |
+| `test_v11_dynamic.py` | 6 | Scenario Analyzer, Planning Engine, Decision Engine |
+| **Total** | **45** | |
 
 ---
 
@@ -524,7 +482,7 @@ python hermes_supervisor.py --once            # Run one processing cycle
 | v2.0 | 1-10 | 15-plane architecture, 50 plugins, 72 tests, ReAct loop |
 | v9 | 11-12 | Environment Intelligence, Universal Protocols, Learning Plane, Computer Use v2 |
 | v10 | 13 | Closed-Loop Orchestrator, Policy Bridge, RSI Integration, Explanation, Benchmark |
-| v11 | 14 | 39 Coding Modules, Repository Intelligence, Architecture Synthesis, Quality Gates |
+| v11 | 14-17 | 39 Coding Modules, Dynamic Planning, Scenario Analysis, Decision Engine |
 
 ---
 
