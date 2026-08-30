@@ -1,0 +1,143 @@
+name: Release Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+      dry-run:
+        description: "Dry run (no push)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ===== Bump Version & Tag =====
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install commitizen bump-my-version
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        if: ${{ !inputs.dry-run }}
+        run: |
+          bump-my-version bump ${{ inputs.bump }} --allow-dirty --verbose
+
+      - name: Get new version
+        id: version
+        run: |
+          VERSION=$(python -c "import tomllib; f=open('pyproject.toml','rb'); print(tomllib.load(f)['project']['version']); f.close()")
+          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Dry run
+        if: ${{ inputs.dry-run }}
+        run: |
+          bump-my-version bump ${{ inputs.bump }} --allow-dirty --verbose --dry-run
+          VERSION=$(python -c "import tomllib; f=open('pyproject.toml','rb'); print(tomllib.load(f)['project']['version']); f.close()")
+          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Dry run complete. No changes pushed."
+
+  # ===== Generate Changelog =====
+  changelog:
+    name: Generate Changelog
+    needs: [bump]
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.dry-run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install commitizen
+
+      - name: Generate changelog
+        run: |
+          cz changelog --incremental --dry-run > NEW_CHANGELOG.md 2>/dev/null || true
+          if [ ! -s NEW_CHANGELOG.md ]; then
+            echo "# v${{ needs.bump.outputs.new_version }}" > NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            git log --oneline -20 >> NEW_CHANGELOG.md
+          fi
+
+      - name: Update CHANGELOG.md
+        run: |
+          head -n 10 NEW_CHANGELOG.md > CHANGELOG.tmp
+          if [ -f CHANGELOG.md ]; then
+            echo "" >> CHANGELOG.tmp
+            tail -n +2 CHANGELOG.md >> CHANGELOG.tmp || true
+          fi
+          mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Commit changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for v${{ needs.bump.outputs.new_version }}"
+          git push origin main
+
+  # ===== Create Tag & Trigger Deploy =====
+  tag-release:
+    name: Create Tag & Trigger Deploy
+    needs: [bump, changelog]
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.dry-run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create tag
+        run: |
+          VERSION=${{ needs.bump.outputs.new_version }}
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Trigger deploy pipeline
+        run: |
+          echo "Tag v${{ needs.bump.outputs.new_version }} created. Deploy pipeline will trigger automatically."

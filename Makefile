@@ -1,6 +1,6 @@
 # Hermes AGI/ASI Harness — Development Makefile
 
-.PHONY: help install install-dev test test-cov lint format typecheck security docs clean build deploy
+.PHONY: help install install-dev test test-cov lint format typecheck security docs clean build deploy ci ci-local
 
 PYTHON := python
 PIP := uv pip
@@ -22,47 +22,47 @@ install-dev: ## Install development dependencies
 # ===== Testing =====
 
 test: ## Run tests
-	pytest tests/ -x -q
+	uv run python -m pytest tests/ -x -q
 
 test-cov: ## Run tests with coverage
-	pytest tests/ --cov=src/harness --cov-report=term-missing --cov-report=html
+	uv run python -m pytest tests/ --cov=src/harness --cov-report=term-missing --cov-report=html
 
 test-all: ## Run all tests (including slow)
-	pytest tests/ -v
+	uv run python -m pytest tests/ -v
 
 test-parallel: ## Run tests in parallel
-	pytest tests/ -n auto -q
+	uv run python -m pytest tests/ -n auto -q
 
 # ===== Linting & Formatting =====
 
 lint: ## Run linter (ruff)
-	ruff check src/ tests/
+	uv run ruff check src/ tests/
 
 lint-fix: ## Fix lint issues
-	ruff check --fix src/ tests/
+	uv run ruff check --fix src/ tests/
 
 format: ## Format code
-	ruff format src/ tests/
+	uv run ruff format src/ tests/
 
 typecheck: ## Run type checker
-	mypy src/harness/
+	uv run mypy src/harness/
 
 # ===== Security =====
 
 security: ## Run security scans
-	bandit -r src/ -c pyproject.toml
-	pip-audit -r requirements.txt
+	uv run bandit -r src/ -c pyproject.toml
+	uv run pip-audit -r requirements.txt
 
 # ===== Documentation =====
 
 docs-serve: ## Serve docs locally
-	mkdocs serve
+	uv run mkdocs serve
 
 docs-build: ## Build documentation
-	mkdocs build
+	uv run mkdocs build
 
 docs-deploy: ## Deploy docs to GitHub Pages
-	mkdocs gh-deploy --force
+	uv run mkdocs gh-deploy --force
 
 # ===== Docker =====
 
@@ -88,6 +88,20 @@ clean: ## Clean build artifacts
 # ===== CI (all checks) =====
 ci: lint typecheck test security ## Run all CI checks locally
 	@echo "All CI checks passed!"
+
+ci-local: ## Run full CI pipeline locally (like GitHub Actions)
+	@echo "=== Running local CI pipeline ==="
+	@echo "--- Lint ---"
+	$(MAKE) lint
+	@echo "--- Type Check ---"
+	$(MAKE) typecheck
+	@echo "--- Test ---"
+	$(MAKE) test
+	@echo "--- Security ---"
+	$(MAKE) security
+	@echo "--- Build ---"
+	$(MAKE) build
+	@echo "=== All CI checks passed! ==="
 
 # ===== Release =====
 bump-patch: ## Bump patch version
