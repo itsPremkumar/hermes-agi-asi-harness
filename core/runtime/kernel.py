@@ -140,6 +140,7 @@ class HermesKernel:
         self.scenario_analyzer: Optional[Any] = None
         self.planning_engine: Optional[Any] = None
         self.decision_engine: Optional[Any] = None
+        self.workflow_executor: Optional[Any] = None
         
         # Store HERMES_HOME for state directory
         self._state_dir = os.environ.get("HERMES_HOME", str(Path.home() / ".hermes"))
@@ -391,17 +392,55 @@ class HermesKernel:
     async def _init_v11_dynamic_planning(self):
         """Initialize the v11 Dynamic Planning Engine."""
         try:
-            from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicDecisionEngine
+            from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicDecisionEngine, DynamicWorkflowExecutor
             
             self.scenario_analyzer = DynamicScenarioAnalyzer()
             self.planning_engine = AdvancedPlanningEngine()
             self.decision_engine = DynamicDecisionEngine()
+            self.workflow_executor = DynamicWorkflowExecutor(kernel=self)
             
             logger.info("v11 Dynamic Planning Engine initialized")
         except Exception as e:
             logger.warning(f"v11 Dynamic Planning initialization failed: {e}")
             import traceback
             traceback.print_exc()
+    
+    async def plan_and_execute_dynamic(self, goal: str) -> Dict[str, Any]:
+        """
+        Dynamically analyze, plan, and execute a goal.
+        
+        This is the main entry point for dynamic execution:
+        1. Analyze the scenario
+        2. Generate a dynamic plan
+        3. Execute the plan with full orchestrator capacity
+        4. Return the execution result
+        """
+        if not self.scenario_analyzer or not self.planning_engine or not self.workflow_executor:
+            return {"success": False, "error": "Dynamic planning not initialized"}
+        
+        try:
+            # Step 1: Analyze scenario
+            profile = self.scenario_analyzer.analyze(goal)
+            
+            # Step 2: Generate plan
+            plan = self.planning_engine.generate_plan(profile)
+            
+            # Step 3: Execute plan
+            result = await self.workflow_executor.execute_plan(plan)
+            
+            return {
+                "success": result.status.value == "completed",
+                "scenario_type": profile.scenario_type.value,
+                "complexity": profile.complexity.value,
+                "plan_steps": len(plan.steps),
+                "steps_completed": len([r for r in result.step_results if r.status.value == "completed"]),
+                "steps_failed": len([r for r in result.step_results if r.status.value == "failed"]),
+                "duration_ms": result.total_duration_ms,
+                "output": result.output,
+                "error": result.error,
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     async def _init_v9_environment_plane(self):
         """Initialize the v9 Universal Environment Intelligence & Action Plane."""
