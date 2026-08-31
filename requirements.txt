@@ -4,7 +4,7 @@
 # All dependencies are MIT/Apache-2.0/BSD licensed.
 
 # Core runtime
-pyyaml>=6.0
+pyyaml>=6.0.3
 psutil>=5.9.0
 aiofiles>=23.2.0
 
