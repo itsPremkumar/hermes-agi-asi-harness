@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import threading
-import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -66,7 +65,7 @@ class HermesAgentIntegration:
             self._profiles[profile.name] = profile
             return profile.name
 
-    def get_profile(self, name: str) -> Optional[ProfileConfig]:
+    def get_profile(self, name: str) -> ProfileConfig | None:
         with self._lock:
             return self._profiles.get(name)
 
@@ -99,7 +98,7 @@ class HermesAgentIntegration:
             self._kanban[card.id] = card
             return card.id
 
-    def get_card(self, card_id: str) -> Optional[KanbanCard]:
+    def get_card(self, card_id: str) -> KanbanCard | None:
         with self._lock:
             return self._kanban.get(card_id)
 
@@ -129,7 +128,7 @@ class HermesAgentIntegration:
             self._cron_jobs[job.id] = job
             return job.id
 
-    def get_cron_job(self, job_id: str) -> Optional[CronJob]:
+    def get_cron_job(self, job_id: str) -> CronJob | None:
         with self._lock:
             return self._cron_jobs.get(job_id)
 
@@ -167,7 +166,7 @@ class HermesAgentIntegration:
             self._mcp_endpoints[endpoint.id] = endpoint
             return endpoint.id
 
-    def get_endpoint(self, endpoint_id: str) -> Optional[MCPEndpoint]:
+    def get_endpoint(self, endpoint_id: str) -> MCPEndpoint | None:
         with self._lock:
             return self._mcp_endpoints.get(endpoint_id)
 
@@ -198,9 +197,9 @@ class HermesAgentIntegration:
 
 
 __all__ = [
-    "HermesAgentIntegration",
-    "ProfileConfig",
-    "KanbanCard",
     "CronJob",
+    "HermesAgentIntegration",
+    "KanbanCard",
     "MCPEndpoint",
+    "ProfileConfig",
 ]

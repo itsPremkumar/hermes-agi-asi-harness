@@ -1,7 +1,9 @@
 """Agent Evaluation & Benchmarking - SWE-bench, GAIA, Terminal-Bench integration."""
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 
@@ -21,7 +23,7 @@ class EvaluationTask:
     task: str
     expected: str
     difficulty: str = "medium"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -31,15 +33,15 @@ class EvaluationResult:
     score: float
     output: str
     duration_ms: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class EvaluationSuite:
     """Run evaluation benchmarks."""
     
     def __init__(self):
-        self._tasks: List[EvaluationTask] = []
-        self._results: List[EvaluationResult] = []
+        self._tasks: list[EvaluationTask] = []
+        self._results: list[EvaluationResult] = []
     
     def add_task(self, benchmark: Benchmark, task: str, expected: str, difficulty: str = "medium"):
         self._tasks.append(EvaluationTask(
@@ -50,7 +52,7 @@ class EvaluationSuite:
             difficulty=difficulty,
         ))
     
-    async def run_all(self) -> List[EvaluationResult]:
+    async def run_all(self) -> list[EvaluationResult]:
         """Run all evaluation tasks."""
         results = []
         for task in self._tasks:
@@ -77,7 +79,7 @@ class EvaluationSuite:
             duration_ms=(time.time() - start) * 1000,
         )
     
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         if not self._results:
             return {"total": 0, "passed": 0, "score": 0.0}
         

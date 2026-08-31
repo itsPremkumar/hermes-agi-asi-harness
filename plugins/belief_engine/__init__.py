@@ -6,11 +6,11 @@ Supports belief updating, confidence calculation, contradiction detection, and
 downstream effect triggering.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Set
-from enum import Enum
 import time
 import uuid
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 
 class BeliefStatus(str, Enum):
@@ -29,15 +29,15 @@ class Belief:
     statement: str
     status: BeliefStatus = BeliefStatus.BELIEF
     confidence: float = 0.5
-    evidence: List[str] = field(default_factory=list)
-    counter_evidence: List[str] = field(default_factory=list)
-    last_verified: Optional[float] = None
+    evidence: list[str] = field(default_factory=list)
+    counter_evidence: list[str] = field(default_factory=list)
+    last_verified: float | None = None
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     source: str = "inferred"
-    downstream_effects: List[str] = field(default_factory=list)
+    downstream_effects: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "statement": self.statement,
@@ -53,7 +53,7 @@ class Belief:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "Belief":
+    def from_dict(cls, d: dict[str, Any]) -> "Belief":
         d = dict(d)
         if "status" in d:
             d["status"] = BeliefStatus(d["status"])
@@ -64,12 +64,12 @@ class BayesianBeliefEngine:
     """Bayesian belief engine that updates confidence based on evidence."""
 
     def __init__(self):
-        self._beliefs: Dict[str, Belief] = {}
-        self._contradictions: List[tuple] = []
+        self._beliefs: dict[str, Belief] = {}
+        self._contradictions: list[tuple] = []
 
     def add_belief(self, statement: str, confidence: float = 0.5,
                    status: BeliefStatus = BeliefStatus.BELIEF,
-                   evidence: List[str] = None,
+                   evidence: list[str] | None = None,
                    source: str = "inferred") -> Belief:
         belief_id = str(uuid.uuid4())
         belief = Belief(
@@ -84,10 +84,10 @@ class BayesianBeliefEngine:
         self._beliefs[belief_id] = belief
         return belief
 
-    def get_belief(self, belief_id: str) -> Optional[Belief]:
+    def get_belief(self, belief_id: str) -> Belief | None:
         return self._beliefs.get(belief_id)
 
-    def find_belief(self, statement_or_prefix: str) -> Optional[Belief]:
+    def find_belief(self, statement_or_prefix: str) -> Belief | None:
         """Find a belief by statement or prefix match."""
         for belief in self._beliefs.values():
             if statement_or_prefix in belief.statement or belief.statement.startswith(statement_or_prefix):
@@ -117,7 +117,7 @@ class BayesianBeliefEngine:
         belief.updated_at = time.time()
         return belief
 
-    def check_contradictions(self, new_statement: str, new_belief_id: str) -> List[str]:
+    def check_contradictions(self, new_statement: str, new_belief_id: str) -> list[str]:
         """Check if a new belief contradicts existing beliefs."""
         contradictions = []
         # Simple negation check
@@ -135,9 +135,7 @@ class BayesianBeliefEngine:
             # Check for direct contradiction
             if belief.confidence > 0.7:
                 for pos, neg in negations:
-                    if pos in belief.statement.lower() and neg in new_statement.lower():
-                        contradictions.append(bid)
-                    elif neg in belief.statement.lower() and pos in new_statement.lower():
+                    if (pos in belief.statement.lower() and neg in new_statement.lower()) or (neg in belief.statement.lower() and pos in new_statement.lower()):
                         contradictions.append(bid)
 
         return contradictions
@@ -160,13 +158,13 @@ class BayesianBeliefEngine:
 
         return winner
 
-    def get_beliefs_by_confidence(self, threshold: float = 0.8) -> List[Belief]:
+    def get_beliefs_by_confidence(self, threshold: float = 0.8) -> list[Belief]:
         return [b for b in self._beliefs.values() if b.confidence >= threshold]
 
-    def get_beliefs_by_status(self, status: BeliefStatus) -> List[Belief]:
+    def get_beliefs_by_status(self, status: BeliefStatus) -> list[Belief]:
         return [b for b in self._beliefs.values() if b.status == status]
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         by_status = {}
         for s in BeliefStatus:
             by_status[s.value] = len([b for b in self._beliefs.values() if b.status == s])
@@ -197,7 +195,7 @@ class BeliefEnginePlugin:
         return {"status": "healthy", "beliefs": len(self.engine._beliefs)}
 
     @property
-    def beliefs(self) -> Dict[str, Belief]:
+    def beliefs(self) -> dict[str, Belief]:
         return self.engine._beliefs
 
 

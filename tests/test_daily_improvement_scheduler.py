@@ -12,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.daily_improvement.scheduler import (
     DailyImprovementLoop,
     DailyImprovementScheduler,
-    ImprovementTask,
     TaskPriority,
     TaskStatus,
 )

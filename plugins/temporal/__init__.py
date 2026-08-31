@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Temporal planner plugin."""
 
-from core.temporal import TemporalPlanner
 from core.runtime.plugin_base import PluginBase, PluginManifest
+from core.temporal import TemporalPlanner
 
 
 class Plugin(PluginBase):
@@ -19,7 +19,7 @@ class Plugin(PluginBase):
     async def stop(self) -> bool:
         return True
     
-    def add_task(self, name: str, duration: float, dependencies: list = None) -> str:
+    def add_task(self, name: str, duration: float, dependencies: list | None = None) -> str:
         """Add a task to the schedule."""
         return self.engine.add_task(name, duration, dependencies)
     

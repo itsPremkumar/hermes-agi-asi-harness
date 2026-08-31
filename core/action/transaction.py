@@ -13,7 +13,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class TransactionState(str, Enum):
@@ -37,14 +37,14 @@ class TransactionAction:
     id: str
     type: str
     target: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     rollback_type: RollbackType
-    compensation_action: Optional[Dict[str, Any]] = None
+    compensation_action: dict[str, Any] | None = None
     status: TransactionState = TransactionState.PREPARING
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     timestamp: float = field(default_factory=time.time)
-    rollback_at: Optional[float] = None
+    rollback_at: float | None = None
 
 
 @dataclass
@@ -55,7 +55,7 @@ class TransactionResult:
     actions_completed: int
     actions_total: int
     compensation_triggered: bool = False
-    error: Optional[str] = None
+    error: str | None = None
     rollback_performed: bool = False
 
 
@@ -68,17 +68,17 @@ class TransactionModel:
     """
 
     def __init__(self):
-        self.transactions: Dict[str, List[TransactionAction]] = {}
-        self.results: Dict[str, TransactionResult] = {}
+        self.transactions: dict[str, list[TransactionAction]] = {}
+        self.results: dict[str, TransactionResult] = {}
 
-    def begin(self, transaction_id: str = None) -> str:
+    def begin(self, transaction_id: str | None = None) -> str:
         tid = transaction_id or str(uuid.uuid4())
         self.transactions[tid] = []
         return tid
 
     def add_action(self, transaction_id: str, type: str, target: str,
-                   parameters: Dict[str, Any], rollback_type: RollbackType,
-                   compensation_action: Dict[str, Any] = None) -> TransactionAction:
+                   parameters: dict[str, Any], rollback_type: RollbackType,
+                   compensation_action: dict[str, Any] | None = None) -> TransactionAction:
         action = TransactionAction(
             id=str(uuid.uuid4()),
             type=type,
@@ -92,7 +92,7 @@ class TransactionModel:
         self.transactions[transaction_id].append(action)
         return action
 
-    def commit(self, transaction_id: str, executor: callable = None) -> TransactionResult:
+    def commit(self, transaction_id: str, executor: callable | None = None) -> TransactionResult:
         """Commit a transaction, executing all actions."""
         actions = self.transactions.get(transaction_id, [])
         if not actions:
@@ -163,7 +163,7 @@ class TransactionModel:
         self.results[transaction_id] = result
         return result
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total_transactions": len(self.transactions),
             "results": len(self.results),

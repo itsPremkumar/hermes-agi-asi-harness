@@ -14,13 +14,12 @@ Pipeline:
 from __future__ import annotations
 
 import asyncio
-import traceback
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from core.runtime.agent_kernel import AgentKernel, WORKING_PLUGINS
+from core.runtime.agent_kernel import WORKING_PLUGINS, AgentKernel
 from core.runtime.context import AgentContext
-from core.runtime.planner import TaskPlanner, Plan, PlanStep
+from core.runtime.planner import PlanStep, TaskPlanner
 
 
 @dataclass
@@ -30,7 +29,7 @@ class StepResult:
     method: str
     success: bool
     output: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     permission_checked: bool = False
     permission_granted: bool = False
 
@@ -40,11 +39,11 @@ class AgentResult:
     goal: str
     success: bool
     steps_executed: int = 0
-    step_results: List[StepResult] = field(default_factory=list)
+    step_results: list[StepResult] = field(default_factory=list)
     final_output: Any = None
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "goal": self.goal,
             "success": self.success,
@@ -174,7 +173,7 @@ class Agent:
 # ── Factory ──────────────────────────────────────────────────────────────
 
 async def build_agent(plugins_root: str = "plugins",
-                      include: Optional[List[str]] = None) -> tuple[AgentKernel, AgentContext, Agent]:
+                      include: list[str] | None = None) -> tuple[AgentKernel, AgentContext, Agent]:
     """Boot the kernel, build context + agent, return all three."""
     from core.runtime.agent_kernel import build_kernel
     kernel = await build_kernel(plugins_root, include=include or WORKING_PLUGINS)

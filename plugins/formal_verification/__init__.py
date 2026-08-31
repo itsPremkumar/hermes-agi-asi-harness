@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Formal verification plugin."""
 
-from core.verify import FormalVerifier
 from core.runtime.plugin_base import PluginBase, PluginManifest
+from core.verify import FormalVerifier
 
 
 class Plugin(PluginBase):

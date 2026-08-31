@@ -20,19 +20,19 @@ class MessagingIntegration:
     """Messaging integration plugin."""
     
     def __init__(self):
-        self._channels: Dict[str, List[str]] = {}
+        self._channels: dict[str, list[str]] = {}
     
-    async def send_slack_message(self, channel: str, message: str) -> Dict[str, Any]:
+    async def send_slack_message(self, channel: str, message: str) -> dict[str, Any]:
         """Send a Slack message."""
         return {"channel": channel, "message": message, "status": "sent"}
     
-    async def send_discord_message(self, channel: str, message: str) -> Dict[str, Any]:
+    async def send_discord_message(self, channel: str, message: str) -> dict[str, Any]:
         """Send a Discord message."""
         return {"channel": channel, "message": message, "status": "sent"}
     
-    async def send_telegram_message(self, chat_id: str, message: str) -> Dict[str, Any]:
+    async def send_telegram_message(self, chat_id: str, message: str) -> dict[str, Any]:
         """Send a Telegram message."""
         return {"chat_id": chat_id, "message": message, "status": "sent"}
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "channels": len(self._channels)}

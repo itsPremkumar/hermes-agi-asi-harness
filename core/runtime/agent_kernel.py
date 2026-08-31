@@ -12,13 +12,11 @@ imports a plugin — it goes through the kernel by name or capability.
 
 from __future__ import annotations
 
-import asyncio
 import importlib
 import logging
-import pkgutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger("hermes.agent_kernel")
 
@@ -30,13 +28,13 @@ class AgentKernel:
 
     def __init__(self, plugins_root: str = "plugins"):
         self.plugins_root = Path(plugins_root)
-        self._instances: Dict[str, Any] = {}
-        self._capabilities: Dict[str, List[str]] = {}
+        self._instances: dict[str, Any] = {}
+        self._capabilities: dict[str, list[str]] = {}
         self._loaded = False
 
     # ── Discovery ──────────────────────────────────────────────────────
 
-    def discover(self) -> List[str]:
+    def discover(self) -> list[str]:
         """Find plugin module names (directories containing __init__.py)."""
         if not self.plugins_root.exists():
             logger.warning("Plugins root not found: %s", self.plugins_root)
@@ -53,12 +51,12 @@ class AgentKernel:
 
     # ── Loading ────────────────────────────────────────────────────────
 
-    async def load_all(self, include: Optional[List[str]] = None,
-                       exclude: Optional[List[str]] = None) -> Dict[str, bool]:
+    async def load_all(self, include: list[str] | None = None,
+                       exclude: list[str] | None = None) -> dict[str, bool]:
         """Load and start every discovered plugin (or a filtered subset)."""
         exclude = set(exclude or [])
         names = self.discover()
-        results: Dict[str, bool] = {}
+        results: dict[str, bool] = {}
 
         # Ensure plugins root is importable
         root_str = str(self.plugins_root.resolve().parent)
@@ -122,26 +120,26 @@ class AgentKernel:
 
     # ── Access ─────────────────────────────────────────────────────────
 
-    def get(self, name: str) -> Optional[Any]:
+    def get(self, name: str) -> Any | None:
         return self._instances.get(name)
 
-    def get_plugins_by_capability(self, capability: str) -> List[str]:
+    def get_plugins_by_capability(self, capability: str) -> list[str]:
         return list(self._capabilities.get(capability, []))
 
     def has(self, name: str) -> bool:
         return name in self._instances
 
     @property
-    def plugins(self) -> Dict[str, Any]:
+    def plugins(self) -> dict[str, Any]:
         return dict(self._instances)
 
     @property
-    def capabilities(self) -> Dict[str, List[str]]:
+    def capabilities(self) -> dict[str, list[str]]:
         return {k: list(v) for k, v in self._capabilities.items()}
 
     # ── Health ─────────────────────────────────────────────────────────
 
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         report = {}
         for name, inst in self._instances.items():
             try:
@@ -173,7 +171,7 @@ class AgentKernel:
 
 # Convenience factory
 async def build_kernel(plugins_root: str = "plugins",
-                       include: Optional[List[str]] = None) -> AgentKernel:
+                       include: list[str] | None = None) -> AgentKernel:
     kernel = AgentKernel(plugins_root)
     await kernel.load_all(include=include)
     return kernel

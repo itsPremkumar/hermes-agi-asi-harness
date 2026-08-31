@@ -5,13 +5,13 @@ Implements: skill creation, testing, deployment, versioning, retirement.
 Skills are reusable procedures built from successful task patterns.
 """
 
-import time
-import json
 import hashlib
+import json
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class SkillStatus(str, Enum):
@@ -27,8 +27,8 @@ class Skill:
     name: str
     description: str
     procedure: str
-    triggers: List[str] = field(default_factory=list)
-    preconditions: List[str] = field(default_factory=list)
+    triggers: list[str] = field(default_factory=list)
+    preconditions: list[str] = field(default_factory=list)
     success_rate: float = 0.0
     usage_count: int = 0
     version: str = "1.0.0"
@@ -36,9 +36,9 @@ class Skill:
     skill_id: str = field(default_factory=lambda: f"SKILL-{hashlib.sha256(str(time.time()).encode()).hexdigest()[:8]}")
     created_at: float = field(default_factory=time.time)
     last_used: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -59,8 +59,8 @@ class Skill:
 class SkillForge:
     """Forge new skills from patterns."""
 
-    def __init__(self, storage_path: Optional[Path] = None):
-        self._skills: Dict[str, Skill] = {}
+    def __init__(self, storage_path: Path | None = None):
+        self._skills: dict[str, Skill] = {}
         self._storage_path = storage_path
         if storage_path and storage_path.exists():
             self._load()
@@ -89,8 +89,8 @@ class SkillForge:
             pass
 
     def forge_skill(self, name: str, description: str, procedure: str,
-                    triggers: List[str] = None,
-                    preconditions: List[str] = None) -> Skill:
+                    triggers: list[str] | None = None,
+                    preconditions: list[str] | None = None) -> Skill:
         """Forge a new skill from a successful pattern."""
         skill = Skill(
             name=name,
@@ -104,7 +104,7 @@ class SkillForge:
         self._save()
         return skill
 
-    def find_matching_skill(self, task: str) -> Optional[Skill]:
+    def find_matching_skill(self, task: str) -> Skill | None:
         """Find a skill that matches a task based on triggers."""
         task_lower = task.lower()
         best_match = None
@@ -144,12 +144,12 @@ class SkillForge:
             self._skills[skill_id].status = SkillStatus.RETIRED
             self._save()
 
-    def list_skills(self, status: Optional[SkillStatus] = None) -> List[Skill]:
+    def list_skills(self, status: SkillStatus | None = None) -> list[Skill]:
         if status:
             return [s for s in self._skills.values() if s.status == status]
         return list(self._skills.values())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_skills": len(self._skills),
             "deployed": sum(1 for s in self._skills.values() if s.status == SkillStatus.DEPLOYED),
@@ -161,7 +161,7 @@ class SkillForge:
 
 
 class SkillForgePlugin:
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None):
         self.engine = SkillForge(storage_path=storage_path)
 
     async def load(self):

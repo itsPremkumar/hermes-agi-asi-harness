@@ -11,8 +11,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_research")
 
@@ -22,8 +23,8 @@ class ResearchQuestion:
     """A research question."""
     question_id: str
     question: str
-    hypotheses: List[str] = field(default_factory=list)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
+    hypotheses: list[str] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
     status: str = "active"
     timestamp: float = field(default_factory=time.time)
 
@@ -32,8 +33,8 @@ class ResearchAutonomous:
     """Autonomous research engine."""
     
     def __init__(self):
-        self._questions: Dict[str, ResearchQuestion] = {}
-        self._papers: List[Dict[str, Any]] = []
+        self._questions: dict[str, ResearchQuestion] = {}
+        self._papers: list[dict[str, Any]] = []
     
     async def formulate_question(self, observation: str) -> ResearchQuestion:
         """Formulate a research question from an observation."""
@@ -45,7 +46,7 @@ class ResearchAutonomous:
         self._questions[question.question_id] = question
         return question
     
-    async def design_experiment(self, question_id: str) -> Dict[str, Any]:
+    async def design_experiment(self, question_id: str) -> dict[str, Any]:
         """Design an experiment to test hypotheses."""
         return {
             "question_id": question_id,
@@ -53,7 +54,7 @@ class ResearchAutonomous:
             "steps": ["Step 1: Collect data", "Step 2: Analyze", "Step 3: Conclude"]
         }
     
-    async def analyze_results(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def analyze_results(self, data: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze experimental results."""
         return {
             "sample_size": len(data),
@@ -61,7 +62,7 @@ class ResearchAutonomous:
             "conclusion": "Results support hypothesis"
         }
     
-    async def generate_report(self, question_id: str) -> Dict[str, Any]:
+    async def generate_report(self, question_id: str) -> dict[str, Any]:
         """Generate a research report."""
         report = {
             "question_id": question_id,
@@ -77,7 +78,7 @@ class ResearchAutonomous:
         self._papers.append(report)
         return report
     
-    async def peer_review(self, paper_id: str) -> Dict[str, Any]:
+    async def peer_review(self, paper_id: str) -> dict[str, Any]:
         """Self-peer-review a paper."""
         return {
             "paper_id": paper_id,
@@ -87,7 +88,7 @@ class ResearchAutonomous:
             "recommendation": "Accept with minor revisions"
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "questions": len(self._questions),

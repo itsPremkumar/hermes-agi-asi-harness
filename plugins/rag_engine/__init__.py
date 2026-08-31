@@ -20,7 +20,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger("hermes_rag_engine")
 
@@ -42,8 +42,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +55,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -90,8 +90,8 @@ class Chunk:
     id: str
     source: str
     text: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[List[float]] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] | None = None
 
 
 @dataclass
@@ -99,7 +99,7 @@ class SearchResult:
     """A search result."""
     chunk: Chunk
     score: float
-    matches: List[str] = field(default_factory=list)
+    matches: list[str] = field(default_factory=list)
 
 
 class DocumentChunker:
@@ -109,12 +109,12 @@ class DocumentChunker:
         self.chunk_size = chunk_size
         self.overlap = overlap
     
-    def chunk_text(self, text: str, source: str = "unknown") -> List[Chunk]:
+    def chunk_text(self, text: str, source: str = "unknown") -> list[Chunk]:
         """Chunk text into overlapping segments."""
         # Split by paragraphs first
         paragraphs = re.split(r'\n\s*\n', text)
         
-        chunks: List[Chunk] = []
+        chunks: list[Chunk] = []
         current_chunk = []
         current_size = 0
         chunk_idx = 0
@@ -158,20 +158,20 @@ class TFIDFEmbedder:
     """Simple TF-IDF based embedding."""
     
     def __init__(self):
-        self.vocab: Dict[str, int] = {}
-        self.idf: Dict[str, float] = {}
+        self.vocab: dict[str, int] = {}
+        self.idf: dict[str, float] = {}
         self.doc_count = 0
     
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """Tokenize text."""
         text = text.lower()
         words = re.findall(r'\b[a-z0-9_]+\b', text)
         return [w for w in words if len(w) > 1]
     
-    def fit(self, documents: List[str]):
+    def fit(self, documents: list[str]):
         """Fit the embedder on a corpus."""
         self.doc_count = len(documents)
-        doc_freq: Dict[str, int] = {}
+        doc_freq: dict[str, int] = {}
         
         for doc in documents:
             tokens = set(self._tokenize(doc))
@@ -183,7 +183,7 @@ class TFIDFEmbedder:
         for token, freq in doc_freq.items():
             self.idf[token] = math.log((self.doc_count + 1) / (freq + 1)) + 1
     
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         """Embed a single text."""
         if not self.vocab:
             return []
@@ -205,7 +205,7 @@ class TFIDFEmbedder:
         
         return vector
     
-    def similarity(self, vec_a: List[float], vec_b: List[float]) -> float:
+    def similarity(self, vec_a: list[float], vec_b: list[float]) -> float:
         """Cosine similarity."""
         if not vec_a or not vec_b or len(vec_a) != len(vec_b):
             return 0.0
@@ -226,10 +226,10 @@ class RAGEngine:
     def __init__(self, chunk_size: int = 512, overlap: int = 50):
         self.chunker = DocumentChunker(chunk_size, overlap)
         self.embedder = TFIDFEmbedder()
-        self.chunks: Dict[str, Chunk] = {}
+        self.chunks: dict[str, Chunk] = {}
         self.fitted = False
     
-    def add_document(self, text: str, source: str = "unknown", metadata: Dict = None) -> int:
+    def add_document(self, text: str, source: str = "unknown", metadata: dict | None = None) -> int:
         """Add a document to the index."""
         chunks = self.chunker.chunk_text(text, source)
         
@@ -244,7 +244,7 @@ class RAGEngine:
         
         return len(chunks)
     
-    def add_documents(self, documents: List[Dict[str, Any]]) -> int:
+    def add_documents(self, documents: list[dict[str, Any]]) -> int:
         """Add multiple documents."""
         total = 0
         for doc in documents:
@@ -263,7 +263,7 @@ class RAGEngine:
                 chunk.embedding = self.embedder.embed(chunk.text)
             self.fitted = True
     
-    def search(self, query: str, top_k: int = 5, threshold: float = 0.0) -> List[SearchResult]:
+    def search(self, query: str, top_k: int = 5, threshold: float = 0.0) -> list[SearchResult]:
         """Search for relevant chunks."""
         if not self.fitted:
             return []
@@ -272,7 +272,7 @@ class RAGEngine:
         if not query_embedding:
             return []
         
-        results: List[SearchResult] = []
+        results: list[SearchResult] = []
         
         for chunk in self.chunks.values():
             if not chunk.embedding:
@@ -317,9 +317,9 @@ class RAGEngine:
         
         return "\n\n".join(context_parts)
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics about the index."""
-        sources: Dict[str, int] = {}
+        sources: dict[str, int] = {}
         for chunk in self.chunks.values():
             sources[chunk.source] = sources.get(chunk.source, 0) + 1
         
@@ -359,7 +359,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.engine: Optional[RAGEngine] = None
+        self.engine: RAGEngine | None = None
     
     async def load(self) -> bool:
         self.engine = RAGEngine()
@@ -376,7 +376,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -388,13 +388,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def add_document(self, text: str, source: str = "unknown", metadata: Dict = None) -> int:
+    def add_document(self, text: str, source: str = "unknown", metadata: dict | None = None) -> int:
         return self.engine.add_document(text, source, metadata)
     
-    def add_documents(self, documents: List[Dict[str, Any]]) -> int:
+    def add_documents(self, documents: list[dict[str, Any]]) -> int:
         return self.engine.add_documents(documents)
     
-    def search(self, query: str, top_k: int = 5, threshold: float = 0.0) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5, threshold: float = 0.0) -> list[dict[str, Any]]:
         results = self.engine.search(query, top_k, threshold)
         return [
             {
@@ -410,8 +410,8 @@ class Plugin(PluginBase):
     def build_context(self, query: str, top_k: int = 3, max_chars: int = 2000) -> str:
         return self.engine.build_context(query, top_k, max_chars)
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.engine.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

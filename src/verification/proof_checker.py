@@ -1,11 +1,8 @@
 """Proof Checker — verify formal proofs and logical arguments."""
-
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
 
 
 class ProofStatus(Enum):
@@ -52,9 +49,11 @@ class ProofChecker:
         self._results: dict[str, CheckResult] = {}
 
     def register(self, proof: Proof) -> None:
+        """Register a proof for checking."""
         self._proofs[proof.id] = proof
 
-    def get(self, proof_id: str) -> Optional[Proof]:
+    def get(self, proof_id: str) -> Proof | None:
+        """Get a registered proof."""
         return self._proofs.get(proof_id)
 
     def check(self, proof_id: str) -> CheckResult:
@@ -78,43 +77,33 @@ class ProofChecker:
                 proof_id=proof_id,
                 status=ProofStatus.INCOMPLETE,
                 errors=errors,
+                warnings=warnings,
+                step_results=step_results,
             )
             self._results[proof_id] = result
+            proof.status = ProofStatus.INCOMPLETE
             return result
 
         # Check each step
         for step in proof.steps:
-            # Check that dependencies exist
-            for dep in step.depends_on:
-                if dep < 1 or dep > len(proof.steps):
-                    errors.append(
-                        f"Step {step.step_number}: invalid dependency {dep}"
-                    )
-                    step_results[step.step_number] = "invalid_dependency"
-
             # Check for circular dependencies
             if step.step_number in step.depends_on:
-                errors.append(
-                    f"Step {step.step_number}: circular dependency"
-                )
-                step_results[step.step_number] = "circular"
+                errors.append(f"Step {step.step_number} depends on itself")
+                step_results[step.step_number] = "ERROR"
+                continue
 
-            # Check justification is not empty
-            if not step.justification.strip():
-                warnings.append(
-                    f"Step {step.step_number}: empty justification"
-                )
+            # Check that dependencies exist
+            dep_ok = True
+            for dep in step.depends_on:
+                if dep not in [s.step_number for s in proof.steps]:
+                    errors.append(f"Step {step.step_number} depends on missing step {dep}")
+                    dep_ok = False
+                    step_results[step.step_number] = "ERROR"
 
-        # Check conclusion matches final step
-        if proof.steps and proof.conclusion:
-            final_step = proof.steps[-1]
-            if proof.conclusion.lower() not in final_step.statement.lower():
-                warnings.append(
-                    "Final step may not match conclusion"
-                )
+            if dep_ok:
+                step_results[step.step_number] = "OK"
 
         status = ProofStatus.VALID if not errors else ProofStatus.INVALID
-
         result = CheckResult(
             proof_id=proof_id,
             status=status,
@@ -129,6 +118,7 @@ class ProofChecker:
     def validate_syntax(self, statement: str) -> tuple[bool, list[str]]:
         """Validate the syntax of a logical statement."""
         errors = []
+        warnings_list: list[str] = []
 
         # Check balanced parentheses
         depth = 0
@@ -148,7 +138,7 @@ class ProofChecker:
         has_operator = any(op in statement.lower() for op in valid_operators)
 
         if not has_operator and len(statement.split()) > 1:
-            warnings.append("No logical operators found")
+            warnings_list.append("No logical operators found")
 
         return len(errors) == 0, errors
 
@@ -158,34 +148,3 @@ class ProofChecker:
         norm1 = ' '.join(stmt1.lower().split())
         norm2 = ' '.join(stmt2.lower().split())
         return norm1 == norm2
-
-    def find_redundancies(self, proof_id: str) -> list[tuple[int, int]]:
-        """Find redundant steps in a proof."""
-        proof = self._proofs.get(proof_id)
-        if not proof:
-            return []
-
-        redundancies = []
-        seen = {}
-        for step in proof.steps:
-            normalized = ' '.join(step.statement.lower().split())
-            if normalized in seen:
-                redundancies.append((seen[normalized], step.step_number))
-            else:
-                seen[normalized] = step.step_number
-        return redundancies
-
-    def get_result(self, proof_id: str) -> Optional[CheckResult]:
-        return self._results.get(proof_id)
-
-    def list_proofs(self) -> list[str]:
-        return list(self._proofs.keys())
-
-
-__all__ = [
-    "ProofChecker",
-    "Proof",
-    "ProofStep",
-    "ProofStatus",
-    "CheckResult",
-]

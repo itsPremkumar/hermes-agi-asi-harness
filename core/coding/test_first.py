@@ -1,14 +1,15 @@
 """Test-First Planning — Requirement → Acceptance Criteria → Test Design → Implementation."""
 from __future__ import annotations
+
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
+
 
 class TestFirstPlanner:
     def __init__(self):
         self.id = str(uuid.uuid4())
     
-    def plan(self, requirement: str, acceptance_criteria: List[str]) -> Dict[str, Any]:
+    def plan(self, requirement: str, acceptance_criteria: list[str]) -> dict[str, Any]:
         """Plan implementation from requirements using test-first approach."""
         tests = []
         for criterion in acceptance_criteria:
@@ -26,5 +27,5 @@ class TestFirstPlanner:
             "status": "planned",
         }
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"id": self.id}

@@ -11,14 +11,14 @@ Implements:
 - License & risk scanning
 """
 
-import time
-import json
-import uuid
-import logging
 import hashlib
-from typing import Dict, List, Any, Optional
+import json
+import logging
+import time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -31,22 +31,22 @@ class DiscoveryItem:
     description: str
     url: str
     license: str = "unknown"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     stars: int = 0
     quality_score: float = 0.0
     discovered_at: float = field(default_factory=time.time)
-    provenance: Dict[str, Any] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ResearchPaper:
     paper_id: str
     title: str
-    authors: List[str]
+    authors: list[str]
     abstract: str
     url: str
     published: str
-    categories: List[str]
+    categories: list[str]
     relevance_score: float = 0.0
 
 
@@ -61,9 +61,9 @@ class EcosystemDiscoveryEngine:
     HF_API_URL = "https://huggingface.co/api/models"
 
     def __init__(self):
-        self.discoveries: List[DiscoveryItem] = []
-        self.papers: List[ResearchPaper] = []
-        self.provenance_log: List[Dict[str, Any]] = []
+        self.discoveries: list[DiscoveryItem] = []
+        self.papers: list[ResearchPaper] = []
+        self.provenance_log: list[dict[str, Any]] = []
         self._http = None  # Will use httpx if available
 
     def _get_http(self):
@@ -75,7 +75,7 @@ class EcosystemDiscoveryEngine:
                 self._http = None
         return self._http
 
-    async def discover_github(self, query: str = "AI agent framework", limit: int = 10) -> List[DiscoveryItem]:
+    async def discover_github(self, query: str = "AI agent framework", limit: int = 10) -> list[DiscoveryItem]:
         """Discovers GitHub repositories matching a query."""
         http = self._get_http()
         if not http:
@@ -113,7 +113,7 @@ class EcosystemDiscoveryEngine:
             logger.warning("GitHub discovery failed: %s", e)
             return []
 
-    async def discover_arxiv(self, query: str = "AI agent", limit: int = 10) -> List[ResearchPaper]:
+    async def discover_arxiv(self, query: str = "AI agent", limit: int = 10) -> list[ResearchPaper]:
         """Discovers research papers from ArXiv."""
         http = self._get_http()
         if not http:
@@ -158,7 +158,7 @@ class EcosystemDiscoveryEngine:
             logger.warning("ArXiv discovery failed: %s", e)
             return []
 
-    async def discover_hf(self, query: str = "text-generation", limit: int = 10) -> List[DiscoveryItem]:
+    async def discover_hf(self, query: str = "text-generation", limit: int = 10) -> list[DiscoveryItem]:
         """Discovers HuggingFace models."""
         http = self._get_http()
         if not http:
@@ -188,10 +188,10 @@ class EcosystemDiscoveryEngine:
             logger.warning("HuggingFace discovery failed: %s", e)
             return []
 
-    def scan_secrets(self, file_paths: List[str]) -> List[Dict[str, str]]:
+    def scan_secrets(self, file_paths: list[str]) -> list[dict[str, str]]:
         """Scans files for hardcoded secrets."""
-        import re
         import pathlib
+        import re
 
         secret_patterns = [
             (r"sk-[A-Za-z0-9]{16,}", "OpenAI API key"),
@@ -222,7 +222,7 @@ class EcosystemDiscoveryEngine:
                 logger.debug("Secret scan error on %s: %s", path, e)
         return findings
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Returns discovery summary."""
         by_source = {}
         for item in self.discoveries:

@@ -10,7 +10,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class RSIStage(str, Enum):
@@ -39,8 +39,8 @@ class Candidate:
     id: str
     hypothesis_id: str
     policy_id: str
-    original_preferences: Dict[str, float]
-    modified_preferences: Dict[str, float]
+    original_preferences: dict[str, float]
+    modified_preferences: dict[str, float]
     created_at: float
 
 
@@ -61,7 +61,7 @@ class HoldoutResult:
     regressed: bool
     score: float
     baseline_score: float
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -69,9 +69,9 @@ class RSIResult:
     promoted: bool
     candidate: Candidate
     hypothesis: Hypothesis
-    ab_test: Optional[ABTestResult] = None
-    holdout: Optional[HoldoutResult] = None
-    evidence: List[str] = field(default_factory=list)
+    ab_test: ABTestResult | None = None
+    holdout: HoldoutResult | None = None
+    evidence: list[str] = field(default_factory=list)
 
 
 class RSIIntegrationEngine:
@@ -84,9 +84,9 @@ class RSIIntegrationEngine:
         self.trajectory_store = trajectory_store
         self.trajectory_replay = trajectory_replay
         self.state = RSIStage.IDLE
-        self.hypotheses: List[Hypothesis] = []
-        self.candidates: List[Candidate] = []
-        self.results: List[RSIResult] = []
+        self.hypotheses: list[Hypothesis] = []
+        self.candidates: list[Candidate] = []
+        self.results: list[RSIResult] = []
     
     def run_rsi_cycle(self, bottleneck: str) -> RSIResult:
         """One full RSI cycle."""
@@ -262,7 +262,7 @@ class RSIIntegrationEngine:
             reason=f"Regressed: {holdout_result.evidence}",
         )
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "state": self.state.value,
             "hypotheses": len(self.hypotheses),

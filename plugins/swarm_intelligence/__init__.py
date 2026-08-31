@@ -16,10 +16,11 @@ import asyncio
 import logging
 import math
 import random
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_swarm_intelligence")
 
@@ -41,8 +42,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -54,11 +55,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -87,9 +88,9 @@ except ImportError:
 class Particle:
     """A particle in the swarm."""
     id: int
-    position: List[float]
-    velocity: List[float]
-    best_position: List[float]
+    position: list[float]
+    velocity: list[float]
+    best_position: list[float]
     best_score: float = float('-inf')
 
 
@@ -103,12 +104,12 @@ class SwarmIntelligence:
         self.inertia = inertia
         self.cognitive = cognitive
         self.social = social
-        self.particles: List[Particle] = []
-        self.global_best_position: Optional[List[float]] = None
+        self.particles: list[Particle] = []
+        self.global_best_position: list[float] | None = None
         self.global_best_score = float('-inf')
-        self.history: List[Dict[str, Any]] = []
+        self.history: list[dict[str, Any]] = []
     
-    def initialize(self, bounds: Tuple[float, float] = (-10, 10)):
+    def initialize(self, bounds: tuple[float, float] = (-10, 10)):
         """Initialize the swarm."""
         self.particles = []
         for i in range(self.num_particles):
@@ -123,8 +124,8 @@ class SwarmIntelligence:
             )
             self.particles.append(particle)
     
-    def optimize(self, objective: Callable[[List[float]], float], 
-                 iterations: int = 50, bounds: Tuple[float, float] = (-10, 10)) -> Dict[str, Any]:
+    def optimize(self, objective: Callable[[list[float]], float], 
+                 iterations: int = 50, bounds: tuple[float, float] = (-10, 10)) -> dict[str, Any]:
         """Run PSO optimization."""
         if not self.particles:
             self.initialize(bounds)
@@ -175,17 +176,17 @@ class SwarmIntelligence:
             "particles": self.num_particles,
         }
     
-    def get_convergence(self) -> List[float]:
+    def get_convergence(self) -> list[float]:
         """Get best score per iteration."""
         return [h["best_score"] for h in self.history]
     
-    def collective_decision(self, options: List[str], votes: Dict[int, str]) -> Dict[str, Any]:
+    def collective_decision(self, options: list[str], votes: dict[int, str]) -> dict[str, Any]:
         """Simple collective decision by voting."""
-        vote_counts: Dict[str, int] = {}
+        vote_counts: dict[str, int] = {}
         for option in options:
             vote_counts[option] = 0
         
-        for particle_id, vote in votes.items():
+        for vote in votes.values():
             if vote in vote_counts:
                 vote_counts[vote] += 1
         
@@ -225,7 +226,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.swarm: Optional[SwarmIntelligence] = None
+        self.swarm: SwarmIntelligence | None = None
     
     async def load(self) -> bool:
         self.swarm = SwarmIntelligence()
@@ -242,7 +243,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -253,18 +254,18 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def initialize(self, dimensions: int = 2, num_particles: int = 10, bounds: Tuple[float, float] = (-10, 10)):
+    def initialize(self, dimensions: int = 2, num_particles: int = 10, bounds: tuple[float, float] = (-10, 10)):
         self.swarm = SwarmIntelligence(dimensions=dimensions, num_particles=num_particles)
         self.swarm.initialize(bounds)
     
-    def optimize(self, objective: Callable[[List[float]], float], iterations: int = 50, bounds: Tuple[float, float] = (-10, 10)) -> Dict[str, Any]:
+    def optimize(self, objective: Callable[[list[float]], float], iterations: int = 50, bounds: tuple[float, float] = (-10, 10)) -> dict[str, Any]:
         return self.swarm.optimize(objective, iterations, bounds)
     
-    def get_convergence(self) -> List[float]:
+    def get_convergence(self) -> list[float]:
         return self.swarm.get_convergence()
     
-    def collective_decision(self, options: List[str], votes: Dict[int, str]) -> Dict[str, Any]:
+    def collective_decision(self, options: list[str], votes: dict[int, str]) -> dict[str, Any]:
         return self.swarm.collective_decision(options, votes)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

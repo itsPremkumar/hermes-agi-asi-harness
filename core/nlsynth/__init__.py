@@ -17,8 +17,9 @@ import logging
 import re
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_nlsynth")
 
@@ -28,11 +29,11 @@ class NLSpec:
     """Natural language specification."""
     description: str
     language: str = "python"
-    inputs: Dict[str, str] = field(default_factory=dict)
-    outputs: Dict[str, str] = field(default_factory=dict)
-    constraints: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
-    ambiguities: List[str] = field(default_factory=list)
+    inputs: dict[str, str] = field(default_factory=dict)
+    outputs: dict[str, str] = field(default_factory=dict)
+    constraints: list[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
+    ambiguities: list[str] = field(default_factory=list)
 
 
 class NLProgramSynthesizer:
@@ -50,9 +51,9 @@ class NLProgramSynthesizer:
     """
     
     def __init__(self):
-        self._history: List[Dict[str, Any]] = []
+        self._history: list[dict[str, Any]] = []
     
-    async def synthesize(self, spec: NLSpec) -> Dict[str, Any]:
+    async def synthesize(self, spec: NLSpec) -> dict[str, Any]:
         """Synthesize code from natural language specification."""
         logger.info("Synthesizing: %s", spec.description[:50])
         
@@ -85,7 +86,7 @@ class NLProgramSynthesizer:
         self._history.append(result)
         return result
     
-    def _parse_spec(self, spec: NLSpec) -> Dict[str, Any]:
+    def _parse_spec(self, spec: NLSpec) -> dict[str, Any]:
         """Parse natural language specification."""
         parsed = {
             "function_name": self._extract_function_name(spec.description),
@@ -125,7 +126,7 @@ class NLProgramSynthesizer:
         
         return "generated_function"
     
-    def _extract_operations(self, description: str) -> List[str]:
+    def _extract_operations(self, description: str) -> list[str]:
         """Extract operations from description."""
         operations = []
         keywords = ["calculate", "compute", "process", "transform", "filter", "sort", "search", "find"]
@@ -136,7 +137,7 @@ class NLProgramSynthesizer:
         
         return operations
     
-    def _detect_ambiguities(self, description: str) -> List[str]:
+    def _detect_ambiguities(self, description: str) -> list[str]:
         """Detect ambiguities in specification."""
         ambiguities = []
         vague_terms = ["some", "various", "appropriate", "suitable", "good", "better"]
@@ -147,13 +148,13 @@ class NLProgramSynthesizer:
         
         return ambiguities
     
-    def _generate_code(self, parsed: Dict[str, Any], language: str) -> str:
+    def _generate_code(self, parsed: dict[str, Any], language: str) -> str:
         """Generate code from parsed specification."""
         if language == "python":
             return self._generate_python(parsed)
         return f"# Code generation for {language} not yet implemented"
     
-    def _generate_python(self, parsed: Dict[str, Any]) -> str:
+    def _generate_python(self, parsed: dict[str, Any]) -> str:
         """Generate Python code."""
         func_name = parsed["function_name"]
         inputs = parsed.get("inputs", {})
@@ -161,7 +162,7 @@ class NLProgramSynthesizer:
         
         # Build function signature
         params = ", ".join([f"{k}: {v}" for k, v in inputs.items()]) if inputs else ""
-        return_type = list(outputs.values())[0] if outputs else "Any"
+        return_type = next(iter(outputs.values())) if outputs else "Any"
         
         code = f'''def {func_name}({params}) -> {return_type}:
     """
@@ -172,7 +173,7 @@ class NLProgramSynthesizer:
 '''
         return code
     
-    def _validate_code(self, code: str, language: str) -> Dict[str, Any]:
+    def _validate_code(self, code: str, language: str) -> dict[str, Any]:
         """Validate generated code."""
         result = {"valid": True, "errors": [], "warnings": []}
         
@@ -210,14 +211,14 @@ def test_{spec.description[:20].replace(" ", "_")}():
         
         return explanation
     
-    async def clarify(self, ambiguities: List[str]) -> List[str]:
+    async def clarify(self, ambiguities: list[str]) -> list[str]:
         """Generate clarification questions for ambiguities."""
         questions = []
         for ambiguity in ambiguities:
             questions.append(f"Could you clarify: {ambiguity}?")
         return questions
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

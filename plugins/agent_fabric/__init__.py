@@ -11,7 +11,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -22,21 +22,21 @@ class AgentInstance:
     agent_id: str
     role: str  # planner, researcher, coder, reviewer, etc.
     status: str = "created"  # created, initialized, assigned, executing, paused, completed, archived
-    mission_id: Optional[str] = None
-    task_id: Optional[str] = None
-    checkpoint: Dict[str, Any] = field(default_factory=dict)
-    artifacts: List[str] = field(default_factory=list)
+    mission_id: str | None = None
+    task_id: str | None = None
+    checkpoint: dict[str, Any] = field(default_factory=dict)
+    artifacts: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    subscriptions: List[str] = field(default_factory=list)
+    subscriptions: list[str] = field(default_factory=list)
 
 
 class AgentFabricRegistry:
     """Dynamic agent population management."""
 
     def __init__(self):
-        self._agents: Dict[str, AgentInstance] = {}
-        self._roles: Dict[str, List[str]] = {}  # role → [agent_ids]
+        self._agents: dict[str, AgentInstance] = {}
+        self._roles: dict[str, list[str]] = {}  # role → [agent_ids]
 
     def create_agent(self, role: str) -> AgentInstance:
         """Create a new agent."""
@@ -50,7 +50,7 @@ class AgentFabricRegistry:
         logger.debug(f"Created agent: {agent.agent_id} (role={role})")
         return agent
 
-    def initialize_agent(self, agent_id: str, mission_id: str = None, config: Dict[str, Any] = None):
+    def initialize_agent(self, agent_id: str, mission_id: str | None = None, config: dict[str, Any] | None = None):
         """Initialize an agent with mission context."""
         agent = self._agents.get(agent_id)
         if not agent:
@@ -93,14 +93,14 @@ class AgentFabricRegistry:
             agent.status = "executing"
             agent.updated_at = time.time()
 
-    def checkpoint_agent(self, agent_id: str, state: Dict[str, Any]):
+    def checkpoint_agent(self, agent_id: str, state: dict[str, Any]):
         """Save agent checkpoint."""
         agent = self._agents.get(agent_id)
         if agent:
             agent.checkpoint.update(state)
             agent.updated_at = time.time()
 
-    def complete_agent(self, agent_id: str, artifacts: List[str] = None):
+    def complete_agent(self, agent_id: str, artifacts: list[str] | None = None):
         """Mark agent as completed."""
         agent = self._agents.get(agent_id)
         if agent:
@@ -116,10 +116,10 @@ class AgentFabricRegistry:
             agent.status = "archived"
             agent.updated_at = time.time()
 
-    def get_agent(self, agent_id: str) -> Optional[AgentInstance]:
+    def get_agent(self, agent_id: str) -> AgentInstance | None:
         return self._agents.get(agent_id)
 
-    def get_agents(self, role: str = None, status: str = None, mission_id: str = None) -> List[AgentInstance]:
+    def get_agents(self, role: str | None = None, status: str | None = None, mission_id: str | None = None) -> list[AgentInstance]:
         """Get agents filtered by role, status, or mission."""
         results = list(self._agents.values())
         if role:
@@ -130,13 +130,13 @@ class AgentFabricRegistry:
             results = [a for a in results if a.mission_id == mission_id]
         return results
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total": len(self._agents),
             "by_role": {role: len(ids) for role, ids in self._roles.items()},
             "by_status": {
                 status: sum(1 for a in self._agents.values() if a.status == status)
-                for status in set(a.status for a in self._agents.values())
+                for status in {a.status for a in self._agents.values()}
             },
         }
 

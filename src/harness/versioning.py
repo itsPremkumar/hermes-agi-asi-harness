@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import re
-import threading
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -17,7 +15,7 @@ class Version:
     prerelease: str = ""
 
     @classmethod
-    def parse(cls, version_str: str) -> "Version":
+    def parse(cls, version_str: str) -> Version:
         """Parse a version string like '1.2.3' or '1.2.3-beta'."""
         parts = version_str.split("-", 1)
         nums = parts[0].split(".")
@@ -37,7 +35,7 @@ class Version:
             return False
         return (self.major, self.minor, self.patch, self.prerelease) == (other.major, other.minor, other.patch, other.prerelease)
 
-    def __lt__(self, other: "Version") -> bool:
+    def __lt__(self, other: Version) -> bool:
         if self.major != other.major:
             return self.major < other.major
         if self.minor != other.minor:
@@ -51,16 +49,16 @@ class Version:
             return True
         return self.prerelease < other.prerelease
 
-    def __le__(self, other: "Version") -> bool:
+    def __le__(self, other: Version) -> bool:
         return self == other or self < other
 
-    def __gt__(self, other: "Version") -> bool:
+    def __gt__(self, other: Version) -> bool:
         return not self <= other
 
-    def __ge__(self, other: "Version") -> bool:
+    def __ge__(self, other: Version) -> bool:
         return not self < other
 
-    def is_compatible_with(self, other: "Version") -> bool:
+    def is_compatible_with(self, other: Version) -> bool:
         """Check if this version is compatible with another (same major)."""
         return self.major == other.major
 
@@ -68,8 +66,8 @@ class Version:
 @dataclass
 class VersionRange:
     """A range of versions."""
-    min_version: Optional[Version] = None
-    max_version: Optional[Version] = None
+    min_version: Version | None = None
+    max_version: Version | None = None
     min_inclusive: bool = True
     max_inclusive: bool = True
 
@@ -150,4 +148,4 @@ class Compatibility:
         return range_obj
 
 
-__all__ = ["Version", "VersionRange", "Compatibility"]
+__all__ = ["Compatibility", "Version", "VersionRange"]

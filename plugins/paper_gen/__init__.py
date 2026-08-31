@@ -20,10 +20,10 @@ class PaperGenerator:
     """Scientific paper generator."""
     
     def __init__(self):
-        self._papers: List[Dict[str, Any]] = []
+        self._papers: list[dict[str, Any]] = []
     
     async def generate_paper(self, title: str, abstract: str,
-                              sections: List[str]) -> Dict[str, Any]:
+                              sections: list[str]) -> dict[str, Any]:
         """Generate a scientific paper."""
         paper = {
             "id": str(uuid.uuid4()),
@@ -37,7 +37,7 @@ class PaperGenerator:
         self._papers.append(paper)
         return paper
     
-    def _generate_latex(self, title: str, abstract: str, sections: List[str]) -> str:
+    def _generate_latex(self, title: str, abstract: str, sections: list[str]) -> str:
         """Generate LaTeX source."""
         latex = f"\\documentclass{{article}}\n\\title{{{title}}}\n\\begin{{document}}\n"
         latex += f"\\begin{{abstract}}\n{abstract}\n\\end{{abstract}}\n"
@@ -46,5 +46,5 @@ class PaperGenerator:
         latex += "\\end{document}"
         return latex
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "papers": len(self._papers)}

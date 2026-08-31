@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import copy
-import json
-import os
-import tempfile
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -25,7 +22,7 @@ class PluginConfig:
     def set(self, key: str, value: Any) -> None:
         self.values[key] = value
 
-    def merge(self, other: 'PluginConfig') -> None:
+    def merge(self, other: PluginConfig) -> None:
         self.values.update(other.values)
 
     def to_dict(self) -> dict[str, Any]:
@@ -96,6 +93,6 @@ class ConfigValidator:
 
             return len(errors) == 0, errors
 
-    def get_schema(self, plugin_id: str) -> Optional[dict[str, Any]]:
+    def get_schema(self, plugin_id: str) -> dict[str, Any] | None:
         with self._lock:
             return self._schemas.get(plugin_id)

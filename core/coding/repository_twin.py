@@ -15,7 +15,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class SymbolType(str, Enum):
@@ -62,7 +62,7 @@ class Symbol:
     docstring: str = ""
     signature: str = ""
     confidence: Confidence = Confidence.OBSERVED
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,7 +71,7 @@ class Edge:
     target: str
     edge_type: EdgeType
     confidence: Confidence = Confidence.OBSERVED
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -80,9 +80,9 @@ class FileNode:
     language: str
     size_bytes: int
     lines: int
-    symbols: List[Symbol] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
-    exports: List[str] = field(default_factory=list)
+    symbols: list[Symbol] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    exports: list[str] = field(default_factory=list)
     hash_sha256: str = ""
     last_modified: float = 0.0
     test_coverage: float = 0.0
@@ -94,23 +94,23 @@ class BuildSystem:
     config_file: str = ""
     build_command: str = ""
     test_command: str = ""
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
 
 @dataclass
 class TestSystem:
     framework: str  # pytest, jest, go test, etc.
-    test_dirs: List[str] = field(default_factory=list)
-    test_files: List[str] = field(default_factory=list)
+    test_dirs: list[str] = field(default_factory=list)
+    test_files: list[str] = field(default_factory=list)
     coverage_tool: str = ""
 
 
 @dataclass
 class CIDeployment:
     platform: str  # github-actions, gitlab-ci, jenkins, etc.
-    config_files: List[str] = field(default_factory=list)
-    environments: List[str] = field(default_factory=list)
-    deployment_targets: List[str] = field(default_factory=list)
+    config_files: list[str] = field(default_factory=list)
+    environments: list[str] = field(default_factory=list)
+    deployment_targets: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -131,30 +131,30 @@ class RepositoryDigitalTwin:
         self.created_at = time.time()
         
         # Core structure
-        self.files: Dict[str, FileNode] = {}
-        self.symbols: Dict[str, Symbol] = {}
-        self.edges: List[Edge] = []
-        self.modules: Dict[str, List[str]] = {}  # module_name → [file_paths]
+        self.files: dict[str, FileNode] = {}
+        self.symbols: dict[str, Symbol] = {}
+        self.edges: list[Edge] = []
+        self.modules: dict[str, list[str]] = {}  # module_name → [file_paths]
         
         # Build/test/CI
-        self.build_system: Optional[BuildSystem] = None
-        self.test_system: Optional[TestSystem] = None
-        self.ci_deployment: Optional[CIDeployment] = None
+        self.build_system: BuildSystem | None = None
+        self.test_system: TestSystem | None = None
+        self.ci_deployment: CIDeployment | None = None
         
         # Metadata
-        self.conventions: List[Convention] = []
-        self.entry_points: List[str] = []
-        self.api_surface: List[Symbol] = []
-        self.dependency_graph: Dict[str, List[str]] = {}
-        self.technical_debt: List[Dict[str, Any]] = []
-        self.known_bugs: List[Dict[str, Any]] = []
+        self.conventions: list[Convention] = []
+        self.entry_points: list[str] = []
+        self.api_surface: list[Symbol] = []
+        self.dependency_graph: dict[str, list[str]] = {}
+        self.technical_debt: list[dict[str, Any]] = []
+        self.known_bugs: list[dict[str, Any]] = []
         
         # History
         self.commit_count = 0
         self.contributor_count = 0
         self.age_days = 0
         
-    def discover(self) -> 'RepositoryDigitalTwin':
+    def discover(self) -> RepositoryDigitalTwin:
         """Run full repository discovery."""
         self._discover_files()
         self._build_symbol_table()
@@ -340,7 +340,7 @@ class RepositoryDigitalTwin:
                         self.dependency_graph[filepath] = []
                     self.dependency_graph[filepath].append(target)
     
-    def _resolve_import(self, import_path: str, from_file: str) -> Optional[str]:
+    def _resolve_import(self, import_path: str, from_file: str) -> str | None:
         """Resolve an import path to a file in the repository."""
         # Handle relative imports
         if import_path.startswith('.'):
@@ -519,7 +519,7 @@ class RepositoryDigitalTwin:
         except (subprocess.SubprocessError, FileNotFoundError):
             pass
     
-    def get_blast_radius(self, filepath: str) -> List[str]:
+    def get_blast_radius(self, filepath: str) -> list[str]:
         """Compute blast radius of changing a file."""
         visited = set()
         queue = [filepath]
@@ -537,23 +537,23 @@ class RepositoryDigitalTwin:
         
         return list(visited - {filepath})
     
-    def get_symbol(self, name: str) -> Optional[Symbol]:
+    def get_symbol(self, name: str) -> Symbol | None:
         """Get a symbol by name."""
         return self.symbols.get(name)
     
-    def get_symbols_by_type(self, symbol_type: SymbolType) -> List[Symbol]:
+    def get_symbols_by_type(self, symbol_type: SymbolType) -> list[Symbol]:
         """Get all symbols of a given type."""
         return [s for s in self.symbols.values() if s.symbol_type == symbol_type]
     
-    def get_file_dependencies(self, filepath: str) -> List[str]:
+    def get_file_dependencies(self, filepath: str) -> list[str]:
         """Get all dependencies of a file."""
         return self.dependency_graph.get(filepath, [])
     
-    def get_reverse_dependencies(self, filepath: str) -> List[str]:
+    def get_reverse_dependencies(self, filepath: str) -> list[str]:
         """Get all files that depend on this file."""
         return [src for src, deps in self.dependency_graph.items() if filepath in deps]
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get repository statistics."""
         languages = {}
         for f in self.files.values():
@@ -578,7 +578,7 @@ class RepositoryDigitalTwin:
             "ci_platform": self.ci_deployment.platform if self.ci_deployment else None,
         }
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "id": self.id,

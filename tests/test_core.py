@@ -5,11 +5,10 @@ from __future__ import annotations
 import os
 import sys
 import time
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from harness.core.dynamic_config import DynamicConfig, ConfigChangeEvent
+from harness.core.dynamic_config import DynamicConfig
 from harness.core.high_availability import (
     CircuitBreaker, CircuitBreakerConfig, CircuitState,
     FailoverManager, GracefulDegradation,

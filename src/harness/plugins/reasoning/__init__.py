@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 # ============== Deductive Reasoning Plugin ==============
@@ -188,11 +188,11 @@ class DecisionPlugin(Plugin):
 
 
 __all__ = [
+    "AbductivePlugin",
+    "AnalogicalPlugin",
+    "CausalPlugin",
+    "DecisionPlugin",
     "DeductivePlugin",
     "InductivePlugin",
-    "AbductivePlugin",
-    "CausalPlugin",
-    "AnalogicalPlugin",
     "PlanningPlugin",
-    "DecisionPlugin",
 ]

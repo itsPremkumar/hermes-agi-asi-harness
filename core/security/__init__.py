@@ -1,9 +1,11 @@
 """Security Scanning - SAST, DAST, dependency scanning, secret detection."""
 from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
+
 
 class Severity(str, Enum):
     LOW = "low"
@@ -32,7 +34,7 @@ class SecretScanner:
         "Password in URL": r"://[^:]+:[^@]+@",
     }
     
-    def scan(self, content: str, filename: str = "") -> List[SecurityFinding]:
+    def scan(self, content: str, filename: str = "") -> list[SecurityFinding]:
         findings = []
         for name, pattern in self.PATTERNS.items():
             for match in re.finditer(pattern, content):
@@ -59,7 +61,7 @@ class StaticAnalyzer:
         ("debug_true", r'DEBUG\s*=\s*True', Severity.LOW),
     ]
     
-    def analyze(self, content: str, filename: str = "") -> List[SecurityFinding]:
+    def analyze(self, content: str, filename: str = "") -> list[SecurityFinding]:
         findings = []
         for rule_id, pattern, severity in self.RULES:
             for match in re.finditer(pattern, content):
@@ -80,17 +82,17 @@ class SecurityScanner:
         self.secret_scanner = SecretScanner()
         self.static_analyzer = StaticAnalyzer()
     
-    def scan_content(self, content: str, filename: str = "") -> List[SecurityFinding]:
+    def scan_content(self, content: str, filename: str = "") -> list[SecurityFinding]:
         findings = []
         findings.extend(self.secret_scanner.scan(content, filename))
         findings.extend(self.static_analyzer.analyze(content, filename))
         return findings
     
-    def scan_file(self, filepath: str) -> List[SecurityFinding]:
+    def scan_file(self, filepath: str) -> list[SecurityFinding]:
         with open(filepath, errors='ignore') as f:
             return self.scan_content(f.read(), filepath)
     
-    def scan_directory(self, directory: str) -> List[SecurityFinding]:
+    def scan_directory(self, directory: str) -> list[SecurityFinding]:
         import os
         findings = []
         for root, dirs, files in os.walk(directory):

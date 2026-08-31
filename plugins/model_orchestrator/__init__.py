@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Multi-model orchestrator plugin."""
 
-from core.models import ModelOrchestrator, ModelCapability
+from core.models import ModelCapability, ModelOrchestrator
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
 

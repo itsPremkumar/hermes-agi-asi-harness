@@ -1,531 +1,259 @@
-"""Safety Enforcer — enforce safety policies and block dangerous operations."""
+"""Safety Enforcer — enforce safety policies and block dangerous operations.
 
+Part of the Advanced Safety Module. A :class:`SafetyEnforcer` evaluates a
+:class:`SafetyPolicy` against an operation (or a list of detected threats) and
+returns an :class:`EnforcementResult` describing whether the operation is
+allowed, blocked, or requires escalation.
+"""
 from __future__ import annotations
 
-import re
+import logging
 import time
-import threading
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, Callable
+from typing import Any, Callable
 
-from src.safety.threat_modeler import Threat, ThreatCategory, ThreatSeverity
+from safety.risk_assessor import Risk, RiskLevel, RiskProfile
 
+logger = logging.getLogger(__name__)
 
-class PolicyType(Enum):
-    """Types of safety policies that can be enforced."""
-
-    BLOCK_PROMPT_INJECTION = "block_prompt_injection"
-    BLOCK_DATA_EXFILTRATION = "block_data_exfiltration"
-    BLOCK_PRIVILEGE_ESCALATION = "block_privilege_escalation"
-    BLOCK_CREDENTIAL_EXPOSURE = "block_credential_exposure"
-    BLOCK_DOS = "block_dos"
-    BLOCK_MODEL_MANIPULATION = "block_model_manipulation"
-    ALLOWLIST_OPERATIONS = "allowlist_operations"
-    BLOCKLIST_OPERATIONS = "blocklist_operations"
-    RATE_LIMIT = "rate_limit"
-    RESOURCE_QUOTA = "resource_quota"
-    CUSTOM = "custom"
+__all__ = [
+    "EnforcementResult",
+    "PolicyAction",
+    "SafetyEnforcer",
+    "SafetyPolicy",
+]
 
 
-class EnforcementAction(Enum):
-    """Actions the enforcer can take when a policy is violated."""
+class PolicyAction(Enum):
+    """Outcome of applying a safety policy."""
 
     ALLOW = "allow"
     BLOCK = "block"
-    WARN = "warn"
-    SANITIZE = "sanitize"
     ESCALATE = "escalate"
-    REDIRECT = "redirect"
-
-
-@dataclass
-class PolicyRule:
-    """A single safety policy rule."""
-
-    id: str
-    policy_type: PolicyType
-    name: str
-    description: str
-    action: EnforcementAction = EnforcementAction.BLOCK
-    enabled: bool = True
-    # Condition can be a regex pattern (for pattern-based rules) or empty
-    # (for always-on rules like global rate limits).
-    condition: str = ""
-    # Severity threshold: only enforce for threats at or above this severity.
-    severity_threshold: ThreatSeverity = ThreatSeverity.LOW
-    # Metadata / config specific to this rule.
-    config: dict[str, Any] = field(default_factory=dict)
-    created_at: float = field(default_factory=time.time)
-    enforced_count: int = 0
-    blocked_count: int = 0
-
-    @property
-    def is_active(self) -> bool:
-        return self.enabled
-
-    def matches(self, threat: Threat) -> bool:
-        """Check whether this rule applies to a given threat."""
-        if not self.enabled:
-            return False
-
-        # Severity threshold check
-        severity_order = {
-            ThreatSeverity.INFO: 0,
-            ThreatSeverity.LOW: 1,
-            ThreatSeverity.MEDIUM: 2,
-            ThreatSeverity.HIGH: 3,
-            ThreatSeverity.CRITICAL: 4,
-        }
-        threat_level = severity_order.get(threat.severity, 0)
-        threshold_level = severity_order.get(self.severity_threshold, 0)
-        if threat_level < threshold_level:
-            return False
-
-        # If there is a condition, try to match it.
-        if self.condition:
-            # Check category first
-            if self.condition in ThreatCategory.__members__:
-                cat = ThreatCategory[self.condition]
-                if threat.category != cat:
-                    return False
-            # Try regex match against description / attack_vector
-            else:
-                text_to_check = f"{threat.description} {threat.attack_vector}"
-                if not re.search(self.condition, text_to_check, re.IGNORECASE):
-                    return False
-
-        return True
 
 
 @dataclass
 class EnforcementResult:
-    """Result of a policy enforcement decision."""
+    """Result of enforcing a policy on a request."""
 
-    rule_id: str
-    action: EnforcementAction
     allowed: bool
-    reason: str
-    threat_detected: Optional[Threat] = None
-    blocked_threats: list[Threat] = field(default_factory=list)
-    sanitized_content: Optional[str] = None
+    action: PolicyAction
+    risk_level: RiskLevel
+    reason: str = ""
+    violations: list[str] = field(default_factory=list)
+    blocked_rules: list[str] = field(default_factory=list)
+    risk_score: float = 0.0
+    evaluated_at: float = field(default_factory=time.time)
     metadata: dict[str, Any] = field(default_factory=dict)
-    timestamp: float = field(default_factory=time.time)
 
     @property
-    def was_blocked(self) -> bool:
-        return not self.allowed
+    def success(self) -> bool:
+        return self.allowed and self.action in (PolicyAction.ALLOW, PolicyAction.ESCALATE)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "allowed": self.allowed,
+            "action": self.action.value,
+            "risk_level": self.risk_level.value,
+            "reason": self.reason,
+            "violations": list(self.violations),
+            "blocked_rules": list(self.blocked_rules),
+            "evaluated_at": self.evaluated_at,
+        }
 
 
 @dataclass
-class RateLimitState:
-    """Rate-limiting state for a key."""
+class SafetyPolicy:
+    """Declarative safety policy.
 
-    request_times: list[float] = field(default_factory=list)
-    violation_count: int = 0
+    A policy maps a :class:`RiskLevel` to a :class:`PolicyAction` and an
+    ordered list of predicate rules.  The most-specific applicable rule
+    (highest risk level whose threshold is met) wins.
+    """
+
+    name: str
+    description: str = ""
+    # risk level -> action (None means "inherit default")
+    level_actions: dict[RiskLevel, PolicyAction] = field(default_factory=lambda: {
+        RiskLevel.NONE: PolicyAction.ALLOW,
+        RiskLevel.LOW: PolicyAction.ALLOW,
+        RiskLevel.MEDIUM: PolicyAction.ALLOW,
+        RiskLevel.HIGH: PolicyAction.ESCALATE,
+        RiskLevel.CRITICAL: PolicyAction.BLOCK,
+    })
+    # Ordered list of explicit predicate rules.
+    rules: list[Callable[[RiskProfile, Risk], PolicyAction | None]] = field(default_factory=list)
+    default_action: PolicyAction = PolicyAction.ALLOW
+    max_risk_score: float = 1.0  # hard ceiling; anything above is BLOCK regardless.
+    escalate_threshold: float = 0.6  # scores above this escalate unless blocked.
+    block_threshold: float = 0.85  # scores above this are blocked.
+    human_approval_required: bool = True
+    enabled: bool = True
+
+    def add_rule(self, rule: Callable[[RiskProfile, Risk], PolicyAction | None]) -> None:
+        self.rules.append(rule)
+
+    def evaluate_risk(self, profile: RiskProfile, risk: Risk) -> PolicyAction:
+        """Evaluate a single *risk* against this policy."""
+        # Explicit rules take priority.
+        for rule in self.rules:
+            result = rule(profile, risk)
+            if result is not None:
+                return result
+
+        # Hard ceiling.
+        if risk.score > self.max_risk_score or risk.score >= self.block_threshold:
+            return PolicyAction.BLOCK
+
+        # Level-based mapping.
+        action = self.level_actions.get(risk.level)
+        if action is not None:
+            return action
+
+        # Score thresholds.
+        if risk.score >= self.block_threshold:
+            return PolicyAction.BLOCK
+        if risk.score >= self.escalate_threshold:
+            return PolicyAction.ESCALATE
+        return PolicyAction.ALLOW
+
+    def evaluate_profile(self, profile: RiskProfile) -> PolicyAction:
+        """Evaluate the *overall* profile risk, returning the strictest action."""
+        if not profile.risks:
+            return PolicyAction.ALLOW
+        actions = [self.evaluate_risk(profile, r) for r in profile.risks]
+        # BLOCK dominates, then ESCALATE, then ALLOW.
+        if PolicyAction.BLOCK in actions:
+            return PolicyAction.BLOCK
+        if PolicyAction.ESCALATE in actions:
+            return PolicyAction.ESCALATE
+        return PolicyAction.ALLOW
 
 
 class SafetyEnforcer:
-    """Enforce safety policies and block dangerous operations."""
+    """Enforces a set of safety policies against risk profiles."""
 
-    # Default built-in rules for common AI safety threats.
-    DEFAULT_RULES: list[dict[str, Any]] = [
-        {
-            "id": "rule_prompt_injection",
-            "policy_type": PolicyType.BLOCK_PROMPT_INJECTION,
-            "name": "Block Prompt Injection",
-            "description": "Block inputs attempting to override system instructions",
-            "action": EnforcementAction.BLOCK,
-            "condition": "PROMPT_INJECTION",
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-        {
-            "id": "rule_data_exfil",
-            "policy_type": PolicyType.BLOCK_DATA_EXFILTRATION,
-            "name": "Block Data Exfiltration",
-            "description": "Block attempts to exfiltrate sensitive data",
-            "action": EnforcementAction.BLOCK,
-            "condition": "DATA_EXFILTRATION",
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-        {
-            "id": "rule_priv_esc",
-            "policy_type": PolicyType.BLOCK_PRIVILEGE_ESCALATION,
-            "name": "Block Privilege Escalation",
-            "description": "Block privilege escalation attempts",
-            "action": EnforcementAction.BLOCK,
-            "condition": "PRIVILEGE_ESCALATION",
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-        {
-            "id": "rule_cred_theft",
-            "policy_type": PolicyType.BLOCK_CREDENTIAL_EXPOSURE,
-            "name": "Block Credential Exposure",
-            "description": "Block attempts to expose credentials",
-            "action": EnforcementAction.BLOCK,
-            "condition": "CREDENTIAL_THEFT",
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-        {
-            "id": "rule_dos",
-            "policy_type": PolicyType.BLOCK_DOS,
-            "name": "Block Denial of Service",
-            "description": "Block DoS / resource exhaustion attempts",
-            "action": EnforcementAction.BLOCK,
-            "condition": ThreatCategory.DENIAL_OF_SERVICE.value,
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-        {
-            "id": "rule_model_manip",
-            "policy_type": PolicyType.BLOCK_MODEL_MANIPULATION,
-            "name": "Block Model Manipulation",
-            "description": "Block model manipulation and jailbreaking attempts",
-            "action": EnforcementAction.BLOCK,
-            "condition": "MODEL_MANIPULATION",
-            "severity_threshold": ThreatSeverity.LOW,
-        },
-    ]
+    def __init__(self, policies: list[SafetyPolicy] | None = None) -> None:
+        self._policies: list[SafetyPolicy] = list(policies or [])
+        self._blocked_log: list[EnforcementResult] = []
+        self._allowed_log: list[EnforcementResult] = []
 
-    def __init__(self):
-        self._lock = threading.RLock()
-        self._rules: dict[str, PolicyRule] = {}
-        self._rate_limit_state: dict[str, RateLimitState] = {}
-        self._custom_callbacks: dict[str, Callable] = {}
-        self._decision_log: list[dict[str, Any]] = []
-        self._rule_counter = 0
+        if not self._policies:
+            self._policies.append(self.default_policy())
 
-        # Install default rules
-        for rule_spec in self.DEFAULT_RULES:
-            self._add_rule_from_spec(rule_spec)
-
-    def _add_rule_from_spec(self, spec: dict[str, Any]) -> None:
-        rule = PolicyRule(
-            id=spec["id"],
-            policy_type=spec["policy_type"],
-            name=spec["name"],
-            description=spec["description"],
-            action=spec.get("action", EnforcementAction.BLOCK),
-            enabled=spec.get("enabled", True),
-            condition=spec.get("condition", ""),
-            severity_threshold=spec.get(
-                "severity_threshold", ThreatSeverity.LOW
-            ),
-            config=spec.get("config", {}),
+    @staticmethod
+    def default_policy() -> SafetyPolicy:
+        policy = SafetyPolicy(
+            name="default-safety-policy",
+            description="Default allow-escalate-block policy for AGI/ASI operations.",
         )
-        self._rules[rule.id] = rule
+        # Rule: any CRITICAL-severity threat is blocked immediately.
+        def block_critical(_profile: RiskProfile, risk: Risk) -> PolicyAction | None:
+            if risk.level == RiskLevel.CRITICAL:
+                return PolicyAction.BLOCK
+            return None
 
-    # ------------------------------------------------------------------
-    # Rule management
-    # ------------------------------------------------------------------
+        policy.add_rule(block_critical)
+        return policy
 
-    def add_rule(self, rule: PolicyRule) -> bool:
-        """Register a new policy rule."""
-        with self._lock:
-            if rule.id in self._rules:
-                return False
-            self._rules[rule.id] = rule
-            return True
+    def add_policy(self, policy: SafetyPolicy) -> None:
+        self._policies.append(policy)
 
-    def remove_rule(self, rule_id: str) -> bool:
-        """Remove a policy rule by ID."""
-        with self._lock:
-            return self._rules.pop(rule_id, None) is not None
+    def get_policy(self, name: str) -> SafetyPolicy | None:
+        for p in self._policies:
+            if p.name == name:
+                return p
+        return None
 
-    def enable_rule(self, rule_id: str, enabled: bool = True) -> bool:
-        """Enable or disable a rule."""
-        with self._lock:
-            rule = self._rules.get(rule_id)
-            if rule is None:
-                return False
-            rule.enabled = enabled
-            return True
+    def enforce(self, profile: RiskProfile, risk: Risk | None = None) -> EnforcementResult:
+        """Enforce all policies against *profile* (and optionally a single *risk*).
 
-    def get_rule(self, rule_id: str) -> Optional[PolicyRule]:
-        return self._rules.get(rule_id)
-
-    def list_rules(self) -> list[PolicyRule]:
-        """List all registered rules (including built-in defaults)."""
-        return list(self._rules.values())
-
-    def list_active_rules(self) -> list[PolicyRule]:
-        """List only enabled rules."""
-        return [r for r in self._rules.values() if r.enabled]
-
-    # ------------------------------------------------------------------
-    # Enforcement
-    # ------------------------------------------------------------------
-
-    def enforce(self, threats: list[Threat]) -> EnforcementResult:
-        """Evaluate a list of threats against all active rules.
-
-        Returns an EnforcementResult describing whether the action is allowed
-        and which threats (if any) were blocked.
+        When *risk* is provided the action is computed for that risk; otherwise
+        the strictest action across the whole profile is used.
         """
-        with self._lock:
-            blocked_threats: list[Threat] = []
-            matched_rules: list[str] = []
-            reasons: list[str] = []
-
-            for threat in threats:
-                for rule in self._rules.values():
-                    if not rule.enabled:
-                        continue
-                    if rule.matches(threat):
-                        rule.enforced_count += 1
-                        matched_rules.append(rule.id)
-                        reasons.append(
-                            f"Rule '{rule.name}' matched threat "
-                            f"'{threat.name}' ({threat.category.value}, "
-                            f"{threat.severity.value})"
-                        )
-
-                        if rule.action == EnforcementAction.BLOCK:
-                            blocked_threats.append(threat)
-                            rule.blocked_count += 1
-                        elif rule.action == EnforcementAction.WARN:
-                            # Warn but still allow
-                            pass
-                        elif rule.action == EnforcementAction.SANITIZE:
-                            blocked_threats.append(threat)
-                            rule.blocked_count += 1
-
-            allowed = len(blocked_threats) == 0
-            action = EnforcementAction.BLOCK if blocked_threats else EnforcementAction.ALLOW
-
+        enabled = [p for p in self._policies if p.enabled]
+        if not enabled:
             result = EnforcementResult(
-                rule_id=matched_rules[0] if matched_rules else "",
-                action=action,
-                allowed=allowed,
-                reason="; ".join(reasons) if reasons else "All clear",
-                blocked_threats=blocked_threats,
-                metadata={
-                    "matched_rules": matched_rules,
-                    "total_threats": len(threats),
-                    "blocked_count": len(blocked_threats),
-                },
+                allowed=True,
+                action=PolicyAction.ALLOW,
+                risk_level=profile.overall_level,
+                reason="No enabled policies",
             )
-
-            self._decision_log.append({
-                "timestamp": time.time(),
-                "action": action.value,
-                "allowed": allowed,
-                "threat_count": len(threats),
-                "blocked_count": len(blocked_threats),
-                "matched_rules": matched_rules,
-            })
-
+            self._allowed_log.append(result)
             return result
 
-    def enforce_input(self, user_input: str) -> EnforcementResult:
-        """Quick enforcement of a raw user input string.
-
-        Scans for simple danger patterns and returns a result.  This is a
-        lightweight convenience method that does not require a ThreatModeler
-        — useful for fast pre-checks.
-        """
-        dangerous_patterns = [
-            (r"(?i)\b(ignore\s+previous|system\s+override|jailbreak)",
-             ThreatCategory.PROMPT_INJECTION, ThreatSeverity.HIGH),
-            (r"(?i)\b(exfiltrate|send.*to.*external)",
-             ThreatCategory.DATA_EXFILTRATION, ThreatSeverity.HIGH),
-            (r"(?i)\b(sudo|root\s+privileges)",
-             ThreatCategory.PRIVILEGE_ESCALATION, ThreatSeverity.MEDIUM),
-            (r"(?i)\b(password|secret\s*=|api\s*key)",
-             ThreatCategory.CREDENTIAL_THEFT, ThreatSeverity.CRITICAL),
-            (r"(?i)\b(infinite\s+loop|resource\s+exhaustion)",
-             ThreatCategory.DENIAL_OF_SERVICE, ThreatSeverity.MEDIUM),
-        ]
-
-        detected_threats: list[Threat] = []
-        import hashlib
-
-        for pattern, category, severity in dangerous_patterns:
-            if re.search(pattern, user_input):
-                tid = hashlib.sha256(
-                    f"{user_input}{time.time()}{category.value}".encode()
-                ).hexdigest()[:8]
-                threat = Threat(
-                    threat_id=tid,
-                    name=f"{category.value}_in_input",
-                    category=category,
-                    severity=severity,
-                    description=f"Detected {category.value} pattern in user input",
-                    attack_vector=user_input[:200],
-                    impact="Potential security breach",
-                    likelihood=0.85,
-                    mitigations=["Block the input", "Alert security team"],
-                )
-                detected_threats.append(threat)
-
-        return self.enforce(detected_threats)
-
-    def check_operation(
-        self,
-        operation: str,
-        context: dict[str, Any] | None = None,
-        allowlist: list[str] | None = None,
-        blocklist: list[str] | None = None,
-    ) -> EnforcementResult:
-        """Check whether an operation is allowed, optionally against
-        allowlist / blocklist."""
-        context = context or {}
-
-        # Check blocklist first (more dangerous if explicitly blocked)
-        if blocklist:
-            for blocked in blocklist:
-                if re.search(blocked, operation, re.IGNORECASE):
-                    return EnforcementResult(
-                        rule_id="blocklist_check",
-                        action=EnforcementAction.BLOCK,
-                        allowed=False,
-                        reason=f"Operation matches blocklist pattern: {blocked}",
-                        metadata={"operation": operation, "blocklist_match": blocked},
-                    )
-
-        # Then check allowlist
-        if allowlist:
-            for allowed_pattern in allowlist:
-                if re.search(allowed_pattern, operation, re.IGNORECASE):
-                    return EnforcementResult(
-                        rule_id="allowlist_check",
-                        action=EnforcementAction.ALLOW,
-                        allowed=True,
-                        reason=f"Operation matches allowlist pattern: {allowed_pattern}",
-                        metadata={"operation": operation, "allowlist_match": allowed_pattern},
-                    )
-            # Did not match any allowlist entry
-            if not allowlist:
-                return EnforcementResult(
-                    rule_id="allowlist_check",
-                    action=EnforcementAction.BLOCK,
-                    allowed=False,
-                    reason="Operation not in allowlist",
-                    metadata={"operation": operation},
-                )
-            return EnforcementResult(
-                rule_id="allowlist_check",
-                action=EnforcementAction.BLOCK,
-                allowed=False,
-                reason="Operation not in allowlist",
-                metadata={"operation": operation},
+        if risk is not None:
+            actions = [p.evaluate_risk(profile, risk) for p in enabled]
+            target_risk = risk
+        else:
+            actions = [p.evaluate_profile(profile) for p in enabled]
+            target_risk = Risk(
+                risk_id="profile",
+                threat_id="aggregate",
+                category="aggregate",
+                description=profile.target_system,
+                score=profile.overall_score,
+                level=profile.overall_level,
+                likelihood=1.0,
+                impact="",
             )
 
-        # No allowlist or blocklist — default allow
-        return EnforcementResult(
-            rule_id="default",
-            action=EnforcementAction.ALLOW,
-            allowed=True,
-            reason="No allowlist or blocklist configured",
-            metadata={"operation": operation},
+        # Aggregate: BLOCK wins, then ESCALATE, then ALLOW.
+        if PolicyAction.BLOCK in actions:
+            action = PolicyAction.BLOCK
+        elif PolicyAction.ESCALATE in actions:
+            action = PolicyAction.ESCALATE
+        else:
+            action = PolicyAction.ALLOW
+
+        allowed = action in (PolicyAction.ALLOW, PolicyAction.ESCALATE)
+        violations: list[str] = []
+        blocked_rules: list[str] = []
+        reason_parts: list[str] = []
+        for p, a in zip(enabled, actions):
+            if a == PolicyAction.BLOCK:
+                blocked_rules.append(p.name)
+            if not allowed:
+                violations.append(f"{p.name}: {a.value}")
+            reason_parts.append(f"{p.name}={a.value}")
+
+        reason = "; ".join(reason_parts) if reason_parts else "policy satisfied"
+
+        result = EnforcementResult(
+            allowed=allowed,
+            action=action,
+            risk_level=target_risk.level,
+            reason=reason,
+            violations=violations,
+            blocked_rules=blocked_rules,
+            risk_score=target_risk.score,
+            metadata={"policy_count": len(enabled)},
         )
 
-    # ------------------------------------------------------------------
-    # Rate limiting
-    # ------------------------------------------------------------------
+        if allowed:
+            self._allowed_log.append(result)
+        else:
+            self._blocked_log.append(result)
 
-    def check_rate_limit(
-        self,
-        key: str,
-        max_requests: int,
-        window_seconds: int = 60,
-    ) -> bool:
-        """Check if a key has exceeded its rate limit.
+        logger.info(
+            "Enforced policy: action=%s allowed=%s risk_level=%s",
+            action.value, allowed, target_risk.level.value,
+        )
+        return result
 
-        Returns True if the request is ALLOWED, False if rate-limited.
-        """
-        with self._lock:
-            now = time.time()
-            state = self._rate_limit_state.setdefault(key, RateLimitState())
+    def is_operation_safe(self, profile: RiskProfile) -> bool:
+        """Convenience: True if the overall profile is allowed by policy."""
+        return self.enforce(profile).allowed
 
-            # Prune old timestamps
-            state.request_times = [
-                t for t in state.request_times if now - t < window_seconds
-            ]
+    @property
+    def blocked_log(self) -> list[EnforcementResult]:
+        return list(self._blocked_log)
 
-            if len(state.request_times) >= max_requests:
-                state.violation_count += 1
-                return False
+    @property
+    def allowed_log(self) -> list[EnforcementResult]:
+        return list(self._allowed_log)
 
-            state.request_times.append(now)
-            return True
-
-    def get_rate_limit_state(self, key: str) -> Optional[RateLimitState]:
-        return self._rate_limit_state.get(key)
-
-    def reset_rate_limit(self, key: str) -> None:
-        with self._lock:
-            self._rate_limit_state.pop(key, None)
-
-    # ------------------------------------------------------------------
-    # Custom rules
-    # ------------------------------------------------------------------
-
-    def add_custom_rule(
-        self,
-        name: str,
-        check_fn: Callable[[Threat], bool],
-        action: EnforcementAction = EnforcementAction.BLOCK,
-        severity_threshold: ThreatSeverity = ThreatSeverity.LOW,
-    ) -> str:
-        """Register a custom callable-based rule."""
-        with self._lock:
-            self._rule_counter += 1
-            rule_id = f"custom_{self._rule_counter}"
-            self._custom_callbacks[rule_id] = check_fn
-
-            rule = PolicyRule(
-                id=rule_id,
-                policy_type=PolicyType.CUSTOM,
-                name=name,
-                description=f"Custom rule: {name}",
-                action=action,
-                severity_threshold=severity_threshold,
-            )
-            # Store the check function on the rule for later use
-            rule.config["check_fn"] = check_fn
-            self._rules[rule_id] = rule
-            return rule_id
-
-    # ------------------------------------------------------------------
-    # Audit / stats
-    # ------------------------------------------------------------------
-
-    def get_stats(self) -> dict[str, Any]:
-        with self._lock:
-            return {
-                "total_rules": len(self._rules),
-                "active_rules": len(self.list_active_rules()),
-                "decision_log_entries": len(self._decision_log),
-                "total_blocks": sum(r.blocked_count for r in self._rules.values()),
-                "total_enforcements": sum(r.enforced_count for r in self._rules.values()),
-                "rate_limit_keys": len(self._rate_limit_state),
-            }
-
-    def get_decision_log(self, limit: int = 100) -> list[dict[str, Any]]:
-        with self._lock:
-            return list(self._decision_log[-limit:])
-
-    def clear_decision_log(self) -> None:
-        with self._lock:
-            self._decision_log.clear()
-
-    def reset(self) -> None:
-        """Reset all state (rules revert to defaults, logs cleared)."""
-        with self._lock:
-            self._rules.clear()
-            self._rate_limit_state.clear()
-            self._custom_callbacks.clear()
-            self._decision_log.clear()
-            self._rule_counter = 0
-            for rule_spec in self.DEFAULT_RULES:
-                self._add_rule_from_spec(rule_spec)
-
-
-__all__ = [
-    "PolicyType",
-    "EnforcementAction",
-    "PolicyRule",
-    "EnforcementResult",
-    "RateLimitState",
-    "SafetyEnforcer",
-]
+    def clear_logs(self) -> None:
+        self._blocked_log.clear()
+        self._allowed_log.clear()

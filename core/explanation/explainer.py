@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -24,12 +24,12 @@ class ActionExplanation:
     """Human-readable explanation for an action."""
     action_id: str
     why_chosen: str
-    alternatives: List[str]
-    evidence: List[str]
+    alternatives: list[str]
+    evidence: list[str]
     risk_estimate: float
-    policy_id: Optional[str]
+    policy_id: str | None
     prediction_accuracy: float  # 0.0 to 1.0
-    causal_chain: List[str]
+    causal_chain: list[str]
     timestamp: float
 
 
@@ -40,9 +40,9 @@ class AuditEntry:
     action_id: str
     timestamp: float
     event_type: str  # created, selected, simulated, executed, verified, promoted, rolled_back
-    details: Dict[str, Any]
-    previous_state: Optional[Dict[str, Any]] = None
-    new_state: Optional[Dict[str, Any]] = None
+    details: dict[str, Any]
+    previous_state: dict[str, Any] | None = None
+    new_state: dict[str, Any] | None = None
 
 
 class ActionExplainer:
@@ -80,7 +80,7 @@ class ActionExplainer:
             timestamp=time.time(),
         )
     
-    def _get_action_from_trajectory(self, action_id: str, trajectory: Any) -> Dict[str, Any]:
+    def _get_action_from_trajectory(self, action_id: str, trajectory: Any) -> dict[str, Any]:
         """Extract action from trajectory."""
         if not trajectory or not hasattr(trajectory, 'steps'):
             return {}
@@ -89,13 +89,13 @@ class ActionExplainer:
                 return step.action
         return {}
     
-    def _get_alternatives(self, action: Dict[str, Any]) -> List[str]:
+    def _get_alternatives(self, action: dict[str, Any]) -> list[str]:
         """Get alternative actions that were considered."""
         all_actions = ["read", "create", "update", "delete", "send", "execute"]
         action_type = action.get("type", "")
         return [a for a in all_actions if a != action_type]
     
-    def _get_evidence(self, action: Dict[str, Any]) -> List[str]:
+    def _get_evidence(self, action: dict[str, Any]) -> list[str]:
         """Get evidence that supported the action."""
         evidence = []
         if action.get("_exploration"):
@@ -111,7 +111,7 @@ class ActionExplainer:
         # In a real implementation, compare prediction with actual
         return 0.75  # Placeholder
     
-    def _build_causal_chain(self, action_id: str, trajectory: Any) -> List[str]:
+    def _build_causal_chain(self, action_id: str, trajectory: Any) -> list[str]:
         """Build causal chain for the action."""
         return [
             "Goal received",
@@ -126,12 +126,12 @@ class AuditTrail:
     """Maintain tamper-evident audit trail."""
     
     def __init__(self):
-        self.entries: List[AuditEntry] = []
+        self.entries: list[AuditEntry] = []
     
     def record(self, action_id: str, event_type: str,
-               details: Dict[str, Any],
-               previous_state: Dict[str, Any] = None,
-               new_state: Dict[str, Any] = None) -> AuditEntry:
+               details: dict[str, Any],
+               previous_state: dict[str, Any] | None = None,
+               new_state: dict[str, Any] | None = None) -> AuditEntry:
         """Record an audit entry."""
         entry = AuditEntry(
             id=str(uuid.uuid4()),
@@ -145,21 +145,21 @@ class AuditTrail:
         self.entries.append(entry)
         return entry
     
-    def get_entries_for_action(self, action_id: str) -> List[AuditEntry]:
+    def get_entries_for_action(self, action_id: str) -> list[AuditEntry]:
         """Get all audit entries for an action."""
         return [e for e in self.entries if e.action_id == action_id]
     
-    def get_entries_by_type(self, event_type: str) -> List[AuditEntry]:
+    def get_entries_by_type(self, event_type: str) -> list[AuditEntry]:
         """Get all audit entries of a specific type."""
         return [e for e in self.entries if e.event_type == event_type]
     
-    def get_entries_in_range(self, start_time: float, end_time: float) -> List[AuditEntry]:
+    def get_entries_in_range(self, start_time: float, end_time: float) -> list[AuditEntry]:
         """Get audit entries within a time range."""
         return [e for e in self.entries if start_time <= e.timestamp <= end_time]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "total_entries": len(self.entries),
-            "action_ids": len(set(e.action_id for e in self.entries)),
-            "event_types": list(set(e.event_type for e in self.entries)),
+            "action_ids": len({e.action_id for e in self.entries}),
+            "event_types": list({e.event_type for e in self.entries}),
         }

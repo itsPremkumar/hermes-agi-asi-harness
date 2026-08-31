@@ -8,11 +8,11 @@ Implements the agent's ability to reason about its own reasoning:
 - Bias detection and correction
 """
 
-import time
 import logging
-from typing import Dict, Any, Optional, List
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +40,10 @@ class ThinkingStep:
 @dataclass
 class SelfModel:
     """Tracks the agent's self-assessment."""
-    capabilities: Dict[str, float] = field(default_factory=dict)
-    limitations: List[str] = field(default_factory=list)
-    recent_failures: List[Dict[str, Any]] = field(default_factory=list)
-    recent_successes: List[Dict[str, Any]] = field(default_factory=list)
+    capabilities: dict[str, float] = field(default_factory=dict)
+    limitations: list[str] = field(default_factory=list)
+    recent_failures: list[dict[str, Any]] = field(default_factory=list)
+    recent_successes: list[dict[str, Any]] = field(default_factory=list)
     calibration_score: float = 0.5  # How well confidence tracks reality
     total_tasks_attempted: int = 0
     total_tasks_succeeded: int = 0
@@ -62,10 +62,10 @@ class MetacognitionEngine:
 
     def __init__(self):
         self.self_model = SelfModel()
-        self.thinking_history: List[ThinkingStep] = []
+        self.thinking_history: list[ThinkingStep] = []
         self._current_mode = CognitiveMode.DELIBERATIVE
 
-    def select_mode(self, task_description: str, context: Optional[Dict[str, Any]] = None) -> CognitiveMode:
+    def select_mode(self, task_description: str, context: dict[str, Any] | None = None) -> CognitiveMode:
         """Selects the best cognitive mode for a task."""
         task_lower = task_description.lower()
 
@@ -87,7 +87,7 @@ class MetacognitionEngine:
         self._current_mode = mode
         return mode
 
-    def evaluate_confidence(self, task: str, proposed_answer: str, evidence: List[str]) -> float:
+    def evaluate_confidence(self, task: str, proposed_answer: str, evidence: list[str]) -> float:
         """
         Evaluates confidence in a proposed answer based on evidence quality.
         Returns a calibrated confidence score between 0 and 1.
@@ -118,7 +118,7 @@ class MetacognitionEngine:
         self.thinking_history.append(step)
         return step
 
-    def record_outcome(self, task: str, success: bool, error: Optional[str] = None):
+    def record_outcome(self, task: str, success: bool, error: str | None = None):
         """Records task outcome for self-model updating."""
         self.self_model.total_tasks_attempted += 1
         if success:
@@ -140,7 +140,7 @@ class MetacognitionEngine:
             predicted = self.self_model.calibration_score
             self.self_model.calibration_score = 0.9 * predicted + 0.1 * actual
 
-    def get_reflection(self) -> Dict[str, Any]:
+    def get_reflection(self) -> dict[str, Any]:
         """Generates a self-reflection summary."""
         recent_failures = len([f for f in self.self_model.recent_failures
                               if time.time() - f.get("timestamp", 0) < 3600])

@@ -1,23 +1,25 @@
 """Population-Based Coding Evolution — Archive, mutate, evaluate."""
 from __future__ import annotations
+
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from dataclasses import dataclass
+from typing import Any
+
 
 @dataclass
 class Candidate:
     id: str
-    strategy: Dict[str, Any]
+    strategy: dict[str, Any]
     score: float = 0.0
     parent: str = ""
 
 class PopulationEvolution:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.archive: List[Candidate] = []
+        self.archive: list[Candidate] = []
         self.generation = 0
     
-    def add_candidate(self, strategy: Dict[str, Any],
+    def add_candidate(self, strategy: dict[str, Any],
                       score: float = 0.0, parent: str = "") -> Candidate:
         c = Candidate(id=str(uuid.uuid4()), strategy=strategy, score=score, parent=parent)
         self.archive.append(c)
@@ -33,5 +35,5 @@ class PopulationEvolution:
         self.generation += 1
         return child
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"archive": len(self.archive), "generation": self.generation}

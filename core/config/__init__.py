@@ -1,16 +1,20 @@
 """Configuration System - YAML-based config with env overrides."""
 from __future__ import annotations
-import os, yaml
+
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import yaml
+
 
 @dataclass
 class LLMConfig:
     provider: str = "ollama"
     model: str = "llama3"
-    api_key: Optional[str] = None
-    api_base: Optional[str] = None
+    api_key: str | None = None
+    api_base: str | None = None
     temperature: float = 0.7
     max_tokens: int = 4096
     timeout: int = 120
@@ -39,7 +43,7 @@ class Config:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     api: APIConfig = field(default_factory=APIConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
     
     @classmethod
     def from_yaml(cls, path: str) -> Config:
@@ -63,7 +67,7 @@ class Config:
         if os.getenv("API_PORT"): config.api.port = int(os.getenv("API_PORT"))
         return config
 
-def load_config(path: Optional[str] = None) -> Config:
+def load_config(path: str | None = None) -> Config:
     config = Config()
     if path and Path(path).exists():
         config.merge(Config.from_yaml(path))

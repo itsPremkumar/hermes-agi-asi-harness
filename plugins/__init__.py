@@ -18,11 +18,13 @@ import json
 import logging
 import os
 import sys
-import yaml
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 logger = logging.getLogger("hermes_plugins")
 
@@ -41,8 +43,8 @@ class PluginPermissions:
     """Plugin permission boundaries."""
     filesystem_read: str = "project"
     filesystem_write: str = "project"
-    network_domains: List[str] = field(default_factory=list)
-    shell_commands: List[str] = field(default_factory=list)
+    network_domains: list[str] = field(default_factory=list)
+    shell_commands: list[str] = field(default_factory=list)
     secrets_access: str = "none"
     max_memory_mb: int = 512
     max_cpu_percent: int = 50
@@ -56,14 +58,14 @@ class PluginManifest:
     description: str
     license: str
     source: str
-    capabilities: List[str]
+    capabilities: list[str]
     cost: str = "free"
     permissions: PluginPermissions = field(default_factory=PluginPermissions)
-    dependencies: List[str] = field(default_factory=list)
-    path: Optional[Path] = None
+    dependencies: list[str] = field(default_factory=list)
+    path: Path | None = None
 
     @classmethod
-    def from_yaml(cls, yaml_path: Path) -> "PluginManifest":
+    def from_yaml(cls, yaml_path: Path) -> PluginManifest:
         with open(yaml_path, 'r') as f:
             data = yaml.safe_load(f)
         
@@ -128,7 +130,7 @@ class BasePlugin:
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "plugin": self.manifest.name,
@@ -137,24 +139,24 @@ class BasePlugin:
             "healthy": self.state in (PluginState.LOADED, PluginState.RUNNING),
         }
     
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         """Return capabilities."""
         return self.manifest.capabilities
     
     # Hooks
-    def pre_step_hook(self, step_number: int, task: str) -> Optional[str]:
+    def pre_step_hook(self, step_number: int, task: str) -> str | None:
         return None
     
     def post_step_hook(self, step_number: int, observation: str):
         pass
     
-    def pre_tool_hook(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_tool_hook(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         return args
     
     def post_tool_hook(self, tool_name: str, result: Any) -> Any:
         return result
     
-    def on_error_hook(self, error: Exception) -> Optional[str]:
+    def on_error_hook(self, error: Exception) -> str | None:
         return None
 
 
@@ -163,11 +165,11 @@ class PluginManager:
     
     def __init__(self, plugins_root: str = "plugins"):
         self.plugins_root = Path(plugins_root)
-        self._plugins: Dict[str, BasePlugin] = {}
-        self._capabilities: Dict[str, List[str]] = {}
-        self._tool_registry: Dict[str, tuple] = {}
+        self._plugins: dict[str, BasePlugin] = {}
+        self._capabilities: dict[str, list[str]] = {}
+        self._tool_registry: dict[str, tuple] = {}
     
-    def discover_plugins(self) -> Dict[str, Any]:
+    def discover_plugins(self) -> dict[str, Any]:
         """Discover all plugins in the plugins directory."""
         discovered = {}
         
@@ -238,7 +240,7 @@ class PluginManager:
         if name not in self._plugins:
             return False
         
-        plugin = self._plugins.pop(name)
+        self._plugins.pop(name)
         
         for cap in list(self._capabilities.keys()):
             if name in self._capabilities[cap]:
@@ -246,7 +248,7 @@ class PluginManager:
         
         return True
     
-    def list_plugins(self) -> List[Dict[str, Any]]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         """List all registered plugins."""
         return [
             {
@@ -258,7 +260,7 @@ class PluginManager:
             for name, p in self._plugins.items()
         ]
     
-    def get_plugin(self, name: str) -> Optional[BasePlugin]:
+    def get_plugin(self, name: str) -> BasePlugin | None:
         """Get a plugin by name."""
         return self._plugins.get(name)
     
@@ -266,12 +268,12 @@ class PluginManager:
         """Check if any plugin provides a capability."""
         return bool(self._capabilities.get(capability))
     
-    def get_plugins_with_capability(self, capability: str) -> List[BasePlugin]:
+    def get_plugins_with_capability(self, capability: str) -> list[BasePlugin]:
         """Get all plugins that provide a capability."""
         plugin_names = self._capabilities.get(capability, [])
         return [self._plugins[name] for name in plugin_names if name in self._plugins]
     
-    def execute_pre_tool_hooks(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def execute_pre_tool_hooks(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         """Execute pre-tool hooks."""
         curr_args = args
         for plugin in self._plugins.values():
@@ -290,7 +292,7 @@ class PluginManager:
     async def load_all(self):
         """Load all discovered plugins."""
         discovered = self.discover_plugins()
-        for name, info in discovered.items():
+        for info in discovered.values():
             self.load_plugin(info["path"])
     
     async def start_all(self):
@@ -299,7 +301,7 @@ class PluginManager:
             if plugin.state == PluginState.LOADED:
                 await plugin.start()
     
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Health check all plugins."""
         results = {}
         for name, plugin in self._plugins.items():

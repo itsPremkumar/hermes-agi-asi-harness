@@ -1,5 +1,6 @@
 """Advanced Memory System - Multi-layer memory with vector search."""
 from __future__ import annotations
+
 import hashlib
 import time
 import uuid
@@ -11,8 +12,8 @@ from typing import Any, Dict, List, Optional
 class MemoryEntry:
     id: str
     content: str
-    embedding: Optional[List[float]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     importance: float = 0.5
 
@@ -21,12 +22,12 @@ class VectorStore:
     """Simple vector store for semantic search."""
     
     def __init__(self):
-        self._entries: Dict[str, MemoryEntry] = {}
+        self._entries: dict[str, MemoryEntry] = {}
     
     def add(self, entry: MemoryEntry):
         self._entries[entry.id] = entry
     
-    def search(self, query: str, top_k: int = 5) -> List[MemoryEntry]:
+    def search(self, query: str, top_k: int = 5) -> list[MemoryEntry]:
         """Simple keyword-based search (in production, use embeddings)."""
         results = []
         query_lower = query.lower()
@@ -39,7 +40,7 @@ class VectorStore:
         results.sort(key=lambda x: x[0], reverse=True)
         return [entry for _, entry in results[:top_k]]
     
-    def get_all(self) -> List[MemoryEntry]:
+    def get_all(self) -> list[MemoryEntry]:
         return list(self._entries.values())
 
 
@@ -48,7 +49,7 @@ class WorkingMemory:
     
     def __init__(self, max_tokens: int = 8000):
         self.max_tokens = max_tokens
-        self._messages: List[Dict[str, str]] = []
+        self._messages: list[dict[str, str]] = []
     
     def add(self, role: str, content: str):
         self._messages.append({"role": role, "content": content})
@@ -59,7 +60,7 @@ class WorkingMemory:
         while len(str(self._messages)) > self.max_tokens * 4 and len(self._messages) > 1:
             self._messages.pop(0)
     
-    def get_context(self) -> List[Dict[str, str]]:
+    def get_context(self) -> list[dict[str, str]]:
         return self._messages.copy()
     
     def clear(self):
@@ -70,9 +71,9 @@ class EpisodicMemory:
     """Episodic memory for past experiences."""
     
     def __init__(self):
-        self._episodes: List[Dict[str, Any]] = []
+        self._episodes: list[dict[str, Any]] = []
     
-    def record(self, event: str, outcome: str, metadata: Dict = None):
+    def record(self, event: str, outcome: str, metadata: dict | None = None):
         self._episodes.append({
             "id": str(uuid.uuid4()),
             "event": event,
@@ -81,7 +82,7 @@ class EpisodicMemory:
             "timestamp": time.time(),
         })
     
-    def recall(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def recall(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """Recall relevant episodes."""
         results = []
         query_lower = query.lower()
@@ -96,14 +97,14 @@ class SemanticMemory:
     """Semantic memory for knowledge and facts."""
     
     def __init__(self):
-        self._facts: Dict[str, Any] = {}
+        self._facts: dict[str, Any] = {}
         self._vector_store = VectorStore()
     
     def store(self, key: str, value: Any, importance: float = 0.5):
         self._facts[key] = {"value": value, "importance": importance}
         self._vector_store.add(MemoryEntry(id=key, content=f"{key}: {value}", importance=importance))
     
-    def recall(self, query: str) -> Dict[str, Any]:
+    def recall(self, query: str) -> dict[str, Any]:
         results = self._vector_store.search(query)
         return {entry.id: self._facts.get(entry.id, {}) for entry in results}
 
@@ -112,7 +113,7 @@ class LongTermMemory:
     """Long-term memory with consolidation."""
     
     def __init__(self):
-        self._memories: Dict[str, Any] = {}
+        self._memories: dict[str, Any] = {}
         self._consolidation_interval = 3600  # 1 hour
     
     def store(self, key: str, value: Any):
@@ -131,7 +132,7 @@ class MemorySystem:
         self.semantic = SemanticMemory()
         self.longterm = LongTermMemory()
     
-    async def recall(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    async def recall(self, query: str, top_k: int = 5) -> dict[str, Any]:
         """Recall relevant information from all memory layers."""
         return {
             "working": self.working.get_context(),
@@ -141,4 +142,18 @@ class MemorySystem:
     
     async def consolidate(self):
         """Consolidate memories (summarize old episodes)."""
-        pass
+
+
+# Legacy long-term memory store (MemoryStore, semantic_search, retrieve)
+from .legacy import (
+    MemoryStore,
+    load_memory,
+    make_recorder,
+    rank_lessons,
+    recall,
+    record_lesson,
+    retrieve,
+    save_memory,
+    semantic_search,
+    set_embedding_backend,
+)

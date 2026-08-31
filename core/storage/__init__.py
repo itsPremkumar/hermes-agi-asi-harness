@@ -14,9 +14,20 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
-    JSON, Boolean, Column, DateTime, Enum as SQLEnum, Float,
-    ForeignKey, Integer, String, Text, create_engine, select, func
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    create_engine,
+    func,
+    select,
 )
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -224,7 +235,7 @@ class SkillModel(Base):
 class DatabaseManager:
     """Manages database connections and sessions."""
     
-    def __init__(self, database_url: Optional[str] = None):
+    def __init__(self, database_url: str | None = None):
         if database_url is None:
             database_url = "sqlite+aiosqlite:///hermes_agi.db"
         
@@ -254,8 +265,8 @@ class TrajectoryStore:
         self.db = db
     
     async def create_trajectory(self, mission_id: str, goal: str,
-                                 scenario_type: str = None,
-                                 complexity: str = None) -> str:
+                                 scenario_type: str | None = None,
+                                 complexity: str | None = None) -> str:
         """Create a new trajectory."""
         async with self.db.get_session() as session:
             trajectory = Trajectory(
@@ -269,7 +280,7 @@ class TrajectoryStore:
             return trajectory.id
     
     async def add_step(self, trajectory_id: str, step_number: int,
-                       name: str, step_type: str, modules: List[str],
+                       name: str, step_type: str, modules: list[str],
                        agent_role: str) -> str:
         """Add a step to a trajectory."""
         async with self.db.get_session() as session:
@@ -311,13 +322,13 @@ class TrajectoryStore:
                 trajectory.total_cost = total_cost
                 await session.commit()
     
-    async def get_trajectory(self, trajectory_id: str) -> Optional[Dict]:
+    async def get_trajectory(self, trajectory_id: str) -> dict | None:
         """Get a trajectory by ID."""
         async with self.db.get_session() as session:
             trajectory = await session.get(Trajectory, trajectory_id)
             return trajectory.to_dict() if trajectory else None
     
-    async def get_all_trajectories(self, limit: int = 100) -> List[Dict]:
+    async def get_all_trajectories(self, limit: int = 100) -> list[dict]:
         """Get all trajectories."""
         async with self.db.get_session() as session:
             result = await session.execute(
@@ -325,7 +336,7 @@ class TrajectoryStore:
             )
             return [t.to_dict() for t in result.scalars().all()]
     
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get trajectory statistics."""
         async with self.db.get_session() as session:
             total = await session.execute(select(func.count(Trajectory.id)))
@@ -357,9 +368,9 @@ class MissionStore:
     def __init__(self, db: DatabaseManager):
         self.db = db
     
-    async def create_mission(self, goal: str, scenario_type: str = None,
-                             complexity: str = None,
-                             config: Dict = None) -> str:
+    async def create_mission(self, goal: str, scenario_type: str | None = None,
+                             complexity: str | None = None,
+                             config: dict | None = None) -> str:
         """Create a new mission."""
         async with self.db.get_session() as session:
             mission = Mission(
@@ -382,13 +393,13 @@ class MissionStore:
                         setattr(mission, key, value)
                 await session.commit()
     
-    async def get_mission(self, mission_id: str) -> Optional[Dict]:
+    async def get_mission(self, mission_id: str) -> dict | None:
         """Get a mission by ID."""
         async with self.db.get_session() as session:
             mission = await session.get(Mission, mission_id)
             return mission.to_dict() if mission else None
     
-    async def get_all_missions(self, limit: int = 100) -> List[Dict]:
+    async def get_all_missions(self, limit: int = 100) -> list[dict]:
         """Get all missions."""
         async with self.db.get_session() as session:
             result = await session.execute(
@@ -404,7 +415,7 @@ class SkillStore:
         self.db = db
     
     async def create_skill(self, name: str, description: str,
-                           steps: List[Dict], source_trajectory: str = None) -> str:
+                           steps: list[dict], source_trajectory: str | None = None) -> str:
         """Create a new skill."""
         async with self.db.get_session() as session:
             skill = SkillModel(
@@ -417,13 +428,13 @@ class SkillStore:
             await session.commit()
             return skill.id
     
-    async def get_skill(self, skill_id: str) -> Optional[Dict]:
+    async def get_skill(self, skill_id: str) -> dict | None:
         """Get a skill by ID."""
         async with self.db.get_session() as session:
             skill = await session.get(SkillModel, skill_id)
             return skill.to_dict() if skill else None
     
-    async def get_all_skills(self) -> List[Dict]:
+    async def get_all_skills(self) -> list[dict]:
         """Get all skills."""
         async with self.db.get_session() as session:
             result = await session.execute(select(SkillModel))

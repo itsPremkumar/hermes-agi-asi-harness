@@ -1,14 +1,14 @@
 """Dynamic Parallelism — Parallelize independent tasks with conflict detection."""
 from __future__ import annotations
+
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set
+
 
 class ParallelScheduler:
     def __init__(self):
         self.id = str(uuid.uuid4())
     
-    def schedule(self, tasks: List[Dict]) -> List[List[str]]:
+    def schedule(self, tasks: list[dict]) -> list[list[str]]:
         """Schedule tasks into parallel batches."""
         batches = []
         completed = set()
@@ -31,7 +31,7 @@ class ParallelScheduler:
         
         return batches
     
-    def detect_conflicts(self, tasks: List[Dict]) -> List[Dict]:
+    def detect_conflicts(self, tasks: list[dict]) -> list[dict]:
         """Detect resource conflicts between tasks."""
         conflicts = []
         for i, task_a in enumerate(tasks):

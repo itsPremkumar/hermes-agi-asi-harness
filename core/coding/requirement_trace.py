@@ -2,10 +2,12 @@
 Requirement Traceability Graph — Requirement → Design → Implementation → Test → Evidence
 """
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class TraceNodeType(str, Enum):
     REQUIREMENT = "requirement"
@@ -26,8 +28,8 @@ class TraceNode:
     node_type: TraceNodeType
     description: str
     status: TraceStatus = TraceStatus.PENDING
-    references: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    references: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class TraceEdge:
@@ -38,12 +40,12 @@ class TraceEdge:
 class RequirementTraceGraph:
     def __init__(self):
         self.id = str(uuid.uuid4())
-        self.nodes: Dict[str, TraceNode] = {}
-        self.edges: List[TraceEdge] = []
+        self.nodes: dict[str, TraceNode] = {}
+        self.edges: list[TraceEdge] = []
     
     def add_node(self, node_type: TraceNodeType, description: str,
                  status: TraceStatus = TraceStatus.PENDING,
-                 metadata: Dict[str, Any] = None) -> TraceNode:
+                 metadata: dict[str, Any] | None = None) -> TraceNode:
         node = TraceNode(id=str(uuid.uuid4()), node_type=node_type,
                         description=description, status=status,
                         metadata=metadata or {})
@@ -54,15 +56,15 @@ class RequirementTraceGraph:
         self.edges.append(TraceEdge(source_id=source_id, target_id=target_id,
                                     relationship=relationship))
     
-    def get_unverified(self) -> List[TraceNode]:
+    def get_unverified(self) -> list[TraceNode]:
         return [n for n in self.nodes.values() if n.status != TraceStatus.VERIFIED]
     
-    def get_coverage(self) -> Dict[str, Any]:
+    def get_coverage(self) -> dict[str, Any]:
         total = len(self.nodes)
         verified = sum(1 for n in self.nodes.values() if n.status == TraceStatus.VERIFIED)
         return {"total": total, "verified": verified,
                 "coverage": verified / max(total, 1)}
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"nodes": len(self.nodes), "edges": len(self.edges),
                 "coverage": self.get_coverage()}

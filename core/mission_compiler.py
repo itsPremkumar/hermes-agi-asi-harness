@@ -11,12 +11,12 @@ Extracted from SKILL.md v9.0 ASI section 4:
 """
 
 from __future__ import annotations
-import uuid
-import re
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
 
-from .soul import Mission, RiskTier, EpistemicStatus, Claim
+import re
+import uuid
+from typing import Any
+
+from .soul import Mission, RiskTier
 
 
 class MissionCompiler:
@@ -45,7 +45,7 @@ class MissionCompiler:
             "physical": [r"hardware", r"device", r"robot", r"sensor", r"actuator"],
         }
 
-    def compile(self, raw_request: str, context: Optional[Dict[str, Any]] = None) -> Mission:
+    def compile(self, raw_request: str, context: dict[str, Any] | None = None) -> Mission:
         """Compile a raw request into a structured mission."""
         mission = Mission(
             id=str(uuid.uuid4()),
@@ -95,7 +95,7 @@ class MissionCompiler:
             cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
         return cleaned.strip()
 
-    def _detect_latent_needs(self, request: str, context: Optional[Dict[str, Any]]) -> str:
+    def _detect_latent_needs(self, request: str, context: dict[str, Any] | None) -> str:
         """Detect what the user will need next (superintelligent intent)."""
         # Simple heuristic: what would be the next logical step
         if "research" in request.lower():
@@ -110,7 +110,7 @@ class MissionCompiler:
         """Define the concrete desired outcome."""
         return f"Successfully complete: {request}"
 
-    def _extract_constraints(self, request: str) -> Dict[str, List[str]]:
+    def _extract_constraints(self, request: str) -> dict[str, list[str]]:
         """Extract constraints from the request."""
         constraints = {k: [] for k in ["hard", "soft", "forbidden", "physical", "legal", "ethical"]}
         request_lower = request.lower()
@@ -123,7 +123,7 @@ class MissionCompiler:
 
         return constraints
 
-    def _assess_risk(self, request: str, constraints: Dict[str, List[str]]) -> RiskTier:
+    def _assess_risk(self, request: str, constraints: dict[str, list[str]]) -> RiskTier:
         """Assess risk tier for the mission."""
         if constraints.get("forbidden") or constraints.get("legal"):
             return RiskTier.R4
@@ -139,7 +139,7 @@ class MissionCompiler:
             return RiskTier.R1
         return RiskTier.R0
 
-    def _define_acceptance_criteria(self, request: str) -> List[str]:
+    def _define_acceptance_criteria(self, request: str) -> list[str]:
         """Define measurable acceptance criteria."""
         criteria = []
         if "research" in request.lower():
@@ -155,7 +155,7 @@ class MissionCompiler:
             criteria.append("Outcome verified")
         return criteria
 
-    def _define_evidence_requirements(self, request: str) -> List[str]:
+    def _define_evidence_requirements(self, request: str) -> list[str]:
         """Define what evidence is required to prove success."""
         return ["Direct observation of outcome", "Source attribution for claims"]
 
@@ -172,7 +172,7 @@ class MissionCompiler:
         }
         return standards.get(risk, "test")
 
-    def _detect_assumptions(self, request: str) -> List[str]:
+    def _detect_assumptions(self, request: str) -> list[str]:
         """Detect hidden assumptions in the request."""
         assumptions = []
         if "the system" in request.lower():
@@ -181,14 +181,14 @@ class MissionCompiler:
             assumptions.append("User has necessary permissions")
         return assumptions
 
-    def _identify_unknowns(self, request: str) -> List[str]:
+    def _identify_unknowns(self, request: str) -> list[str]:
         """Identify explicit unknowns."""
         unknowns = []
         if "?" in request:
             unknowns.append("Question explicitly asked")
         return unknowns
 
-    def _estimate_budget(self, request: str) -> Dict[str, Any]:
+    def _estimate_budget(self, request: str) -> dict[str, Any]:
         """Estimate resource budget for the mission."""
         return {
             "tokens": 10000,
@@ -197,7 +197,7 @@ class MissionCompiler:
             "compute": "low",
         }
 
-    def detect_ambiguity(self, request: str) -> List[str]:
+    def detect_ambiguity(self, request: str) -> list[str]:
         """Detect ambiguity in the request."""
         ambiguities = []
         for pattern in self._ambiguity_patterns:

@@ -11,13 +11,13 @@ Implements multiple agent topologies:
 - CRITIC — Primary + Critic agents
 """
 
-import time
-import uuid
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+import time
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class AgentSpec:
     """Specification for spawning a subagent."""
     role: str
     system_prompt: str = ""
-    tools: List[str] = field(default_factory=list)
+    tools: list[str] = field(default_factory=list)
     max_steps: int = 15
     max_subagents: int = 0
 
@@ -48,7 +48,7 @@ class AgentResult:
     answer: str
     steps: int
     duration_ms: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class MultiAgentOrchestrator:
@@ -71,7 +71,7 @@ class MultiAgentOrchestrator:
         self.event_bus = event_bus
         self.kernel = kernel
         self._agent_counter = 0
-        self._active_agents: Dict[str, AgentSpec] = {}
+        self._active_agents: dict[str, AgentSpec] = {}
 
     def spawn_agent(self, spec: AgentSpec) -> str:
         """Spawns a subagent and returns its ID."""
@@ -87,9 +87,9 @@ class MultiAgentOrchestrator:
 
     async def execute_sequential(
         self,
-        tasks: List[str],
+        tasks: list[str],
         role: str = "executor",
-    ) -> List[AgentResult]:
+    ) -> list[AgentResult]:
         """Executes tasks sequentially through specialist agents."""
         results = []
         context = ""
@@ -116,9 +116,9 @@ class MultiAgentOrchestrator:
 
     async def execute_parallel(
         self,
-        tasks: List[str],
+        tasks: list[str],
         role: str = "executor",
-    ) -> List[AgentResult]:
+    ) -> list[AgentResult]:
         """Executes tasks in parallel across multiple agents."""
         async def execute_single(task: str, index: int) -> AgentResult:
             agent_id = self.spawn_agent(AgentSpec(role=role, system_prompt=self.get_role_prompt(role)))
@@ -233,7 +233,7 @@ class MultiAgentOrchestrator:
         """Judge evaluates debate and returns verdict."""
         return f"[VERDICT] After reviewing both sides on '{topic}': Both arguments have merit. Synthesis: combine key points from each.",
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Returns orchestrator status."""
         return {
             "active_agents": len(self._active_agents),

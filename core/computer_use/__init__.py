@@ -20,27 +20,27 @@ class ComputerUseEngine:
     """Computer use engine for GUI automation."""
     
     def __init__(self):
-        self._actions: List[Dict[str, Any]] = []
+        self._actions: list[dict[str, Any]] = []
     
-    async def capture_screen(self) -> Dict[str, Any]:
+    async def capture_screen(self) -> dict[str, Any]:
         """Capture the screen."""
         return {"status": "captured", "width": 1920, "height": 1080, "format": "png"}
     
-    async def click(self, x: int, y: int, button: str = "left") -> Dict[str, Any]:
+    async def click(self, x: int, y: int, button: str = "left") -> dict[str, Any]:
         """Click at coordinates."""
         return {"action": "click", "x": x, "y": y, "button": button, "status": "success"}
     
-    async def type_text(self, text: str, interval: float = 0.05) -> Dict[str, Any]:
+    async def type_text(self, text: str, interval: float = 0.05) -> dict[str, Any]:
         """Type text."""
         return {"action": "type", "text": text, "status": "success"}
     
-    async def press_key(self, key: str) -> Dict[str, Any]:
+    async def press_key(self, key: str) -> dict[str, Any]:
         """Press a key."""
         return {"action": "press", "key": key, "status": "success"}
     
-    async def find_element(self, description: str) -> Dict[str, Any]:
+    async def find_element(self, description: str) -> dict[str, Any]:
         """Find an element on screen."""
         return {"element": description, "x": 100, "y": 200, "found": True}
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "actions": len(self._actions)}

@@ -33,14 +33,14 @@ class DebateEngine:
     """Self-play and debate mechanisms."""
     
     def __init__(self):
-        self._debates: List[Dict[str, Any]] = []
+        self._debates: list[dict[str, Any]] = []
     
     async def conduct_debate(
         self,
         proposition: str,
         rounds: int = 3,
         brain: Any = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Conduct a structured debate."""
         debate_rounds = []
         
@@ -70,7 +70,7 @@ class DebateEngine:
         self._debates.append(result)
         return result
     
-    def detect_fallacies(self, argument: str) -> List[str]:
+    def detect_fallacies(self, argument: str) -> list[str]:
         """Detect logical fallacies."""
         fallacies = []
         arg_lower = argument.lower()
@@ -84,5 +84,5 @@ class DebateEngine:
         
         return fallacies
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "debates_count": len(self._debates)}

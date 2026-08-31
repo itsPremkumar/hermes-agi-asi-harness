@@ -12,6 +12,7 @@ Extracted from:
 
 from __future__ import annotations
 
+import builtins
 import logging
 import time
 import uuid
@@ -26,7 +27,7 @@ class Role:
     """A specialized agent role."""
     name: str
     prompt_key: str
-    toolset: Optional[str] = None
+    toolset: str | None = None
     objective: str = ""
     system_prompt: str = ""
 
@@ -39,14 +40,14 @@ class Agent:
     status: str = "active"
     spawned: float = field(default_factory=time.time)
     last_seen: float = field(default_factory=time.time)
-    result: Optional[str] = None
+    result: str | None = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # ROLE DEFINITIONS (from agx-harness-main + hermes-asi-master)
 # ═══════════════════════════════════════════════════════════════════════════════════
 
-DEFAULT_ROLES: Dict[str, Role] = {
+DEFAULT_ROLES: dict[str, Role] = {
     # Manager / planner
     "manager": Role("manager", "planner", None,
                     "Decompose goal, delegate to workers, supervise.",
@@ -108,9 +109,9 @@ class AgentRegistry:
     """Registry of live agents."""
     
     def __init__(self):
-        self.agents: Dict[str, Agent] = {}
+        self.agents: dict[str, Agent] = {}
     
-    def spawn(self, role_name: str, agent_id: str = None) -> str:
+    def spawn(self, role_name: str, agent_id: str | None = None) -> str:
         """Spawn a new agent with the given role."""
         role = DEFAULT_ROLES.get(role_name)
         if not role:
@@ -139,19 +140,19 @@ class AgentRegistry:
             return True
         return False
     
-    def active(self) -> List[str]:
+    def active(self) -> builtins.list[str]:
         """Get list of active agent IDs."""
         return [a for a, b in self.agents.items() if b.status == "active"]
     
-    def list(self) -> Dict[str, Agent]:
+    def list(self) -> dict[str, Agent]:
         """List all agents."""
         return self.agents
     
-    def get_by_role(self, role_name: str) -> List[Agent]:
+    def get_by_role(self, role_name: str) -> builtins.list[Agent]:
         """Get all agents with a specific role."""
         return [a for a in self.agents.values() if a.role.name == role_name]
     
-    def get_role_config(self, config: Dict[str, Any], name: str) -> Role:
+    def get_role_config(self, config: dict[str, Any], name: str) -> Role:
         """Resolve a role from config overrides or defaults."""
         overrides = (config.get("roles") or {}).get(name) or {}
         base = DEFAULT_ROLES.get(name, Role(name, "implementer"))

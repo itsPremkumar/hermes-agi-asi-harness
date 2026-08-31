@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 class SystemVersion:
     """A version of the system configuration."""
     version_id: str
-    parent: Optional[str]
-    components: Dict[str, Any]
+    parent: str | None
+    components: dict[str, Any]
     created_at: float = field(default_factory=time.time)
     promoted: bool = False
     rolled_back: bool = False
@@ -35,7 +35,7 @@ class CanaryDeployment:
     version: str
     stage: str  # "5%", "25%", "50%", "100%"
     status: str  # "running", "passed", "failed", "frozen"
-    metrics: Dict[str, float] = field(default_factory=dict)
+    metrics: dict[str, float] = field(default_factory=dict)
     started_at: float = field(default_factory=time.time)
 
 
@@ -53,16 +53,16 @@ class DriftAlert:
 class RollbackEngine:
     """Canary deployment and rollback infrastructure."""
 
-    def __init__(self, state_dir: str = None):
-        self._versions: Dict[str, SystemVersion] = {}
-        self._current_version: Optional[str] = None
-        self._canaries: List[CanaryDeployment] = []
-        self._drift_alerts: List[DriftAlert] = []
+    def __init__(self, state_dir: str | None = None):
+        self._versions: dict[str, SystemVersion] = {}
+        self._current_version: str | None = None
+        self._canaries: list[CanaryDeployment] = []
+        self._drift_alerts: list[DriftAlert] = []
         self._state_dir = Path(state_dir) if state_dir else Path("state")
         self._state_dir.mkdir(parents=True, exist_ok=True)
         self._stages = ["5%", "25%", "50%", "100%"]
 
-    def create_version(self, components: Dict[str, Any], parent: str = None) -> SystemVersion:
+    def create_version(self, components: dict[str, Any], parent: str | None = None) -> SystemVersion:
         """Create a new system version."""
         version = SystemVersion(
             version_id=f"v{len(self._versions) + 1}-{uuid.uuid4().hex[:6]}",
@@ -82,7 +82,7 @@ class RollbackEngine:
         logger.info(f"Promoted version: {version_id}")
         return True
 
-    def rollback(self) -> Optional[str]:
+    def rollback(self) -> str | None:
         """Rollback to parent version."""
         if not self._current_version:
             return None
@@ -123,7 +123,7 @@ class RollbackEngine:
             return True
         return False
 
-    def detect_drift(self, metric: str, baseline: float, current: float, threshold: float = 0.1) -> Optional[DriftAlert]:
+    def detect_drift(self, metric: str, baseline: float, current: float, threshold: float = 0.1) -> DriftAlert | None:
         """Detect metric drift."""
         if baseline == 0:
             return None
@@ -140,15 +140,15 @@ class RollbackEngine:
             return alert
         return None
 
-    def get_current_version(self) -> Optional[SystemVersion]:
+    def get_current_version(self) -> SystemVersion | None:
         if self._current_version:
             return self._versions.get(self._current_version)
         return None
 
-    def get_version_history(self) -> List[SystemVersion]:
+    def get_version_history(self) -> list[SystemVersion]:
         return list(self._versions.values())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_versions": len(self._versions),
             "current_version": self._current_version,
@@ -173,7 +173,7 @@ class RollbackPlugin:
     async def health(self):
         return {"status": "healthy", **self.engine.get_stats()}
 
-    async def create_version(self, components: Dict[str, Any]):
+    async def create_version(self, components: dict[str, Any]):
         return self.engine.create_version(components)
 
     async def rollback(self):

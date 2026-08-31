@@ -1,9 +1,9 @@
 """Production Deployment Stack - Docker, Kubernetes, monitoring configuration."""
 from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Any, Dict
-
 
 DOCKER_COMPOSE_YAML = """
 version: '3.8'

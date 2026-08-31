@@ -1,176 +1,46 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "hermes-agi-asi-harness"
+name = "harnix"
 version = "1.0.0"
-description = "Production-grade, free-first, modular, model-agnostic autonomous agent harness with advanced coding intelligence"
+description = "Harness Runtime Kernel — LangGraph StateGraph + Agent Lifecycle"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.11"
-authors = [{name = "Prem Kumar", email = "itsPremkumar@users.noreply.github.com"}]
-keywords = ["agi", "asi", "agent", "harness", "langgraph", "langchain", "autonomous"]
+requires-python = ">=3.10"
+authors = [
+    {name = "Hermes AGI/ASI Contributors"},
+]
+keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
 dependencies = [
-    "PyYAML>=6.0",
-    "tomli>=2.0",
-    "psutil>=5.9.0",
-    "aiofiles>=23.2.0",
-    "httpx>=0.25.0",
-    "requests>=2.31.0",
-    "tenacity>=8.2.0",
-    "langgraph>=0.2.0",
-    "langchain>=0.3.0",
+    "langgraph>=1.0.0",
     "langchain-core>=0.3.0",
-    "langsmith>=0.1.0",
-    "deepagents>=0.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3.0",
-    "pytest-cov>=4.0",
-    "pytest-asyncio>=0.23.0",
-    "pytest-xdist>=3.5.0",
-    "ruff>=0.5.0",
-    "mypy>=1.10.0",
-    "pre-commit>=3.7.0",
-    "tox>=4.15.0",
-]
-docs = [
-    "mkdocs>=1.6.0",
-    "mkdocs-material>=9.5.0",
-    "mkdocstrings[python]>=0.25.0",
-]
-security = [
-    "bandit>=1.7.0",
-    "safety>=3.0.0",
-    "pip-audit>=2.6.0",
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "black",
+    "ruff",
 ]
 
-[project.scripts]
-hermes-harness = "harness.cli:main"
+[tool.setuptools.packages.find]
+include = ["harnix*"]
 
-[project.urls]
-Homepage = "https://github.com/itsPremkumar/hermes-agi-asi-harness"
-Documentation = "https://github.com/itsPremkumar/hermes-agi-asi-harness/blob/main/docs"
-Repository = "https://github.com/itsPremkumar/hermes-agi-asi-harness"
-Issues = "https://github.com/itsPremkumar/hermes-agi-asi-harness/issues"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/harness"]
-
-# ===== pytest =====
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "-v",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=src/harness",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml:coverage.xml",
-    "--cov-fail-under=80",
-    "-x",
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks integration tests",
-    "unit: marks unit tests",
-]
-asyncio_mode = "auto"
-
-# ===== ruff =====
-[tool.ruff]
-target-version = "py311"
-line-length = 100
-src = ["src", "tests"]
-
-[tool.ruff.lint]
-select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # pyflakes
-    "I",      # isort
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "UP",     # pyupgrade
-    "ARG",    # flake8-unused-arguments
-    "SIM",    # flake8-simplify
-    "TCH",    # flake8-type-checking
-    "PTH",    # flake8-use-pathlib
-    "ERA",    # eradicate
-    "PD",     # pandas-vet
-    "NPY",    # numpy-specific
-    "RUF",    # ruff-specific
-]
-ignore = [
-    "E501",   # line too long (handled by formatter)
-    "B008",   # do not perform function calls in argument defaults
-    "ERA001", # commented-out code
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "S101"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-
-# ===== mypy =====
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = false
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-show_error_codes = true
-namespace_packages = true
-explicit_package_bases = true
-
-[[tool.mypy.overrides]]
-module = ["langgraph.*", "langchain.*", "langsmith.*", "deepagents.*"]
-ignore_missing_imports = true
-
-# ===== coverage =====
-[tool.coverage.run]
-source = ["src/harness"]
-branch = true
-omit = ["tests/*", "src/harness/cli.py"]
-
-[tool.coverage.report]
-show_missing = true
-fail_under = 80
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.",
-]
-
-# ===== bandit =====
-[tool.bandit]
-exclude_dirs = ["tests"]
-skips = ["B101"]

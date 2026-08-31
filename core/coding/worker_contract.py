@@ -1,8 +1,10 @@
 """Worker Contract — Bounded context for each agent."""
 from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
+
 
 @dataclass
 class WorkerContract:
@@ -11,25 +13,25 @@ class WorkerContract:
     task_id: str
     objective: str
     repository_snapshot: str
-    relevant_files: List[str]
-    constraints: List[str]
-    acceptance_tests: List[str]
-    allowed_tools: List[str]
+    relevant_files: list[str]
+    constraints: list[str]
+    acceptance_tests: list[str]
+    allowed_tools: list[str]
     risk_level: str
-    output_artifacts: List[str]
-    escalation_rules: List[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    output_artifacts: list[str]
+    escalation_rules: list[str]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class ContractManager:
     def __init__(self):
-        self.contracts: Dict[str, WorkerContract] = {}
+        self.contracts: dict[str, WorkerContract] = {}
     
     def create_contract(self, mission_id: str, task_id: str, objective: str,
-                        repository_snapshot: str, relevant_files: List[str],
-                        constraints: List[str], acceptance_tests: List[str],
-                        allowed_tools: List[str], risk_level: str = "medium",
-                        output_artifacts: List[str] = None,
-                        escalation_rules: List[str] = None, **kwargs) -> WorkerContract:
+                        repository_snapshot: str, relevant_files: list[str],
+                        constraints: list[str], acceptance_tests: list[str],
+                        allowed_tools: list[str], risk_level: str = "medium",
+                        output_artifacts: list[str] | None = None,
+                        escalation_rules: list[str] | None = None, **kwargs) -> WorkerContract:
         contract = WorkerContract(
             id=str(uuid.uuid4()), mission_id=mission_id, task_id=task_id,
             objective=objective, repository_snapshot=repository_snapshot,
@@ -43,5 +45,5 @@ class ContractManager:
         self.contracts[contract.id] = contract
         return contract
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"contracts": len(self.contracts)}

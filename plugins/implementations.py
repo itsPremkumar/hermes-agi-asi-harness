@@ -7,12 +7,10 @@ All 10 placeholder plugins fully implemented.
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
@@ -145,7 +143,7 @@ class SchedulerPlugin(PluginBase):
             capabilities=["job_scheduling", "cron_jobs", "delayed_execution", "event_triggers"],
             cost="free",
         )
-        self._jobs: List[Dict[str, Any]] = []
+        self._jobs: list[dict[str, Any]] = []
     
     async def load(self) -> bool:
         logger.info("Scheduler plugin loaded")
@@ -215,7 +213,7 @@ class EvaluationPlugin(PluginBase):
             capabilities=["benchmarking", "regression_testing", "scoring", "leaderboard"],
             cost="free",
         )
-        self._benchmarks: List[Dict[str, Any]] = []
+        self._benchmarks: list[dict[str, Any]] = []
     
     async def load(self) -> bool:
         logger.info("Evaluation plugin loaded")
@@ -283,7 +281,7 @@ class ObservabilityPlugin(PluginBase):
             capabilities=["metrics", "tracing", "health_checks", "alerting"],
             cost="free",
         )
-        self._metrics: List[Dict[str, Any]] = []
+        self._metrics: list[dict[str, Any]] = []
     
     async def load(self) -> bool:
         logger.info("Observability plugin loaded")
@@ -297,7 +295,7 @@ class ObservabilityPlugin(PluginBase):
         logger.info("Observability plugin stopped")
         return True
     
-    def record_metric(self, name: str, value: float, labels: Dict[str, str] = None):
+    def record_metric(self, name: str, value: float, labels: dict[str, str] | None = None):
         self._metrics.append({
             "name": name,
             "value": value,

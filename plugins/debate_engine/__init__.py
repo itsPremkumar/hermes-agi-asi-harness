@@ -16,11 +16,12 @@ import asyncio
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_debate_engine")
 
@@ -42,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -98,8 +99,8 @@ class DebateRound:
     """A round in a debate."""
     round_num: int
     topic: str
-    arguments: List[Dict[str, Any]] = field(default_factory=list)
-    consensus: Optional[str] = None
+    arguments: list[dict[str, Any]] = field(default_factory=list)
+    consensus: str | None = None
 
 
 @dataclass
@@ -108,18 +109,18 @@ class Debater:
     id: str
     name: str
     perspective: Perspective
-    func: Optional[Callable] = None
+    func: Callable | None = None
 
 
 class DebateEngine:
     """Debate engine for multi-perspective reasoning."""
     
     def __init__(self):
-        self.debaters: Dict[str, Debater] = {}
-        self.rounds: List[DebateRound] = []
-        self.topic: Optional[str] = None
+        self.debaters: dict[str, Debater] = {}
+        self.rounds: list[DebateRound] = []
+        self.topic: str | None = None
     
-    def add_debater(self, name: str, perspective: str, func: Callable = None) -> str:
+    def add_debater(self, name: str, perspective: str, func: Callable | None = None) -> str:
         """Add a debater."""
         debater_id = f"debater_{uuid.uuid4().hex[:8]}"
         self.debaters[debater_id] = Debater(
@@ -215,7 +216,7 @@ class DebateEngine:
         
         return transcript
     
-    def score_arguments(self, round_num: int = -1) -> Dict[str, float]:
+    def score_arguments(self, round_num: int = -1) -> dict[str, float]:
         """Score arguments by length and keyword density."""
         if not self.rounds:
             return {}
@@ -263,7 +264,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.engine: Optional[DebateEngine] = None
+        self.engine: DebateEngine | None = None
     
     async def load(self) -> bool:
         self.engine = DebateEngine()
@@ -280,7 +281,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -292,13 +293,13 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def add_debater(self, name: str, perspective: str, func: Callable = None) -> str:
+    def add_debater(self, name: str, perspective: str, func: Callable | None = None) -> str:
         return self.engine.add_debater(name, perspective, func)
     
     def set_topic(self, topic: str):
         self.engine.set_topic(topic)
     
-    async def run_round(self, round_num: int = 1) -> Dict[str, Any]:
+    async def run_round(self, round_num: int = 1) -> dict[str, Any]:
         round_obj = await self.engine.run_round(round_num)
         return {
             "round": round_obj.round_num,
@@ -312,10 +313,10 @@ class Plugin(PluginBase):
     def get_full_transcript(self) -> str:
         return self.engine.get_full_transcript()
     
-    def score_arguments(self, round_num: int = -1) -> Dict[str, float]:
+    def score_arguments(self, round_num: int = -1) -> dict[str, float]:
         return self.engine.score_arguments(round_num)
     
-    async def _run_with_perspectives(self, topic: str) -> Dict[str, Any]:
+    async def _run_with_perspectives(self, topic: str) -> dict[str, Any]:
         """Convenience: run a pro/con debate on a topic with built-in perspectives."""
         def pro_arg(t, p):
             return f"In favor of {t}: it offers clear benefits, scalability, and measurable upside."
@@ -333,5 +334,5 @@ class Plugin(PluginBase):
             "consensus": consensus,
         }
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

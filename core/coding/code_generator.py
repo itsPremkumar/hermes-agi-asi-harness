@@ -1,13 +1,15 @@
 """Real Code Generation - LLM-powered code synthesis."""
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 @dataclass
 class CodeGenRequest:
     spec: str
     language: str = "python"
-    context: Dict[str, Any] = None
+    context: dict[str, Any] = None
     tests: bool = True
     docs: bool = True
 
@@ -16,8 +18,8 @@ class CodeGenResult:
     code: str
     tests: str = ""
     docs: str = ""
-    imports: List[str] = None
-    metadata: Dict[str, Any] = None
+    imports: list[str] = None
+    metadata: dict[str, Any] = None
 
 class CodeGenerator:
     """Generate code using LLM with context-aware prompts."""
@@ -100,10 +102,10 @@ def test_basic():
         """Generate documentation."""
         return f"# {request.spec}\n\n## Usage\n\n```\n# TODO: Add usage examples\n```\n"
     
-    def _extract_imports(self, code: str) -> List[str]:
+    def _extract_imports(self, code: str) -> list[str]:
         """Extract imports from generated code."""
         imports = []
         for line in code.split('\n'):
-            if line.startswith('import ') or line.startswith('from '):
+            if line.startswith(('import ', 'from ')):
                 imports.append(line.strip())
         return imports

@@ -7,9 +7,8 @@ Inspired by: EvoAgentX, A-Evolve, JIT-Agent, Harneloop, DSPy.
 
 import logging
 import uuid
-import time
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Candidate:
     candidate_id: str
     description: str
-    changes: Dict[str, Any]
+    changes: dict[str, Any]
     score: float = 0.0
     status: str = "pending"  # pending, testing, promoted, rejected
 
@@ -28,7 +27,7 @@ class EvolutionEngine:
     
     def __init__(self):
         self.manifest = None
-        self._candidates: Dict[str, Candidate] = {}
+        self._candidates: dict[str, Candidate] = {}
     
     async def load(self) -> bool:
         logger.info("Evolution engine loaded")
@@ -41,7 +40,7 @@ class EvolutionEngine:
     async def stop(self) -> bool:
         return True
     
-    def create_candidate(self, description: str, changes: Dict[str, Any]) -> str:
+    def create_candidate(self, description: str, changes: dict[str, Any]) -> str:
         """Create an evolution candidate."""
         candidate_id = str(uuid.uuid4())
         candidate = Candidate(
@@ -71,7 +70,7 @@ class EvolutionEngine:
                 logger.info("Candidate rejected: %s (score=%.2f)", candidate.description, candidate.score)
         return False
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "type": "evolution_engine",

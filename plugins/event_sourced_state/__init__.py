@@ -12,9 +12,10 @@ import logging
 import os
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +24,15 @@ logger = logging.getLogger(__name__)
 class Event:
     """An immutable event in the system."""
     event_type: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: float = field(default_factory=time.time)
     source: str = "system"
-    mission_id: Optional[str] = None
-    task_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    mission_id: str | None = None
+    task_id: str | None = None
+    agent_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "event_id": self.event_id,
             "event_type": self.event_type,
@@ -47,10 +48,10 @@ class Event:
 class EventStore:
     """Event-sourced state store with replay and reduction."""
 
-    def __init__(self, state_dir: str = None):
-        self._events: List[Event] = []
-        self._state: Dict[str, Any] = {}
-        self._reducers: Dict[str, Callable] = {}
+    def __init__(self, state_dir: str | None = None):
+        self._events: list[Event] = []
+        self._state: dict[str, Any] = {}
+        self._reducers: dict[str, Callable] = {}
         self._state_dir = Path(state_dir) if state_dir else Path("state/events")
         self._state_dir.mkdir(parents=True, exist_ok=True)
         self._event_log_file = self._state_dir / "event_log.jsonl"
@@ -59,7 +60,7 @@ class EventStore:
         """Register a reducer function for an event type."""
         self._reducers[event_type] = reducer
 
-    def emit(self, event_type: str, data: Dict[str, Any], **kwargs) -> Event:
+    def emit(self, event_type: str, data: dict[str, Any], **kwargs) -> Event:
         """Emit an event and apply its reducer."""
         event = Event(event_type=event_type, data=data, **kwargs)
         self._events.append(event)
@@ -86,12 +87,12 @@ class EventStore:
 
     def get_events(
         self,
-        event_type: str = None,
-        mission_id: str = None,
-        task_id: str = None,
-        since: float = None,
+        event_type: str | None = None,
+        mission_id: str | None = None,
+        task_id: str | None = None,
+        since: float | None = None,
         limit: int = 100,
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Query events with filters."""
         results = self._events
         if event_type:
@@ -104,15 +105,15 @@ class EventStore:
             results = [e for e in results if e.timestamp >= since]
         return results[-limit:]
 
-    def replay(self, event_type: str = None, mission_id: str = None) -> List[Event]:
+    def replay(self, event_type: str | None = None, mission_id: str | None = None) -> list[Event]:
         """Replay events (optionally filtered)."""
         return self.get_events(event_type=event_type, mission_id=mission_id, limit=10000)
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """Get current reduced state."""
         return dict(self._state)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "total_events": len(self._events),
             "state_keys": len(self._state),
@@ -139,7 +140,7 @@ class EventSourcedStatePlugin:
     async def health(self):
         return {"status": "healthy", **self.store.get_stats()}
 
-    async def emit(self, event_type: str, data: Dict[str, Any], **kwargs):
+    async def emit(self, event_type: str, data: dict[str, Any], **kwargs):
         return self.store.emit(event_type, data, **kwargs)
 
 

@@ -11,8 +11,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_temporal")
 
@@ -23,7 +24,7 @@ class ScheduledTask:
     task_id: str
     name: str
     duration: float
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     scheduled_start: float = 0.0
     scheduled_end: float = 0.0
     status: str = "pending"
@@ -33,10 +34,10 @@ class TemporalPlanner:
     """Temporal reasoning and planning."""
     
     def __init__(self):
-        self._tasks: Dict[str, ScheduledTask] = {}
-        self._schedule: List[ScheduledTask] = []
+        self._tasks: dict[str, ScheduledTask] = {}
+        self._schedule: list[ScheduledTask] = []
     
-    def add_task(self, name: str, duration: float, dependencies: List[str] = None) -> str:
+    def add_task(self, name: str, duration: float, dependencies: list[str] | None = None) -> str:
         """Add a task to the schedule."""
         task_id = str(uuid.uuid4())
         task = ScheduledTask(
@@ -48,7 +49,7 @@ class TemporalPlanner:
         self._tasks[task_id] = task
         return task_id
     
-    def schedule(self) -> List[Dict[str, Any]]:
+    def schedule(self) -> list[dict[str, Any]]:
         """Schedule tasks based on dependencies."""
         # Simple topological sort
         scheduled = []
@@ -73,5 +74,5 @@ class TemporalPlanner:
         self._schedule = [ScheduledTask(**s) for s in scheduled]
         return scheduled
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "tasks": len(self._tasks)}

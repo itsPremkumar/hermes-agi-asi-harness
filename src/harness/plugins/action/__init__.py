@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 # ============== Tool Use Plugin ==============
@@ -174,10 +174,10 @@ class APIPlugin(Plugin):
 
 
 __all__ = [
-    "ToolUsePlugin",
+    "APIPlugin",
     "CodeGenPlugin",
-    "WebPlugin",
     "FileSystemPlugin",
     "ShellPlugin",
-    "APIPlugin",
+    "ToolUsePlugin",
+    "WebPlugin",
 ]

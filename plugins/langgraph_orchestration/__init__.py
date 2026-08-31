@@ -47,8 +47,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: int = 512
         max_cpu_percent: int = 50
@@ -60,11 +60,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -112,7 +112,7 @@ class AgentMessage:
     """Message passed between agents."""
     role: str
     content: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -120,20 +120,20 @@ class AgentMessage:
 class ResearchState:
     """State for the research workflow."""
     question: str
-    subquestions: List[Dict[str, Any]] = field(default_factory=list)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
-    sources: List[Dict[str, Any]] = field(default_factory=list)
-    gaps: List[str] = field(default_factory=list)
+    subquestions: list[dict[str, Any]] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
+    sources: list[dict[str, Any]] = field(default_factory=list)
+    gaps: list[str] = field(default_factory=list)
     current_depth: int = 0
     max_depth: int = 3
     status: str = "initialized"
     report: str = ""
-    messages: List[AgentMessage] = field(default_factory=list)
+    messages: list[AgentMessage] = field(default_factory=list)
     
-    def add_message(self, role: str, content: str, metadata: Dict[str, Any] = None):
+    def add_message(self, role: str, content: str, metadata: dict[str, Any] | None = None):
         self.messages.append(AgentMessage(role=role, content=content, metadata=metadata or {}))
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "question": self.question,
             "subquestions": self.subquestions,
@@ -161,14 +161,14 @@ class Agent:
         name: str,
         role: AgentRole,
         system_prompt: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: list[dict[str, Any]] | None = None,
     ):
         self.name = name
         self.role = role
         self.system_prompt = system_prompt
         self.tools = tools or []
-        self.subagents: List[Agent] = []
-        self._state: Dict[str, Any] = {}
+        self.subagents: list[Agent] = []
+        self._state: dict[str, Any] = {}
     
     def add_subagent(self, agent: Agent):
         """Add a sub-agent."""
@@ -314,7 +314,7 @@ class LangGraphOrchestrator:
     
     def __init__(self, max_depth: int = 3):
         self.max_depth = max_depth
-        self.agents: Dict[AgentRole, Agent] = {}
+        self.agents: dict[AgentRole, Agent] = {}
         self._setup_agents()
     
     def _setup_agents(self):
@@ -422,7 +422,7 @@ class LangGraphOrchestrator:
         # Step 4: Report
         state = await self.agents[AgentRole.REPORTER].execute(state)
         
-        logger.info(f"✅ LangGraph research complete")
+        logger.info("✅ LangGraph research complete")
         
         return state
 
@@ -465,7 +465,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=70,
             ),
         )
-        self.orchestrator: Optional[LangGraphOrchestrator] = None
+        self.orchestrator: LangGraphOrchestrator | None = None
     
     async def load(self) -> bool:
         """Load the plugin."""
@@ -485,7 +485,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "plugin": self.manifest.name,
@@ -498,7 +498,7 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────────
     
-    async def run_research(self, question: str, max_depth: int = 3) -> Dict[str, Any]:
+    async def run_research(self, question: str, max_depth: int = 3) -> dict[str, Any]:
         """Run a full LangGraph-orchestrated research workflow."""
         if not self.orchestrator:
             await self.start()
@@ -507,6 +507,6 @@ class Plugin(PluginBase):
         state = await self.orchestrator.run(question)
         return state.to_dict()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Return plugin capabilities."""
         return self.manifest.capabilities

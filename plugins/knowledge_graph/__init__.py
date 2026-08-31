@@ -5,13 +5,13 @@ Implements a causal graph and entity store for tracking relationships between
 concepts, sources, and findings across research sessions and multi-agent coordination.
 """
 
-import time
 import json
-import sqlite3
 import pathlib
-from typing import Dict, List, Any, Optional, Set, Tuple
+import sqlite3
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 class RelationType(str, Enum):
@@ -32,7 +32,7 @@ class KGEntity:
     id: str
     name: str
     entity_type: str
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     last_updated: float = field(default_factory=time.time)
 
@@ -43,7 +43,7 @@ class KGRelation:
     target_id: str
     relation_type: RelationType
     strength: float = 1.0
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
 
 
@@ -53,7 +53,7 @@ class KnowledgeGraph:
     Uses SQLite for persistence with FTS5 full-text search.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         if db_path is None:
             self.db_path = ":memory:"
         else:
@@ -105,7 +105,7 @@ class KnowledgeGraph:
         entity_id: str,
         name: str,
         entity_type: str,
-        properties: Optional[Dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ) -> KGEntity:
         """Adds or updates an entity."""
         now = time.time()
@@ -132,7 +132,7 @@ class KnowledgeGraph:
                 pass
         return KGEntity(id=entity_id, name=name, entity_type=entity_type, properties=props)
 
-    def _get_entity_ids(self) -> Set[str]:
+    def _get_entity_ids(self) -> set[str]:
         cursor = self._conn.cursor()
         cursor.execute("SELECT id FROM entities")
         return {row[0] for row in cursor.fetchall()}
@@ -149,7 +149,7 @@ class KnowledgeGraph:
         target_id: str,
         relation_type: RelationType,
         strength: float = 1.0,
-        evidence: Optional[List[str]] = None,
+        evidence: list[str] | None = None,
     ):
         """Adds a relation between two entities."""
         with self._conn:
@@ -165,7 +165,7 @@ class KnowledgeGraph:
                 time.time(),
             ))
 
-    def get_entity(self, entity_id: str) -> Optional[KGEntity]:
+    def get_entity(self, entity_id: str) -> KGEntity | None:
         """Retrieves an entity by ID."""
         cursor = self._conn.cursor()
         cursor.execute("SELECT id, name, entity_type, properties_json, created_at, last_updated FROM entities WHERE id = ?", (entity_id,))
@@ -178,7 +178,7 @@ class KnowledgeGraph:
             )
         return None
 
-    def search_entities(self, query: str, limit: int = 20) -> List[KGEntity]:
+    def search_entities(self, query: str, limit: int = 20) -> list[KGEntity]:
         """Searches entities by name, type, or properties."""
         cursor = self._conn.cursor()
         if self._has_fts:
@@ -220,7 +220,7 @@ class KnowledgeGraph:
             for row in rows
         ]
 
-    def get_relations(self, entity_id: str, direction: str = "both") -> List[Tuple[KGEntity, KGRelation]]:
+    def get_relations(self, entity_id: str, direction: str = "both") -> list[tuple[KGEntity, KGRelation]]:
         """Gets all relations for an entity."""
         cursor = self._conn.cursor()
         if direction in ("outgoing", "both"):
@@ -262,7 +262,7 @@ class KnowledgeGraph:
             results.append((entity, relation))
         return results
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Returns summary statistics."""
         cursor = self._conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM entities")

@@ -15,7 +15,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -24,12 +24,12 @@ class AbstractSkill:
     id: str
     name: str
     description: str
-    preconditions: List[str]
-    steps: List[Dict[str, Any]]
-    postconditions: List[str]
-    verification_methods: List[str]
-    source_domains: List[str] = field(default_factory=list)
-    target_domains: List[str] = field(default_factory=list)
+    preconditions: list[str]
+    steps: list[dict[str, Any]]
+    postconditions: list[str]
+    verification_methods: list[str]
+    source_domains: list[str] = field(default_factory=list)
+    target_domains: list[str] = field(default_factory=list)
     transfer_count: int = 0
     success_rate: float = 0.5
 
@@ -40,7 +40,7 @@ class SkillInstance:
     id: str
     skill_id: str
     domain: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     success_count: int = 0
     failure_count: int = 0
     last_used: float = 0.0
@@ -50,14 +50,14 @@ class SkillTransfer:
     """Transfer skills across domains."""
 
     def __init__(self):
-        self.skills: Dict[str, AbstractSkill] = {}
-        self.instances: Dict[str, SkillInstance] = {}
+        self.skills: dict[str, AbstractSkill] = {}
+        self.instances: dict[str, SkillInstance] = {}
 
     def define_skill(self, name: str, description: str,
-                     preconditions: List[str], steps: List[Dict[str, Any]],
-                     postconditions: List[str],
-                     verification_methods: List[str],
-                     source_domains: List[str] = None) -> AbstractSkill:
+                     preconditions: list[str], steps: list[dict[str, Any]],
+                     postconditions: list[str],
+                     verification_methods: list[str],
+                     source_domains: list[str] | None = None) -> AbstractSkill:
         skill = AbstractSkill(
             id=str(uuid.uuid4()),
             name=name,
@@ -72,7 +72,7 @@ class SkillTransfer:
         return skill
 
     def instantiate_skill(self, skill_id: str, domain: str,
-                          parameters: Dict[str, Any]) -> SkillInstance:
+                          parameters: dict[str, Any]) -> SkillInstance:
         instance = SkillInstance(
             id=str(uuid.uuid4()),
             skill_id=skill_id,
@@ -84,7 +84,7 @@ class SkillTransfer:
         return instance
 
     def transfer_skill(self, skill_id: str, target_domain: str,
-                       parameters: Dict[str, Any] = None) -> Optional[SkillInstance]:
+                       parameters: dict[str, Any] | None = None) -> SkillInstance | None:
         """Transfer an abstract skill to a new domain."""
         skill = self.skills.get(skill_id)
         if not skill:
@@ -102,7 +102,7 @@ class SkillTransfer:
         return instance
 
     def find_applicable_skills(self, domain: str,
-                               available_preconditions: List[str]) -> List[AbstractSkill]:
+                               available_preconditions: list[str]) -> list[AbstractSkill]:
         """Find skills applicable in a given domain."""
         applicable = []
         for skill in self.skills.values():
@@ -112,13 +112,13 @@ class SkillTransfer:
                     applicable.append(skill)
         return applicable
 
-    def get_skill(self, skill_id: str) -> Optional[AbstractSkill]:
+    def get_skill(self, skill_id: str) -> AbstractSkill | None:
         return self.skills.get(skill_id)
 
-    def get_instances_for_domain(self, domain: str) -> List[SkillInstance]:
+    def get_instances_for_domain(self, domain: str) -> list[SkillInstance]:
         return [i for i in self.instances.values() if i.domain == domain]
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {
             "abstract_skills": len(self.skills),
             "instances": len(self.instances),

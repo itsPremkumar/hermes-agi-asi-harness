@@ -41,8 +41,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -54,11 +54,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -87,9 +87,9 @@ class DocumentIntel:
     """Document parsing and extraction."""
     
     def __init__(self):
-        self.stopwords = set("the a an and or but if then else for to of in on at by with from as is are was were be been being this that these those it its their our your my we you they he she them his her not no yes do does did done has have had will would can could should may might must i me he she they who what which when where why how all any both each few more most other some such only own same so than too very s t can will just don should now".split())
+        self.stopwords = {"the", "a", "an", "and", "or", "but", "if", "then", "else", "for", "to", "of", "in", "on", "at", "by", "with", "from", "as", "is", "are", "was", "were", "be", "been", "being", "this", "that", "these", "those", "it", "its", "their", "our", "your", "my", "we", "you", "they", "he", "she", "them", "his", "her", "not", "no", "yes", "do", "does", "did", "done", "has", "have", "had", "will", "would", "can", "could", "should", "may", "might", "must", "i", "me", "who", "what", "which", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "only", "own", "same", "so", "than", "too", "very", "s", "t", "just", "don", "now"}
     
-    def read_text(self, path: str) -> Dict[str, Any]:
+    def read_text(self, path: str) -> dict[str, Any]:
         """Read text from a file."""
         file_path = Path(path)
         if not file_path.exists():
@@ -106,7 +106,7 @@ class DocumentIntel:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def extract_metadata(self, content: str) -> Dict[str, Any]:
+    def extract_metadata(self, content: str) -> dict[str, Any]:
         """Extract basic metadata from text."""
         words = re.findall(r'\b[a-zA-Z]+\b', content.lower())
         word_count = len(words)
@@ -127,7 +127,7 @@ class DocumentIntel:
             "avg_sentence_length": round(word_count / max(sentence_count, 1), 2),
         }
     
-    def extract_keywords(self, content: str, top_k: int = 10) -> List[str]:
+    def extract_keywords(self, content: str, top_k: int = 10) -> list[str]:
         """Extract keywords from text."""
         words = re.findall(r'\b[a-zA-Z]{3,}\b', content.lower())
         # Remove stopwords
@@ -139,9 +139,9 @@ class DocumentIntel:
         # Return top keywords
         return [word for word, _ in word_counts.most_common(top_k)]
     
-    def extract_entities(self, content: str) -> Dict[str, List[str]]:
+    def extract_entities(self, content: str) -> dict[str, list[str]]:
         """Extract basic entities (capitalized words, emails, URLs, numbers)."""
-        entities: Dict[str, List[str]] = {
+        entities: dict[str, list[str]] = {
             "proper_nouns": [],
             "emails": [],
             "urls": [],
@@ -171,7 +171,7 @@ class DocumentIntel:
         
         return entities
     
-    def extract_tables(self, content: str) -> List[Dict[str, Any]]:
+    def extract_tables(self, content: str) -> list[dict[str, Any]]:
         """Extract tables from Markdown or CSV content."""
         tables = []
         
@@ -190,7 +190,7 @@ class DocumentIntel:
         
         return tables
     
-    def summarize(self, content: str, sentences: int = 3) -> Dict[str, Any]:
+    def summarize(self, content: str, sentences: int = 3) -> dict[str, Any]:
         """Extractive summarization."""
         # Split into sentences
         raw_sentences = re.split(r'(?<=[.!?])\s+', content.strip())
@@ -200,7 +200,7 @@ class DocumentIntel:
             return {"success": False, "error": "No sentences found"}
         
         # Score sentences by word frequency
-        word_freq: Dict[str, int] = {}
+        word_freq: dict[str, int] = {}
         for sentence in raw_sentences:
             words = re.findall(r'\b[a-zA-Z]{3,}\b', sentence.lower())
             for word in words:
@@ -229,7 +229,7 @@ class DocumentIntel:
             "summary_sentences": len(top_sentences),
         }
     
-    def analyze_document(self, path: str) -> Dict[str, Any]:
+    def analyze_document(self, path: str) -> dict[str, Any]:
         """Full document analysis."""
         result = self.read_text(path)
         if not result["success"]:
@@ -277,7 +277,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.engine: Optional[DocumentIntel] = None
+        self.engine: DocumentIntel | None = None
     
     async def load(self) -> bool:
         self.engine = DocumentIntel()
@@ -294,7 +294,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -305,26 +305,26 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def read_text(self, path: str) -> Dict[str, Any]:
+    def read_text(self, path: str) -> dict[str, Any]:
         return self.engine.read_text(path)
     
-    def extract_metadata(self, content: str) -> Dict[str, Any]:
+    def extract_metadata(self, content: str) -> dict[str, Any]:
         return self.engine.extract_metadata(content)
     
-    def extract_keywords(self, content: str, top_k: int = 10) -> List[str]:
+    def extract_keywords(self, content: str, top_k: int = 10) -> list[str]:
         return self.engine.extract_keywords(content, top_k)
     
-    def extract_entities(self, content: str) -> Dict[str, List[str]]:
+    def extract_entities(self, content: str) -> dict[str, list[str]]:
         return self.engine.extract_entities(content)
     
-    def extract_tables(self, content: str) -> List[Dict[str, Any]]:
+    def extract_tables(self, content: str) -> list[dict[str, Any]]:
         return self.engine.extract_tables(content)
     
-    def summarize(self, content: str, sentences: int = 3) -> Dict[str, Any]:
+    def summarize(self, content: str, sentences: int = 3) -> dict[str, Any]:
         return self.engine.summarize(content, sentences)
     
-    def analyze_document(self, path: str) -> Dict[str, Any]:
+    def analyze_document(self, path: str) -> dict[str, Any]:
         return self.engine.analyze_document(path)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

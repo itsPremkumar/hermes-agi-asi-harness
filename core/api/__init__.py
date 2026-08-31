@@ -1,10 +1,14 @@
 """REST API & WebSocket Server - FastAPI-based API for external integration."""
 from __future__ import annotations
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+
+import asyncio
+import json
+import uuid
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional
-import asyncio, json, uuid
 
 app = FastAPI(title="Hermes AGI/ASI Master API", version="12.0")
 
@@ -17,18 +21,18 @@ app.add_middleware(
 )
 
 # In-memory state (replace with DB in production)
-missions: Dict[str, Any] = {}
-ws_connections: List[WebSocket] = []
+missions: dict[str, Any] = {}
+ws_connections: list[WebSocket] = []
 
 class CreateMissionRequest(BaseModel):
     goal: str
-    config: Optional[Dict] = None
+    config: dict | None = None
 
 class MissionResponse(BaseModel):
     id: str
     goal: str
     status: str
-    result: Optional[Dict] = None
+    result: dict | None = None
 
 @app.get("/health")
 async def health():
@@ -59,8 +63,7 @@ async def get_mission(mission_id: str):
 
 @app.delete("/api/missions/{mission_id}")
 async def delete_mission(mission_id: str):
-    if mission_id in missions:
-        del missions[mission_id]
+    missions.pop(mission_id, None)
     return {"status": "deleted"}
 
 @app.websocket("/ws/missions/{mission_id}")

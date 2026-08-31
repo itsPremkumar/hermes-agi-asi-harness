@@ -21,9 +21,7 @@ import asyncio
 import os
 import sys
 import json
-import time
 import argparse
-import traceback
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -42,7 +40,7 @@ def run_all_phases_verification():
     cross-validates results, and produces a confidence score.
     """
     print(f"\n{'#'*70}")
-    print(f"#  MASTER VERIFICATION — COMPLETE SYSTEM VALIDATION")
+    print("#  MASTER VERIFICATION — COMPLETE SYSTEM VALIDATION")
     print(f"#  {datetime.now(timezone.utc).isoformat()}")
     print(f"{'#'*70}")
     
@@ -74,7 +72,7 @@ def run_all_phases_verification():
     # Create 3-round verification plan
     plan = verifier.create_plan(existing, num_rounds=3)
     
-    print(f"\nVerification plan:")
+    print("\nVerification plan:")
     print(f"  Rounds: {plan.num_rounds}")
     print(f"  Isolated runs: {plan.isolated_runs}")
     print(f"  Cross-validation: {plan.cross_validate}")
@@ -89,7 +87,7 @@ def run_all_phases_verification():
     
     # Final verdict
     print(f"\n{'#'*70}")
-    print(f"#  FINAL VERDICT")
+    print("#  FINAL VERDICT")
     print(f"{'#'*70}")
     
     rounds_passed = sum(1 for r in result["rounds"] if r["passed"])
@@ -104,15 +102,15 @@ def run_all_phases_verification():
     overall = result["overall_passed"]
     
     if overall:
-        print(f"\n  ✓✓✓ SYSTEM FULLY VERIFIED ✓✓✓")
+        print("\n  ✓✓✓ SYSTEM FULLY VERIFIED ✓✓✓")
         print(f"  All {total_rounds} verification rounds passed")
-        print(f"  All rounds agree — consensus achieved")
-        print(f"  System is production-ready")
+        print("  All rounds agree — consensus achieved")
+        print("  System is production-ready")
     else:
-        print(f"\n  ✗✗✗ VERIFICATION FAILED ✗✗✗")
+        print("\n  ✗✗✗ VERIFICATION FAILED ✗✗✗")
         print(f"  {total_rounds - rounds_passed} round(s) failed")
         if not result["consensus"]["all_rounds_agree"]:
-            print(f"  Cross-validation: rounds disagree")
+            print("  Cross-validation: rounds disagree")
     
     # Save result
     result_file = PROJECT_ROOT / "verification_result.json"
@@ -156,7 +154,7 @@ async def run_daily_dev():
     
     result = await engine.run_daily_cycle()
     
-    print(f"\nDaily dev cycle complete:")
+    print("\nDaily dev cycle complete:")
     print(f"  Ideas generated: {result['ideas_generated']}")
     print(f"  Ideas implemented: {result['ideas_implemented']}")
     print(f"  Tests passed: {result['tests_passed']}/{result['tests_total']}")
@@ -180,7 +178,7 @@ async def run_real_env():
 async def run_all():
     """Run everything: daily dev → verification → real-env."""
     print(f"\n{'#'*70}")
-    print(f"#  MASTER ORCHESTRATOR — FULL SYSTEM RUN")
+    print("#  MASTER ORCHESTRATOR — FULL SYSTEM RUN")
     print(f"#  {datetime.now(timezone.utc).isoformat()}")
     print(f"{'#'*70}\n")
     
@@ -188,25 +186,25 @@ async def run_all():
     
     # Step 1: Daily Development
     print(f"\n{'='*60}")
-    print(f"  STEP 1/3: Daily Development Cycle")
+    print("  STEP 1/3: Daily Development Cycle")
     print(f"{'='*60}")
     results["daily_dev"] = await run_daily_dev()
     
     # Step 2: Multi-Round Verification
     print(f"\n{'='*60}")
-    print(f"  STEP 2/3: Multi-Round Verification")
+    print("  STEP 2/3: Multi-Round Verification")
     print(f"{'='*60}")
     results["verification"] = run_all_phases_verification()
     
     # Step 3: Real-Environment Validation
     print(f"\n{'='*60}")
-    print(f"  STEP 3/3: Real-Environment Validation")
+    print("  STEP 3/3: Real-Environment Validation")
     print(f"{'='*60}")
     results["real_env"] = await run_real_env()
     
     # Final summary
     print(f"\n{'#'*70}")
-    print(f"#  MASTER ORCHESTRATOR — FINAL SUMMARY")
+    print("#  MASTER ORCHESTRATOR — FINAL SUMMARY")
     print(f"{'#'*70}")
     
     print(f"\n  Daily Dev:   {results['daily_dev']['ideas_implemented']} ideas implemented, {results['daily_dev']['tests_passed']}/{results['daily_dev']['tests_total']} tests passed")
@@ -220,9 +218,9 @@ async def run_all():
     )
     
     if all_passed:
-        print(f"\n  🚀 SYSTEM FULLY OPERATIONAL — ALL CHECKS PASSED 🚀")
+        print("\n  🚀 SYSTEM FULLY OPERATIONAL — ALL CHECKS PASSED 🚀")
     else:
-        print(f"\n  ⚠️  Some checks failed — review results above")
+        print("\n  ⚠️  Some checks failed — review results above")
     
     print(f"\n{'#'*70}\n")
     

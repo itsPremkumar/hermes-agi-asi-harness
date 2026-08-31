@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class FailureRecord:
     failure_class: str  # knowledge_gap, reasoning_error, planning_error, tool_selection, etc.
     root_cause: str
     recovery_action: str = ""
-    counterfactuals: List[str] = field(default_factory=list)
+    counterfactuals: list[str] = field(default_factory=list)
     recurrence_count: int = 0
     impact_score: float = 0.5
     timestamp: float = field(default_factory=time.time)
@@ -56,9 +56,9 @@ class FailureIntelligenceEngine:
     ]
 
     def __init__(self):
-        self._failures: Dict[str, FailureRecord] = {}
-        self._counterfactuals: Dict[str, Counterfactual] = {}
-        self._recurrence: Dict[str, List[str]] = {}  # root_cause → [failure_ids]
+        self._failures: dict[str, FailureRecord] = {}
+        self._counterfactuals: dict[str, Counterfactual] = {}
+        self._recurrence: dict[str, list[str]] = {}  # root_cause → [failure_ids]
 
     def record_failure(
         self,
@@ -96,7 +96,7 @@ class FailureIntelligenceEngine:
         if failure_id in self._failures:
             self._failures[failure_id].recovery_action = action
 
-    def generate_counterfactuals(self, failure_id: str) -> List[Counterfactual]:
+    def generate_counterfactuals(self, failure_id: str) -> list[Counterfactual]:
         """Generate counterfactual analyses for a failure."""
         failure = self._failures.get(failure_id)
         if not failure:
@@ -124,7 +124,7 @@ class FailureIntelligenceEngine:
         
         return counterfactuals
 
-    def _suggest_alternatives(self, failure: FailureRecord) -> List[tuple]:
+    def _suggest_alternatives(self, failure: FailureRecord) -> list[tuple]:
         """Suggest alternative actions based on failure class."""
         suggestions = {
             "knowledge_gap": [
@@ -159,7 +159,7 @@ class FailureIntelligenceEngine:
             ("skip_and_continue", "Skip this step and continue"),
         ])
 
-    def get_recurring_failures(self, min_count: int = 2) -> List[Dict[str, Any]]:
+    def get_recurring_failures(self, min_count: int = 2) -> list[dict[str, Any]]:
         """Get failures that recur frequently."""
         recurring = []
         for root_cause, failure_ids in self._recurrence.items():
@@ -172,7 +172,7 @@ class FailureIntelligenceEngine:
         recurring.sort(key=lambda x: x["count"], reverse=True)
         return recurring
 
-    def get_failure_summary(self) -> Dict[str, Any]:
+    def get_failure_summary(self) -> dict[str, Any]:
         """Get failure statistics."""
         if not self._failures:
             return {"total": 0}

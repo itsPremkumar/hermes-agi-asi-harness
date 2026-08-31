@@ -13,14 +13,14 @@ from __future__ import annotations
 import logging
 import math
 import random
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
-StrategyFn = Callable[[dict], Optional[str]]
+StrategyFn = Callable[[dict], str | None]
 
 
-def _scored_tips(state: dict) -> List[str]:
+def _scored_tips(state: dict) -> list[str]:
     """Frontier nodes that exist and carry a score."""
     out = []
     for nid in state["frontier"]:
@@ -30,7 +30,7 @@ def _scored_tips(state: dict) -> List[str]:
     return out
 
 
-def argmax(state: dict) -> Optional[str]:
+def argmax(state: dict) -> str | None:
     """Pick the best-scoring tip."""
     tips = _scored_tips(state)
     if not tips:
@@ -40,7 +40,7 @@ def argmax(state: dict) -> Optional[str]:
         else -float(state["tree"][nid]["score"] or 0.0)))
 
 
-def top_k(state: dict, k: int = 2) -> Optional[str]:
+def top_k(state: dict, k: int = 2) -> str | None:
     """Round-robin among top-k tips."""
     tips = _scored_tips(state)
     if not tips:
@@ -53,7 +53,7 @@ def top_k(state: dict, k: int = 2) -> Optional[str]:
     return ranked[idx]
 
 
-def epsilon_greedy(state: dict, eps: float = 0.3) -> Optional[str]:
+def epsilon_greedy(state: dict, eps: float = 0.3) -> str | None:
     """Exploit best, explore with probability eps."""
     best = argmax(state)
     if best is None:
@@ -65,7 +65,7 @@ def epsilon_greedy(state: dict, eps: float = 0.3) -> Optional[str]:
     return best
 
 
-def softmax(state: dict, temperature: float = 0.5) -> Optional[str]:
+def softmax(state: dict, temperature: float = 0.5) -> str | None:
     """Softmax sampling over tips."""
     tips = _scored_tips(state)
     if not tips:
@@ -86,16 +86,16 @@ def softmax(state: dict, temperature: float = 0.5) -> Optional[str]:
     return tips[-1]
 
 
-def pareto_per_task(state: dict) -> Optional[str]:
+def pareto_per_task(state: dict) -> str | None:
     """Keep specialists the aggregate hides (GEPA-style)."""
     tips = _scored_tips(state)
     if not tips:
         return None
-    by_op: Dict[str, List[str]] = {}
+    by_op: dict[str, list[str]] = {}
     for nid in tips:
         op = state["tree"][nid].get("operator", "default").split(":")[0]
         by_op.setdefault(op, []).append(nid)
-    best_per_op: Dict[str, str] = {}
+    best_per_op: dict[str, str] = {}
     for op, nids in by_op.items():
         best_per_op[op] = max(nids, key=lambda nid: (
             state["tree"][nid]["score"]
@@ -105,7 +105,7 @@ def pareto_per_task(state: dict) -> Optional[str]:
     return best_per_op[ops[state["round_no"] % len(ops)]]
 
 
-STRATEGIES: Dict[str, StrategyFn] = {
+STRATEGIES: dict[str, StrategyFn] = {
     "argmax": argmax,
     "top_k": top_k,
     "epsilon_greedy": epsilon_greedy,
@@ -114,7 +114,7 @@ STRATEGIES: Dict[str, StrategyFn] = {
 }
 
 
-def select_next_parent(state: dict) -> Optional[str]:
+def select_next_parent(state: dict) -> str | None:
     """Select the next parent node to extend."""
     fn = STRATEGIES.get(state["strategy"], argmax)
     pick = fn(state)
@@ -127,5 +127,5 @@ def select_next_parent(state: dict) -> Optional[str]:
                     if state["tree"][c]["parent"]}
         remaining = [n for n in passed if n not in extended]
         if remaining:
-            return sorted(remaining)[0]
+            return min(remaining)
     return pick

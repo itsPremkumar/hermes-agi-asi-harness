@@ -14,8 +14,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
@@ -48,12 +49,12 @@ class DeepResearchPlugin(PluginBase):
     
     async def load(self) -> bool:
         """Load the plugin."""
-        from .director import ResearchDirector
         from .agents import WebResearchAgent
+        from .critic import CriticEngine
+        from .dag import DAGResearchExecutor
+        from .director import ResearchDirector
         from .evidence import EvidenceStore
         from .perspective import MultiPerspectiveResearch
-        from .dag import DAGResearchExecutor
-        from .critic import CriticEngine
         from .report import ReportGenerator
         
         self._director = ResearchDirector()
@@ -77,7 +78,7 @@ class DeepResearchPlugin(PluginBase):
         logger.info("Deep Research Engine stopped")
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",
@@ -90,7 +91,7 @@ class DeepResearchPlugin(PluginBase):
             "report_generator": self._report_generator is not None
         }
     
-    async def research(self, topic: str, depth: int = 3) -> Dict[str, Any]:
+    async def research(self, topic: str, depth: int = 3) -> dict[str, Any]:
         """
         Conduct deep research on a topic.
         
@@ -140,11 +141,11 @@ class DeepResearchPlugin(PluginBase):
                     )
         
         # Step 5: Curate knowledge from perspectives
-        knowledge = await self._perspective_research.curate_knowledge(topic)
+        await self._perspective_research.curate_knowledge(topic)
         
         # Step 6: Build and execute DAG
-        dag = self._dag_executor.build_dag(topic)
-        dag_results = await self._dag_executor.execute()
+        self._dag_executor.build_dag(topic)
+        await self._dag_executor.execute()
         
         # Step 7: Critic review
         research_data = {

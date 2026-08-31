@@ -17,11 +17,12 @@ import json
 import logging
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +87,13 @@ class EventType(str, Enum):
 class Event:
     """An event in the system."""
     type: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=datetime.utcnow)
     source: str = "kernel"
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "event_id": self.event_id,
             "type": self.type,
@@ -115,14 +116,14 @@ class EventBus:
     - Wildcard subscriptions
     """
     
-    def __init__(self, kernel: Any = None, persist_path: Optional[Path] = None):
+    def __init__(self, kernel: Any = None, persist_path: Path | None = None):
         self.kernel = kernel
         self.persist_path = persist_path
-        self._subscribers: Dict[str, List[Callable[[Event], Awaitable[None]]]] = defaultdict(list)
-        self._event_log: List[Event] = []
+        self._subscribers: dict[str, list[Callable[[Event], Awaitable[None]]]] = defaultdict(list)
+        self._event_log: list[Event] = []
         self._running = False
         self._queue: asyncio.Queue[Event] = asyncio.Queue()
-        self._dead_letter: List[Event] = []
+        self._dead_letter: list[Event] = []
     
     async def start(self):
         """Start the event bus."""
@@ -135,7 +136,7 @@ class EventBus:
         self._running = False
         logger.info("Event bus stopped")
     
-    async def emit(self, event_type: str, data: Dict[str, Any], source: str = "kernel"):
+    async def emit(self, event_type: str, data: dict[str, Any], source: str = "kernel"):
         """Emit an event."""
         event = Event(type=event_type, data=data, source=source)
         await self._queue.put(event)
@@ -192,14 +193,14 @@ class EventBus:
         except Exception as e:
             logger.warning("Failed to persist event: %s", e)
     
-    def get_event_log(self, event_type: Optional[str] = None, limit: int = 100) -> List[Event]:
+    def get_event_log(self, event_type: str | None = None, limit: int = 100) -> list[Event]:
         """Get event log, optionally filtered by type."""
         events = self._event_log
         if event_type:
             events = [e for e in events if e.type == event_type]
         return events[-limit:]
     
-    async def replay(self, event_type: Optional[str] = None):
+    async def replay(self, event_type: str | None = None):
         """Replay events from the log."""
         events = self._event_log
         if event_type:
@@ -213,7 +214,7 @@ class EventBus:
                 except Exception as e:
                     logger.error("Replay handler error: %s", e)
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy" if self._running else "stopped",
             "subscribers": {k: len(v) for k, v in self._subscribers.items()},

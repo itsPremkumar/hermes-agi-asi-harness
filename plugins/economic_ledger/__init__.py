@@ -7,10 +7,11 @@ monetary_limit, compute_limit. Expected benefit/cost analysis.
 """
 
 import time
-import psutil
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 
 @dataclass
@@ -27,7 +28,7 @@ class ResourceUsage:
     tool_calls: int = 0
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "cpu_percent": self.cpu_percent,
             "memory_mb": self.memory_mb,
@@ -66,7 +67,7 @@ class MissionBudget:
                 self.elapsed_seconds >= self.time_limit_seconds or
                 (self.monetary_limit > 0 and self.spent_amount >= self.monetary_limit))
 
-    def utilization(self) -> Dict[str, float]:
+    def utilization(self) -> dict[str, float]:
         return {
             "tokens": self.used_tokens / max(1, self.token_limit),
             "time": self.elapsed_seconds / max(1, self.time_limit_seconds),
@@ -79,8 +80,8 @@ class EconomicLedger:
     """Track resource usage and enforce budgets."""
 
     def __init__(self):
-        self._usage: List[ResourceUsage] = []
-        self._budgets: Dict[str, MissionBudget] = {}
+        self._usage: list[ResourceUsage] = []
+        self._budgets: dict[str, MissionBudget] = {}
         self._total_cost: float = 0.0
         self._total_tokens: int = 0
 
@@ -135,7 +136,7 @@ class EconomicLedger:
         if mission_id in self._budgets:
             self._budgets[mission_id].used_compute += 0.001  # Approximate
 
-    def check_budget(self, mission_id: str) -> Dict[str, Any]:
+    def check_budget(self, mission_id: str) -> dict[str, Any]:
         """Check if a mission is within budget."""
         budget = self._budgets.get(mission_id)
         if not budget:
@@ -165,7 +166,7 @@ class EconomicLedger:
         """Calculate expected value: probability * benefit - cost."""
         return probability * expected_benefit - cost
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         return {
             "total_tokens": self._total_tokens,
             "total_cost": round(self._total_cost, 6),

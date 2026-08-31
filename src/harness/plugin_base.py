@@ -6,7 +6,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 
 class PluginStatus(Enum):
@@ -34,7 +34,7 @@ class PluginMetadata:
     dependencies: list[str] = field(default_factory=list)
     provides: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-    config_schema: Optional[dict[str, Any]] = None
+    config_schema: dict[str, Any] | None = None
 
     def __post_init__(self):
         if not self.provides:
@@ -49,7 +49,7 @@ class Plugin:
         self.status = PluginStatus.REGISTERED
         self._lock = threading.RLock()
         self._config: dict[str, Any] = {}
-        self._error: Optional[str] = None
+        self._error: str | None = None
         self._load_time: float = 0.0
         self._init_time: float = 0.0
         self._last_error_time: float = 0.0
@@ -94,7 +94,7 @@ class Plugin:
         with self._lock:
             self._error = None
 
-    def get_error(self) -> Optional[str]:
+    def get_error(self) -> str | None:
         with self._lock:
             return self._error
 

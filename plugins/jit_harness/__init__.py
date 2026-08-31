@@ -6,8 +6,8 @@ Analyzes task descriptions and generates optimal execution profiles.
 """
 
 import logging
-from typing import Dict, Any, List
 from dataclasses import dataclass, field
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class TaskProfile:
     complexity_score: float  # 0.0 to 1.0
     recommended_temperature: float
     max_steps: int
-    required_tools: List[str] = field(default_factory=list)
+    required_tools: list[str] = field(default_factory=list)
     verification_mode: str = "standard"
     estimated_duration_seconds: int = 30
 
@@ -132,7 +132,7 @@ class JITHarnessGenerator:
             estimated_duration_seconds=domain_config["duration"],
         )
 
-    def get_all_domains(self) -> List[str]:
+    def get_all_domains(self) -> list[str]:
         """Returns all available domain names."""
         return list(self.DOMAIN_PATTERNS.keys())
 

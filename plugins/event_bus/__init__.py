@@ -16,8 +16,9 @@ import fnmatch
 import logging
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes.event_bus")
 
@@ -44,7 +45,7 @@ class EventBus:
 
     def __init__(self, max_history: int = 5000):
         self._subscribers: dict = defaultdict(list)
-        self._history: List[Event] = []
+        self._history: list[Event] = []
         self._max_history = max_history
         self._started = False
 
@@ -82,26 +83,26 @@ class EventBus:
                     except Exception as e:
                         logger.error("Event handler error (%s <- %s): %s", pattern, event.topic, e)
 
-    def emit(self, topic: str, payload: Optional[dict] = None, sender: str = "kernel") -> Event:
+    def emit(self, topic: str, payload: dict | None = None, sender: str = "kernel") -> Event:
         """Convenience: create and publish in one call."""
         evt = Event(topic=topic, payload=payload or {}, sender=sender)
         self.publish(evt)
         return evt
 
-    async def emit_async(self, topic: str, payload: Optional[dict] = None, sender: str = "kernel") -> Event:
+    async def emit_async(self, topic: str, payload: dict | None = None, sender: str = "kernel") -> Event:
         """Async-safe emit."""
         return self.emit(topic, payload, sender)
 
-    def replay(self, topic_pattern: str = "*", limit: int = 100) -> List[Event]:
+    def replay(self, topic_pattern: str = "*", limit: int = 100) -> list[Event]:
         """Replay events matching a pattern (most recent first)."""
         matching = [e for e in reversed(self._history) if fnmatch.fnmatch(e.topic, topic_pattern)]
         return matching[:limit]
 
     @property
-    def history(self) -> List[Event]:
+    def history(self) -> list[Event]:
         return list(self._history)
 
-    def get_subscriber_count(self, topic: str = None) -> int:
+    def get_subscriber_count(self, topic: str | None = None) -> int:
         if topic:
             total = 0
             for pattern, handlers in self._subscribers.items():
@@ -119,12 +120,12 @@ class EventBus:
             "topics": list(self._subscribers.keys()),
         }
 
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return ["event.publish", "event.subscribe", "event.replay"]
 
 
 # Singleton instance
-_instance: Optional[EventBus] = None
+_instance: EventBus | None = None
 
 
 async def create(kernel: Any) -> EventBus:

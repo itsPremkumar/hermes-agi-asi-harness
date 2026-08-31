@@ -55,8 +55,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: int = 512
         max_cpu_percent: int = 50
@@ -68,11 +68,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -110,9 +110,9 @@ class SearchResult:
     source: str = ""
     position: int = 0
     score: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "url": self.url,
@@ -128,13 +128,13 @@ class SearchResponse:
     """A search response with results."""
     success: bool
     query: str
-    results: List[SearchResult] = field(default_factory=list)
+    results: list[SearchResult] = field(default_factory=list)
     source: str = ""
     error: str = ""
     total_results: int = 0
     search_time_ms: float = 0.0
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "success": self.success,
             "query": self.query,
@@ -507,9 +507,9 @@ class ContentExtractor:
     """Extract readable content from web pages."""
     
     def __init__(self):
-        self._cache: Dict[str, str] = {}
+        self._cache: dict[str, str] = {}
     
-    async def extract(self, url: str) -> Dict[str, str]:
+    async def extract(self, url: str) -> dict[str, str]:
         """Extract content and metadata from a URL."""
         try:
             loop = asyncio.get_event_loop()
@@ -592,7 +592,7 @@ class AgentEyeSearch:
     Main search engine with multiple free backends and automatic fallback.
     """
     
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         # Initialize backends
         self.backends = [
             DuckDuckGoBackend(),
@@ -655,7 +655,7 @@ class AgentEyeSearch:
         all_results.sort(key=lambda r: (r.position, -r.score))
         
         # Build response
-        source_names = list(set(r.source for r in all_results[:limit]))
+        source_names = list({r.source for r in all_results[:limit]})
         
         return SearchResponse(
             success=len(all_results) > 0,
@@ -674,7 +674,7 @@ class AgentEyeSearch:
             logger.debug(f"Backend {backend.name} failed: {e}")
             return SearchResponse(success=False, query=query, source=backend.name)
     
-    def _select_backends(self, mode: str) -> List[Any]:
+    def _select_backends(self, mode: str) -> list[Any]:
         """Select backends based on search mode."""
         if mode == "academic":
             return [self.backends[3], self.backends[2], self.backends[0]]  # arxiv, wikipedia, ddg
@@ -685,7 +685,7 @@ class AgentEyeSearch:
         else:
             return self.backends
     
-    async def extract(self, urls: List[str]) -> List[Dict[str, str]]:
+    async def extract(self, urls: list[str]) -> list[dict[str, str]]:
         """Extract content from multiple URLs."""
         tasks = [self.extractor.extract(url) for url in urls]
         return await asyncio.gather(*tasks, return_exceptions=True)
@@ -730,7 +730,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=50,
             ),
         )
-        self.search_engine: Optional[AgentEyeSearch] = None
+        self.search_engine: AgentEyeSearch | None = None
     
     async def load(self) -> bool:
         """Load the plugin."""
@@ -750,7 +750,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "plugin": self.manifest.name,
@@ -768,7 +768,7 @@ class Plugin(PluginBase):
         query: str,
         limit: int = 10,
         mode: str = "general",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform a search across all free backends."""
         if not self.search_engine:
             await self.start()
@@ -776,13 +776,13 @@ class Plugin(PluginBase):
         response = await self.search_engine.search(query, limit, mode)
         return response.to_dict()
     
-    async def extract(self, urls: List[str]) -> List[Dict[str, str]]:
+    async def extract(self, urls: list[str]) -> list[dict[str, str]]:
         """Extract content from URLs."""
         if not self.search_engine:
             await self.start()
         
         return await self.search_engine.extract(urls)
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         """Return plugin capabilities."""
         return self.manifest.capabilities

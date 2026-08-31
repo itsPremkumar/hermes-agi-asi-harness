@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 # ============== Reinforcement Learning Plugin ==============
@@ -168,10 +168,10 @@ class CurriculumPlugin(Plugin):
 
 
 __all__ = [
+    "CurriculumPlugin",
+    "MetaLearningPlugin",
     "RLPlugin",
     "SupervisedPlugin",
-    "UnsupervisedPlugin",
-    "MetaLearningPlugin",
     "TransferLearningPlugin",
-    "CurriculumPlugin",
+    "UnsupervisedPlugin",
 ]

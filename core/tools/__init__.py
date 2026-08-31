@@ -1,15 +1,21 @@
 """Tool Execution Framework - Real shell, git, file operations with sandboxing."""
 from __future__ import annotations
-import asyncio, os, shutil, subprocess, tempfile
+
+import asyncio
+import os
+import shutil
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class ToolResult:
     success: bool
     output: str
-    error: Optional[str] = None
+    error: str | None = None
     return_code: int = 0
     duration_ms: float = 0.0
 
@@ -17,7 +23,7 @@ class ShellExecutor:
     """Execute shell commands with sandboxing and timeout."""
     
     def __init__(self, working_dir: str = ".", timeout: int = 60, 
-                 allow_sudo: bool = False, env: Dict = None):
+                 allow_sudo: bool = False, env: dict | None = None):
         self.working_dir = Path(working_dir)
         self.timeout = timeout
         self.allow_sudo = allow_sudo
@@ -93,7 +99,7 @@ class GitExecutor:
     async def diff(self) -> ToolResult:
         return await self.shell.run("git diff")
     
-    async def clone(self, url: str, dest: str = None) -> ToolResult:
+    async def clone(self, url: str, dest: str | None = None) -> ToolResult:
         cmd = f"git clone {url}"
         if dest:
             cmd += f" {dest}"
@@ -105,7 +111,7 @@ class FileExecutor:
     def __init__(self, base_path: str = "."):
         self.base_path = Path(base_path)
     
-    def read(self, path: str, limit: int = None) -> str:
+    def read(self, path: str, limit: int | None = None) -> str:
         full = self.base_path / path
         content = full.read_text(errors='ignore')
         if limit:
@@ -121,7 +127,7 @@ class FileExecutor:
     def exists(self, path: str) -> bool:
         return (self.base_path / path).exists()
     
-    def list_dir(self, path: str = ".") -> List[str]:
+    def list_dir(self, path: str = ".") -> list[str]:
         return [str(p.relative_to(self.base_path)) for p in (self.base_path / path).rglob("*")]
     
     def delete(self, path: str) -> bool:
@@ -135,7 +141,7 @@ class FileExecutor:
 class PythonExecutor:
     """Execute Python code with isolation."""
     
-    async def run_script(self, script: str, args: List[str] = None) -> ToolResult:
+    async def run_script(self, script: str, args: list[str] | None = None) -> ToolResult:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
             f.write(script)
             f.flush()
@@ -150,9 +156,9 @@ class PythonExecutor:
     async def run_code(self, code: str) -> ToolResult:
         return await self.run_script(code)
     
-    async def pip_install(self, packages: List[str]) -> ToolResult:
+    async def pip_install(self, packages: list[str]) -> ToolResult:
         cmd = f"pip install {' '.join(packages)}"
-        shell = ShellExecutor()
+        ShellExecutor()
         return await self.shell.run(cmd)
 
 class ToolManager:

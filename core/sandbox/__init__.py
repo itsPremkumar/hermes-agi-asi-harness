@@ -23,7 +23,7 @@ class SandboxedExecution:
         self.memory_limit_mb = memory_limit_mb
         self.cpu_limit = cpu_limit
     
-    async def execute(self, code: str, timeout: int = 60) -> Dict[str, Any]:
+    async def execute(self, code: str, timeout: int = 60) -> dict[str, Any]:
         """Execute code in sandbox."""
         return {
             "status": "success",
@@ -32,5 +32,5 @@ class SandboxedExecution:
             "execution_time": 0
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy"}

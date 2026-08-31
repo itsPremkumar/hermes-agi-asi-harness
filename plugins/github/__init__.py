@@ -19,11 +19,11 @@ logger = logging.getLogger("hermes_github")
 class GitHubIntegration:
     """GitHub integration plugin."""
     
-    def __init__(self, token: str = None):
+    def __init__(self, token: str | None = None):
         self.token = token
-        self._repos: Dict[str, Any] = {}
+        self._repos: dict[str, Any] = {}
     
-    async def create_repo(self, name: str, description: str = "") -> Dict[str, Any]:
+    async def create_repo(self, name: str, description: str = "") -> dict[str, Any]:
         """Create a repository."""
         return {
             "name": name,
@@ -33,7 +33,7 @@ class GitHubIntegration:
         }
     
     async def create_pull_request(self, repo: str, title: str, body: str,
-                                   head: str, base: str = "main") -> Dict[str, Any]:
+                                   head: str, base: str = "main") -> dict[str, Any]:
         """Create a pull request."""
         return {
             "repo": repo,
@@ -42,7 +42,7 @@ class GitHubIntegration:
             "status": "open"
         }
     
-    async def create_issue(self, repo: str, title: str, body: str = "") -> Dict[str, Any]:
+    async def create_issue(self, repo: str, title: str, body: str = "") -> dict[str, Any]:
         """Create an issue."""
         return {
             "repo": repo,
@@ -51,5 +51,5 @@ class GitHubIntegration:
             "status": "open"
         }
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "repos": len(self._repos)}

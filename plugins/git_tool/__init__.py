@@ -42,8 +42,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +55,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -102,7 +102,7 @@ class GitTool:
         self.cwd = Path(cwd)
         self.timeout = timeout
     
-    def _run_git(self, args: List[str], check: bool = True) -> GitResult:
+    def _run_git(self, args: list[str], check: bool = True) -> GitResult:
         """Run a git command."""
         start_time = time.time()
         
@@ -146,12 +146,12 @@ class GitTool:
                 duration=duration,
             )
     
-    def init(self) -> Dict[str, Any]:
+    def init(self) -> dict[str, Any]:
         """Initialize a git repository."""
         result = self._run_git(["init"])
         return self._to_dict(result)
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get git status."""
         result = self._run_git(["status", "--porcelain=v1", "-b"], check=False)
         
@@ -161,7 +161,7 @@ class GitTool:
         # Parse porcelain output
         lines = result.stdout.strip().split("\n") if result.stdout.strip() else []
         branch = "unknown"
-        files: List[Dict[str, str]] = []
+        files: list[dict[str, str]] = []
         
         for line in lines:
             if line.startswith("##"):
@@ -191,14 +191,14 @@ class GitTool:
             "raw": result.stdout,
         }
     
-    def add(self, paths: List[str]) -> Dict[str, Any]:
+    def add(self, paths: list[str]) -> dict[str, Any]:
         """Stage files."""
         if not paths:
             paths = ["."]
         result = self._run_git(["add"] + paths)
         return self._to_dict(result)
     
-    def commit(self, message: str, author: Optional[str] = None) -> Dict[str, Any]:
+    def commit(self, message: str, author: str | None = None) -> dict[str, Any]:
         """Commit staged changes."""
         args = ["commit", "-m", message]
         if author:
@@ -206,7 +206,7 @@ class GitTool:
         result = self._run_git(args)
         return self._to_dict(result)
     
-    def push(self, remote: str = "origin", branch: str = "", force: bool = False) -> Dict[str, Any]:
+    def push(self, remote: str = "origin", branch: str = "", force: bool = False) -> dict[str, Any]:
         """Push to remote."""
         args = ["push"]
         if force:
@@ -218,7 +218,7 @@ class GitTool:
         result = self._run_git(args)
         return self._to_dict(result)
     
-    def pull(self, remote: str = "origin", branch: str = "", rebase: bool = False) -> Dict[str, Any]:
+    def pull(self, remote: str = "origin", branch: str = "", rebase: bool = False) -> dict[str, Any]:
         """Pull from remote."""
         args = ["pull"]
         if rebase:
@@ -230,12 +230,12 @@ class GitTool:
         result = self._run_git(args)
         return self._to_dict(result)
     
-    def clone(self, url: str, dest: str = ".") -> Dict[str, Any]:
+    def clone(self, url: str, dest: str = ".") -> dict[str, Any]:
         """Clone a repository."""
         result = self._run_git(["clone", url, dest])
         return self._to_dict(result)
     
-    def branch(self, name: Optional[str] = None, delete: bool = False) -> Dict[str, Any]:
+    def branch(self, name: str | None = None, delete: bool = False) -> dict[str, Any]:
         """Branch operations."""
         if delete and name:
             result = self._run_git(["branch", "-D", name])
@@ -249,7 +249,7 @@ class GitTool:
             return self._to_dict(result)
         return self._to_dict(result)
     
-    def checkout(self, target: str, create_branch: bool = False) -> Dict[str, Any]:
+    def checkout(self, target: str, create_branch: bool = False) -> dict[str, Any]:
         """Checkout a branch or commit."""
         args = ["checkout"]
         if create_branch:
@@ -258,7 +258,7 @@ class GitTool:
         result = self._run_git(args)
         return self._to_dict(result)
     
-    def diff(self, staged: bool = False, file: Optional[str] = None) -> Dict[str, Any]:
+    def diff(self, staged: bool = False, file: str | None = None) -> dict[str, Any]:
         """Get diff."""
         args = ["diff"]
         if staged:
@@ -272,7 +272,7 @@ class GitTool:
             "error": result.stderr if not result.success else None,
         }
     
-    def log(self, limit: int = 20, oneline: bool = True) -> Dict[str, Any]:
+    def log(self, limit: int = 20, oneline: bool = True) -> dict[str, Any]:
         """Get commit log."""
         args = ["log"]
         if oneline:
@@ -290,7 +290,7 @@ class GitTool:
         result = self._run_git(["rev-parse", "--is-inside-work-tree"], check=False)
         return result.success and result.stdout.strip() == "true"
     
-    def _to_dict(self, result: GitResult) -> Dict[str, Any]:
+    def _to_dict(self, result: GitResult) -> dict[str, Any]:
         return {
             "success": result.success,
             "command": result.command,
@@ -328,7 +328,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.tool: Optional[GitTool] = None
+        self.tool: GitTool | None = None
     
     async def load(self) -> bool:
         self.tool = GitTool()
@@ -345,7 +345,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -356,41 +356,41 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def init(self) -> Dict[str, Any]:
+    def init(self) -> dict[str, Any]:
         return self.tool.init()
     
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         return self.tool.status()
     
-    def add(self, paths: List[str] = None) -> Dict[str, Any]:
+    def add(self, paths: list[str] | None = None) -> dict[str, Any]:
         return self.tool.add(paths or [])
     
-    def commit(self, message: str, author: Optional[str] = None) -> Dict[str, Any]:
+    def commit(self, message: str, author: str | None = None) -> dict[str, Any]:
         return self.tool.commit(message, author)
     
-    def push(self, remote: str = "origin", branch: str = "", force: bool = False) -> Dict[str, Any]:
+    def push(self, remote: str = "origin", branch: str = "", force: bool = False) -> dict[str, Any]:
         return self.tool.push(remote, branch, force)
     
-    def pull(self, remote: str = "origin", branch: str = "", rebase: bool = False) -> Dict[str, Any]:
+    def pull(self, remote: str = "origin", branch: str = "", rebase: bool = False) -> dict[str, Any]:
         return self.tool.pull(remote, branch, rebase)
     
-    def clone(self, url: str, dest: str = ".") -> Dict[str, Any]:
+    def clone(self, url: str, dest: str = ".") -> dict[str, Any]:
         return self.tool.clone(url, dest)
     
-    def branch(self, name: Optional[str] = None, delete: bool = False) -> Dict[str, Any]:
+    def branch(self, name: str | None = None, delete: bool = False) -> dict[str, Any]:
         return self.tool.branch(name, delete)
     
-    def checkout(self, target: str, create_branch: bool = False) -> Dict[str, Any]:
+    def checkout(self, target: str, create_branch: bool = False) -> dict[str, Any]:
         return self.tool.checkout(target, create_branch)
     
-    def diff(self, staged: bool = False, file: Optional[str] = None) -> Dict[str, Any]:
+    def diff(self, staged: bool = False, file: str | None = None) -> dict[str, Any]:
         return self.tool.diff(staged, file)
     
-    def log(self, limit: int = 20, oneline: bool = True) -> Dict[str, Any]:
+    def log(self, limit: int = 20, oneline: bool = True) -> dict[str, Any]:
         return self.tool.log(limit, oneline)
     
     def is_repo(self) -> bool:
         return self.tool.is_repo()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

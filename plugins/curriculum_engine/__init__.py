@@ -6,12 +6,12 @@ spaced repetition, mastery tracking. Selects next learning task based
 on current skill levels.
 """
 
-import time
-import random
 import math
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+import random
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -21,8 +21,8 @@ class LearningTask:
     description: str
     domain: str
     difficulty: float  # 0-1
-    prerequisites: List[str] = field(default_factory=list)
-    skills: List[str] = field(default_factory=list)
+    prerequisites: list[str] = field(default_factory=list)
+    skills: list[str] = field(default_factory=list)
     estimated_minutes: int = 30
 
 
@@ -40,8 +40,8 @@ class CurriculumEngine:
     """Adaptive learning curriculum engine."""
 
     def __init__(self):
-        self._tasks: Dict[str, LearningTask] = {}
-        self._mastery: Dict[str, SkillMastery] = {}
+        self._tasks: dict[str, LearningTask] = {}
+        self._mastery: dict[str, SkillMastery] = {}
 
     def add_task(self, task: LearningTask):
         self._tasks[task.task_id] = task
@@ -63,7 +63,7 @@ class CurriculumEngine:
         else:
             m.mastery = max(0.0, m.mastery * 0.5)
 
-    def select_next_task(self, available_time_minutes: int = 30) -> Optional[LearningTask]:
+    def select_next_task(self, available_time_minutes: int = 30) -> LearningTask | None:
         """Select next learning task based on curriculum principles."""
         candidates = []
 
@@ -123,7 +123,7 @@ class CurriculumEngine:
         # Spaced repetition: prefer tasks that haven't been done in a while
         return min(1.0, hours_ago / 24)
 
-    def get_learning_path(self, target_skill: str) -> List[LearningTask]:
+    def get_learning_path(self, target_skill: str) -> list[LearningTask]:
         """Generate a learning path to master a target skill."""
         path = []
         visited = set()
@@ -146,7 +146,7 @@ class CurriculumEngine:
         path.sort(key=lambda t: t.difficulty)
         return path
 
-    def get_curriculum_stats(self) -> Dict[str, Any]:
+    def get_curriculum_stats(self) -> dict[str, Any]:
         return {
             "total_tasks": len(self._tasks),
             "tracked_skills": len(self._mastery),

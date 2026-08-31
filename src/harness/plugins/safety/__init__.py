@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 # ============== Guardrails Plugin ==============
@@ -155,10 +155,10 @@ class AlignmentPlugin(Plugin):
 
 
 __all__ = [
-    "GuardrailsPlugin",
-    "BiasDetectionPlugin",
     "AdversarialDefensePlugin",
-    "PrivacyPlugin",
-    "ExplainabilityPlugin",
     "AlignmentPlugin",
+    "BiasDetectionPlugin",
+    "ExplainabilityPlugin",
+    "GuardrailsPlugin",
+    "PrivacyPlugin",
 ]

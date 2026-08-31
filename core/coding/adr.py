@@ -1,9 +1,12 @@
 """Architecture Decision Records (ADR)."""
 from __future__ import annotations
-import time, uuid
+
+import time
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 class ADRStatus(str, Enum):
     PROPOSED = "proposed"
@@ -17,12 +20,12 @@ class ADR:
     number: int
     title: str
     problem: str
-    constraints: List[str]
-    alternatives: List[Dict[str, str]]
+    constraints: list[str]
+    alternatives: list[dict[str, str]]
     chosen: str
-    rejected: List[str]
+    rejected: list[str]
     evidence: str
-    consequences: List[str]
+    consequences: list[str]
     reversibility: str = "high"
     status: ADRStatus = ADRStatus.PROPOSED
     owner: str = ""
@@ -30,13 +33,13 @@ class ADR:
 
 class ADRRegistry:
     def __init__(self):
-        self.adrs: Dict[str, ADR] = {}
+        self.adrs: dict[str, ADR] = {}
         self._counter = 0
     
-    def create(self, title: str, problem: str, constraints: List[str],
-               alternatives: List[Dict[str, str]], chosen: str,
-               rejected: List[str], evidence: str,
-               consequences: List[str], **kwargs) -> ADR:
+    def create(self, title: str, problem: str, constraints: list[str],
+               alternatives: list[dict[str, str]], chosen: str,
+               rejected: list[str], evidence: str,
+               consequences: list[str], **kwargs) -> ADR:
         self._counter += 1
         adr = ADR(id=str(uuid.uuid4()), number=self._counter, title=title,
                   problem=problem, constraints=constraints,
@@ -49,11 +52,11 @@ class ADRRegistry:
         if adr_id in self.adrs:
             self.adrs[adr_id].status = ADRStatus.ACCEPTED
     
-    def get_accepted(self) -> List[ADR]:
+    def get_accepted(self) -> list[ADR]:
         return [a for a in self.adrs.values() if a.status == ADRStatus.ACCEPTED]
     
-    def get_all(self) -> List[ADR]:
+    def get_all(self) -> list[ADR]:
         return list(self.adrs.values())
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"total": len(self.adrs), "accepted": len(self.get_accepted())}

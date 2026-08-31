@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
+from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
 # ============== Vision Plugin ==============
@@ -174,10 +174,10 @@ class AttentionPlugin(Plugin):
 
 
 __all__ = [
-    "VisionPlugin",
-    "AudioPlugin",
-    "TextPlugin",
-    "SensorPlugin",
-    "MultimodalPlugin",
     "AttentionPlugin",
+    "AudioPlugin",
+    "MultimodalPlugin",
+    "SensorPlugin",
+    "TextPlugin",
+    "VisionPlugin",
 ]

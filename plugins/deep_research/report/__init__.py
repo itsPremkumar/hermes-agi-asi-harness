@@ -16,9 +16,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_report")
 
@@ -36,8 +37,8 @@ class ReportSection:
     section_id: str
     title: str
     content: str
-    citations: List[str] = field(default_factory=list)
-    sub_sections: List["ReportSection"] = field(default_factory=list)
+    citations: list[str] = field(default_factory=list)
+    sub_sections: list[ReportSection] = field(default_factory=list)
     confidence: float = 0.0
 
 
@@ -47,9 +48,9 @@ class ResearchReport:
     report_id: str
     title: str
     abstract: str
-    sections: List[ReportSection] = field(default_factory=list)
-    citations: List[Dict[str, Any]] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    sections: list[ReportSection] = field(default_factory=list)
+    citations: list[dict[str, Any]] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     quality_score: float = 0.0
 
@@ -68,13 +69,13 @@ class ReportGenerator:
     
     def __init__(self, default_format: ReportFormat = ReportFormat.MARKDOWN):
         self.default_format = default_format
-        self._reports: List[ResearchReport] = []
+        self._reports: list[ResearchReport] = []
     
     async def generate_report(
         self,
         topic: str,
-        evidence: List[Dict[str, Any]],
-        perspectives: List[Dict[str, Any]] = None,
+        evidence: list[dict[str, Any]],
+        perspectives: list[dict[str, Any]] | None = None,
         quality_score: float = 0.0,
         output_format: ReportFormat = None
     ) -> ResearchReport:
@@ -107,11 +108,11 @@ class ReportGenerator:
         logger.info("Report generated: %s (%d sections)", report.title, len(report.sections))
         return report
     
-    async def _generate_abstract(self, topic: str, evidence: List[Dict[str, Any]]) -> str:
+    async def _generate_abstract(self, topic: str, evidence: list[dict[str, Any]]) -> str:
         """Generate an abstract."""
         return f"This report presents a comprehensive analysis of {topic}. Based on {len(evidence)} pieces of evidence gathered from multiple sources, we provide a detailed examination of the topic, including key findings, perspectives, and conclusions."
     
-    async def _generate_executive_summary(self, topic: str, evidence: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_executive_summary(self, topic: str, evidence: list[dict[str, Any]]) -> ReportSection:
         """Generate executive summary."""
         return ReportSection(
             section_id=str(uuid.uuid4()),
@@ -123,7 +124,7 @@ class ReportGenerator:
             confidence=0.8
         )
     
-    async def _generate_introduction(self, topic: str, evidence: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_introduction(self, topic: str, evidence: list[dict[str, Any]]) -> ReportSection:
         """Generate introduction."""
         return ReportSection(
             section_id=str(uuid.uuid4()),
@@ -132,21 +133,21 @@ class ReportGenerator:
             confidence=0.9
         )
     
-    async def _generate_methodology(self, evidence: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_methodology(self, evidence: list[dict[str, Any]]) -> ReportSection:
         """Generate methodology section."""
         return ReportSection(
             section_id=str(uuid.uuid4()),
             title="Methodology",
-            content=f"This research employed a multi-method approach:\n\n" +
-                    f"- Web search across multiple engines\n" +
+            content="This research employed a multi-method approach:\n\n" +
+                    "- Web search across multiple engines\n" +
                     f"- Deep crawling of {len(evidence)} relevant sources\n" +
-                    f"- Evidence extraction and ranking\n" +
-                    f"- Cross-verification and contradiction detection\n" +
-                    f"- Multi-perspective analysis",
+                    "- Evidence extraction and ranking\n" +
+                    "- Cross-verification and contradiction detection\n" +
+                    "- Multi-perspective analysis",
             confidence=0.95
         )
     
-    async def _generate_findings(self, topic: str, evidence: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_findings(self, topic: str, evidence: list[dict[str, Any]]) -> ReportSection:
         """Generate findings section."""
         findings = []
         for i, e in enumerate(evidence):
@@ -161,7 +162,7 @@ class ReportGenerator:
             confidence=0.7
         )
     
-    async def _generate_perspectives_section(self, perspectives: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_perspectives_section(self, perspectives: list[dict[str, Any]]) -> ReportSection:
         """Generate perspectives section."""
         perspective_text = []
         for p in perspectives:
@@ -176,7 +177,7 @@ class ReportGenerator:
             confidence=0.75
         )
     
-    async def _generate_conclusion(self, topic: str, evidence: List[Dict[str, Any]]) -> ReportSection:
+    async def _generate_conclusion(self, topic: str, evidence: list[dict[str, Any]]) -> ReportSection:
         """Generate conclusion."""
         return ReportSection(
             section_id=str(uuid.uuid4()),
@@ -185,7 +186,7 @@ class ReportGenerator:
             confidence=0.8
         )
     
-    def _generate_citations(self, evidence: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_citations(self, evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Generate citations from evidence."""
         citations = []
         for i, e in enumerate(evidence):
@@ -270,7 +271,7 @@ class ReportGenerator:
         html += "</body></html>"
         return html
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {
             "status": "healthy",

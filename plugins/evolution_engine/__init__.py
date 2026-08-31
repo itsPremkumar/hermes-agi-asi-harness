@@ -18,10 +18,11 @@ import copy
 import hashlib
 import logging
 import random
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes_evolution_engine")
 
@@ -43,8 +44,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -56,11 +57,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -92,8 +93,8 @@ class Individual:
     genome: Any  # Can be str (code), dict (params), etc.
     fitness: float = 0.0
     generation: int = 0
-    parents: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    parents: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -113,10 +114,10 @@ class EvolutionEngine:
     
     def __init__(self, config: EvolutionConfig = None):
         self.config = config or EvolutionConfig()
-        self.population: List[Individual] = []
+        self.population: list[Individual] = []
         self.generation = 0
-        self.best_history: List[float] = []
-        self.fitness_cache: Dict[str, float] = {}
+        self.best_history: list[float] = []
+        self.fitness_cache: dict[str, float] = {}
     
     def _hash_genome(self, genome: Any) -> str:
         """Hash a genome for caching."""
@@ -125,7 +126,7 @@ class EvolutionEngine:
         else:
             return hashlib.md5(str(genome).encode()).hexdigest()
     
-    def initialize(self, seed_genomes: List[Any]):
+    def initialize(self, seed_genomes: list[Any]):
         """Initialize population from seed genomes."""
         self.population = []
         for i, genome in enumerate(seed_genomes[:self.config.population_size]):
@@ -154,7 +155,7 @@ class EvolutionEngine:
                     logger.error(f"Fitness eval failed: {e}")
                     ind.fitness = float('-inf')
     
-    def select_parents(self) -> List[Individual]:
+    def select_parents(self) -> list[Individual]:
         """Tournament selection."""
         selected = []
         population_sorted = sorted(self.population, key=lambda x: x.fitness, reverse=True)
@@ -219,7 +220,7 @@ class EvolutionEngine:
             # Default: random selection
             return random.choice([parent1.genome, parent2.genome])
     
-    async def evolve(self, fitness_func: Callable[[Any], float]) -> Dict[str, Any]:
+    async def evolve(self, fitness_func: Callable[[Any], float]) -> dict[str, Any]:
         """Run full evolution."""
         if not self.population:
             raise ValueError("Population not initialized")
@@ -275,7 +276,7 @@ class EvolutionEngine:
             "improvement": self.best_history[-1] - self.best_history[0] if self.best_history else 0,
         }
     
-    def get_best(self) -> Optional[Individual]:
+    def get_best(self) -> Individual | None:
         """Get the best individual."""
         if not self.population:
             return None
@@ -309,7 +310,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.engine: Optional[EvolutionEngine] = None
+        self.engine: EvolutionEngine | None = None
     
     async def load(self) -> bool:
         self.engine = EvolutionEngine()
@@ -326,7 +327,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         healthy = self.state in (PluginState.LOADED, PluginState.RUNNING)
         return {
             "status": "healthy" if healthy else "degraded",
@@ -351,20 +352,20 @@ class Plugin(PluginBase):
             max_generations=max_generations,
         ))
     
-    def initialize(self, seed_genomes: List[Any]):
+    def initialize(self, seed_genomes: list[Any]):
         self.engine.initialize(seed_genomes)
     
-    async def evolve(self, fitness_func: Callable[[Any], float]) -> Dict[str, Any]:
+    async def evolve(self, fitness_func: Callable[[Any], float]) -> dict[str, Any]:
         return await self.engine.evolve(fitness_func)
     
-    def get_best(self) -> Optional[Any]:
+    def get_best(self) -> Any | None:
         best = self.engine.get_best()
         return best.genome if best else None
     
-    def get_fitness_history(self) -> List[float]:
+    def get_fitness_history(self) -> list[float]:
         return self.engine.best_history
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities
 
 async def create(kernel: Any) -> Plugin:

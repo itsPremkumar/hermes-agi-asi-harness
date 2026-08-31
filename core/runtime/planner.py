@@ -21,10 +21,9 @@ Step spec format:
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.runtime.agent_kernel import AgentKernel
 
@@ -34,18 +33,18 @@ class PlanStep:
     id: str
     plugin: str
     method: str
-    args: List[Any] = field(default_factory=list)
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    permission: Optional[str] = None
+    args: list[Any] = field(default_factory=list)
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    permission: str | None = None
     description: str = ""
 
 
 @dataclass
 class Plan:
     goal: str
-    steps: List[PlanStep] = field(default_factory=list)
+    steps: list[PlanStep] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "goal": self.goal,
             "steps": [
@@ -68,11 +67,11 @@ class TaskPlanner:
     # ── Helpers ──────────────────────────────────────────────────────────
 
     @staticmethod
-    def _extract_quoted(text: str) -> List[str]:
+    def _extract_quoted(text: str) -> list[str]:
         return re.findall(r'"([^"]*)"', text)
 
     @staticmethod
-    def _extract_path(text: str) -> Optional[str]:
+    def _extract_path(text: str) -> str | None:
         # Match common path patterns (relative or absolute-ish)
         m = re.search(r'(?:file|path|to)\s+([\w./\\-]+\.\w+)', text, re.IGNORECASE)
         if m:
@@ -85,7 +84,7 @@ class TaskPlanner:
 
     def plan(self, goal: str) -> Plan:
         goal_l = goal.lower()
-        steps: List[PlanStep] = []
+        steps: list[PlanStep] = []
 
         # 1) Write/Create a file
         if any(k in goal_l for k in ("write file", "create file", "save file", "write a file", "create a file")):

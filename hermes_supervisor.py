@@ -19,14 +19,13 @@ Usage:
 """
 
 import os
-import sys
 import time
 import json
 import asyncio
 import logging
 import signal
 import argparse
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from pathlib import Path
 
 # Configure logging
@@ -48,7 +47,7 @@ class HermesSupervisorDaemon:
     and performing nightly "dream cycles" of memory consolidation.
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self._shutdown = False
         self._config = self._load_config(config_path)
         self._loop_count = 0
@@ -57,7 +56,7 @@ class HermesSupervisorDaemon:
         self._task_queue: List[str] = []
         self._results: List[Dict[str, Any]] = []
 
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> Dict[str, Any]:
         """Loads configuration from config.yaml."""
         import yaml
 
@@ -119,7 +118,6 @@ class HermesSupervisorDaemon:
         6. Record to WorldModel
         """
         from core.runtime.kernel import Task
-        from core.runtime.react_loop_v2 import AdvancedReActLoop
 
         start = time.time()
 

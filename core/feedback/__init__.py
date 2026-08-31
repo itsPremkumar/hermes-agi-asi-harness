@@ -11,8 +11,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_feedback")
 
@@ -25,17 +26,17 @@ class FeedbackRecord:
     rating: float  # 0-1
     context: str
     timestamp: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class FeedbackLearner:
     """Continuous learning from feedback."""
     
     def __init__(self):
-        self._feedback_history: List[FeedbackRecord] = []
-        self._ab_tests: Dict[str, Dict[str, Any]] = {}
-        self._learning_curves: Dict[str, List[float]] = {}
-        self._drift_detector: Dict[str, Any] = {"baseline": 0.5, "current": 0.5}
+        self._feedback_history: list[FeedbackRecord] = []
+        self._ab_tests: dict[str, dict[str, Any]] = {}
+        self._learning_curves: dict[str, list[float]] = {}
+        self._drift_detector: dict[str, Any] = {"baseline": 0.5, "current": 0.5}
     
     def collect_explicit(self, rating: float, context: str = "") -> str:
         """Collect explicit feedback."""
@@ -81,7 +82,7 @@ class FeedbackLearner:
             if key in self._ab_tests[test_id]:
                 self._ab_tests[test_id][key].append(1.0 if success else 0.0)
     
-    def get_ab_result(self, test_id: str) -> Dict[str, Any]:
+    def get_ab_result(self, test_id: str) -> dict[str, Any]:
         """Get A/B test result."""
         test = self._ab_tests.get(test_id)
         if not test:
@@ -109,11 +110,11 @@ class FeedbackLearner:
             return True
         return False
     
-    def get_learning_curve(self, metric_name: str) -> List[float]:
+    def get_learning_curve(self, metric_name: str) -> list[float]:
         """Get learning curve for a metric."""
         return self._learning_curves.get(metric_name, [])
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "healthy",
             "feedback_count": len(self._feedback_history),

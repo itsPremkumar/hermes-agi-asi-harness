@@ -7,8 +7,8 @@ Uses data from benchmark results, task outcomes, and evolution experiments.
 """
 
 import time
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -16,15 +16,15 @@ class CapabilityRecord:
     name: str
     success_rate: float = 0.0
     evidence_count: int = 0
-    required_tools: List[str] = field(default_factory=list)
+    required_tools: list[str] = field(default_factory=list)
     best_model: str = "unknown"
     average_time_seconds: float = 0.0
     confidence: float = 0.5
-    last_evaluated: Optional[float] = None
+    last_evaluated: float | None = None
     category: str = "general"
-    benchmarks: List[str] = field(default_factory=list)
+    benchmarks: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "success_rate": self.success_rate,
@@ -39,18 +39,18 @@ class CapabilityRecord:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "CapabilityRecord":
+    def from_dict(cls, d: dict[str, Any]) -> "CapabilityRecord":
         d = dict(d)
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
 class CapabilityRegistry:
     def __init__(self):
-        self._capabilities: Dict[str, CapabilityRecord] = {}
-        self._performance_history: List[Dict[str, Any]] = []
+        self._capabilities: dict[str, CapabilityRecord] = {}
+        self._performance_history: list[dict[str, Any]] = []
 
     def register_capability(self, name: str, category: str = "general",
-                           required_tools: List[str] = None) -> CapabilityRecord:
+                           required_tools: list[str] | None = None) -> CapabilityRecord:
         """Register a new capability."""
         if name not in self._capabilities:
             self._capabilities[name] = CapabilityRecord(
@@ -60,13 +60,13 @@ class CapabilityRegistry:
             )
         return self._capabilities[name]
 
-    def get_capability(self, name: str) -> Optional[CapabilityRecord]:
+    def get_capability(self, name: str) -> CapabilityRecord | None:
         return self._capabilities.get(name)
 
     def record_result(self, capability_name: str, success: bool,
                      time_seconds: float = 0.0,
                      model: str = "unknown",
-                     evidence: str = None) -> CapabilityRecord:
+                     evidence: str | None = None) -> CapabilityRecord:
         """Record a task execution result for a capability."""
         cap = self._capabilities.get(capability_name)
         if cap is None:
@@ -106,10 +106,10 @@ class CapabilityRegistry:
         cap = self._capabilities.get(capability_name)
         return cap.confidence if cap else 0.0
 
-    def get_all_capabilities(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_capabilities(self) -> dict[str, dict[str, Any]]:
         return {name: cap.to_dict() for name, cap in self._capabilities.items()}
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         caps = list(self._capabilities.values())
         avg_success = sum(c.success_rate for c in caps) / len(caps) if caps else 0
         avg_conf = sum(c.confidence for c in caps) / len(caps) if caps else 0
@@ -120,7 +120,7 @@ class CapabilityRegistry:
             "by_category": self._by_category(),
         }
 
-    def _by_category(self) -> Dict[str, int]:
+    def _by_category(self) -> dict[str, int]:
         counts = {}
         for cap in self._capabilities.values():
             counts[cap.category] = counts.get(cap.category, 0) + 1

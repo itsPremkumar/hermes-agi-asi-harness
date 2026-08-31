@@ -47,8 +47,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: int = 512
         max_cpu_percent: int = 20
@@ -60,11 +60,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -231,7 +231,7 @@ class StateManager:
     def __init__(self, db_path: str = "state/hermes_state.db"):
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._init_db()
     
     def _init_db(self):
@@ -250,7 +250,7 @@ class StateManager:
     
     # ── Sessions ─────────────────────────────────────────────────────────
     
-    def create_session(self, title: str = "", context: Dict = None) -> str:
+    def create_session(self, title: str = "", context: dict | None = None) -> str:
         """Create a new session."""
         session_id = str(uuid.uuid4())
         self._conn.execute(
@@ -261,7 +261,7 @@ class StateManager:
         self._log_action("session.create", "state_manager", session_id, {"title": title})
         return session_id
     
-    def get_session(self, session_id: str) -> Optional[Dict]:
+    def get_session(self, session_id: str) -> dict | None:
         """Get a session by ID."""
         cursor = self._conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,))
         row = cursor.fetchone()
@@ -276,7 +276,7 @@ class StateManager:
         if not updates:
             return False
         
-        set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
         values = list(updates.values()) + [session_id]
         
         self._conn.execute(
@@ -286,7 +286,7 @@ class StateManager:
         self._conn.commit()
         return True
     
-    def list_sessions(self, status: str = None, limit: int = 50) -> List[Dict]:
+    def list_sessions(self, status: str | None = None, limit: int = 50) -> list[dict]:
         """List sessions."""
         if status:
             cursor = self._conn.execute(
@@ -309,7 +309,7 @@ class StateManager:
     
     # ── Tasks ───────────────────────────────────────────────────────────
     
-    def create_task(self, title: str, description: str = "", session_id: str = None, priority: int = 0) -> str:
+    def create_task(self, title: str, description: str = "", session_id: str | None = None, priority: int = 0) -> str:
         """Create a new task."""
         task_id = str(uuid.uuid4())
         self._conn.execute(
@@ -320,7 +320,7 @@ class StateManager:
         self._log_action("task.create", "state_manager", task_id, {"title": title})
         return task_id
     
-    def get_task(self, task_id: str) -> Optional[Dict]:
+    def get_task(self, task_id: str) -> dict | None:
         """Get a task by ID."""
         cursor = self._conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
         row = cursor.fetchone()
@@ -335,7 +335,7 @@ class StateManager:
         if not updates:
             return False
         
-        set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
         values = list(updates.values()) + [task_id]
         
         self._conn.execute(
@@ -352,7 +352,7 @@ class StateManager:
         self._conn.commit()
         return True
     
-    def list_tasks(self, session_id: str = None, status: str = None, limit: int = 50) -> List[Dict]:
+    def list_tasks(self, session_id: str | None = None, status: str | None = None, limit: int = 50) -> list[dict]:
         """List tasks."""
         query = "SELECT * FROM tasks WHERE 1=1"
         params = []
@@ -378,7 +378,7 @@ class StateManager:
     
     # ── Memories ───────────────────────────────────────────────────────
     
-    def create_memory(self, memory_type: str, title: str, content: str, importance: float = 0.5, tags: List[str] = None, source: str = "") -> str:
+    def create_memory(self, memory_type: str, title: str, content: str, importance: float = 0.5, tags: list[str] | None = None, source: str = "") -> str:
         """Create a new memory."""
         memory_id = str(uuid.uuid4())
         self._conn.execute(
@@ -389,7 +389,7 @@ class StateManager:
         self._log_action("memory.create", "state_manager", memory_id, {"type": memory_type, "title": title})
         return memory_id
     
-    def get_memory(self, memory_id: str) -> Optional[Dict]:
+    def get_memory(self, memory_id: str) -> dict | None:
         """Get a memory by ID."""
         cursor = self._conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,))
         row = cursor.fetchone()
@@ -406,7 +406,7 @@ class StateManager:
         if not updates:
             return False
         
-        set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
         values = list(updates.values()) + [memory_id]
         
         self._conn.execute(
@@ -416,7 +416,7 @@ class StateManager:
         self._conn.commit()
         return True
     
-    def list_memories(self, memory_type: str = None, limit: int = 50, order_by: str = "importance") -> List[Dict]:
+    def list_memories(self, memory_type: str | None = None, limit: int = 50, order_by: str = "importance") -> list[dict]:
         """List memories."""
         query = "SELECT * FROM memories WHERE 1=1"
         params = []
@@ -449,7 +449,7 @@ class StateManager:
     
     # ── Full-Text Search ──────────────────────────────────────────────
     
-    def search(self, query: str, table: str = "all", limit: int = 20) -> List[Dict]:
+    def search(self, query: str, table: str = "all", limit: int = 20) -> list[dict]:
         """Full-text search across all content."""
         results = []
         
@@ -497,7 +497,7 @@ class StateManager:
     
     # ── Checkpoints ───────────────────────────────────────────────────
     
-    def create_checkpoint(self, task_id: str, state_data: Dict, compress: bool = True) -> str:
+    def create_checkpoint(self, task_id: str, state_data: dict, compress: bool = True) -> str:
         """Create a checkpoint for a task."""
         checkpoint_id = str(uuid.uuid4())
         state_json = json.dumps(state_data).encode("utf-8")
@@ -516,7 +516,7 @@ class StateManager:
         self._log_action("checkpoint.create", "state_manager", checkpoint_id, {"task_id": task_id})
         return checkpoint_id
     
-    def get_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
+    def get_checkpoint(self, checkpoint_id: str) -> dict | None:
         """Get a checkpoint and decompress."""
         cursor = self._conn.execute("SELECT * FROM checkpoints WHERE id = ?", (checkpoint_id,))
         row = cursor.fetchone()
@@ -534,7 +534,7 @@ class StateManager:
         d["state_data"] = json.loads(state_json.decode("utf-8"))
         return d
     
-    def get_latest_checkpoint(self, task_id: str) -> Optional[Dict]:
+    def get_latest_checkpoint(self, task_id: str) -> dict | None:
         """Get the latest checkpoint for a task."""
         cursor = self._conn.execute(
             "SELECT * FROM checkpoints WHERE task_id = ? ORDER BY created_at DESC LIMIT 1",
@@ -555,7 +555,7 @@ class StateManager:
         d["state_data"] = json.loads(state_json.decode("utf-8"))
         return d
     
-    def list_checkpoints(self, task_id: str) -> List[Dict]:
+    def list_checkpoints(self, task_id: str) -> list[dict]:
         """List checkpoints for a task."""
         cursor = self._conn.execute(
             "SELECT id, task_id, state_hash, created_at FROM checkpoints WHERE task_id = ? ORDER BY created_at DESC",
@@ -563,7 +563,7 @@ class StateManager:
         )
         return [dict(row) for row in cursor.fetchall()]
     
-    def rollback_to_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
+    def rollback_to_checkpoint(self, checkpoint_id: str) -> dict | None:
         """Rollback to a checkpoint."""
         checkpoint = self.get_checkpoint(checkpoint_id)
         if not checkpoint:
@@ -585,7 +585,7 @@ class StateManager:
         self._log_action("skill.create", "state_manager", skill_id, {"name": name})
         return skill_id
     
-    def get_skill(self, skill_id: str = None, name: str = None) -> Optional[Dict]:
+    def get_skill(self, skill_id: str | None = None, name: str | None = None) -> dict | None:
         """Get a skill by ID or name."""
         if skill_id:
             cursor = self._conn.execute("SELECT * FROM skills WHERE id = ?", (skill_id,))
@@ -610,7 +610,7 @@ class StateManager:
         if "content" in updates:
             updates["version"] = "version + 1"
         
-        set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
         values = list(updates.values()) + [skill_id]
         
         self._conn.execute(
@@ -634,7 +634,7 @@ class StateManager:
             )
         self._conn.commit()
     
-    def list_skills(self, limit: int = 50) -> List[Dict]:
+    def list_skills(self, limit: int = 50) -> list[dict]:
         """List all skills."""
         cursor = self._conn.execute("SELECT * FROM skills ORDER BY updated_at DESC LIMIT ?", (limit,))
         return [dict(row) for row in cursor.fetchall()]
@@ -647,7 +647,7 @@ class StateManager:
     
     # ── Audit Log ─────────────────────────────────────────────────────
     
-    def _log_action(self, action: str, actor: str, target: str, details: Dict):
+    def _log_action(self, action: str, actor: str, target: str, details: dict):
         """Log an action to the audit log."""
         self._conn.execute(
             "INSERT INTO audit_log (action, actor, target, details) VALUES (?, ?, ?, ?)",
@@ -655,7 +655,7 @@ class StateManager:
         )
         self._conn.commit()
     
-    def get_audit_log(self, limit: int = 100, action: str = None) -> List[Dict]:
+    def get_audit_log(self, limit: int = 100, action: str | None = None) -> list[dict]:
         """Get audit log entries."""
         if action:
             cursor = self._conn.execute(
@@ -671,7 +671,7 @@ class StateManager:
     
     # ── Stats ─────────────────────────────────────────────────────────
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get database statistics."""
         stats = {}
         
@@ -733,7 +733,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=20,
             ),
         )
-        self.manager: Optional[StateManager] = None
+        self.manager: StateManager | None = None
     
     async def load(self) -> bool:
         self.manager = StateManager()
@@ -752,7 +752,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         healthy = self.state in (PluginState.LOADED, PluginState.RUNNING)
         return {
             "status": "healthy" if healthy else "degraded",
@@ -766,67 +766,67 @@ class Plugin(PluginBase):
     
     # ── PUBLIC API ──────────────────────────────────────────────────────
     
-    def create_session(self, title: str = "", context: Dict = None) -> str:
+    def create_session(self, title: str = "", context: dict | None = None) -> str:
         return self.manager.create_session(title, context)
     
-    def get_session(self, session_id: str) -> Optional[Dict]:
+    def get_session(self, session_id: str) -> dict | None:
         return self.manager.get_session(session_id)
     
-    def list_sessions(self, status: str = None, limit: int = 50) -> List[Dict]:
+    def list_sessions(self, status: str | None = None, limit: int = 50) -> list[dict]:
         return self.manager.list_sessions(status, limit)
     
-    def create_task(self, title: str, description: str = "", session_id: str = None, priority: int = 0) -> str:
+    def create_task(self, title: str, description: str = "", session_id: str | None = None, priority: int = 0) -> str:
         return self.manager.create_task(title, description, session_id, priority)
     
-    def get_task(self, task_id: str) -> Optional[Dict]:
+    def get_task(self, task_id: str) -> dict | None:
         return self.manager.get_task(task_id)
     
     def update_task(self, task_id: str, **kwargs) -> bool:
         return self.manager.update_task(task_id, **kwargs)
     
-    def list_tasks(self, session_id: str = None, status: str = None, limit: int = 50) -> List[Dict]:
+    def list_tasks(self, session_id: str | None = None, status: str | None = None, limit: int = 50) -> list[dict]:
         return self.manager.list_tasks(session_id, status, limit)
     
-    def create_memory(self, memory_type: str, title: str, content: str, importance: float = 0.5, tags: List[str] = None, source: str = "") -> str:
+    def create_memory(self, memory_type: str, title: str, content: str, importance: float = 0.5, tags: list[str] | None = None, source: str = "") -> str:
         return self.manager.create_memory(memory_type, title, content, importance, tags, source)
     
-    def list_memories(self, memory_type: str = None, limit: int = 50) -> List[Dict]:
+    def list_memories(self, memory_type: str | None = None, limit: int = 50) -> list[dict]:
         return self.manager.list_memories(memory_type, limit)
     
-    def search(self, query: str, table: str = "all", limit: int = 20) -> List[Dict]:
+    def search(self, query: str, table: str = "all", limit: int = 20) -> list[dict]:
         return self.manager.search(query, table, limit)
     
-    def create_checkpoint(self, task_id: str, state_data: Dict) -> str:
+    def create_checkpoint(self, task_id: str, state_data: dict) -> str:
         return self.manager.create_checkpoint(task_id, state_data)
     
-    def get_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
+    def get_checkpoint(self, checkpoint_id: str) -> dict | None:
         return self.manager.get_checkpoint(checkpoint_id)
     
-    def get_latest_checkpoint(self, task_id: str) -> Optional[Dict]:
+    def get_latest_checkpoint(self, task_id: str) -> dict | None:
         return self.manager.get_latest_checkpoint(task_id)
     
-    def rollback_to_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
+    def rollback_to_checkpoint(self, checkpoint_id: str) -> dict | None:
         return self.manager.rollback_to_checkpoint(checkpoint_id)
     
     def create_skill(self, name: str, content: str, description: str = "") -> str:
         return self.manager.create_skill(name, content, description)
     
-    def get_skill(self, skill_id: str = None, name: str = None) -> Optional[Dict]:
+    def get_skill(self, skill_id: str | None = None, name: str | None = None) -> dict | None:
         return self.manager.get_skill(skill_id, name)
     
-    def list_skills(self) -> List[Dict]:
+    def list_skills(self) -> list[dict]:
         return self.manager.list_skills()
     
     def record_skill_usage(self, skill_id: str, success: bool):
         return self.manager.record_skill_usage(skill_id, success)
     
-    def get_audit_log(self, limit: int = 100) -> List[Dict]:
+    def get_audit_log(self, limit: int = 100) -> list[dict]:
         return self.manager.get_audit_log(limit)
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self.manager.get_stats()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities
 
 async def create(kernel: Any) -> Plugin:

@@ -20,21 +20,21 @@ class BrowserAutomation:
     """Advanced browser automation."""
     
     def __init__(self):
-        self._sessions: Dict[str, Any] = {}
+        self._sessions: dict[str, Any] = {}
     
-    async def navigate(self, url: str) -> Dict[str, Any]:
+    async def navigate(self, url: str) -> dict[str, Any]:
         """Navigate to a URL."""
         return {"url": url, "status": "loaded", "title": "Page Title"}
     
-    async def click(self, selector: str) -> Dict[str, Any]:
+    async def click(self, selector: str) -> dict[str, Any]:
         """Click an element."""
         return {"selector": selector, "status": "clicked"}
     
-    async def fill(self, selector: str, text: str) -> Dict[str, Any]:
+    async def fill(self, selector: str, text: str) -> dict[str, Any]:
         """Fill a form field."""
         return {"selector": selector, "text": text, "status": "filled"}
     
-    async def screenshot(self, path: str = "screenshot.png") -> Dict[str, Any]:
+    async def screenshot(self, path: str = "screenshot.png") -> dict[str, Any]:
         """Take a screenshot."""
         return {"path": path, "status": "saved"}
     
@@ -42,5 +42,5 @@ class BrowserAutomation:
         """Extract text from page."""
         return "Extracted text content"
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy", "sessions": len(self._sessions)}

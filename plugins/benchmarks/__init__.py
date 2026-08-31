@@ -16,15 +16,16 @@ Implements comprehensive evaluation and regression testing for autonomous agents
 - SELF_EVOLUTION — Improvement effectiveness
 """
 
+import asyncio
+import hashlib
+import json
+import logging
 import time
 import uuid
-import asyncio
-import logging
-import json
-import hashlib
-from typing import Dict, List, Any, Optional, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class BenchmarkTest:
     prompt: str
     expected_outcome: str
     timeout_seconds: int = 60
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -63,8 +64,8 @@ class BenchmarkResult:
     passed: bool
     score: float  # 0.0 to 1.0
     latency_ms: float
-    evidence: List[str] = field(default_factory=list)
-    error: Optional[str] = None
+    evidence: list[str] = field(default_factory=list)
+    error: str | None = None
     model_used: str = "deterministic"
     timestamp: float = field(default_factory=time.time)
 
@@ -79,9 +80,9 @@ class EvaluationReport:
     failed: int
     avg_score: float
     avg_latency_ms: float
-    by_suite: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    by_suite: dict[str, dict[str, Any]] = field(default_factory=dict)
     regression: bool = False
-    previous_run_id: Optional[str] = None
+    previous_run_id: str | None = None
 
 
 class BenchmarkEngine:
@@ -90,9 +91,9 @@ class BenchmarkEngine:
     """
 
     def __init__(self):
-        self.suites: Dict[BenchmarkSuite, List[BenchmarkTest]] = {}
-        self.results: List[BenchmarkResult] = []
-        self.reports: List[EvaluationReport] = []
+        self.suites: dict[BenchmarkSuite, list[BenchmarkTest]] = {}
+        self.results: list[BenchmarkResult] = []
+        self.reports: list[EvaluationReport] = []
         self._load_builtin_tests()
 
     def _load_builtin_tests(self):
@@ -134,7 +135,7 @@ class BenchmarkEngine:
             self.suites[test.suite] = []
         self.suites[test.suite].append(test)
 
-    async def run_suite(self, suite: BenchmarkSuite, evaluator: Callable) -> List[BenchmarkResult]:
+    async def run_suite(self, suite: BenchmarkSuite, evaluator: Callable) -> list[BenchmarkResult]:
         """Runs all tests in a suite using the provided evaluator function."""
         tests = self.suites.get(suite, [])
         results = []
@@ -187,7 +188,7 @@ class BenchmarkEngine:
         expected_str = expected.lower()
         return expected_str in outcome_str or outcome_str in expected_str
 
-    def generate_report(self, run_id: Optional[str] = None) -> EvaluationReport:
+    def generate_report(self, run_id: str | None = None) -> EvaluationReport:
         """Generates an evaluation report from collected results."""
         now = time.time()
         new_results = self.results
@@ -244,14 +245,14 @@ class BenchmarkEngine:
         previous = self.reports[-2]
         return (current.avg_score < previous.avg_score - 0.05) or current.regression
 
-    def get_all_tests(self) -> List[BenchmarkTest]:
+    def get_all_tests(self) -> list[BenchmarkTest]:
         """Returns all tests across all suites."""
         all_tests = []
         for suite_tests in self.suites.values():
             all_tests.extend(suite_tests)
         return all_tests
 
-    def leaderboard(self, top_n: int = 10) -> List[Dict[str, Any]]:
+    def leaderboard(self, top_n: int = 10) -> list[dict[str, Any]]:
         """Returns top-performing runs."""
         sorted_reports = sorted(self.reports, key=lambda r: r.avg_score, reverse=True)
         return [

@@ -7,11 +7,9 @@ Input sanitization, instruction hierarchy enforcement.
 
 from __future__ import annotations
 
-import json
 import logging
 import re
-import time
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger("hermes_injection_defense")
 
@@ -46,5 +44,5 @@ class PromptInjectionDefense:
         # Simple check - in production, use more sophisticated methods
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {"status": "healthy"}

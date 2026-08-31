@@ -9,15 +9,12 @@ Native bindings to the Hermes agent runtime:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-import os
-import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from harness_control_plane import (
     IPlugin,
@@ -67,12 +64,12 @@ class HermesIntegrationPlugin(IPlugin):
         "tool_registry",
     ]
     
-    def __init__(self, hermes_home: Optional[str] = None):
+    def __init__(self, hermes_home: str | None = None):
         self._hermes_home = Path(hermes_home or self._detect_hermes_home())
         self._profiles: dict[str, HermesProfile] = {}
         self._memory_cache: dict[str, list[MemoryEntry]] = {}
         self._skill_hooks: dict[str, callable] = {}
-        self._gateway_url: Optional[str] = None
+        self._gateway_url: str | None = None
         self._initialized = False
     
     @property
@@ -120,7 +117,7 @@ class HermesIntegrationPlugin(IPlugin):
         """Check integration health."""
         return self._initialized and self._hermes_home.exists()
     
-    async def get_profile(self, name: str) -> Optional[HermesProfile]:
+    async def get_profile(self, name: str) -> HermesProfile | None:
         """Get a profile by name."""
         return self._profiles.get(name)
     
@@ -147,7 +144,7 @@ class HermesIntegrationPlugin(IPlugin):
         return entries[-limit:]
     
     async def write_memory(self, content: str, category: str = "memory", 
-                           metadata: Optional[dict[str, Any]] = None) -> MemoryEntry:
+                           metadata: dict[str, Any] | None = None) -> MemoryEntry:
         """Write to the Hermes memory system."""
         memory_dir = self._hermes_home / "memories"
         memory_dir.mkdir(parents=True, exist_ok=True)

@@ -18,10 +18,11 @@ import shlex
 import subprocess
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes_tools")
 
@@ -38,8 +39,8 @@ class ToolRisk(str, Enum):
 class ToolSchema:
     """Tool input/output schema."""
     type: str = "object"
-    properties: Dict[str, Any] = field(default_factory=dict)
-    required: List[str] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    required: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -53,8 +54,8 @@ class ToolManifest:
     output_schema: ToolSchema = field(default_factory=ToolSchema)
     risk: ToolRisk = ToolRisk.LOW
     timeout_seconds: int = 60
-    requires_permissions: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
+    requires_permissions: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -62,18 +63,18 @@ class ToolResult:
     """Result of tool execution."""
     success: bool
     output: str
-    error: Optional[str] = None
+    error: str | None = None
     execution_time_ms: float = 0.0
     tool_name: str = ""
     tool_version: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseTool:
     """Base class for all tools."""
     
     def __init__(self):
-        self.manifest: Optional[ToolManifest] = None
+        self.manifest: ToolManifest | None = None
     
     async def execute(self, **kwargs) -> ToolResult:
         """Execute the tool."""
@@ -83,7 +84,7 @@ class BaseTool:
         """Validate input parameters."""
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Health check."""
         return {"status": "healthy", "tool": self.manifest.name if self.manifest else "unknown"}
 
@@ -101,7 +102,7 @@ class ToolRegistry:
     """
     
     def __init__(self, audit_log_path: str = "logs/tool_audit.jsonl"):
-        self._tools: Dict[str, BaseTool] = {}
+        self._tools: dict[str, BaseTool] = {}
         self._audit_log_path = audit_log_path
         os.makedirs(os.path.dirname(audit_log_path), exist_ok=True)
     
@@ -127,11 +128,11 @@ class ToolRegistry:
             return True
         return False
     
-    def get(self, name: str) -> Optional[BaseTool]:
+    def get(self, name: str) -> BaseTool | None:
         """Get a tool by name."""
         return self._tools.get(name)
     
-    def list_tools(self) -> List[Dict[str, Any]]:
+    def list_tools(self) -> list[dict[str, Any]]:
         """List all registered tools."""
         return [
             {
@@ -144,7 +145,7 @@ class ToolRegistry:
             for name, tool in self._tools.items()
         ]
     
-    def search(self, query: str = None, category: str = None, tag: str = None) -> List[BaseTool]:
+    def search(self, query: str | None = None, category: str | None = None, tag: str | None = None) -> list[BaseTool]:
         """Search tools by query, category, or tag."""
         results = []
         for tool in self._tools.values():
@@ -159,7 +160,7 @@ class ToolRegistry:
             results.append(tool)
         return results
     
-    async def execute(self, tool_name: str, permissions: List[str] = None, **kwargs) -> ToolResult:
+    async def execute(self, tool_name: str, permissions: list[str] | None = None, **kwargs) -> ToolResult:
         """Execute a tool with permission check and audit."""
         tool = self._tools.get(tool_name)
         if not tool:
@@ -370,8 +371,8 @@ class HttpTool(BaseTool):
         )
     
     async def execute(self, **kwargs) -> ToolResult:
-        import urllib.request
         import urllib.error
+        import urllib.request
         
         method = kwargs.get("method", "GET")
         url = kwargs.get("url", "")

@@ -1,12 +1,12 @@
 """Worktree Isolation — Git worktree per agent."""
 from __future__ import annotations
-import os
-import shutil
+
 import subprocess
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 
 @dataclass
 class Worktree:
@@ -20,9 +20,9 @@ class Worktree:
 class WorktreeManager:
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path)
-        self.worktrees: Dict[str, Worktree] = {}
+        self.worktrees: dict[str, Worktree] = {}
     
-    def create_worktree(self, agent_id: str, branch: str) -> Optional[Worktree]:
+    def create_worktree(self, agent_id: str, branch: str) -> Worktree | None:
         worktree_path = self.repo_path / ".worktrees" / agent_id
         try:
             subprocess.run(
@@ -48,5 +48,5 @@ class WorktreeManager:
                 pass
             del self.worktrees[worktree_id]
     
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         return {"worktrees": len(self.worktrees)}

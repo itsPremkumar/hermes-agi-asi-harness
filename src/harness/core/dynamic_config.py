@@ -6,8 +6,8 @@ import json
 import os
 import threading
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from dataclasses import dataclass
+from typing import Any, Callable
 
 
 @dataclass
@@ -168,4 +168,4 @@ class DynamicConfig:
             self._change_log.clear()
 
 
-__all__ = ["DynamicConfig", "ConfigChangeEvent"]
+__all__ = ["ConfigChangeEvent", "DynamicConfig"]

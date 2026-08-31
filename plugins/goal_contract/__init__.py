@@ -6,8 +6,8 @@ failure_conditions, approval requirements, constraints.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ApprovalLevel(str, Enum):
@@ -21,17 +21,17 @@ class ApprovalLevel(str, Enum):
 class GoalContract:
     id: str
     objective: str
-    desired_state: List[str] = field(default_factory=list)
-    success_criteria: List[str] = field(default_factory=list)
-    failure_conditions: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    budget: Dict[str, Any] = field(default_factory=dict)
-    approval: Dict[str, ApprovalLevel] = field(default_factory=dict)
+    desired_state: list[str] = field(default_factory=list)
+    success_criteria: list[str] = field(default_factory=list)
+    failure_conditions: list[str] = field(default_factory=list)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    budget: dict[str, Any] = field(default_factory=dict)
+    approval: dict[str, ApprovalLevel] = field(default_factory=dict)
     risk_level: str = "low"
-    deadline: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    deadline: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "objective": self.objective,
@@ -47,7 +47,7 @@ class GoalContract:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "GoalContract":
+    def from_dict(cls, d: dict[str, Any]) -> "GoalContract":
         d = dict(d)
         d["approval"] = {k: ApprovalLevel(v) for k, v in d.get("approval", {}).items()}
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
@@ -101,7 +101,7 @@ class GoalCompiler:
             return "medium"
         return "low"
 
-    def _infer_desired_state(self, objective: str) -> List[str]:
+    def _infer_desired_state(self, objective: str) -> list[str]:
         obj = objective.lower()
         if "write" in obj or "file" in obj:
             return ["file exists with correct content"]
@@ -113,10 +113,10 @@ class GoalCompiler:
             return ["application is deployed"]
         return ["objective is satisfied"]
 
-    def _infer_criteria(self, objective: str) -> List[str]:
+    def _infer_criteria(self, objective: str) -> list[str]:
         return ["functional", "tested", "verified"]
 
-    def _infer_approvals(self, risk: str) -> Dict[str, ApprovalLevel]:
+    def _infer_approvals(self, risk: str) -> dict[str, ApprovalLevel]:
         if risk == "critical":
             return {
                 "financial_transaction": ApprovalLevel.REQUIRED,
@@ -145,7 +145,7 @@ class GoalCompiler:
 class GoalContractPlugin:
     def __init__(self):
         self.compiler = GoalCompiler()
-        self._contracts: Dict[str, GoalContract] = {}
+        self._contracts: dict[str, GoalContract] = {}
 
     async def load(self):
         pass
@@ -164,7 +164,7 @@ class GoalContractPlugin:
         self._contracts[contract.id] = contract
         return contract
 
-    def get_contract(self, goal_id: str) -> Optional[GoalContract]:
+    def get_contract(self, goal_id: str) -> GoalContract | None:
         return self._contracts.get(goal_id)
 
     @property

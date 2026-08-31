@@ -14,13 +14,12 @@ Event types:
 
 from __future__ import annotations
 
-import asyncio
 import fnmatch
 import logging
 import time
-import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger("hermes.event_bus")
 
@@ -28,7 +27,7 @@ logger = logging.getLogger("hermes.event_bus")
 @dataclass
 class Event:
     topic: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     sender: str = "kernel"
     timestamp: float = field(default_factory=time.time)
     event_id: str = ""
@@ -45,8 +44,8 @@ class EventBus:
     """Async event bus with topic patterns and replay history."""
 
     def __init__(self, max_history: int = 1000):
-        self._subscribers: Dict[str, List[Handler]] = {}
-        self._history: List[Event] = []
+        self._subscribers: dict[str, list[Handler]] = {}
+        self._history: list[Event] = []
         self._max_history = max_history
 
     def subscribe(self, topic_pattern: str, handler: Handler):
@@ -74,17 +73,17 @@ class EventBus:
                     except Exception as e:
                         logger.error("Event handler error for %s: %s", event.topic, e)
 
-    def emit(self, topic: str, payload: Optional[Dict[str, Any]] = None, sender: str = "kernel") -> Event:
+    def emit(self, topic: str, payload: dict[str, Any] | None = None, sender: str = "kernel") -> Event:
         """Convenience: create and publish in one call."""
         evt = Event(topic=topic, payload=payload or {}, sender=sender)
         self.publish(evt)
         return evt
 
-    def replay(self, topic_pattern: str = "*", limit: int = 50) -> List[Event]:
+    def replay(self, topic_pattern: str = "*", limit: int = 50) -> list[Event]:
         """Replay events matching a pattern (most recent first)."""
         matching = [e for e in self._history if fnmatch.fnmatch(e.topic, topic_pattern)]
         return matching[-limit:]
 
     @property
-    def history(self) -> List[Event]:
+    def history(self) -> list[Event]:
         return list(self._history)

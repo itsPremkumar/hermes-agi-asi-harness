@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Code generation plugin."""
 
-from core.codegen import CodeSynthesisEngine, CodeSpec, CodeGenType
+from core.codegen import CodeGenType, CodeSpec, CodeSynthesisEngine
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
 

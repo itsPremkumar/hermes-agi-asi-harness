@@ -16,11 +16,12 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger("hermes_streaming_output")
 
@@ -42,8 +43,8 @@ except ImportError:
     class PluginPermissions:
         filesystem_read: str = "project"
         filesystem_write: str = "project"
-        network_domains: List[str] = field(default_factory=list)
-        shell_commands: List[str] = field(default_factory=list)
+        network_domains: list[str] = field(default_factory=list)
+        shell_commands: list[str] = field(default_factory=list)
         secrets_access: str = "none"
         max_memory_mb: 512
         max_cpu_percent: 20
@@ -55,11 +56,11 @@ except ImportError:
         description: str = ""
         license: str = "MIT"
         source: str = "internal"
-        capabilities: List[str] = field(default_factory=list)
+        capabilities: list[str] = field(default_factory=list)
         cost: str = "free"
         permissions: PluginPermissions = field(default_factory=PluginPermissions)
-        dependencies: List[str] = field(default_factory=list)
-        path: Optional[Path] = None
+        dependencies: list[str] = field(default_factory=list)
+        path: Path | None = None
     
     class PluginBase:
         manifest: PluginManifest
@@ -96,7 +97,7 @@ class StreamChunk:
     content: str
     format: StreamFormat
     timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class StreamingOutput:
@@ -104,8 +105,8 @@ class StreamingOutput:
     
     def __init__(self, default_format: StreamFormat = StreamFormat.TEXT):
         self.default_format = default_format
-        self._subscribers: List[asyncio.Queue] = []
-        self._buffer: List[StreamChunk] = []
+        self._subscribers: list[asyncio.Queue] = []
+        self._buffer: list[StreamChunk] = []
         self._max_buffer = 1000
     
     def subscribe(self) -> asyncio.Queue:
@@ -119,7 +120,7 @@ class StreamingOutput:
         if queue in self._subscribers:
             self._subscribers.remove(queue)
     
-    async def emit(self, content: str, format: StreamFormat = None, metadata: Dict[str, Any] = None):
+    async def emit(self, content: str, format: StreamFormat = None, metadata: dict[str, Any] | None = None):
         """Emit a chunk to all subscribers."""
         chunk = StreamChunk(
             content=content,
@@ -168,12 +169,12 @@ class StreamingOutput:
                 await asyncio.sleep(delay)
         return count
     
-    async def collect(self, duration: float = 1.0) -> List[StreamChunk]:
+    async def collect(self, duration: float = 1.0) -> list[StreamChunk]:
         """Collect chunks for a duration."""
         await asyncio.sleep(duration)
         return self._buffer.copy()
     
-    def get_buffer(self) -> List[StreamChunk]:
+    def get_buffer(self) -> list[StreamChunk]:
         """Get buffered chunks."""
         return self._buffer.copy()
     
@@ -209,7 +210,7 @@ class Plugin(PluginBase):
                 max_cpu_percent=10,
             ),
         )
-        self.streamer: Optional[StreamingOutput] = None
+        self.streamer: StreamingOutput | None = None
     
     async def load(self) -> bool:
         self.streamer = StreamingOutput()
@@ -226,7 +227,7 @@ class Plugin(PluginBase):
         self.state = PluginState.UNLOADED
         return True
     
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         return {
             "plugin": self.manifest.name,
             "version": self.manifest.version,
@@ -244,7 +245,7 @@ class Plugin(PluginBase):
     def unsubscribe(self, queue: asyncio.Queue):
         self.streamer.unsubscribe(queue)
     
-    async def emit(self, content: str, format: str = "text", metadata: Dict[str, Any] = None):
+    async def emit(self, content: str, format: str = "text", metadata: dict[str, Any] | None = None):
         from plugins.streaming_output import StreamFormat
         await self.streamer.emit(content, StreamFormat(format), metadata)
     
@@ -255,7 +256,7 @@ class Plugin(PluginBase):
     async def stream_lines(self, text: str, delay: float = 0.0) -> int:
         return await self.streamer.stream_lines(text, delay)
     
-    def get_buffer(self) -> List[Dict[str, Any]]:
+    def get_buffer(self) -> list[dict[str, Any]]:
         return [
             {
                 "content": c.content,
@@ -269,5 +270,5 @@ class Plugin(PluginBase):
     def clear_buffer(self):
         self.streamer.clear_buffer()
     
-    def get_capabilities(self) -> List[str]:
+    def get_capabilities(self) -> list[str]:
         return self.manifest.capabilities

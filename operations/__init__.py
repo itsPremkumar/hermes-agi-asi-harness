@@ -166,7 +166,7 @@ class CheckpointManager:
         checkpoints = list(self.checkpoint_dir.glob(f"{agent_id}_*.json"))
         if not checkpoints:
             return None
-        latest_path = max(checkpoints, key=lambda p: p.stat().st_mtime)
+        latest_path = max(checkpoints, key=lambda p: (p.stat().st_mtime, p.stem.split('_')[-1] if '_' in p.stem else ''))
         data = json.loads(latest_path.read_text())
         return Checkpoint(**data)
 

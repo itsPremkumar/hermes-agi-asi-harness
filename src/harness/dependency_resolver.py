@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Optional
 
-from harness.plugin_base import Plugin, PluginStatus
 
 
 @dataclass

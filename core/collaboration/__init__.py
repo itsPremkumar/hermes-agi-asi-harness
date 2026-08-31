@@ -1,11 +1,18 @@
 """Collaboration Package."""
-from .protocol import AgentCollaborationProtocol, Agent, AgentRole, SubGoal, Conflict, CollaborationResult
+from .protocol import (
+    Agent,
+    AgentCollaborationProtocol,
+    AgentRole,
+    CollaborationResult,
+    Conflict,
+    SubGoal,
+)
 
 __all__ = [
-    "AgentCollaborationProtocol",
     "Agent",
+    "AgentCollaborationProtocol",
     "AgentRole",
-    "SubGoal",
-    "Conflict",
     "CollaborationResult",
+    "Conflict",
+    "SubGoal",
 ]

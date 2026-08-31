@@ -14,10 +14,9 @@ The agent ONLY ever reaches plugins through this context or the kernel.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from core.runtime.agent_kernel import AgentKernel
 from core.runtime.event_bus import EventBus
@@ -34,8 +33,8 @@ class AgentContext:
         self.permissions = kernel.get("permission_system")
         self.audit = kernel.get("audit_logger")
         self.stream = kernel.get("streaming_output")
-        self.session_id: Optional[str] = None
-        self.task_id: Optional[str] = None
+        self.session_id: str | None = None
+        self.task_id: str | None = None
 
     # ── Session / task lifecycle ────────────────────────────────────────
 
@@ -59,12 +58,12 @@ class AgentContext:
 
     # ── Permission gating ───────────────────────────────────────────────
 
-    def check_permission(self, action: str, context: Dict[str, Any] = None) -> tuple[bool, str]:
+    def check_permission(self, action: str, context: dict[str, Any] | None = None) -> tuple[bool, str]:
         if not self.permissions:
             return True, "no permission system loaded"
         return self.permissions.check(action, context or {})
 
-    def require_permission(self, action: str, context: Dict[str, Any] = None):
+    def require_permission(self, action: str, context: dict[str, Any] | None = None):
         """Raise if not permitted."""
         ok, reason = self.check_permission(action, context)
         if not ok:
@@ -73,7 +72,7 @@ class AgentContext:
     # ── Audit ────────────────────────────────────────────────────────────
 
     def log_action(self, event_type: str, action: str, target: str,
-                   result: str, details: Dict[str, Any] = None):
+                   result: str, details: dict[str, Any] | None = None):
         if self.audit:
             self.audit.log(event_type, "agent", action, target, result, details or {})
         # Also emit to event bus for subscribers
@@ -82,19 +81,19 @@ class AgentContext:
     # ── Memory ───────────────────────────────────────────────────────────
 
     def remember(self, content: str, category: str = "general",
-                 importance: float = 0.5, tags: List[str] = None) -> Optional[str]:
+                 importance: float = 0.5, tags: list[str] | None = None) -> str | None:
         if not self.memory:
             return None
         return self.memory.add_memory(content, category, importance, tags)
 
-    def recall(self, query: str, top_k: int = 3, category: str = None) -> List[Dict[str, Any]]:
+    def recall(self, query: str, top_k: int = 3, category: str | None = None) -> list[dict[str, Any]]:
         if not self.memory:
             return []
         return self.memory.search(query, top_k=top_k, category=category)
 
     # ── Streaming ───────────────────────────────────────────────────────
 
-    async def emit(self, content: str, metadata: Dict[str, Any] = None):
+    async def emit(self, content: str, metadata: dict[str, Any] | None = None):
         if self.stream:
             await self.stream.emit(content, metadata=metadata or {})
 
@@ -112,5 +111,5 @@ class AgentContext:
     def plugin(self, name: str):
         return self.kernel.get(name)
 
-    def plugins_with_capability(self, capability: str) -> List[str]:
+    def plugins_with_capability(self, capability: str) -> list[str]:
         return self.kernel.get_plugins_by_capability(capability)
