@@ -93,7 +93,7 @@ def test_gsm8k_result_dataclass():
     result = GSM8KResult(
         question_id="test_001",
         predicted=25.0,
-        correct_answer=25.0,
+        expected=25.0,
         correct=True,
     )
     assert result.question_id == "test_001"
