@@ -1,252 +1,111 @@
-"""
-Tests for SIQA Benchmark.
-Test count: 22
-"""
-import asyncio
-import json
-import os
-import sys
-import tempfile
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+"""Tests for siqa_benchmark.py — SIQA Benchmark."""
+import pytest
 
 from benchmark.siqa_benchmark import (
-    SIQAQuestion,
-    SIQADataset,
-    SIQAResult,
-    SIQABenchmark,
+    SIQABenchmark, SIQAProblem, SIQAResult, ProblemStatus,
 )
-
-
-# ──────────────────── Domain Model Tests ──────────────────────────────
-
-
-class TestSIQAQuestion:
-    def test_create(self):
-        q = SIQAQuestion(
-            id="q1",
-            context="Alex got a promotion.",
-            question="How would Alex feel?",
-            choices=["happy", "sad", "indifferent"],
-            correct_answer=0,
-        )
-        assert q.id == "q1"
-        assert q.correct_answer == 0
-        assert len(q.choices) == 3
-
-    def test_default_metadata(self):
-        q = SIQAQuestion(id="q1", context="", question="", choices=[], correct_answer=0)
-        assert q.metadata == {}
-
-
-class TestSIQADataset:
-    def test_create(self):
-        dataset = SIQADataset(questions=[])
-        assert len(dataset.questions) == 0
-
-    def test_create_with_questions(self):
-        q = SIQAQuestion(id="q1", context="", question="", choices=[], correct_answer=0)
-        dataset = SIQADataset(questions=[q])
-        assert len(dataset.questions) == 1
-
-
-class TestSIQAResult:
-    def test_create_correct(self):
-        result = SIQAResult(
-            question_id="q1",
-            predicted_answer=0,
-            correct_answer=0,
-            correct=True,
-        )
-        assert result.correct is True
-
-    def test_create_incorrect(self):
-        result = SIQAResult(
-            question_id="q1",
-            predicted_answer=1,
-            correct_answer=0,
-            correct=False,
-        )
-        assert result.correct is False
-
-    def test_default_values(self):
-        result = SIQAResult(question_id="q1", predicted_answer=0, correct_answer=0, correct=True)
-        assert result.confidence == 0.0
-        assert result.duration == 0.0
-
-
-# ──────────────── SIQABenchmark Tests ─────────────────────────────────
 
 
 class TestSIQABenchmark:
     def test_create(self):
-        bench = SIQABenchmark()
-        assert bench.data_dir.exists() or True
+        b = SIQABenchmark()
+        assert b.count() == 0
 
-    def test_load_no_data(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            dataset = bench.load()
-            # Should generate synthetic data
-            assert len(dataset.questions) > 0
+    def test_load_problems(self):
+        b = SIQABenchmark()
+        count = b.load_problems()
+        assert count == 1000
+        assert b.count() == 1000
 
-    def test_load_with_jsonl(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a test JSONL file
-            data = [
-                {"id": "q1", "context": "Test", "question": "Q?", "choices": {"0": "A", "1": "B"}, "correct": "0"},
-                {"id": "q2", "context": "Test2", "question": "Q2?", "choices": {"0": "A", "1": "B"}, "correct": "1"},
-            ]
-            with open(os.path.join(tmpdir, "siqa_validation.jsonl"), "w") as f:
-                for item in data:
-                    f.write(json.dumps(item) + "\n")
+    def test_run_problem(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        r = b.run_problem("SIQA_1", 0)
+        assert r.status in (ProblemStatus.PASSED, ProblemStatus.FAILED)
 
-            bench = SIQABenchmark(data_dir=tmpdir)
-            dataset = bench.load()
-            assert len(dataset.questions) == 2
+    def test_run_problem_correct(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        # SIQA_1 has correct_index = 1 % 3 = 1
+        r = b.run_problem("SIQA_1", 1)
+        assert r.correct is True
+        assert r.status == ProblemStatus.PASSED
 
-    def test_load_with_answer_format(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            data = [
-                {"id": "q1", "context": "Test", "question": "Q?", "answerA": "Yes", "answerB": "No", "answerC": "Maybe", "answer": "A"},
-            ]
-            with open(os.path.join(tmpdir, "siqa_validation.jsonl"), "w") as f:
-                for item in data:
-                    f.write(json.dumps(item) + "\n")
+    def test_run_problem_incorrect(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        r = b.run_problem("SIQA_1", 0)
+        assert r.correct is False
+        assert r.status == ProblemStatus.FAILED
 
-            bench = SIQABenchmark(data_dir=tmpdir)
-            dataset = bench.load()
-            assert len(dataset.questions) == 1
-            assert len(dataset.questions[0].choices) == 3
+    def test_run_problem_missing(self):
+        b = SIQABenchmark()
+        r = b.run_problem("nonexistent", 0)
+        assert r.status == ProblemStatus.ERROR
 
     def test_run_all(self):
-        async def predictor(question):
-            return question.correct_answer
+        b = SIQABenchmark()
+        b.load_problems()
+        results = b.run_all()
+        assert len(results) == 1000
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            results = bench.run(predictor)
-            assert len(results) > 0
-            assert all(r.correct for r in results)
+    def test_get_pass_rate(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        b.run_problem("SIQA_1", 1)  # correct
+        b.run_problem("SIQA_2", 0)  # wrong (correct is 2)
+        pr = b.get_pass_rate()
+        assert pr["pass_rate"] == 0.5
 
-    def test_run_max_questions(self):
-        async def predictor(question):
-            return question.correct_answer
+    def test_get_pass_rate_empty(self):
+        b = SIQABenchmark()
+        pr = b.get_pass_rate()
+        assert pr["pass_rate"] == 0.0
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            results = bench.run(predictor, max_questions=5)
-            assert len(results) == 5
+    def test_get_problem(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        p = b.get_problem("SIQA_1")
+        assert p is not None
+        assert p.id == "SIQA_1"
 
-    def test_run_sample(self):
-        async def predictor(question):
-            return question.correct_answer
+    def test_list_problems(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        problems = b.list_problems()
+        assert len(problems) == 1000
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            results = bench.run_sample(predictor, sample_size=5)
-            assert len(results) == 5
+    def test_get_result(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        b.run_problem("SIQA_1", 0)
+        r = b.get_result("SIQA_1")
+        assert r is not None
 
-    def test_run_sample_seed(self):
-        async def predictor(question):
-            return question.correct_answer
+    def test_clear_results(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        b.run_problem("SIQA_1", 0)
+        b.clear_results()
+        assert b.get_result("SIQA_1") is None
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            r1 = bench.run_sample(predictor, sample_size=5, seed=42)
-            bench.reset()
-            r2 = bench.run_sample(predictor, sample_size=5, seed=42)
-            assert [r.question_id for r in r1] == [r.question_id for r in r2]
+    def test_set_prediction(self):
+        b = SIQABenchmark()
+        b.load_problems()
+        b.set_prediction("SIQA_1", 1)
+        r = b.run_problem("SIQA_1")
+        assert r.correct is True
 
-    def test_get_accuracy(self):
-        async def predictor(question):
-            return question.correct_answer
+    def test_problem_status_enum(self):
+        assert ProblemStatus.PENDING.value == "pending"
+        assert ProblemStatus.PASSED.value == "passed"
+        assert ProblemStatus.FAILED.value == "failed"
+        assert ProblemStatus.ERROR.value == "error"
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            bench.run(predictor, max_questions=10)
-            accuracy = bench.get_accuracy()
-            assert accuracy == 1.0
+    def test_siqa_problem(self):
+        p = SIQAProblem(id="test", context="ctx", question="q", options=["a", "b", "c"], correct_index=1)
+        assert p.status == ProblemStatus.PENDING
 
-    def test_get_accuracy_no_results(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            assert bench.get_accuracy() == 0.0
-
-    def test_get_report(self):
-        async def predictor(question):
-            return question.correct_answer
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            bench.run(predictor, max_questions=10)
-            report = bench.get_report()
-            assert report["benchmark"] == "SIQA"
-            assert report["total_questions"] == 10
-            assert report["correct"] == 10
-            assert report["accuracy"] == 1.0
-
-    def test_get_report_no_results(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            report = bench.get_report()
-            assert "error" in report
-
-    def test_get_results(self):
-        async def predictor(question):
-            return question.correct_answer
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            bench.run(predictor, max_questions=5)
-            results = bench.get_results()
-            assert len(results) == 5
-
-    def test_get_dataset(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            dataset = bench.get_dataset()
-            assert dataset is not None
-            assert len(dataset.questions) > 0
-
-    def test_reset(self):
-        async def predictor(question):
-            return question.correct_answer
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            bench.run(predictor, max_questions=5)
-            assert len(bench.get_results()) == 5
-            bench.reset()
-            assert len(bench.get_results()) == 0
-
-    def test_predictor_error_handling(self):
-        async def bad_predictor(question):
-            raise ValueError("Prediction failed")
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            results = bench.run(bad_predictor, max_questions=5)
-            assert all(not r.correct for r in results)
-
-    def test_run_partial_correct(self):
-        async def partial_predictor(question):
-            # Intentionally imperfect: only correct for answer index 0
-            return 0
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            bench = SIQABenchmark(data_dir=tmpdir)
-            bench.load()
-            results = bench.run(partial_predictor, max_questions=20)
-            correct_count = sum(1 for r in results if r.correct)
-            assert 0 < correct_count < 20
+    def test_siqa_result(self):
+        r = SIQAResult(problem_id="test", status=ProblemStatus.PASSED, predicted_index=1, correct=True)
+        assert r.correct is True

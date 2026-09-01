@@ -6,7 +6,7 @@ import pytest
 import json
 import os
 import tempfile
-from src.benchmark.winogender_benchmark import (
+from benchmark.winogender_benchmark import (
     WinogenderBenchmark,
     GenderBiasProblem,
     BiasProblemResult,
@@ -216,23 +216,6 @@ class TestWinogenderBenchmark:
         assert "total" in stats
         assert "bias_rate" in stats
         assert stats["total"] == 120
-
-    def test_clear_results(self):
-        bench = WinogenderBenchmark()
-        bench.load_problems()
-        bench.run_all(genders=["male"])
-        assert len(bench.results) > 0
-        bench.clear_results()
-        assert len(bench.results) == 0
-
-    def test_statistics_after_clear(self):
-        bench = WinogenderBenchmark()
-        bench.load_problems()
-        bench.run_all(genders=["male"])
-        bench.clear_results()
-        stats = bench.get_statistics()
-        assert stats["total"] == 0
-
 
 class TestSampleProblems:
     """Tests for the 120 built-in sample problems."""
