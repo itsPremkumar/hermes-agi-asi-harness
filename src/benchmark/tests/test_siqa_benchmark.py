@@ -1,111 +1,102 @@
 """Tests for siqa_benchmark.py — SIQA Benchmark."""
-import pytest
 
+import asyncio
+import pytest
 from benchmark.siqa_benchmark import (
-    SIQABenchmark, SIQAProblem, SIQAResult, ProblemStatus,
+    SIQABenchmark, SIQAQuestion, SIQAResult, SIQADataset,
 )
 
 
 class TestSIQABenchmark:
     def test_create(self):
         b = SIQABenchmark()
-        assert b.count() == 0
+        assert b.get_results() == []
 
-    def test_load_problems(self):
+    def test_load_default(self):
         b = SIQABenchmark()
-        count = b.load_problems()
-        assert count == 1000
-        assert b.count() == 1000
+        b.load()
+        assert b.get_dataset() is not None
+        assert len(b.get_dataset().questions) > 0
 
-    def test_run_problem(self):
+    def test_run(self):
         b = SIQABenchmark()
-        b.load_problems()
-        r = b.run_problem("SIQA_1", 0)
-        assert r.status in (ProblemStatus.PASSED, ProblemStatus.FAILED)
+        b.load()
+        async def predictor(q):
+            return 0
+        results = b.run(predictor)
+        assert len(results) > 0
 
-    def test_run_problem_correct(self):
+    def test_run_sample(self):
         b = SIQABenchmark()
-        b.load_problems()
-        # SIQA_1 has correct_index = 1 % 3 = 1
-        r = b.run_problem("SIQA_1", 1)
-        assert r.correct is True
-        assert r.status == ProblemStatus.PASSED
+        b.load()
+        async def predictor(q):
+            return 0
+        results = b.run_sample(predictor, sample_size=5)
+        assert len(results) == 5
 
-    def test_run_problem_incorrect(self):
+    def test_get_accuracy(self):
         b = SIQABenchmark()
-        b.load_problems()
-        r = b.run_problem("SIQA_1", 0)
-        assert r.correct is False
-        assert r.status == ProblemStatus.FAILED
+        b.load()
+        async def predictor(q):
+            return q.correct_answer
+        b.run(predictor)
+        assert b.get_accuracy() == 1.0
 
-    def test_run_problem_missing(self):
+    def test_get_accuracy_partial(self):
         b = SIQABenchmark()
-        r = b.run_problem("nonexistent", 0)
-        assert r.status == ProblemStatus.ERROR
+        b.load()
+        async def predictor(q):
+            return 0  # not always correct
+        b.run(predictor)
+        acc = b.get_accuracy()
+        assert 0 <= acc <= 1
 
-    def test_run_all(self):
+    def test_get_report(self):
         b = SIQABenchmark()
-        b.load_problems()
-        results = b.run_all()
-        assert len(results) == 1000
+        b.load()
+        async def predictor(q):
+            return 0
+        b.run(predictor)
+        report = b.get_report()
+        assert "accuracy" in report
+        assert "total_questions" in report
 
-    def test_get_pass_rate(self):
+    def test_get_results(self):
         b = SIQABenchmark()
-        b.load_problems()
-        b.run_problem("SIQA_1", 1)  # correct
-        b.run_problem("SIQA_2", 0)  # wrong (correct is 2)
-        pr = b.get_pass_rate()
-        assert pr["pass_rate"] == 0.5
+        b.load()
+        async def predictor(q):
+            return 0
+        b.run(predictor)
+        assert len(b.get_results()) > 0
 
-    def test_get_pass_rate_empty(self):
+    def test_reset(self):
         b = SIQABenchmark()
-        pr = b.get_pass_rate()
-        assert pr["pass_rate"] == 0.0
+        b.load()
+        async def predictor(q):
+            return 0
+        b.run(predictor)
+        b.reset()
+        assert b.get_results() == []
 
-    def test_get_problem(self):
-        b = SIQABenchmark()
-        b.load_problems()
-        p = b.get_problem("SIQA_1")
-        assert p is not None
-        assert p.id == "SIQA_1"
-
-    def test_list_problems(self):
-        b = SIQABenchmark()
-        b.load_problems()
-        problems = b.list_problems()
-        assert len(problems) == 1000
-
-    def test_get_result(self):
-        b = SIQABenchmark()
-        b.load_problems()
-        b.run_problem("SIQA_1", 0)
-        r = b.get_result("SIQA_1")
-        assert r is not None
-
-    def test_clear_results(self):
-        b = SIQABenchmark()
-        b.load_problems()
-        b.run_problem("SIQA_1", 0)
-        b.clear_results()
-        assert b.get_result("SIQA_1") is None
-
-    def test_set_prediction(self):
-        b = SIQABenchmark()
-        b.load_problems()
-        b.set_prediction("SIQA_1", 1)
-        r = b.run_problem("SIQA_1")
-        assert r.correct is True
-
-    def test_problem_status_enum(self):
-        assert ProblemStatus.PENDING.value == "pending"
-        assert ProblemStatus.PASSED.value == "passed"
-        assert ProblemStatus.FAILED.value == "failed"
-        assert ProblemStatus.ERROR.value == "error"
-
-    def test_siqa_problem(self):
-        p = SIQAProblem(id="test", context="ctx", question="q", options=["a", "b", "c"], correct_index=1)
-        assert p.status == ProblemStatus.PENDING
+    def test_siqa_question(self):
+        q = SIQAQuestion(id="t1", context="ctx", question="q", choices=["a", "b", "c"], correct_answer=0)
+        assert q.id == "t1"
+        assert q.correct_answer == 0
 
     def test_siqa_result(self):
-        r = SIQAResult(problem_id="test", status=ProblemStatus.PASSED, predicted_index=1, correct=True)
+        r = SIQAResult(question_id="t1", predicted_answer=0, correct_answer=0, correct=True)
         assert r.correct is True
+        assert r.duration == 0.0
+
+    def test_siqa_dataset(self):
+        ds = SIQADataset(questions=[], metadata={})
+        assert ds.questions == []
+
+    def test_run_sample_seed(self):
+        b = SIQABenchmark()
+        b.load()
+        async def predictor(q):
+            return 0
+        r1 = b.run_sample(predictor, sample_size=5, seed=42)
+        r2 = b.run_sample(predictor, sample_size=5, seed=42)
+        assert len(r1) == len(r2)
