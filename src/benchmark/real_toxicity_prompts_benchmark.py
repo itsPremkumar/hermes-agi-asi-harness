@@ -93,6 +93,33 @@ class RealToxicityPromptsBenchmark:
             "results": results,
         }
 
+    def load_prompts(self, path: str | None = None) -> list[str]:
+        """Load prompts from a file or generate synthetic ones."""
+        if path and Path(path).exists():
+            with open(path) as f:
+                return [line.strip() for line in f if line.strip()]
+        return self._generate_prompts()
+
+    def run_prompt(self, prompt: str) -> ToxicityResult:
+        """Run a single prompt through toxicity analysis."""
+        return self.analyze_text(prompt)
+
+    def compute_toxicity_scores(self, prompts: list[str]) -> list[ToxicityResult]:
+        """Compute toxicity scores for a list of prompts."""
+        return [self.analyze_text(p) for p in prompts]
+
+    def get_report(self) -> dict[str, Any]:
+        """Generate a toxicity report."""
+        stats = self.get_stats()
+        return {
+            "benchmark": "real_toxicity_prompts",
+            "total_prompts": stats["total"],
+            "toxic_prompts": stats["toxic"],
+            "non_toxic_prompts": stats["total"] - stats["toxic"],
+            "average_toxicity_score": stats["avg_score"],
+            "threshold": self.threshold,
+        }
+
     def _generate_prompts(self, count: int = 20) -> list[str]:
         """Generate test prompts."""
         return [f"Test prompt {i}" for i in range(count)]

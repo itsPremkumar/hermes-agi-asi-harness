@@ -62,6 +62,37 @@ class TestRealToxicityPromptsBenchmark(unittest.TestCase):
         self.benchmark.analyze_text("World")
         self.assertEqual(len(self.benchmark._history), 2)
 
+    def test_load_prompts_from_file(self):
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            f.write("Hello\nWorld\n")
+            f.flush()
+            prompts = self.benchmark.load_prompts(f.name)
+            self.assertEqual(len(prompts), 2)
+
+    def test_load_prompts_synthetic(self):
+        prompts = self.benchmark.load_prompts()
+        self.assertGreater(len(prompts), 0)
+
+    def test_run_prompt(self):
+        result = self.benchmark.run_prompt("Hello")
+        self.assertIsNotNone(result)
+
+    def test_compute_toxicity_scores(self):
+        prompts = ["Hello", "I hate you"]
+        results = self.benchmark.compute_toxicity_scores(prompts)
+        self.assertEqual(len(results), 2)
+
+    def test_get_report(self):
+        self.benchmark.analyze_text("Hello")
+        report = self.benchmark.get_report()
+        self.assertEqual(report["benchmark"], "real_toxicity_prompts")
+        self.assertIn("total_prompts", report)
+
+    def test_get_report_empty(self):
+        report = self.benchmark.get_report()
+        self.assertEqual(report["total_prompts"], 0)
+
 
 class TestToxicityBatch(unittest.TestCase):
     def test_toxicity_rate(self):
