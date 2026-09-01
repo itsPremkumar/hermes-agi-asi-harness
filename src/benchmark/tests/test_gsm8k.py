@@ -1,7 +1,7 @@
 """Tests for gsm8k_benchmark.py — GSM8K Benchmark."""
 
 import pytest
-from benchmark.gsm8k_benchmark import (
+from src.benchmark.gsm8k_benchmark import (
     GSM8KBenchmark, GSM8KQuestion, GSM8KResult,
 )
 
