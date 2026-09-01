@@ -1,188 +1,89 @@
+"""Tests for mmlu_benchmark.py — MMLU Benchmark."""
+
 import pytest
-import os
-import tempfile
-import json
-
-from benchmark.mmlu_benchmark import MMLUQuestion, MMLUResult, MMLULoader, MMLUEvaluator, MMLUBenchmark
-
-
-def _create_temp_json(data):
-    fd, path = tempfile.mkstemp(suffix=".json")
-    with os.fdopen(fd, "w") as f:
-        json.dump(data, f)
-    return path
-
-
-class TestMMLULoader:
-    def test_create(self):
-        loader = MMLULoader()
-        assert len(loader.questions) == 0
-
-    def test_load_questions(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "What is 2+2?", "subject": "math", "choices": ["1", "2", "3", "4"], "answer": 3},
-            {"id": "2", "question": "What is H2O?", "subject": "chemistry", "choices": ["water", "air", "earth", "fire"], "answer": 0},
-        ])
-        loader = MMLULoader()
-        questions = loader.load_questions(path)
-        assert len(questions) == 2
-        os.unlink(path)
-
-    def test_get_by_subject(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "science", "choices": ["a", "b", "c", "d"], "answer": 1},
-            {"id": "3", "question": "Q3", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 2},
-        ])
-        loader = MMLULoader()
-        loader.load_questions(path)
-        math = loader.get_by_subject("math")
-        assert len(math) == 2
-        os.unlink(path)
-
-    def test_get_subjects(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "science", "choices": ["a", "b", "c", "d"], "answer": 1},
-        ])
-        loader = MMLULoader()
-        loader.load_questions(path)
-        subjects = loader.get_subjects()
-        assert "math" in subjects
-        assert "science" in subjects
-        os.unlink(path)
-
-
-class TestMMLUEvaluator:
-    def test_evaluate_correct(self):
-        ev = MMLUEvaluator()
-        q = MMLUQuestion(id="1", question="Q", subject="math", choices=["a", "b", "c", "d"], answer=2)
-        r = ev.evaluate(q, 2)
-        assert r.correct is True
-
-    def test_evaluate_incorrect(self):
-        ev = MMLUEvaluator()
-        q = MMLUQuestion(id="1", question="Q", subject="math", choices=["a", "b", "c", "d"], answer=2)
-        r = ev.evaluate(q, 0)
-        assert r.correct is False
+from benchmark.mmlu_benchmark import (
+    MMLUBenchmark, Question, CategoryResult, QuestionStatus, MMLU_CATEGORIES,
+)
 
 
 class TestMMLUBenchmark:
     def test_create(self):
         b = MMLUBenchmark()
-        assert len(b.results) == 0
+        assert b.load_categories() == MMLU_CATEGORIES
 
-    def test_load_and_run(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "What is 2+2?", "subject": "math", "choices": ["1", "2", "3", "4"], "answer": 3},
-        ])
+    def test_generate_questions(self):
         b = MMLUBenchmark()
-        b.load_questions(path)
-        r = b.run_question("1", 3)
-        assert r is not None
-        assert r.correct is True
-        os.unlink(path)
+        questions = b.generate_questions("abstract_algebra", 10)
+        assert len(questions) == 10
+
+    def test_generate_all(self):
+        b = MMLUBenchmark()
+        total = b.generate_all()
+        assert total == len(MMLU_CATEGORIES) * 246
+
+    def test_run_question(self):
+        b = MMLUBenchmark()
+        questions = b.generate_questions("abstract_algebra", 1)
+        qid = questions[0].id
+        assert b.run_question(qid, questions[0].correct_answer) is True
+
+    def test_run_question_wrong(self):
+        b = MMLUBenchmark()
+        questions = b.generate_questions("abstract_algebra", 1)
+        qid = questions[0].id
+        wrong = (questions[0].correct_answer + 1) % 4
+        assert b.run_question(qid, wrong) is False
+
+    def test_run_question_missing(self):
+        b = MMLUBenchmark()
+        assert b.run_question("nonexistent", 0) is False
 
     def test_get_accuracy(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 1},
-        ])
         b = MMLUBenchmark()
-        b.load_questions(path)
-        b.run_question("1", 0)  # correct
-        b.run_question("2", 0)  # wrong
-        acc = b.get_accuracy()
-        assert acc["accuracy"] == 0.5
-        assert acc["total"] == 2
-        os.unlink(path)
+        b.generate_questions("abstract_algebra", 5)
+        for q in b.load_questions("abstract_algebra"):
+            b.run_question(q.id, q.correct_answer)
+        assert b.get_accuracy("abstract_algebra") == 1.0
 
-    def test_get_subject_accuracy(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "science", "choices": ["a", "b", "c", "d"], "answer": 1},
-        ])
+    def test_get_accuracy_empty(self):
         b = MMLUBenchmark()
-        b.load_questions(path)
-        b.run_question("1", 0)  # correct
-        b.run_question("2", 0)  # wrong
-        math_acc = b.get_accuracy("math")
-        assert math_acc["accuracy"] == 1.0
-        science_acc = b.get_accuracy("science")
-        assert science_acc["accuracy"] == 0.0
-        os.unlink(path)
+        assert b.get_accuracy("abstract_algebra") == 0.0
 
-
-class TestMMLUQuestion:
-    def test_create(self):
-        q = MMLUQuestion(id="1", question="What is 2+2?", subject="math", choices=["1", "2", "3", "4"], answer=3)
-        assert q.question == "What is 2+2?"
-        assert q.answer == 3
-
-    def test_from_dict(self):
-        d = {"id": "2", "question": "Q", "subject": "sci", "choices": ["a", "b", "c", "d"], "answer": 1}
-        q = MMLUQuestion.from_dict(d)
-        assert q.subject == "sci"
-
-
-class TestMMLUResult:
-    def test_create(self):
-        r = MMLUResult(id="r1", question_id="q1", predicted=2, correct=True, subject="math")
-        assert r.correct is True
-        assert r.subject == "math"
-
-
-class TestMMLUBenchmarkAllSubjects:
-    def test_all_subjects_accuracy(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "science", "choices": ["a", "b", "c", "d"], "answer": 1},
-            {"id": "3", "question": "Q3", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 2},
-        ])
+    def test_get_overall(self):
         b = MMLUBenchmark()
-        b.load_questions(path)
-        b.run_question("1", 0)  # correct
-        b.run_question("2", 0)  # wrong
-        b.run_question("3", 2)  # correct
-        all_acc = b.get_all_subjects_accuracy()
-        assert "math" in all_acc
-        assert "science" in all_acc
-        assert all_acc["math"]["accuracy"] == 1.0
-        assert all_acc["science"]["accuracy"] == 0.0
-        os.unlink(path)
+        b.generate_questions("abstract_algebra", 5)
+        for q in b.load_questions("abstract_algebra"):
+            b.run_question(q.id, q.correct_answer)
+        overall = b.get_overall()
+        assert overall["correct"] == 5
 
-
-class TestMMLUBenchmarkEdgeCases:
-    def test_missing_file(self):
-        loader = MMLULoader()
-        assert loader.load_questions("/nonexistent/path.json") == []
-
-    def test_unknown_question(self):
+    def test_get_category_results(self):
         b = MMLUBenchmark()
-        assert b.run_question("nonexistent", 0) is None
+        b.generate_questions("abstract_algebra", 5)
+        for q in b.load_questions("abstract_algebra"):
+            b.run_question(q.id, q.correct_answer)
+        results = b.get_category_results()
+        assert len(results) > 0
 
-    def test_accuracy_no_results(self):
+    def test_load_questions(self):
         b = MMLUBenchmark()
-        acc = b.get_accuracy()
-        assert acc["accuracy"] == 0.0
-        assert acc["total"] == 0
+        b.generate_questions("abstract_algebra", 10)
+        questions = b.load_questions("abstract_algebra")
+        assert len(questions) == 10
 
-    def test_batch_evaluate(self):
-        ev = MMLUEvaluator()
-        q1 = MMLUQuestion(id="1", question="Q1", subject="math", choices=["a", "b", "c", "d"], answer=0)
-        q2 = MMLUQuestion(id="2", question="Q2", subject="math", choices=["a", "b", "c", "d"], answer=1)
-        results = ev.evaluate_batch([q1, q2], [0, 1])
-        assert len(results) == 2
-        assert results[0].correct is True
-        assert results[1].correct is True
+    def test_question_status(self):
+        assert QuestionStatus.PENDING.value == "pending"
+        assert QuestionStatus.CORRECT.value == "correct"
+        assert QuestionStatus.INCORRECT.value == "incorrect"
 
-    def test_multiple_subjects(self):
-        path = _create_temp_json([
-            {"id": "1", "question": "Q1", "subject": "math", "choices": ["a", "b", "c", "d"], "answer": 0},
-            {"id": "2", "question": "Q2", "subject": "science", "choices": ["a", "b", "c", "d"], "answer": 1},
-            {"id": "3", "question": "Q3", "subject": "history", "choices": ["a", "b", "c", "d"], "answer": 2},
-        ])
+    def test_load_categories(self):
         b = MMLUBenchmark()
-        b.load_questions(path)
-        assert len(b.loader.get_subjects()) == 3
-        os.unlink(path)
+        cats = b.load_categories()
+        assert len(cats) == 57
+
+    def test_run_questions(self):
+        b = MMLUBenchmark()
+        b.generate_questions("abstract_algebra", 3)
+        answers = {q.id: q.correct_answer for q in b.load_questions("abstract_algebra")}
+        results = b.run_questions(answers)
+        assert all(results.values())
