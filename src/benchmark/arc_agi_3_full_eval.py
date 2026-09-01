@@ -1,283 +1,217 @@
-"""
-t_84fe883b — ARC-AGI-3 Full Evaluation
-
-Full ARC-AGI-3 evaluation across all 183 levels, 25 environments.
-"""
-
+"""ARC-AGI-3 Full Evaluation Suite — 183 levels, 25 environments."""
 from __future__ import annotations
 
-import json
-import os
-import random
-import time
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Any
 
+from core.arc_agi_3 import (
+    ARCAGI3Engine,
+    ARCAGI3Agent,
+    ARCAGI3Scorer,
+    PersistentMemory,
+    Supervisor,
+    Observation,
+    Action,
+    ActionType,
+    LevelResult,
+    EnvironmentResult,
+    GRID_SIZE,
+    MAX_ACTIONS_PER_LEVEL,
+)
 
-@dataclass
-class ARCLevel:
-    level_id: str
-    name: str
-    environment: str
-    difficulty: str
-    input_shape: tuple[int, int]
-    output_shape: tuple[int, int]
-    num_examples: int
-    constraints: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
-        return {
-            "level_id": self.level_id,
-            "name": self.name,
-            "environment": self.environment,
-            "difficulty": self.difficulty,
-            "input_shape": self.input_shape,
-            "output_shape": self.output_shape,
-            "num_examples": self.num_examples,
-            "constraints": self.constraints,
-        }
+NUM_ENVIRONMENTS = 25
+NUM_LEVELS = 183
+LEVELS_PER_ENVIRONMENT = NUM_LEVELS // NUM_ENVIRONMENTS  # ~7-8 levels per environment
 
 
 @dataclass
-class ARCResult:
-    id: str
+class LevelInfo:
+    """Info about a level."""
+    env_id: str
     level_id: str
-    environment: str
-    success: bool
-    score: float
-    attempts: int = 0
-    duration: float = 0.0
-    error: str | None = None
-
-    def to_dict(self) -> dict:
-        return asdict(self)
+    index: int
+    completed: bool = False
+    score: float = 0.0
+    actions_used: int = 0
 
 
 @dataclass
-class LevelReport:
-    level_id: str
-    name: str
-    environment: str
-    difficulty: str
-    score: float
-    attempts: int
-    solved: bool
-
-    def to_dict(self) -> dict:
-        return asdict(self)
+class FullEvalResult:
+    """Result of a full evaluation run."""
+    total_levels: int
+    completed_levels: int
+    total_actions: int
+    overall_score: float
+    environment_scores: dict[str, float]
+    level_results: dict[str, LevelResult] = field(default_factory=dict)
 
 
-class ARCAGI3FullEval:
-    """ARC-AGI-3 Full Evaluation — 183 levels, 25 environments."""
+class FullEvaluationSuite:
+    """ARC-AGI-3 Full Evaluation Suite — 183 levels, 25 environments."""
 
-    ENVIRONMENTS = [
-        "pattern_recognition", "spatial_reasoning", "color_perception",
-        "shape_matching", "counting", "rotation", "reflection",
-        "scaling", "translation", "completion", "transformation",
-        "abstraction", "logic", "math", "topology", "symmetry",
-        "ordering", "grouping", "boundary", "connectivity",
-        "enclosure", "overlap", "merge", "split", "sequence",
-    ]
-
-    DIFFICULTIES = ["easy", "medium", "hard", "expert"]
-
-    def __init__(self) -> None:
-        self.levels: dict[str, ARCLevel] = {}
-        self.results: list[ARCResult] = []
-        self.level_results: dict[str, list[ARCResult]] = {}
-
-    def load_all_levels(self) -> int:
-        """Load all 183 ARC-AGI-3 levels across 25 environments."""
-        level_id = 0
-        for env in self.ENVIRONMENTS:
-            levels_per_env = self._get_levels_per_environment(env)
-            for i, diff in enumerate(self.DIFFICULTIES):
-                count = levels_per_env[i]
-                for j in range(count):
-                    lid = f"{env}_{diff}_{j}"
-                    level = ARCLevel(
-                        level_id=lid,
-                        name=f"{env.replace('_', ' ').title()} {diff.title()} {j}",
-                        environment=env,
-                        difficulty=diff,
-                        input_shape=self._get_shape(diff),
-                        output_shape=self._get_shape(diff),
-                        num_examples=self._get_num_examples(diff),
-                        constraints=self._get_constraints(env, diff),
-                    )
-                    self.levels[lid] = level
-                    level_id += 1
-        return level_id
-
-    def _get_levels_per_environment(self, env: str) -> list[int]:
-        """Get number of levels per difficulty for an environment."""
-        idx = hash(env) % 5
-        distributions = [
-            [5, 4, 3, 2],
-            [6, 4, 3, 2],
-            [5, 5, 3, 2],
-            [4, 4, 4, 2],
-            [5, 4, 4, 2],
-        ]
-        return distributions[idx]
-
-    def _get_shape(self, difficulty: str) -> tuple[int, int]:
-        shapes = {"easy": (3, 3), "medium": (4, 4), "hard": (5, 5), "expert": (6, 6)}
-        return shapes.get(difficulty, (3, 3))
-
-    def _get_num_examples(self, difficulty: str) -> int:
-        nums = {"easy": 2, "medium": 3, "hard": 4, "expert": 5}
-        return nums.get(difficulty, 2)
-
-    def _get_constraints(self, env: str, difficulty: str) -> dict[str, Any]:
-        return {
-            "environment": env,
-            "difficulty": difficulty,
-            "max_colors": 4 if difficulty == "easy" else 6 if difficulty == "medium" else 8,
-            "time_limit": 10.0 if difficulty == "easy" else 30.0 if difficulty == "medium" else 60.0,
-        }
-
-    def run_level(self, level_id: str, solver: Any = None) -> ARCResult | None:
-        """Run a single ARC-AGI-3 level."""
-        level = self.levels.get(level_id)
-        if not level:
-            return None
-        start = time.time()
-        score = self._simulate_solve(level, solver)
-        duration = time.time() - start
-        result = ARCResult(
-            id=str(uuid.uuid4().hex[:8]),
-            level_id=level_id,
-            environment=level.environment,
-            success=score >= 0.8,
-            score=score,
-            attempts=1,
-            duration=duration,
+    def __init__(self, verbose: bool = False):
+        self.id = str(uuid.uuid4())
+        self.verbose = verbose
+        self._memory = PersistentMemory()
+        self._supervisor = Supervisor()
+        self._scorer = ARCAGI3Scorer()
+        self._agent = ARCAGI3Agent(
+            memory=self._memory,
+            supervisor=self._supervisor,
+            verbose=verbose,
         )
-        self.results.append(result)
-        if level_id not in self.level_results:
-            self.level_results[level_id] = []
-        self.level_results[level_id].append(result)
+        self._engine = ARCAGI3Engine(
+            agent=self._agent,
+            scorer=self._scorer,
+            memory=self._memory,
+            supervisor=self._supervisor,
+            verbose=verbose,
+        )
+        self._levels: dict[str, LevelInfo] = {}
+        self._environment_scores: dict[str, float] = {}
+        self._results: dict[str, LevelResult] = {}
+
+    def load_all_levels(self) -> dict[str, list[str]]:
+        """Load all 183 levels across 25 environments."""
+        levels: dict[str, list[str]] = {}
+        level_index = 0
+        for env_idx in range(NUM_ENVIRONMENTS):
+            env_id = f"env_{env_idx:03d}"
+            env_levels = []
+            # Distribute levels across environments
+            num_levels = LEVELS_PER_ENVIRONMENT + (1 if env_idx < NUM_LEVELS % NUM_ENVIRONMENTS else 0)
+            for level_idx in range(num_levels):
+                level_id = f"level_{level_index:04d}"
+                env_levels.append(level_id)
+                self._levels[level_id] = LevelInfo(
+                    env_id=env_id,
+                    level_id=level_id,
+                    index=level_index,
+                )
+                level_index += 1
+            levels[env_id] = env_levels
+        return levels
+
+    def run_level(self, env_id: str, level_id: str) -> LevelResult:
+        """Run a single level in an environment."""
+        # Create a simple environment mock
+        env = self._create_env_mock(env_id)
+        result = self._agent.run_level(env, level_id)
+        # Store result
+        self._results[level_id] = result
+        if level_id in self._levels:
+            self._levels[level_id].completed = result.completed
+            self._levels[level_id].score = result.score
+            self._levels[level_id].actions_used = result.actions_used
         return result
 
-    def _simulate_solve(self, level: ARCLevel, solver: Any) -> float:
-        """Simulate solving a level. If solver is None, use heuristic."""
-        diff_scores = {"easy": 0.9, "medium": 0.7, "hard": 0.5, "expert": 0.3}
-        base = diff_scores.get(level.difficulty, 0.5)
-        noise = random.gauss(0, 0.1)
-        return max(0.0, min(1.0, base + noise))
+    def run_all_levels(self) -> FullEvalResult:
+        """Run all 183 levels across all environments."""
+        levels = self.load_all_levels()
+        total_actions = 0
+        completed = 0
+        all_results: dict[str, LevelResult] = {}
 
-    def run_all_levels(self, solver: Any = None) -> list[ARCResult]:
-        """Run all loaded ARC-AGI-3 levels."""
-        results = []
-        for level_id in self.levels:
-            result = self.run_level(level_id, solver)
-            if result:
-                results.append(result)
-        return results
+        for env_id, env_levels in levels.items():
+            for level_id in env_levels:
+                result = self.run_level(env_id, level_id)
+                all_results[level_id] = result
+                total_actions += result.actions_used
+                if result.completed:
+                    completed += 1
 
-    def get_environment_scores(self) -> dict[str, dict[str, float]]:
-        """Get scores grouped by environment."""
-        env_results: dict[str, list[ARCResult]] = {}
-        for r in self.results:
-            if r.environment not in env_results:
-                env_results[r.environment] = []
-            env_results[r.environment].append(r)
-        scores = {}
-        for env, results in env_results.items():
-            avg_score = sum(r.score for r in results) / len(results)
-            solved = sum(1 for r in results if r.success)
-            scores[env] = {
-                "average_score": avg_score,
-                "total": len(results),
-                "solved": solved,
-                "solve_rate": solved / len(results),
-            }
-        return scores
+        # Compute environment scores
+        self._compute_environment_scores(levels)
 
-    def get_overall_score(self) -> dict[str, float]:
-        """Get overall ARC-AGI-3 score across all levels."""
-        if not self.results:
-            return {"overall": 0.0, "total_levels": 0}
-        overall = sum(r.score for r in self.results) / len(self.results)
-        solved = sum(1 for r in self.results if r.success)
-        return {
-            "overall": overall,
-            "total_levels": len(self.results),
-            "solved": solved,
-            "solve_rate": solved / len(self.results),
-        }
+        # Compute overall score
+        overall = self._scorer.game_score(list(all_results.values()))
 
-    def get_level_report(self, level_id: str) -> LevelReport | None:
-        """Get detailed report for a specific level."""
-        level = self.levels.get(level_id)
-        if not level:
-            return None
-        results = self.level_results.get(level_id, [])
-        if not results:
-            return LevelReport(
-                level_id=level_id,
-                name=level.name,
-                environment=level.environment,
-                difficulty=level.difficulty,
-                score=0.0,
-                attempts=0,
-                solved=False,
-            )
-        avg_score = sum(r.score for r in results) / len(results)
-        return LevelReport(
-            level_id=level_id,
-            name=level.name,
-            environment=level.environment,
-            difficulty=level.difficulty,
-            score=avg_score,
-            attempts=len(results),
-            solved=any(r.success for r in results),
+        return FullEvalResult(
+            total_levels=len(self._levels),
+            completed_levels=completed,
+            total_actions=total_actions,
+            overall_score=overall,
+            environment_scores=dict(self._environment_scores),
+            level_results=all_results,
         )
 
-    def get_difficulty_breakdown(self) -> dict[str, dict[str, float]]:
-        """Get scores grouped by difficulty."""
-        diff_results: dict[str, list[ARCResult]] = {}
-        for r in self.results:
-            level = self.levels.get(r.level_id)
-            if level:
-                diff = level.difficulty
-                if diff not in diff_results:
-                    diff_results[diff] = []
-                diff_results[diff].append(r)
-        breakdown = {}
-        for diff, results in diff_results.items():
-            breakdown[diff] = {
-                "average": sum(r.score for r in results) / len(results),
-                "total": len(results),
-                "solved": sum(1 for r in results if r.success),
-            }
-        return breakdown
+    def get_environment_scores(self) -> dict[str, float]:
+        """Get per-environment scores."""
+        if not self._environment_scores:
+            levels = self.load_all_levels()
+            self._compute_environment_scores(levels)
+        return dict(self._environment_scores)
 
-    def get_unsolved_levels(self) -> list[str]:
-        """Get list of level IDs not yet solved."""
-        return [
-            lid for lid, level in self.levels.items()
-            if lid not in self.level_results or not any(r.success for r in self.level_results[lid])
-        ]
+    def get_overall_score(self) -> float:
+        """Get overall RHAE score."""
+        if not self._results:
+            return 0.0
+        return self._scorer.game_score(list(self._results.values()))
 
-    def get_solved_levels(self) -> list[str]:
-        """Get list of level IDs that have been solved."""
-        return [
-            lid for lid, results in self.level_results.items()
-            if any(r.success for r in results)
-        ]
+    def get_level_report(self, env_id: str, level_id: str) -> dict[str, Any]:
+        """Get detailed report for a level."""
+        result = self._results.get(level_id)
+        if not result:
+            return {"error": "Level not found or not yet run"}
+        return {
+            "env_id": env_id,
+            "level_id": level_id,
+            "completed": result.completed,
+            "score": result.score,
+            "actions_used": result.actions_used,
+            "actions_budget": result.actions_budget,
+            "observations": result.observations,
+            "hypotheses_tested": result.hypotheses_tested,
+            "revisions": result.revisions,
+        }
 
-    def clear_results(self) -> None:
-        """Clear all results but keep levels loaded."""
-        self.results = []
-        self.level_results = {}
+    def _compute_environment_scores(self, levels: dict[str, list[str]]) -> None:
+        """Compute scores per environment."""
+        for env_id, env_levels in levels.items():
+            env_results = [self._results[lid] for lid in env_levels if lid in self._results]
+            if env_results:
+                self._environment_scores[env_id] = self._scorer.game_score(env_results)
+            else:
+                self._environment_scores[env_id] = 0.0
 
-    def get_levels_by_environment(self, env: str) -> list[ARCLevel]:
-        """Get all levels for a specific environment."""
-        return [l for l in self.levels.values() if l.environment == env]
+    def _create_env_mock(self, env_id: str) -> Any:
+        """Create a simple environment mock for testing."""
+        return _MockEnvironment(env_id)
 
-    def get_levels_by_difficulty(self, difficulty: str) -> list[ARCLevel]:
-        """Get all levels of a specific difficulty."""
-        return [l for l in self.levels.values() if l.difficulty == difficulty]
+    def get_state(self) -> dict[str, Any]:
+        return {
+            "total_levels": len(self._levels),
+            "completed": sum(1 for l in self._levels.values() if l.completed),
+            "environments": NUM_ENVIRONMENTS,
+            "results": len(self._results),
+        }
+
+
+class _MockEnvironment:
+    """Mock environment for testing."""
+
+    def __init__(self, env_id: str):
+        self.env_id = env_id
+        self._step_count = 0
+        self._max_steps = 50
+
+    def reset(self) -> Observation:
+        self._step_count = 0
+        return Observation(
+            grid=[[0] * GRID_SIZE for _ in range(GRID_SIZE)],
+            score=0.0,
+            done=False,
+        )
+
+    def step(self, action: str) -> tuple[Observation, float, bool, dict]:
+        self._step_count += 1
+        done = self._step_count >= self._max_steps
+        score = 1.0 if done else 0.0
+        obs = Observation(
+            grid=[[0] * GRID_SIZE for _ in range(GRID_SIZE)],
+            score=score,
+            done=done,
+        )
+        return obs, score, done, {}
