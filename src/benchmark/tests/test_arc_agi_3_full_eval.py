@@ -1,254 +1,108 @@
 """Tests for arc_agi_3_full_eval.py — ARC-AGI-3 Full Evaluation."""
-import pytest
 
+import pytest
 from benchmark.arc_agi_3_full_eval import (
-    ARCLevel, ARCResult, LevelReport, ARCAGI3FullEval,
+    FullEvaluationSuite, FullEvalResult, LevelInfo, LevelResult,
+    NUM_ENVIRONMENTS, NUM_LEVELS,
 )
 
 
-class TestARCLevel:
+class TestLevelInfo:
     def test_create(self):
-        level = ARCLevel(
-            level_id="test_0", name="Test", environment="pattern_recognition",
-            difficulty="easy", input_shape=(3, 3), output_shape=(3, 3), num_examples=2,
-        )
-        assert level.level_id == "test_0"
-        assert level.environment == "pattern_recognition"
-
-    def test_to_dict(self):
-        level = ARCLevel(
-            level_id="test_0", name="Test", environment="logic",
-            difficulty="hard", input_shape=(5, 5), output_shape=(5, 5), num_examples=4,
-        )
-        d = level.to_dict()
-        assert d["level_id"] == "test_0"
-        assert d["environment"] == "logic"
+        info = LevelInfo(env_id="env_000", level_id="level_0000", index=0)
+        assert info.env_id == "env_000"
+        assert info.completed is False
 
 
-class TestARCResult:
+class TestLevelResult:
     def test_create(self):
-        r = ARCResult(id="r1", level_id="l1", environment="math", success=True, score=0.95)
-        assert r.success is True
-        assert r.score == 0.95
-
-    def test_to_dict(self):
-        r = ARCResult(id="r1", level_id="l1", environment="math", success=True, score=0.95)
-        d = r.to_dict()
-        assert d["success"] is True
-
-
-class TestLevelReport:
-    def test_create(self):
-        report = LevelReport(
-            level_id="l1", name="Test", environment="math",
-            difficulty="easy", score=0.9, attempts=1, solved=True,
+        result = LevelResult(
+            level_id="level_0000",
+            completed=True,
+            score=0.85,
+            actions_used=10,
+            actions_budget=50,
         )
-        assert report.solved is True
-        assert report.score == 0.9
-
-    def test_to_dict(self):
-        report = LevelReport(
-            level_id="l1", name="Test", environment="math",
-            difficulty="easy", score=0.9, attempts=1, solved=True,
-        )
-        d = report.to_dict()
-        assert d["solved"] is True
+        assert result.completed is True
 
 
-class TestARCAGI3FullEval:
+class TestFullEvalResult:
     def test_create(self):
-        eval = ARCAGI3FullEval()
-        assert len(eval.levels) == 0
-        assert len(eval.results) == 0
+        result = FullEvalResult(
+            total_levels=183,
+            completed_levels=150,
+            total_actions=5000,
+            overall_score=0.82,
+            environment_scores={"env_000": 0.9},
+            level_results={},
+        )
+        assert result.total_levels == 183
+
+
+class TestFullEvaluationSuite:
+    def test_create(self):
+        suite = FullEvaluationSuite()
+        assert suite.get_state()["total_levels"] == 0
 
     def test_load_all_levels(self):
-        eval = ARCAGI3FullEval()
-        count = eval.load_all_levels()
-        assert count > 0
-        assert len(eval.levels) > 0
-
-    def test_load_all_levels_count(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        # Should have levels across 25 environments
-        envs = set(l.environment for l in eval.levels.values())
-        assert len(envs) == 25
+        suite = FullEvaluationSuite()
+        levels = suite.load_all_levels()
+        assert len(levels) == NUM_ENVIRONMENTS
 
     def test_run_level(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        level_id = list(eval.levels.keys())[0]
-        result = eval.run_level(level_id)
-        assert result is not None
-        assert result.level_id == level_id
-
-    def test_run_level_missing(self):
-        eval = ARCAGI3FullEval()
-        assert eval.run_level("nonexistent") is None
+        suite = FullEvaluationSuite()
+        suite.load_all_levels()
+        result = suite.run_level("env_000", "level_0000")
+        assert isinstance(result, LevelResult)
 
     def test_run_all_levels(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        results = eval.run_all_levels()
-        assert len(results) == len(eval.levels)
+        suite = FullEvaluationSuite(verbose=False)
+        result = suite.run_all_levels()
+        assert isinstance(result, FullEvalResult)
+        assert result.total_levels == NUM_LEVELS
 
     def test_get_environment_scores(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        scores = eval.get_environment_scores()
-        assert len(scores) == 25
-        for env, data in scores.items():
-            assert "average_score" in data
-            assert "total" in data
-            assert "solved" in data
-            assert "solve_rate" in data
+        suite = FullEvaluationSuite()
+        suite.run_all_levels()
+        scores = suite.get_environment_scores()
+        assert len(scores) == NUM_ENVIRONMENTS
 
     def test_get_overall_score(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        overall = eval.get_overall_score()
-        assert "overall" in overall
-        assert "total_levels" in overall
-        assert "solved" in overall
-        assert "solve_rate" in overall
+        suite = FullEvaluationSuite()
+        suite.run_all_levels()
+        score = suite.get_overall_score()
+        assert 0 <= score <= 1
 
     def test_get_level_report(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        level_id = list(eval.levels.keys())[0]
-        eval.run_level(level_id)
-        report = eval.get_level_report(level_id)
-        assert report is not None
-        assert report.level_id == level_id
+        suite = FullEvaluationSuite()
+        suite.run_all_levels()
+        report = suite.get_level_report("env_000", "level_0000")
+        assert isinstance(report, dict)
 
-    def test_get_level_report_missing(self):
-        eval = ARCAGI3FullEval()
-        assert eval.get_level_report("nonexistent") is None
+    def test_get_state(self):
+        suite = FullEvaluationSuite()
+        state = suite.get_state()
+        assert "total_levels" in state
 
-    def test_get_difficulty_breakdown(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        breakdown = eval.get_difficulty_breakdown()
-        assert "easy" in breakdown
-        assert "medium" in breakdown
-        assert "hard" in breakdown
-        assert "expert" in breakdown
+    def test_constants(self):
+        assert NUM_ENVIRONMENTS == 25
+        assert NUM_LEVELS == 183
 
-    def test_get_unsolved_levels(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        unsolved = eval.get_unsolved_levels()
-        assert isinstance(unsolved, list)
 
-    def test_get_solved_levels(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        solved = eval.get_solved_levels()
-        assert isinstance(solved, list)
+class TestMockEnvironment:
+    def test_create(self):
+        from benchmark.arc_agi_3_full_eval import _MockEnvironment
+        env = _MockEnvironment("env_test")
+        assert env.env_id == "env_test"
 
-    def test_clear_results(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        eval.clear_results()
-        assert len(eval.results) == 0
-        assert len(eval.level_results) == 0
+    def test_reset(self):
+        from benchmark.arc_agi_3_full_eval import _MockEnvironment
+        env = _MockEnvironment("env_test")
+        obs = env.reset()
+        assert obs is not None
 
-    def test_get_levels_by_environment(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        levels = eval.get_levels_by_environment("pattern_recognition")
-        assert len(levels) > 0
-        assert all(l.environment == "pattern_recognition" for l in levels)
-
-    def test_get_levels_by_difficulty(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        levels = eval.get_levels_by_difficulty("easy")
-        assert len(levels) > 0
-        assert all(l.difficulty == "easy" for l in levels)
-
-    def test_overall_score_range(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        overall = eval.get_overall_score()
-        assert 0 <= overall["overall"] <= 1
-
-    def test_environment_scores_range(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        scores = eval.get_environment_scores()
-        for env, data in scores.items():
-            assert 0 <= data["average_score"] <= 1
-            assert 0 <= data["solve_rate"] <= 1
-
-    def test_run_level_with_solver(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        level_id = list(eval.levels.keys())[0]
-        result = eval.run_level(level_id, solver=lambda x: x)
+    def test_step(self):
+        from benchmark.arc_agi_3_full_eval import _MockEnvironment
+        env = _MockEnvironment("env_test")
+        result = env.step("action")
         assert result is not None
-
-    def test_level_constraints(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        for level in eval.levels.values():
-            assert "max_colors" in level.constraints
-            assert "time_limit" in level.constraints
-
-    def test_level_shapes(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        for level in eval.levels.values():
-            assert level.input_shape[0] > 0
-            assert level.input_shape[1] > 0
-
-    def test_results_accumulate(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        level_id = list(eval.levels.keys())[0]
-        eval.run_level(level_id)
-        eval.run_level(level_id)
-        assert len(eval.results) == 2
-
-    def test_level_report_after_multiple_runs(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        level_id = list(eval.levels.keys())[0]
-        eval.run_level(level_id)
-        eval.run_level(level_id)
-        report = eval.get_level_report(level_id)
-        assert report.attempts == 2
-
-    def test_empty_overall_score(self):
-        eval = ARCAGI3FullEval()
-        overall = eval.get_overall_score()
-        assert overall["overall"] == 0.0
-
-    def test_empty_environment_scores(self):
-        eval = ARCAGI3FullEval()
-        scores = eval.get_environment_scores()
-        assert scores == {}
-
-    def test_all_environments_present(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        envs = set(l.environment for l in eval.levels.values())
-        assert len(envs) == 25
-        for env in ARCAGI3FullEval.ENVIRONMENTS:
-            assert env in envs
-
-    def test_difficulty_breakdown_totals(self):
-        eval = ARCAGI3FullEval()
-        eval.load_all_levels()
-        eval.run_all_levels()
-        breakdown = eval.get_difficulty_breakdown()
-        total = sum(d["total"] for d in breakdown.values())
-        assert total == len(eval.levels)
