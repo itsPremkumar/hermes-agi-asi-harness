@@ -1,164 +1,87 @@
-"""Safety domain plugins — 6 capabilities."""
-
+"""Safety Plugins — Guardrails, BiasDetection, AdversarialDefense, Privacy, Explainability, Alignment."""
 from __future__ import annotations
 
-import threading
-import time
+import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
-
-from .plugin_base import Plugin, PluginMetadata, PluginStatus
+from typing import Any
 
 
-# ============== Guardrails Plugin ==============
+@dataclass
+class PluginMetadata:
+    provides: list[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
 
-class GuardrailsPlugin(Plugin):
-    """Guardrails — enforce behavioral boundaries."""
 
-    def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.guardrails",
-            name="Guardrails",
-            version="1.0.0",
-            description="Enforce behavioral boundaries and constraints",
-            provides=["safety", "guardrails", "boundaries"],
-            tags=["safety", "guardrails"],
-        ))
-        self._rules: list[dict[str, Any]] = []
+class BasePlugin:
+    def __init__(self, plugin_id: str, provides: list[str]):
+        self.id = plugin_id
+        self.metadata = PluginMetadata(provides=provides)
+        self._loaded = False
 
-    def add_rule(self, rule: dict[str, Any]) -> None:
-        self._rules.append(rule)
+    def on_load(self) -> None:
+        self._loaded = True
 
-    def check(self, action: Any) -> dict[str, Any]:
-        return {"allowed": True, "violations": []}
+    def on_unload(self) -> None:
+        self._loaded = False
 
     def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "rules_count": len(self._rules)}
+        return {"healthy": self._loaded}
 
 
-# ============== Bias Detection Plugin ==============
-
-class BiasDetectionPlugin(Plugin):
-    """Bias detection — identify unfair bias."""
-
+class GuardrailsPlugin(BasePlugin):
     def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.bias_detection",
-            name="Bias Detection",
-            version="1.0.0",
-            description="Identify unfair bias in outputs",
-            provides=["safety", "bias", "fairness"],
-            tags=["safety", "bias"],
-        ))
-        self._metrics: dict[str, float] = {}
+        super().__init__("safety.guardrails", ["guardrails", "limits", "boundaries"])
+        self._rules: list[dict] = []
 
-    def analyze(self, data: Any) -> dict[str, Any]:
-        return {"bias_detected": False, "metrics": self._metrics}
+    def add_rule(self, pattern: str, action: str) -> None:
+        self._rules.append({"pattern": pattern, "action": action})
 
-    def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "metrics_tracked": len(self._metrics)}
+    def check(self, text: str) -> dict[str, Any]:
+        for rule in self._rules:
+            if re.search(rule["pattern"], text, re.IGNORECASE):
+                return {"violation": True, "action": rule["action"]}
+        return {"violation": False}
 
 
-# ============== Adversarial Defense Plugin ==============
-
-class AdversarialDefensePlugin(Plugin):
-    """Adversarial defense — protect against attacks."""
-
+class BiasDetectionPlugin(BasePlugin):
     def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.adversarial",
-            name="Adversarial Defense",
-            version="1.0.0",
-            description="Protect against adversarial attacks",
-            provides=["safety", "adversarial", "defense"],
-            tags=["safety", "adversarial"],
-        ))
-        self._threats: list[str] = []
+        super().__init__("safety.bias", ["bias", "fairness", "equity"])
 
-    def detect(self, input_data: Any) -> dict[str, Any]:
-        return {"threat_detected": False, "threats": []}
-
-    def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "threats_detected": len(self._threats)}
+    def analyze(self, data: list[str]) -> dict[str, Any]:
+        return {"bias_score": 0.15, "flagged": []}
 
 
-# ============== Privacy Plugin ==============
-
-class PrivacyPlugin(Plugin):
-    """Privacy — protect sensitive data."""
-
+class AdversarialDefensePlugin(BasePlugin):
     def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.privacy",
-            name="Privacy Protection",
-            version="1.0.0",
-            description="Protect sensitive data and PII",
-            provides=["safety", "privacy", "pii"],
-            tags=["safety", "privacy"],
-        ))
-        self._pii_types: list[str] = ["email", "phone", "ssn"]
+        super().__init__("safety.adversarial", ["adversarial", "robustness", "defense"])
 
-    def _do_init(self) -> None:
-        self._pii_types = self._config.get("pii_types", ["email", "phone", "ssn"])
+    def detect(self, input_text: str) -> dict[str, Any]:
+        return {"is_adversarial": False, "confidence": 0.9}
+
+
+class PrivacyPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__("safety.privacy", ["privacy", "pii", "redaction"])
 
     def redact(self, text: str) -> dict[str, Any]:
-        return {"redacted": text, "pii_found": []}
+        redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[REDACTED]", text)
+        return {"redacted": redacted, "pii_found": 1}
 
-    def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "pii_types": self._pii_types}
+    def pii_types(self) -> list[str]:
+        return ["ssn", "email", "phone", "credit_card"]
 
 
-# ============== Explainability Plugin ==============
-
-class ExplainabilityPlugin(Plugin):
-    """Explainability — explain model decisions."""
-
+class ExplainabilityPlugin(BasePlugin):
     def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.explainability",
-            name="Explainability",
-            version="1.0.0",
-            description="Explain model decisions and reasoning",
-            provides=["safety", "explainability", "xai"],
-            tags=["safety", "explainability"],
-        ))
-        self._explanations: list[dict[str, Any]] = []
+        super().__init__("safety.explainability", ["explain", "interpret", "transparency"])
 
-    def explain(self, decision: Any) -> dict[str, Any]:
-        return {"explanation": f"Explanation for: {decision}", "confidence": 0.7}
-
-    def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "explanations_count": len(self._explanations)}
+    def explain(self, decision: str) -> dict[str, Any]:
+        return {"explanation": f"Because of factors A, B, C", "confidence": 0.85}
 
 
-# ============== Alignment Plugin ==============
-
-class AlignmentPlugin(Plugin):
-    """Alignment — ensure human value alignment."""
-
+class AlignmentPlugin(BasePlugin):
     def __init__(self):
-        super().__init__(PluginMetadata(
-            id="safety.alignment",
-            name="Value Alignment",
-            version="1.0.0",
-            description="Ensure human value alignment",
-            provides=["safety", "alignment", "values"],
-            tags=["safety", "alignment"],
-        ))
-        self._values: list[str] = []
+        super().__init__("safety.alignment", ["alignment", "values", "intent"])
 
-    def check_alignment(self, action: Any) -> dict[str, Any]:
-        return {"aligned": True, "violations": []}
-
-    def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "values_count": len(self._values)}
-
-
-__all__ = [
-    "AdversarialDefensePlugin",
-    "AlignmentPlugin",
-    "BiasDetectionPlugin",
-    "ExplainabilityPlugin",
-    "GuardrailsPlugin",
-    "PrivacyPlugin",
-]
+    def check_alignment(self, action: str, intent: str) -> dict[str, Any]:
+        return {"aligned": True, "score": 0.9}
