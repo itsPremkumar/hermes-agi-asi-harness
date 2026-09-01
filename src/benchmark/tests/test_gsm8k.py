@@ -1,125 +1,71 @@
-"""Tests for GSM8K benchmark — 9 tests."""
-import sys
-import os
-import tempfile
+"""Tests for gsm8k_benchmark.py — GSM8K Benchmark."""
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-
+import pytest
 from src.benchmark.gsm8k_benchmark import (
-    GSM8KQuestion,
-    GSM8KResult,
-    GSM8KBenchmark,
+    GSM8KBenchmark, GSM8KQuestion, GSM8KResult,
 )
 
 
-def test_benchmark_init():
-    """Test benchmark initialization."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        assert bench._questions == []
+class TestGSM8KBenchmark:
+    def test_create(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        assert b.get_stats()["total_questions"] == 0
 
+    def test_add_question(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.add_question(GSM8KQuestion(question_id="q1", question="What is 5+3?", answer=8.0))
+        assert b.get_stats()["total_questions"] == 1
 
-def test_add_question():
-    """Test adding a question."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q = GSM8KQuestion(
-            question_id="test_001",
-            question="What is 2+2?",
-            answer=4.0,
-            steps=["Add 2 and 2"],
-        )
-        bench.add_question(q)
-        assert len(bench._questions) == 1
+    def test_evaluate_correct(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.add_question(GSM8KQuestion(question_id="q1", question="Q", answer=8.0))
+        assert b.evaluate("q1", 8.0) is True
 
+    def test_evaluate_incorrect(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.add_question(GSM8KQuestion(question_id="q1", question="Q", answer=8.0))
+        assert b.evaluate("q1", 999.0) is False
 
-def test_run_question():
-    """Test running a question."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q = GSM8KQuestion(
-            question_id="test_001",
-            question="What is 2+2?",
-            answer=4.0,
-        )
-        bench.add_question(q)
-        result = bench.evaluate("test_001", 4.0)
-        assert result is True
+    def test_evaluate_missing(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        assert b.evaluate("nonexistent", 0.0) is False
 
+    def test_generate_synthetic(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        questions = b.generate_synthetic_questions(10)
+        assert len(questions) == 10
+        assert b.get_stats()["total_questions"] == 10
 
-def test_run_question_incorrect():
-    """Test running a question with wrong answer."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q = GSM8KQuestion(
-            question_id="test_001",
-            question="What is 2+2?",
-            answer=4.0,
-        )
-        bench.add_question(q)
-        result = bench.evaluate("test_001", 5.0)
-        assert result is False
+    def test_run_benchmark(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.generate_synthetic_questions(10)
+        result = b.run_benchmark()
+        assert result["total"] == 10
 
+    def test_run_benchmark_with_limit(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.generate_synthetic_questions(10)
+        result = b.run_benchmark(num_questions=5)
+        assert result["total"] == 5
 
-def test_get_accuracy():
-    """Test getting accuracy."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q1 = GSM8KQuestion(question_id="q1", question="Q1", answer=10.0)
-        q2 = GSM8KQuestion(question_id="q2", question="Q2", answer=20.0)
-        bench.add_question(q1)
-        bench.add_question(q2)
-        bench.evaluate("q1", 10.0)
-        bench.evaluate("q2", 5.0)
-        # GSM8K benchmark doesn't have get_accuracy, so we check results
-        assert True  # If we got here, no errors
+    def test_get_stats(self):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.add_question(GSM8KQuestion(question_id="q1", question="Q", answer=42.0))
+        assert b.get_stats()["total_questions"] == 1
 
+    def test_save_results(self, tmp_path):
+        b = GSM8KBenchmark(data_dir="/tmp/nonexistent")
+        b.generate_synthetic_questions(5)
+        result = b.run_benchmark()
+        out = tmp_path / "results.json"
+        b.save_results(result, str(out))
+        assert out.exists()
 
-def test_gsm8k_question_dataclass():
-    """Test GSM8KQuestion dataclass."""
-    q = GSM8KQuestion(
-        question_id="test_001",
-        question="What is 5*5?",
-        answer=25.0,
-        steps=["Multiply 5 by 5"],
-    )
-    assert q.question_id == "test_001"
-    assert q.answer == 25.0
-    assert len(q.steps) == 1
+    def test_gsm8k_question(self):
+        q = GSM8KQuestion(question_id="q1", question="What is 2+2?", answer=4.0)
+        assert q.question_id == "q1"
+        assert q.answer == 4.0
 
-
-def test_gsm8k_result_dataclass():
-    """Test GSM8KResult dataclass."""
-    result = GSM8KResult(
-        question_id="test_001",
-        predicted=25.0,
-        expected=25.0,
-        correct=True,
-    )
-    assert result.question_id == "test_001"
-    assert result.correct is True
-
-
-def test_run_all():
-    """Test running all questions."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q1 = GSM8KQuestion(question_id="q1", question="Q1", answer=10.0)
-        q2 = GSM8KQuestion(question_id="q2", question="Q2", answer=20.0)
-        bench.add_question(q1)
-        bench.add_question(q2)
-        # GSM8K doesn't have run_all, so we evaluate individually
-        bench.evaluate("q1", 10.0)
-        bench.evaluate("q2", 20.0)
-        assert True
-
-
-def test_get_report():
-    """Test getting report."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        bench = GSM8KBenchmark(data_dir=tmpdir)
-        q1 = GSM8KQuestion(question_id="q1", question="Q1", answer=10.0)
-        bench.add_question(q1)
-        bench.evaluate("q1", 10.0)
-        # GSM8K doesn't have get_report, so we just verify no errors
-        assert True
+    def test_gsm8k_result(self):
+        r = GSM8KResult(question_id="q1", correct=True, predicted=4.0, expected=4.0)
+        assert r.correct is True
