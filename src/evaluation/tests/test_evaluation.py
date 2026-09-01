@@ -270,6 +270,103 @@ class TestEvaluationIntegration:
         total = sum(r.total for r in report.results)
         assert report.total_problems == total
 
+
+class TestEvaluationExtended:
+    def test_multiple_categories(self):
+        suite = EvaluationSuite()
+        suite.register_benchmark("HumanEval", HumanEvalBenchmark(), "code")
+        suite.register_benchmark("MBPP", MBPPBenchmark(), "code")
+        suite.register_benchmark("HellaSwag", HellaSwagBenchmark(), "reasoning")
+        suite.register_benchmark("BoolQ", BoolQBenchmark(), "reasoning")
+        suite.run_all_benchmarks()
+        scores = suite.get_category_scores()
+        assert len(scores) == 2
+
+    def test_benchmark_result_fields(self):
+        suite = build_default_evaluation_suite()
+        results = suite.run_all_benchmarks()
+        for result in results:
+            assert hasattr(result, 'benchmark')
+            assert hasattr(result, 'category')
+            assert hasattr(result, 'total')
+            assert hasattr(result, 'passed')
+            assert hasattr(result, 'failed')
+            assert hasattr(result, 'score')
+            assert hasattr(result, 'duration_ms')
+
+    def test_report_fields(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        report = suite.generate_report()
+        assert hasattr(report, 'timestamp')
+        assert hasattr(report, 'overall_score')
+        assert hasattr(report, 'total_problems')
+        assert hasattr(report, 'total_passed')
+        assert hasattr(report, 'total_failed')
+        assert hasattr(report, 'category_scores')
+        assert hasattr(report, 'results')
+
+    def test_register_multiple_categories(self):
+        suite = EvaluationSuite()
+        suite.register_benchmark("HumanEval", HumanEvalBenchmark(), "code")
+        suite.register_benchmark("HellaSwag", HellaSwagBenchmark(), "reasoning")
+        suite.register_benchmark("SWE-bench Pro", SWEBenchPro(), "code")
+        assert len(suite.get_benchmark_names()) == 3
+
+    def test_run_all_returns_eval_results(self):
+        suite = build_default_evaluation_suite()
+        results = suite.run_all_benchmarks()
+        for result in results:
+            assert isinstance(result, EvalResult)
+
+    def test_generate_report_returns_eval_report(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        report = suite.generate_report()
+        assert isinstance(report, EvalReport)
+
+    def test_overall_score_after_multiple_runs(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        score1 = suite.get_overall_score()
+        suite.run_all_benchmarks()
+        score2 = suite.get_overall_score()
+        assert score1 == score2
+
+    def test_category_scores_after_multiple_runs(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        scores1 = suite.get_category_scores()
+        suite.run_all_benchmarks()
+        scores2 = suite.get_category_scores()
+        assert scores1 == scores2
+
+    def test_get_reports_multiple(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        suite.generate_report()
+        suite.generate_report()
+        assert len(suite.get_reports()) == 2
+
+    def test_clear_does_not_affect_reports(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        suite.generate_report()
+        suite.clear()
+        assert len(suite.get_reports()) == 1
+
+    def test_total_equals_passed_plus_failed(self):
+        suite = build_default_evaluation_suite()
+        suite.run_all_benchmarks()
+        report = suite.generate_report()
+        assert report.total_problems == report.total_passed + report.total_failed
+
+    def test_each_result_total_equals_passed_plus_failed(self):
+        suite = build_default_evaluation_suite()
+        results = suite.run_all_benchmarks()
+        for result in results:
+            assert result.total == result.passed + result.failed
+
     def test_score_between_0_and_1(self):
         suite = build_default_evaluation_suite()
         results = suite.run_all_benchmarks()
