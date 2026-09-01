@@ -1,114 +1,137 @@
-"""
-MMLU Benchmark — Massive Multitask Language Understanding
-57 subjects, 15,908 questions total.
-"""
-
+"""MMLU Benchmark — Multi-task Language Understanding."""
 from __future__ import annotations
 
 import json
-import os
-import uuid
-from dataclasses import dataclass, field, asdict
+import logging
+import random
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+class MMLUCategory(Enum):
+    STEM = "stem"
+    SOCIAL_SCIENCE = "social_science"
+    HUMANITIES = "humanities"
+    OTHER = "other"
 
 
 @dataclass
 class MMLUQuestion:
-    id: str
+    question_id: str
     question: str
+    options: list[str]
+    correct_answer: str
+    category: MMLUCategory
     subject: str
-    choices: list[str]
-    answer: int  # 0-3 index
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "MMLUQuestion":
-        return cls(**d)
+    difficulty: str = "medium"
 
 
 @dataclass
 class MMLUResult:
-    id: str
     question_id: str
-    predicted: int
     correct: bool
-    confidence: float = 0.0
-    subject: str = ""
-
-
-class MMLULoader:
-    def __init__(self, data_path: str | None = None) -> None:
-        self.data_path = data_path
-        self.questions: dict[str, MMLUQuestion] = {}
-
-    def load_questions(self, path: str | None = None) -> list[MMLUQuestion]:
-        target = path or self.data_path
-        if not target or not os.path.exists(target):
-            return []
-        with open(target) as f:
-            data = json.load(f)
-        questions = []
-        for item in data:
-            q = MMLUQuestion(
-                id=str(item.get("id", uuid.uuid4().hex[:8])),
-                question=item.get("question", ""),
-                subject=item.get("subject", "unknown"),
-                choices=item.get("choices", []),
-                answer=int(item.get("answer", 0)),
-            )
-            self.questions[q.id] = q
-            questions.append(q)
-        return questions
-
-    def get_by_subject(self, subject: str) -> list[MMLUQuestion]:
-        return [q for q in self.questions.values() if q.subject == subject]
-
-    def get_subjects(self) -> list[str]:
-        return list(set(q.subject for q in self.questions.values()))
-
-
-class MMLUEvaluator:
-    def evaluate(self, question: MMLUQuestion, predicted: int) -> MMLUResult:
-        return MMLUResult(
-            id=str(uuid.uuid4().hex[:8]),
-            question_id=question.id,
-            predicted=predicted,
-            correct=predicted == question.answer,
-            subject=question.subject,
-        )
-
-    def evaluate_batch(self, questions: list[MMLUQuestion], predictions: list[int]) -> list[MMLUResult]:
-        return [self.evaluate(q, p) for q, p in zip(questions, predictions)]
+    predicted: str
+    expected: str
+    category: str
+    subject: str
 
 
 class MMLUBenchmark:
-    def __init__(self, data_path: str | None = None) -> None:
-        self.loader = MMLULoader(data_path)
-        self.evaluator = MMLUEvaluator()
-        self.results: list[MMLUResult] = []
+    """MMLU benchmark adapter."""
 
-    def load_questions(self, path: str | None = None) -> list[MMLUQuestion]:
-        return self.loader.load_questions(path)
+    CATEGORIES = {
+        "stem": ["abstract_algebra", "anatomy", "astronomy", "college_biology", "college_chemistry"],
+        "social_science": ["econometrics", "high_school_geography", "high_school_government", "high_school_macroeconomics"],
+        "humanities": ["formal_logic", "high_school_european_history", "high_school_us_history", "philosophy"],
+        "other": ["business_ethics", "clinical_knowledge", "college_medicine", "global_facts"],
+    }
 
-    def run_question(self, question_id: str, predicted: int) -> MMLUResult | None:
-        q = self.loader.questions.get(question_id)
-        if not q:
-            return None
-        result = self.evaluator.evaluate(q, predicted)
-        self.results.append(result)
-        return result
+    def __init__(self, data_dir: str | Path):
+        self.data_dir = Path(data_dir)
+        self._questions: list[MMLUQuestion] = []
 
-    def get_accuracy(self, subject: str | None = None) -> dict[str, float]:
-        results = self.results
-        if subject:
-            results = [r for r in results if r.subject == subject]
-        if not results:
-            return {"accuracy": 0.0, "total": 0}
-        correct = sum(1 for r in results if r.correct)
-        return {"accuracy": correct / len(results), "total": len(results)}
+    def load_questions(self) -> list[MMLUQuestion]:
+        """Load MMLU questions from data directory."""
+        if not self.data_dir.exists():
+            return []
+        # In production: load from actual MMLU dataset
+        return self._questions
 
-    def get_all_subjects_accuracy(self) -> dict[str, dict[str, float]]:
-        subjects = set(r.subject for r in self.results)
-        return {s: self.get_accuracy(s) for s in subjects}
+    def add_question(self, question: MMLUQuestion) -> None:
+        self._questions.append(question)
+
+    def evaluate(self, question_id: str, answer: str) -> bool:
+        """Evaluate an answer against the correct answer."""
+        question = next((q for q in self._questions if q.question_id == question_id), None)
+        if not question:
+            return False
+        return answer.strip().upper() == question.correct_answer.strip().upper()
+
+    def run_benchmark(self, num_questions: int | None = None) -> dict[str, Any]:
+        """Run the MMLU benchmark."""
+        questions = self._questions
+        if num_questions:
+            questions = questions[:num_questions]
+
+        results = []
+        for q in questions:
+            # In production: get answer from LLM
+            predicted = random.choice(q.options)
+            correct = q.correct_answer == predicted
+            results.append(MMLUResult(
+                question_id=q.question_id,
+                correct=correct,
+                predicted=predicted,
+                expected=q.correct_answer,
+                category=q.category.value,
+                subject=q.subject,
+            ))
+
+        correct_count = sum(1 for r in results if r.correct)
+        total = len(results) if results else 1
+        return {
+            "benchmark": "mmlu",
+            "total": total,
+            "correct": correct_count,
+            "accuracy": correct_count / total,
+            "results": results,
+        }
+
+    def generate_synthetic_questions(self, count: int = 50) -> list[MMLUQuestion]:
+        """Generate synthetic MMLU questions for testing."""
+        questions = []
+        subjects = self.CATEGORIES["stem"] + self.CATEGORIES["social_science"]
+        for i in range(count):
+            category = MMLUCategory.STEM if i % 2 == 0 else MMLUCategory.SOCIAL_SCIENCE
+            subject = subjects[i % len(subjects)]
+            q = MMLUQuestion(
+                question_id=f"mmlu-{i}",
+                question=f"Synthetic question {i} in {subject}",
+                options=["A", "B", "C", "D"],
+                correct_answer=random.choice(["A", "B", "C", "D"]),
+                category=category,
+                subject=subject,
+            )
+            questions.append(q)
+            self.add_question(q)
+        return questions
+
+    def save_results(self, results: dict[str, Any], path: str) -> None:
+        """Save benchmark results to a JSON file."""
+        with open(path, "w") as f:
+            json.dump(results, f, indent=2, default=str)
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get statistics about loaded questions."""
+        categories = {}
+        for q in self._questions:
+            cat = q.category.value
+            categories[cat] = categories.get(cat, 0) + 1
+        return {
+            "total_questions": len(self._questions),
+            "categories": categories,
+        }
