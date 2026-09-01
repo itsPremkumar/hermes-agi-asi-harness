@@ -1,8 +1,8 @@
 """
-t_da531cb1 — Benchmark Adapters
+t_da531cb1 — Benchmark Adapters (v2 with SWEBenchProAdapter)
 
 Unified adapter layer for all benchmarks:
-HumanEval, MBPP, MMLU, GSM8K.
+HumanEval, MBPP, MMLU, GSM8K, SWEBenchPro.
 Each adapter: load, run, get_pass_rate.
 """
 
@@ -20,7 +20,7 @@ class BenchmarkAdapter(Protocol):
     """Protocol all benchmark adapters implement."""
 
     def load(self, path: str | None = None) -> int: ...
-    def run(self, task_id: str, solution: str) -> BenchmarkTaskResult | None: ...
+    def run(self, task_id: str, solution: str) -> TaskResult | None: ...
     def get_pass_rate(self) -> dict[str, float]: ...
 
 
@@ -35,7 +35,7 @@ class TaskResult:
     error: str | None = None
 
 
-# ─── HumanEval Adapter ───────────────────────────────────────────────────────
+# ─── HumanEval Adapter ─────────────────────────────────────────────────────────
 
 @dataclass
 class HumanEvalTask:
@@ -77,8 +77,8 @@ class HumanEvalAdapter:
         task = self.tasks.get(task_id)
         if not task:
             return None
-        results = {}
-        error = None
+        results: dict[str, bool] = {}
+        error: str | None = None
         for test in task.test_cases:
             try:
                 namespace: dict[str, Any] = {}
@@ -114,7 +114,7 @@ class HumanEvalAdapter:
         return list(self.tasks.values())
 
 
-# ─── MBPP Adapter ─────────────────────────────────────────────────────────────
+# ─── MBPP Adapter ───────────────────────────────────────────────────────────────
 
 @dataclass
 class MBPPTask:
@@ -156,8 +156,8 @@ class MBPPAdapter:
         task = self.tasks.get(task_id)
         if not task:
             return None
-        results = {}
-        error = None
+        results: dict[str, bool] = {}
+        error: str | None = None
         for test in task.test_cases:
             try:
                 namespace: dict[str, Any] = {}
@@ -193,7 +193,7 @@ class MBPPAdapter:
         return list(self.tasks.values())
 
 
-# ─── MMLU Adapter ─────────────────────────────────────────────────────────────
+# ─── MMLU Adapter ───────────────────────────────────────────────────────────────
 
 @dataclass
 class MMLUTask:
@@ -263,7 +263,7 @@ class MMLUAdapter:
         return list(self.tasks.values())
 
 
-# ─── GSM8K Adapter ────────────────────────────────────────────────────────────
+# ─── GSM8K Adapter ──────────────────────────────────────────────────────────────
 
 @dataclass
 class GSM8KTask:
@@ -341,6 +341,87 @@ class GSM8KAdapter:
         return list(self.tasks.values())
 
 
+# ─── SWEBenchPro Adapter ────────────────────────────────────────────────────────
+
+@dataclass
+class SWEBenchProTask:
+    instance_id: str
+    repo: str
+    base_commit: str
+    issue_title: str
+    issue_description: str
+    patch: str
+    test_patch: str
+    difficulty: str = "medium"
+    language: str = "python"
+
+
+class SWEBenchProAdapter:
+    """Adapter for SWEBenchPro benchmark (production-grade SWE tasks)."""
+
+    def __init__(self) -> None:
+        self.tasks: dict[str, SWEBenchProTask] = {}
+        self.results: list[TaskResult] = []
+
+    def load(self, path: str | None = None) -> int:
+        if not path or not os.path.exists(path):
+            return 0
+        with open(path) as f:
+            data = json.load(f)
+        count = 0
+        for item in data:
+            t = SWEBenchProTask(
+                instance_id=item.get("instance_id", str(uuid.uuid4().hex[:8])),
+                repo=item.get("repo", ""),
+                base_commit=item.get("base_commit", ""),
+                issue_title=item.get("issue_title", ""),
+                issue_description=item.get("issue_description", ""),
+                patch=item.get("patch", ""),
+                test_patch=item.get("test_patch", ""),
+                difficulty=item.get("difficulty", "medium"),
+                language=item.get("language", "python"),
+            )
+            self.tasks[t.instance_id] = t
+            count += 1
+        return count
+
+    def run(self, task_id: str, patch: str, test_results: dict[str, bool] | None = None) -> TaskResult | None:
+        task = self.tasks.get(task_id)
+        if not task:
+            return None
+        if test_results is None:
+            test_results = {}
+        passed = sum(1 for v in test_results.values() if v)
+        total = len(test_results)
+        score = passed / total if total > 0 else 0.0
+        result = TaskResult(
+            id=str(uuid.uuid4().hex[:8]),
+            task_id=task_id,
+            benchmark="swebenchpro",
+            success=score >= 0.8,
+            score=score,
+            output={"test_results": test_results},
+        )
+        self.results.append(result)
+        return result
+
+    def get_pass_rate(self) -> dict[str, float]:
+        if not self.results:
+            return {"pass_rate": 0.0, "total": 0}
+        passed = sum(1 for r in self.results if r.success)
+        return {"pass_rate": passed / len(self.results), "total": len(self.results)}
+
+    def get_repo_pass_rate(self, repo: str) -> dict[str, float]:
+        results = [r for r in self.results if self.tasks.get(r.task_id) and self.tasks[r.task_id].repo == repo]
+        if not results:
+            return {"pass_rate": 0.0, "total": 0}
+        passed = sum(1 for r in results if r.success)
+        return {"pass_rate": passed / len(results), "total": len(results)}
+
+    def get_all_tasks(self) -> list[SWEBenchProTask]:
+        return list(self.tasks.values())
+
+
 # ─── Unified Benchmark Manager ────────────────────────────────────────────────
 
 class BenchmarkManager:
@@ -372,3 +453,6 @@ class BenchmarkManager:
 
     def get_adapter(self, name: str) -> BenchmarkAdapter | None:
         return self.adapters.get(name)
+
+    def get_adapter_names(self) -> list[str]:
+        return list(self.adapters.keys())

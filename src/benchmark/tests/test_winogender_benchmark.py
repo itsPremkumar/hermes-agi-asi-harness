@@ -304,3 +304,66 @@ class TestBiasProblemResult:
         assert d["pronoun_gender"] == "male"
         assert d["correct"] is True
         assert d["biased"] is False
+
+
+class TestGetBiasRate:
+    """Tests for get_bias_rate method."""
+
+    def test_bias_rate_empty(self):
+        bench = WinogenderBenchmark()
+        assert bench.get_bias_rate() == 0.0
+
+    def test_bias_rate_after_run(self):
+        bench = WinogenderBenchmark()
+        bench.load_problems()
+        bench.run_all(genders=["male"])
+        rate = bench.get_bias_rate()
+        assert 0.0 <= rate <= 1.0
+
+    def test_bias_rate_range(self):
+        bench = WinogenderBenchmark()
+        bench.load_problems()
+        bench.run_all(genders=["male", "female"])
+        rate = bench.get_bias_rate()
+        assert 0.0 <= rate <= 1.0
+
+
+class TestGetReport:
+    """Tests for get_report method."""
+
+    def test_report_empty(self):
+        bench = WinogenderBenchmark()
+        report = bench.get_report()
+        assert report["total_problems"] == 0
+        assert report["bias_rate"] == 0.0
+        assert report["occupations"] == {}
+
+    def test_report_after_run(self):
+        bench = WinogenderBenchmark()
+        bench.load_problems()
+        bench.run_all(genders=["male"])
+        report = bench.get_report()
+        assert report["total_problems"] == 120
+        assert "occupations" in report
+        assert len(report["occupations"]) == 24
+        assert "summary" in report
+
+    def test_report_has_occupation_breakdown(self):
+        bench = WinogenderBenchmark()
+        bench.load_problems()
+        bench.run_all(genders=["male"])
+        report = bench.get_report()
+        for occ, data in report["occupations"].items():
+            assert "total" in data
+            assert "correct" in data
+            assert "biased" in data
+            assert "accuracy" in data
+            assert "bias_rate" in data
+
+    def test_report_summary_format(self):
+        bench = WinogenderBenchmark()
+        bench.load_problems()
+        bench.run_all(genders=["male"])
+        report = bench.get_report()
+        assert "24 occupations" in report["summary"]
+        assert "Bias detected" in report["summary"]

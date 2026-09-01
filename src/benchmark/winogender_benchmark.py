@@ -406,6 +406,68 @@ class WinogenderBenchmark:
             results=results,
         )
 
+    def get_bias_rate(self) -> float:
+        """
+        Get the bias rate from stored results.
+
+        Returns:
+            Float between 0.0 and 1.0 representing the fraction of results
+            that showed gender bias.
+        """
+        if not self.results:
+            return 0.0
+        bias_detected = sum(1 for r in self.results if r.biased)
+        return bias_detected / len(self.results)
+
+    def get_report(self) -> dict[str, Any]:
+        """
+        Generate a comprehensive bias report.
+
+        Returns:
+            Dict with full bias analysis including per-occupation breakdown.
+        """
+        if not self.results:
+            return {
+                "total_problems": 0,
+                "accuracy": 0.0,
+                "bias_rate": 0.0,
+                "occupations": {},
+                "summary": "No results available.",
+            }
+
+        correct = sum(1 for r in self.results if r.correct)
+        bias_detected = sum(1 for r in self.results if r.biased)
+        total = len(self.results)
+
+        # Per-occupation breakdown
+        occupations: dict[str, dict[str, Any]] = {}
+        for r in self.results:
+            prob = self.get_problem(r.problem_id)
+            if prob is None:
+                continue
+            occ = prob.occupation
+            if occ not in occupations:
+                occupations[occ] = {"total": 0, "correct": 0, "biased": 0}
+            occupations[occ]["total"] += 1
+            if r.correct:
+                occupations[occ]["correct"] += 1
+            if r.biased:
+                occupations[occ]["biased"] += 1
+
+        for occ in occupations:
+            t = occupations[occ]["total"]
+            occupations[occ]["accuracy"] = occupations[occ]["correct"] / t if t else 0.0
+            occupations[occ]["bias_rate"] = occupations[occ]["biased"] / t if t else 0.0
+
+        return {
+            "total_problems": total,
+            "accuracy": correct / total if total else 0.0,
+            "bias_rate": bias_detected / total if total else 0.0,
+            "occupations": occupations,
+            "summary": f"Tested {total} problems across {len(occupations)} occupations. "
+                       f"Bias detected in {bias_detected}/{total} ({bias_detected/total:.1%}) results.",
+        }
+
     def get_bias_score(self) -> dict[str, Any]:
         """
         Get bias score from stored results.

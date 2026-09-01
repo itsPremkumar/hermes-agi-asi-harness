@@ -9,6 +9,7 @@ from benchmark.adapters import (
     MBPPTask, MBPPAdapter,
     MMLUTask, MMLUAdapter,
     GSM8KTask, GSM8KAdapter,
+    SWEBenchProTask, SWEBenchProAdapter,
     BenchmarkManager, TaskResult,
 )
 
@@ -283,7 +284,93 @@ class TestTaskResult:
         r2 = TaskResult(id="r2", task_id="t2", benchmark="mbpp", success=True, score=1.0)
         r3 = TaskResult(id="r3", task_id="t3", benchmark="mmlu", success=True, score=1.0)
         r4 = TaskResult(id="r4", task_id="t4", benchmark="gsm8k", success=True, score=1.0)
+        r5 = TaskResult(id="r5", task_id="t5", benchmark="swebenchpro", success=True, score=1.0)
         assert r1.benchmark == "humaneval"
         assert r2.benchmark == "mbpp"
         assert r3.benchmark == "mmlu"
         assert r4.benchmark == "gsm8k"
+        assert r5.benchmark == "swebenchpro"
+
+
+# ─── SWEBenchPro Tests ──────────────────────────────────────────────────────────
+
+class TestSWEBenchProAdapter:
+    def test_load(self):
+        path = _create_temp_json([
+            {"instance_id": "sw1", "repo": "django/django", "base_commit": "abc", "issue_title": "Fix", "issue_description": "Bug", "patch": "p", "test_patch": "tp"},
+        ])
+        adapter = SWEBenchProAdapter()
+        assert adapter.load(path) == 1
+        os.unlink(path)
+
+    def test_run_correct(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        r = adapter.run("sw1", "patch", {"t1": True, "t2": True})
+        assert r.success is True
+        assert r.score == 1.0
+
+    def test_run_partial(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        r = adapter.run("sw1", "patch", {"t1": True, "t2": False})
+        assert r.score == 0.5
+
+    def test_run_missing(self):
+        adapter = SWEBenchProAdapter()
+        assert adapter.run("nonexistent", "patch", {"t1": True}) is None
+
+    def test_run_no_tests(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        r = adapter.run("sw1", "patch", {})
+        assert r.score == 0.0
+
+    def test_get_pass_rate(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        adapter.tasks["sw2"] = SWEBenchProTask(instance_id="sw2", repo="sympy/sympy", base_commit="def", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        adapter.run("sw1", "patch", {"t1": True, "t2": True})
+        adapter.run("sw2", "patch", {"t1": False})
+        pr = adapter.get_pass_rate()
+        assert pr["pass_rate"] == 0.5
+
+    def test_get_pass_rate_empty(self):
+        adapter = SWEBenchProAdapter()
+        pr = adapter.get_pass_rate()
+        assert pr["pass_rate"] == 0.0
+
+    def test_repo_pass_rate(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        adapter.tasks["sw2"] = SWEBenchProTask(instance_id="sw2", repo="sympy/sympy", base_commit="def", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        adapter.run("sw1", "patch", {"t1": True})
+        adapter.run("sw2", "patch", {"t1": False})
+        pr = adapter.get_repo_pass_rate("django/django")
+        assert pr["pass_rate"] == 1.0
+
+    def test_get_all_tasks(self):
+        adapter = SWEBenchProAdapter()
+        adapter.tasks["sw1"] = SWEBenchProTask(instance_id="sw1", repo="django/django", base_commit="abc", issue_title="Fix", issue_description="Bug", patch="p", test_patch="tp")
+        assert len(adapter.get_all_tasks()) == 1
+
+
+# ─── BenchmarkManager Extended Tests ────────────────────────────────────────────
+
+class TestBenchmarkManagerExtended:
+    def test_register_all_adapters(self):
+        mgr = BenchmarkManager()
+        mgr.register("humaneval", HumanEvalAdapter())
+        mgr.register("mbpp", MBPPAdapter())
+        mgr.register("mmlu", MMLUAdapter())
+        mgr.register("gsm8k", GSM8KAdapter())
+        mgr.register("swebenchpro", SWEBenchProAdapter())
+        assert len(mgr.get_adapter_names()) == 5
+
+    def test_get_adapter_names(self):
+        mgr = BenchmarkManager()
+        mgr.register("humaneval", HumanEvalAdapter())
+        mgr.register("mbpp", MBPPAdapter())
+        names = mgr.get_adapter_names()
+        assert "humaneval" in names
+        assert "mbpp" in names
