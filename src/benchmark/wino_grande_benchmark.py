@@ -330,3 +330,15 @@ class WinogradBenchmark:
             "incorrect": len(self.results) - correct,
             "accuracy": correct / len(self.results),
         }
+
+    def get_report(self) -> dict[str, Any]:
+        """Get full report including accuracy, statistics, and per-problem results."""
+        accuracy = self.get_accuracy()
+        stats = self.get_statistics()
+        return {
+            "accuracy": accuracy,
+            "statistics": stats,
+            "total_problems": len(self.problems),
+            "results_count": len(self.results),
+            "results": [r.to_dict() for r in self.results],
+        }
