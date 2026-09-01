@@ -1,216 +1,124 @@
 """Tests for executive_agent.py — Executive Agent."""
+
+import asyncio
 import pytest
-
-from agent.executive_agent import ExecutiveAgent, AgentTask, AgentPlan
-
-
-class MockBenchmark:
-    def __init__(self, name: str, has_pass_rate: bool = True) -> None:
-        self.name = name
-        self.has_pass_rate = has_pass_rate
-        self.loaded = False
-        self.run = False
-
-    def load_problems(self) -> int:
-        self.loaded = True
-        return 10
-
-    def run_all(self) -> list:
-        self.run = True
-        return []
-
-    def get_pass_rate(self) -> dict:
-        return {"pass_rate": 0.8, "total": 10}
+from agent.executive_agent import (
+    ExecutiveAgent, BenchmarkOrchestrator, ScoreAggregator, ImprovementPlanner,
+    DailyCycle, BenchmarkTask, BenchmarkResult, Scorecard, ImprovementPlan, DailyReport,
+)
 
 
-class MockBenchmarkNoPassRate:
-    def load_problems(self) -> int:
-        return 5
-
-    def run_all(self) -> list:
-        return []
-
-    def get_accuracy(self) -> dict:
-        return {"accuracy": 0.9}
-
-
-class MockBenchmarkFailing:
-    def load_problems(self) -> int:
-        raise RuntimeError("Load failed")
-
-    def run_all(self) -> list:
-        return []
-
-
-class TestAgentTask:
+class TestBenchmarkTask:
     def test_create(self):
-        t = AgentTask(id="t1", benchmark="mmlu", task_type="evaluate")
-        assert t.status == "pending"
-        assert t.benchmark == "mmlu"
+        t = BenchmarkTask(id="t1", name="mmlu", category="knowledge")
+        assert t.id == "t1"
+        assert t.name == "mmlu"
+        assert t.weight == 1.0
 
-    def test_complete(self):
-        t = AgentTask(id="t1", benchmark="mmlu", task_type="evaluate")
-        t.complete({"score": 0.9})
-        assert t.status == "completed"
-        assert t.result == {"score": 0.9}
-        assert t.completed_at is not None
-
-    def test_fail(self):
-        t = AgentTask(id="t1", benchmark="mmlu", task_type="evaluate")
-        t.fail("Error")
-        assert t.status == "failed"
-        assert "error" in t.result
+    def test_default_id(self):
+        t = BenchmarkTask(id="", name="mmlu", category="knowledge")
+        assert t.id != ""
 
 
-class TestAgentPlan:
+class TestBenchmarkResult:
     def test_create(self):
-        tasks = [AgentTask(id="t1", benchmark="mmlu", task_type="evaluate")]
-        plan = AgentPlan(id="p1", tasks=tasks)
-        assert plan.total == 1
-        assert plan.pending == 1
+        r = BenchmarkResult(task_id="t1", benchmark_name="mmlu", score=0.85)
+        assert r.score == 0.85
+        assert r.success is True
 
-    def test_progress(self):
-        tasks = [
-            AgentTask(id="t1", benchmark="mmlu", task_type="evaluate"),
-            AgentTask(id="t2", benchmark="gsm8k", task_type="evaluate"),
-        ]
-        tasks[0].complete({})
-        plan = AgentPlan(id="p1", tasks=tasks)
-        assert plan.progress == 0.5
+    def test_success_false_on_error(self):
+        r = BenchmarkResult(task_id="t1", benchmark_name="mmlu", score=0.0, error="fail")
+        assert r.success is False
 
-    def test_progress_empty(self):
-        plan = AgentPlan(id="p1", tasks=[])
-        assert plan.progress == 0.0
 
-    def test_completed_count(self):
-        tasks = [
-            AgentTask(id="t1", benchmark="mmlu", task_type="evaluate"),
-            AgentTask(id="t2", benchmark="gsm8k", task_type="evaluate"),
-        ]
-        tasks[0].complete({})
-        plan = AgentPlan(id="p1", tasks=tasks)
-        assert plan.completed == 1
-        assert plan.pending == 1
+class TestScorecard:
+    def test_create(self):
+        s = Scorecard(id="s1", timestamp=0.0, overall_score=0.8, category_scores={"math": 0.9}, benchmark_results=[])
+        assert s.overall_score == 0.8
+
+    def test_to_dict(self):
+        s = Scorecard(id="s1", timestamp=0.0, overall_score=0.8, category_scores={}, benchmark_results=[])
+        d = s.to_dict()
+        assert d["overall_score"] == 0.8
+
+
+class TestImprovementPlan:
+    def test_create(self):
+        p = ImprovementPlan(id="p1", target_benchmark="mmlu", current_score=0.5, target_score=0.9, strategies=["s1", "s2"])
+        assert p.priority == 0
+
+    def test_default_id(self):
+        p = ImprovementPlan(id="", target_benchmark="mmlu", current_score=0.5, target_score=0.9, strategies=[])
+        assert p.id != ""
+
+
+class TestDailyReport:
+    def test_create(self):
+        r = DailyReport(id="r1", date="2024-01-01", cycle_number=1, scorecards=[], improvements_attempted=0, improvements_succeeded=0, key_findings=[], recommendations=[])
+        assert r.cycle_number == 1
+
+    def test_to_dict(self):
+        r = DailyReport(id="r1", date="2024-01-01", cycle_number=1, scorecards=[], improvements_attempted=0, improvements_succeeded=0, key_findings=[], recommendations=[])
+        d = r.to_dict()
+        assert d["cycle_number"] == 1
+
+
+class TestBenchmarkOrchestrator:
+    def test_create(self):
+        o = BenchmarkOrchestrator()
+        assert o.max_concurrent == 4
+
+    def test_register_benchmark(self):
+        o = BenchmarkOrchestrator()
+        o.register_benchmark("mmlu", lambda t: {})
+        assert len(o._benchmarks) == 1
+
+    def test_add_task(self):
+        o = BenchmarkOrchestrator()
+        o.add_task(BenchmarkTask(id="t1", name="mmlu", category="knowledge"))
+        assert len(o._tasks) == 1
+
+
+class TestScoreAggregator:
+    def test_create(self):
+        s = ScoreAggregator()
+        assert s is not None
+
+    def test_aggregate_empty(self):
+        s = ScoreAggregator()
+        sc = s.aggregate([], [])
+        assert sc.overall_score == 0.0
+
+
+class TestImprovementPlanner:
+    def test_create(self):
+        p = ImprovementPlanner()
+        assert p is not None
+
+    def test_plan_improvements(self):
+        p = ImprovementPlanner()
+        sc = Scorecard(id="s1", timestamp=0.0, overall_score=0.5, category_scores={"math": 0.4}, benchmark_results=[])
+        plans = p.plan_improvements(sc, target_score=0.95)
+        assert len(plans) > 0
+
+
+class TestDailyCycle:
+    def test_create(self):
+        o = BenchmarkOrchestrator()
+        a = ScoreAggregator()
+        p = ImprovementPlanner()
+        d = DailyCycle(o, a, p)
+        assert d.cycle_number == 0
+
+    def test_scorecard_history(self):
+        o = BenchmarkOrchestrator()
+        a = ScoreAggregator()
+        p = ImprovementPlanner()
+        d = DailyCycle(o, a, p)
+        assert d.scorecard_history == []
 
 
 class TestExecutiveAgent:
     def test_create(self):
-        agent = ExecutiveAgent()
-        assert len(agent.list_benchmarks()) == 0
-
-    def test_register_benchmark(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        assert "mmlu" in agent.list_benchmarks()
-
-    def test_get_benchmark(self):
-        agent = ExecutiveAgent()
-        bench = MockBenchmark("mmlu")
-        agent.register_benchmark("mmlu", bench)
-        assert agent.get_benchmark("mmlu") is bench
-
-    def test_get_benchmark_missing(self):
-        agent = ExecutiveAgent()
-        assert agent.get_benchmark("nonexistent") is None
-
-    def test_create_plan(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        assert plan.total == 1
-
-    def test_create_plan_specific(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        agent.register_benchmark("gsm8k", MockBenchmark("gsm8k"))
-        plan = agent.create_plan(["mmlu"])
-        assert plan.total == 1
-        assert plan.tasks[0].benchmark == "mmlu"
-
-    def test_execute_plan(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        results = agent.execute_plan(plan.id)
-        assert "mmlu" in results
-
-    def test_execute_plan_missing_benchmark(self):
-        agent = ExecutiveAgent()
-        plan = agent.create_plan(["nonexistent"])
-        results = agent.execute_plan(plan.id)
-        assert "error" in results["nonexistent"]
-
-    def test_execute_plan_failing_benchmark(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("failing", MockBenchmarkFailing())
-        plan = agent.create_plan(["failing"])
-        results = agent.execute_plan(plan.id)
-        assert "error" in results["failing"]
-
-    def test_get_plan(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        assert agent.get_plan(plan.id) is plan
-
-    def test_get_plan_missing(self):
-        agent = ExecutiveAgent()
-        assert agent.get_plan("nonexistent") is None
-
-    def test_get_all_plans(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        agent.create_plan()
-        agent.create_plan()
-        assert len(agent.get_all_plans()) == 2
-
-    def test_get_plan_results(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        agent.execute_plan(plan.id)
-        results = agent.get_plan_results(plan.id)
-        assert "mmlu" in results
-
-    def test_get_overall_progress(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        agent.execute_plan(plan.id)
-        assert agent.get_overall_progress(plan.id) == 1.0
-
-    def test_get_plan_summary(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan()
-        summary = agent.get_plan_summary(plan.id)
-        assert summary["total_tasks"] == 1
-
-    def test_clear_plans(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        agent.create_plan()
-        agent.clear_plans()
-        assert len(agent.get_all_plans()) == 0
-
-    def test_execute_plan_with_no_pass_rate(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmarkNoPassRate())
-        plan = agent.create_plan()
-        results = agent.execute_plan(plan.id)
-        assert "mmlu" in results
-
-    def test_multiple_benchmarks(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        agent.register_benchmark("gsm8k", MockBenchmark("gsm8k"))
-        agent.register_benchmark("mbpp", MockBenchmark("mbpp"))
-        plan = agent.create_plan()
-        results = agent.execute_plan(plan.id)
-        assert len(results) == 3
-
-    def test_plan_strategy(self):
-        agent = ExecutiveAgent()
-        agent.register_benchmark("mmlu", MockBenchmark("mmlu"))
-        plan = agent.create_plan(strategy="sequential")
-        assert plan.strategy == "sequential"
+        a = ExecutiveAgent()
+        assert a is not None

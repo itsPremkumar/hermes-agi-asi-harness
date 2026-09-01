@@ -502,6 +502,55 @@ class DailyCycle:
             recommendations=recommendations,
         )
 
+
+# ───────────────────────── 5. ExecutiveAgent ─────────────────────────
+
+
+class ExecutiveAgent:
+    """Top-level agent that coordinates all benchmark solving and improvement."""
+
+    def __init__(self, max_concurrent: int = 4) -> None:
+        self.orchestrator = BenchmarkOrchestrator(max_concurrent=max_concurrent)
+        self.aggregator = ScoreAggregator()
+        self.planner = ImprovementPlanner()
+        self.daily_cycle = DailyCycle(self.orchestrator, self.aggregator, self.planner)
+        self._benchmarks: dict[str, Any] = {}
+
+    def register_benchmark(
+        self,
+        name: str,
+        func: Callable[..., Awaitable[dict]],
+        category: str = "general",
+        weight: float = 1.0,
+    ) -> None:
+        """Register a benchmark function."""
+        self.orchestrator.register_benchmark(name, func, category, weight)
+
+    def add_task(self, task: BenchmarkTask) -> None:
+        """Add a benchmark task."""
+        self.orchestrator.add_task(task)
+
+    def get_benchmark(self, name: str) -> Any:
+        """Get a registered benchmark."""
+        return self._benchmarks.get(name)
+
+    def list_benchmarks(self) -> list[str]:
+        """List all registered benchmark names."""
+        return list(self.orchestrator._benchmarks.keys())
+
+    def get_results(self) -> list[BenchmarkResult]:
+        """Get all benchmark results."""
+        return self.orchestrator.get_results()
+
+    def get_scorecard_history(self) -> list[Scorecard]:
+        """Get scorecard history."""
+        return self.daily_cycle.scorecard_history
+
+    @property
+    def cycle_number(self) -> int:
+        """Get current cycle number."""
+        return self.daily_cycle.cycle_number
+
     def get_progress_summary(self) -> dict:
         """Get summary of progress across all cycles."""
         if not self._scorecard_history:
