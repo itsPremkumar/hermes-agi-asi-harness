@@ -290,13 +290,14 @@ class BotSwarm:
     Each bot runs in its own isolated context with its own model and tools.
     """
     
-    def __init__(self, config: dict, profiles: dict[str, BotProfile]):
+    def __init__(self, config: dict, profiles: dict[str, BotProfile], discovery: Any = None):
         self.config = config
         self.profiles = profiles
+        self.discovery = discovery
         self._active_bots: dict[str, dict] = {}
     
     @classmethod
-    async def create(cls, config: dict, kernel: Any) -> "BotSwarm":
+    async def create(cls, config: dict, kernel: Any, discovery: Any = None) -> "BotSwarm":
         """Create the bot swarm."""
         profiles = {}
         profiles_dir = config.get("profiles_dir", os.path.expanduser("~/.hermes/profiles"))
@@ -310,7 +311,7 @@ class BotSwarm:
                 # Use default profile
                 profiles[name] = profile
         
-        return cls(config, profiles)
+        return cls(config, profiles, discovery)
     
     async def spawn(self, bot_name: str, command: str) -> dict:
         """
