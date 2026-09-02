@@ -157,7 +157,7 @@ class RiskAssessor:
             risks.append(risk)
 
         overall_score = sum(r.score for r in risks) / len(risks) if risks else 0.0
-        overall_level = score_to_level(overall_score)
+        overall_level = score_to_level(overall_score) if risks else RiskLevel.NONE
 
         profile = RiskProfile(
             profile_id=f"profile-{uuid.uuid4().hex[:8]}",
@@ -190,7 +190,7 @@ class RiskAssessor:
             risks.append(risk)
 
         overall_score = sum(r.score for r in risks) / len(risks) if risks else 0.0
-        overall_level = score_to_level(overall_score)
+        overall_level = score_to_level(overall_score) if risks else RiskLevel.NONE
 
         profile = RiskProfile(
             profile_id=f"profile-{uuid.uuid4().hex[:8]}",
