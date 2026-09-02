@@ -1,0 +1,92 @@
+# Alerting Rules for Hermes AGI/ASI Harness
+groups:
+  - name: hermes_plane_alerts
+    rules:
+      # High latency alert
+      - alert: HermesHighLatency
+        expr: histogram_quantile(0.99, rate(hermes_request_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Hermes plane latency is high"
+          description: "p99 latency is {{ $value }}s for the last 5 minutes"
+
+      # Circuit breaker open
+      - alert: HermesCircuitBreakerOpen
+        expr: hermes_circuit_breaker_open == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker open for {{ $labels.plane }}"
+          description: "Plane {{ $labels.plane }} circuit breaker has been open for more than 1 minute"
+
+      # Cost budget exceeded
+      - alert: HermesCostBudgetExceeded
+        expr: hermes_cost_per_query_usd > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cost per query exceeded budget"
+          description: "Cost is ${{ $value }} per query (budget: $1.00)"
+
+      # Memory full
+      - alert: HermesMemoryFull
+        expr: hermes_memory_usage_bytes / hermes_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # Plane health down
+      - alert: HermesPlaneDown
+        expr: hermes_plane_health == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Plane {{ $labels.plane }} is down"
+          description: "Plane health check has been failing for 2 minutes"
+
+      # Token budget exhaustion
+      - alert: HermesTokenBudgetLow
+        expr: hermes_tokens_remaining / hermes_tokens_total < 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Token budget below 10%"
+          description: "Only {{ $value | humanizePercentage }} tokens remaining"
+
+  - name: hermes_system_alerts
+    rules:
+      # Pod restart loop
+      - alert: HermesPodRestartLoop
+        expr: rate(kube_pod_container_status_restarts_total{pod=~"hermes-.*"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod {{ $labels.pod }} is in a restart loop"
+
+      # High CPU usage
+      - alert: HermesHighCPU
+        expr: rate(container_cpu_usage_seconds_total{pod=~"hermes-.*"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod {{ $labels.pod }} CPU usage above 80%"
+
+      # High memory usage
+      - alert: HermesHighMemory
+        expr: container_memory_usage_bytes{pod=~"hermes-.*"} / container_spec_memory_limit_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod {{ $labels.pod }} memory usage above 85%"

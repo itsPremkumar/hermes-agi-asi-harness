@@ -1,0 +1,25 @@
+name: user_interaction
+version: 1.0.0
+description: "User Interaction & Explanation Plane (Plane 22) — clarifying questions, reasoning explanations, multi-channel result delivery"
+license: MIT
+source: internal
+capabilities:
+  - clarification_engine
+  - explanation_renderer
+  - confidence_communicator
+  - result_deliverer
+  - multi_channel_output
+  - streaming_support
+  - citation_management
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

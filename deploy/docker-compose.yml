@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # Main Hermes Service
+  hermes:
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+    container_name: hermes-main
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://hermes:${POSTGRES_PASSWORD}@postgres:5432/hermes
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PLANE_TIMEOUT_SECONDS=${PLANE_TIMEOUT_SECONDS:-300}
+      - COST_BUDGET_PER_QUERY=${COST_BUDGET_PER_QUERY:-0.50}
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hermes-net
+
+  # Redis — Caching (Planes 5, 15)
+  redis:
+    image: redis:7-alpine
+    container_name: hermes-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hermes-net
+
+  # PostgreSQL — Memory Persistence (Plane 15)
+  postgres:
+    image: postgres:15-alpine
+    container_name: hermes-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=hermes
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=hermes
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hermes"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hermes-net
+
+  # Prometheus — Metrics (Plane 17)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: hermes-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - hermes-net
+
+  # Grafana — Dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: hermes-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - hermes-net
+
+  # NGINX — Reverse Proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: hermes-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - hermes
+    networks:
+      - hermes-net
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  hermes-net:
+    driver: bridge

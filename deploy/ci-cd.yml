@@ -1,0 +1,74 @@
+name: Hermes AGI/ASI Harness CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+      - name: Run linter
+        run: |
+          pip install ruff
+          ruff check src/
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t hermes-agi:${{ github.sha }} -f deploy/Dockerfile .
+
+      - name: Tag image
+        run: |
+          docker tag hermes-agi:${{ github.sha }} ${DOCKER_REGISTRY}/hermes-agi:${{ github.sha }}
+          docker tag hermes-agi:${{ github.sha }} ${DOCKER_REGISTRY}/hermes-agi:latest
+
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${DOCKER_REGISTRY} -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push ${DOCKER_REGISTRY}/hermes-agi:${{ github.sha }}
+          docker push ${DOCKER_REGISTRY}/hermes-agi:latest
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # kubectl apply -f deploy/kubernetes/
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # kubectl apply -f deploy/kubernetes/

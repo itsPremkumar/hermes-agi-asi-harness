@@ -1,0 +1,150 @@
+# Kubernetes Deployment with HPA
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-agi
+  namespace: hermes
+  labels:
+    app: hermes-agi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hermes-agi
+  template:
+    metadata:
+      labels:
+        app: hermes-agi
+    spec:
+      containers:
+        - name: hermes
+          image: hermes-agi:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: hermes-config
+            - secretRef:
+                name: hermes-secrets
+          resources:
+            limits:
+              cpu: '2'
+              memory: 4Gi
+            requests:
+              cpu: '1'
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hermes-agi-hpa
+  namespace: hermes
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hermes-agi
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# Service with Load Balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-agi-service
+  namespace: hermes
+spec:
+  selector:
+    app: hermes-agi
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
+---
+# Ingress with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-agi-ingress
+  namespace: hermes
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: '100'
+spec:
+  tls:
+    - hosts:
+        - hermes.example.com
+      secretName: hermes-tls
+  rules:
+    - host: hermes.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-agi-service
+                port:
+                  number: 80
+---
+# ConfigMap for settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+  namespace: hermes
+data:
+  LOG_LEVEL: 'INFO'
+  PLANE_TIMEOUT_SECONDS: '300'
+  COST_BUDGET_PER_QUERY: '0.50'
+---
+# Secret for credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-secrets
+  namespace: hermes
+type: Opaque
+data:
+  LLM_API_KEY: '' # base64 encoded
+  POSTGRES_PASSWORD: '' # base64 encoded
+  REDIS_PASSWORD: '' # base64 encoded
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: hermes-agi-pdb
+  namespace: hermes
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: hermes-agi
