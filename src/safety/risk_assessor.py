@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+from src.safety.threat_modeler import ThreatSeverity
+
 
 class RiskLevel(str, Enum):
     NONE = "none"
@@ -108,22 +110,29 @@ def score_to_level(score: float) -> RiskLevel:
 class RiskAssessor:
     """Assess and score risks for agent systems."""
 
+    # Weight mapping for risk assessment (used in profile computation)
+    _RISK_WEIGHT = {
+        ThreatSeverity.CRITICAL: 1.0,
+        ThreatSeverity.HIGH: 0.75,
+        ThreatSeverity.MEDIUM: 0.5,
+        ThreatSeverity.LOW: 0.2,
+        ThreatSeverity.INFO: 0.05,
+    }
+
     def __init__(self):
         self._profiles: dict[str, RiskProfile] = {}
 
-    def assess(self, title: str, likelihood: float, impact: float, mitigations: list[str] | None = None) -> Risk:
-        """Assess a single risk."""
+    def assess(self, title: str, likelihood: float, impact: float, mitigations: list[str] | None = None) -> RiskAssessment:
+        """Assess a single risk (backward compat)."""
         score = likelihood * impact
-        level = score_to_level(score)
-        return Risk(
+        level = score_to_level(score) if score > 0.0 else RiskLevel.LOW
+        return RiskAssessment(
             risk_id=f"risk-{int(time.time() * 1000)}",
             title=title,
-            category="general",
-            description="",
-            score=score,
             level=level,
+            score=score,
             likelihood=likelihood,
-            impact=str(impact),
+            impact=impact,
             mitigations=mitigations or [],
         )
 
@@ -131,7 +140,8 @@ class RiskAssessor:
         """Assess all threats in a ThreatModel."""
         risks = []
         for threat in model.threats:
-            score = threat.risk_score
+            # Use internal weight mapping for profile score
+            score = self._RISK_WEIGHT.get(threat.severity, 0.5) * threat.likelihood
             level = score_to_level(score)
             risk = Risk(
                 risk_id=threat.threat_id,
@@ -147,7 +157,7 @@ class RiskAssessor:
             risks.append(risk)
 
         overall_score = sum(r.score for r in risks) / len(risks) if risks else 0.0
-        overall_level = score_to_level(overall_score)
+        overall_level = score_to_level(overall_score) if risks else RiskLevel.NONE
 
         profile = RiskProfile(
             profile_id=f"profile-{uuid.uuid4().hex[:8]}",
@@ -163,7 +173,8 @@ class RiskAssessor:
         """Assess a list of threats directly."""
         risks = []
         for threat in threats:
-            score = threat.risk_score
+            # Use internal weight mapping for profile score
+            score = self._RISK_WEIGHT.get(threat.severity, 0.5) * threat.likelihood
             level = score_to_level(score)
             risk = Risk(
                 risk_id=threat.threat_id,
@@ -179,7 +190,7 @@ class RiskAssessor:
             risks.append(risk)
 
         overall_score = sum(r.score for r in risks) / len(risks) if risks else 0.0
-        overall_level = score_to_level(overall_score)
+        overall_level = score_to_level(overall_score) if risks else RiskLevel.NONE
 
         profile = RiskProfile(
             profile_id=f"profile-{uuid.uuid4().hex[:8]}",
@@ -191,7 +202,7 @@ class RiskAssessor:
         self._profiles[profile.profile_id] = profile
         return profile
 
-    def is_acceptable(self, assessment: Risk, threshold: float = 0.5) -> bool:
+    def is_acceptable(self, assessment: Any, threshold: float = 0.5) -> bool:
         """Check if a risk is acceptable."""
         return assessment.score < threshold
 
@@ -222,3 +233,19 @@ class RiskAssessor:
             "low_count": profile.low_count,
             "top_risks": [r.to_dict() for r in top_risks],
         }
+
+
+# Backward compat
+from dataclasses import dataclass as _dataclass
+
+@_dataclass
+class RiskAssessment:
+    """Backward compat for old tests."""
+    risk_id: str
+    title: str
+    level: Any
+    score: float
+    likelihood: float
+    impact: float
+    mitigations: list[str] = field(default_factory=list)
+    timestamp: float = field(default_factory=time.time)

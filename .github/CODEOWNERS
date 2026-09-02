@@ -1,0 +1,31 @@
+# CODEOWNERS for hermes-agi-asi-harness
+# Each line is a file pattern followed by one or more owners
+
+# Default owners for everything in the repo
+* @itsPremkumar
+
+# Core harness code - requires security review
+/core/ @itsPremkumar
+/harnix/ @itsPremkumar
+/agents/ @itsPremkumar
+
+# Security-critical files
+/SECURITY.md @itsPremkumar
+/safety_plugin.py @itsPremkumar
+/.github/workflows/codeql.yml @itsPremkumar
+/.github/workflows/security.yml @itsPremkumar
+
+# Configuration and deployment
+/config/ @itsPremkumar
+/deploy/ @itsPremkumar
+/docker-compose.yml @itsPremkumar
+/Dockerfile @itsPremkumar
+
+# Documentation
+/docs/ @itsPremkumar
+/README.md @itsPremkumar
+
+# Dependencies
+/requirements.txt @itsPremkumar
+/pyproject.toml @itsPremkumar
+/uv.lock @itsPremkumar

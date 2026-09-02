@@ -142,6 +142,30 @@ class ProofChecker:
 
         return len(errors) == 0, errors
 
+    def find_redundancies(self, proof_id: str) -> list[str]:
+        """Find redundant steps in a proof."""
+        proof = self._proofs.get(proof_id)
+        if not proof:
+            return [f"Proof not found: {proof_id}"]
+
+        redundancies = []
+        seen_statements = {}
+
+        for step in proof.steps:
+            normalized = ' '.join(step.statement.lower().split())
+            if normalized in seen_statements:
+                redundancies.append(
+                    f"Step {step.step_number} duplicates step {seen_statements[normalized]}: '{step.statement}'"
+                )
+            else:
+                seen_statements[normalized] = step.step_number
+
+        return redundancies
+
+    def list_proofs(self) -> list[str]:
+        """List all registered proof IDs."""
+        return list(self._proofs.keys())
+
     def check_equivalence(self, stmt1: str, stmt2: str) -> bool:
         """Check if two statements are syntactically equivalent."""
         # Normalize: lowercase, strip whitespace

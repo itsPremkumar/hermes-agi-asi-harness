@@ -501,6 +501,20 @@ class DailyCycle:
             key_findings=findings,
             recommendations=recommendations,
         )
+    def get_progress_summary(self) -> dict:
+        """Get summary of progress across all cycles."""
+        if not self._scorecard_history:
+            return {"cycles": 0}
+
+        scores = [s.overall_score for s in self._scorecard_history]
+        return {
+            "cycles": self._cycle_number,
+            "latest_score": scores[-1],
+            "best_score": max(scores),
+            "worst_score": min(scores),
+            "average_score": statistics.mean(scores),
+            "score_trend": scores[-1] - scores[0] if len(scores) > 1 else 0.0,
+        }
 
 
 # ───────────────────────── 5. ExecutiveAgent ─────────────────────────

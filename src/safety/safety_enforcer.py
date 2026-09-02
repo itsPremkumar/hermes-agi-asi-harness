@@ -178,7 +178,7 @@ class SafetyEnforcer:
             allowed=True,
             action=PolicyAction.ALLOW,
             risk_level=profile.overall_level,
-            reason="No policy violations",
+            reason="default-safety-policy=allow",
         )
         self._allowed_log.append(result)
         return result
