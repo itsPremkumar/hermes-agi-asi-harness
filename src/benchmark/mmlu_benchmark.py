@@ -219,28 +219,38 @@ class MMLUBenchmark:
     def count_questions(self) -> int:
         return len(self._questions)
 
-    def add_question(self, question: Question) -> None:
+    def add_question(self, question: Any) -> None:
         """Add a question to the benchmark."""
-        self._questions[question.id] = question
-        cat = question.category
+        qid = getattr(question, 'id', None) or getattr(question, 'question_id', None)
+        cat = getattr(question, 'category', None) or getattr(question, 'subcategory', 'unknown')
+        self._questions[qid] = question
         if cat not in self._category_index:
             self._category_index[cat] = []
-        self._category_index[cat].append(question.id)
+        self._category_index[cat].append(qid)
 
     def evaluate(self, question_id: str, answer: str) -> bool:
         """Evaluate an answer for a question (string-based)."""
         if question_id not in self._questions:
             return False
         q = self._questions[question_id]
-        # Map string answer to int
-        answer_map = {"A": 0, "B": 1, "C": 2, "D": 3}
-        answer_int = answer_map.get(answer, -1)
-        if answer_int == q.correct_answer:
-            q.status = QuestionStatus.CORRECT
-            return True
+        # Handle both int and string correct_answer
+        correct = q.correct_answer
+        if isinstance(correct, str):
+            if answer == correct:
+                q.status = QuestionStatus.CORRECT
+                return True
+            else:
+                q.status = QuestionStatus.INCORRECT
+                return False
         else:
-            q.status = QuestionStatus.INCORRECT
-            return False
+            answer_map = {"A": 0, "B": 1, "C": 2, "D": 3}
+            answer_int = answer_map.get(answer, -1)
+            if answer_int == correct:
+                q.status = QuestionStatus.CORRECT
+                return True
+            else:
+                q.status = QuestionStatus.INCORRECT
+                return False
 
     def generate_synthetic_questions(self, count: int) -> list[Question]:
         """Generate synthetic questions for testing."""

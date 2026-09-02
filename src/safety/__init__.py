@@ -9,18 +9,24 @@ from src.safety.threat_modeler import (
     ThreatSeverity,
 )
 from src.safety.risk_assessor import (
+    Risk,
     RiskAssessment,
     RiskAssessor,
     RiskLevel,
+    RiskProfile,
 )
 from src.safety.safety_enforcer import (
     EnforcementResult,
     PolicyAction,
     PolicyRule,
     SafetyEnforcer,
+    SafetyPolicy,
 )
 from src.safety.incident_responder import (
+    EscalationLevel,
+    EscalationRule,
     Incident,
+    IncidentLevel,
     IncidentResponder,
     IncidentSeverity,
     IncidentStatus,
@@ -28,7 +34,9 @@ from src.safety.incident_responder import (
 from src.safety.safety_auditor import (
     AuditFinding,
     AuditReport,
+    AuditSeverity,
     AuditStatus,
+    ComplianceStandard,
     SafetyAuditor,
 )
 
@@ -38,20 +46,28 @@ __all__ = [
     "ThreatModel",
     "ThreatModeler",
     "ThreatSeverity",
+    "Risk",
     "RiskAssessment",
     "RiskAssessor",
     "RiskLevel",
+    "RiskProfile",
     "EnforcementResult",
     "PolicyAction",
     "PolicyRule",
     "SafetyEnforcer",
+    "SafetyPolicy",
+    "EscalationLevel",
+    "EscalationRule",
     "Incident",
+    "IncidentLevel",
     "IncidentResponder",
     "IncidentSeverity",
     "IncidentStatus",
     "AuditFinding",
     "AuditReport",
+    "AuditSeverity",
     "AuditStatus",
+    "ComplianceStandard",
     "SafetyAuditor",
 ]
 

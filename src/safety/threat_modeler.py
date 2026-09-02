@@ -214,7 +214,7 @@ class ThreatModeler:
 
     def create_model(self, target_system: str) -> str:
         """Create a new threat model for *target_system*. Returns the model_id."""
-        model_id = self._gen_id(target_system, str(time.time()))
+        model_id = self._gen_id(target_system, str(time.time()), str(len(self._models)))
         model = ThreatModel(model_id=model_id, target_system=target_system)
         self._models[model_id] = model
         logger.info("Created threat model %s for %s", model_id, target_system)

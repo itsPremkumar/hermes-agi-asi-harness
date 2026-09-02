@@ -6,7 +6,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 
 
 class IncidentLevel(str, Enum):
@@ -27,6 +27,7 @@ class IncidentStatus(str, Enum):
     CONTAINED = "contained"
     RESOLVED = "resolved"
     CLOSED = "closed"
+    ESCALATED = "escalated"
 
 
 class EscalationLevel(str, Enum):
@@ -35,14 +36,20 @@ class EscalationLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+    L1_OPERATIONAL = "L1_operational"
+    L2_TECHNICAL = "L2_technical"
+    L3_MANAGEMENT = "L3_management"
+    L4_EXTERNAL = "L4_external"
 
 
 @dataclass
 class EscalationRule:
     level: EscalationLevel
-    action: str
+    action: str = ""
     target: str = ""
     enabled: bool = True
+    handler: Optional[Callable] = None
+    timeout_seconds: int = 0
 
 
 @dataclass
@@ -58,6 +65,8 @@ class Incident:
     resolved_at: float | None = None
     resolution: str | None = None
     severity: IncidentLevel = IncidentLevel.MEDIUM  # Backward compat
+    escalation_level: Optional[EscalationLevel] = None
+    timeline: list[dict[str, Any]] = field(default_factory=list)
 
     def __eq__(self, other):
         if isinstance(other, Incident):
@@ -78,27 +87,51 @@ class Incident:
             "updated_at": self.updated_at,
             "resolved_at": self.resolved_at,
             "resolution": self.resolution,
+            "timeline": self.timeline,
         }
 
 
 class IncidentResponder:
     def __init__(self):
         self._incidents: dict[str, Incident] = {}
-        self._escalation_rules: list[EscalationRule] = []
+        self._escalation_rules: dict[IncidentLevel, list[EscalationRule]] = {}
         self._notification_log: list[dict[str, Any]] = []
 
     def default_escalation_rules(self) -> None:
         """Set up default escalation rules."""
-        self._escalation_rules = [
-            EscalationRule(level=EscalationLevel.CRITICAL, action="page_oncall", target="security-team"),
-            EscalationRule(level=EscalationLevel.HIGH, action="slack_alert", target="security-alerts"),
-            EscalationRule(level=EscalationLevel.MEDIUM, action="log_incident", target=""),
-            EscalationRule(level=EscalationLevel.LOW, action="log_only", target=""),
-        ]
+        self._escalation_rules = {
+            IncidentLevel.CRITICAL: [
+                EscalationRule(level=EscalationLevel.L4_EXTERNAL, action="page_oncall", target="security-team"),
+                EscalationRule(level=EscalationLevel.L3_MANAGEMENT, action="escalate_management", target="management"),
+            ],
+            IncidentLevel.HIGH: [
+                EscalationRule(level=EscalationLevel.L3_MANAGEMENT, action="slack_alert", target="security-alerts"),
+                EscalationRule(level=EscalationLevel.L2_TECHNICAL, action="page_tech", target="tech-team"),
+            ],
+            IncidentLevel.MEDIUM: [
+                EscalationRule(level=EscalationLevel.L2_TECHNICAL, action="log_incident", target=""),
+                EscalationRule(level=EscalationLevel.L1_OPERATIONAL, action="notify_ops", target="ops"),
+            ],
+            IncidentLevel.LOW: [
+                EscalationRule(level=EscalationLevel.L1_OPERATIONAL, action="log_only", target=""),
+            ],
+        }
 
     def open_incident(self, title: str, description: str, level: IncidentLevel = IncidentLevel.MEDIUM, enforcement_result: Any = None) -> Incident:
         """Open a new incident."""
         incident_id = f"inc-{uuid.uuid4().hex[:8]}"
+        
+        # Determine level from enforcement_result if provided
+        if enforcement_result is not None and hasattr(enforcement_result, 'risk_level') and enforcement_result.risk_level:
+            level_map = {
+                "critical": IncidentLevel.CRITICAL,
+                "high": IncidentLevel.HIGH,
+                "medium": IncidentLevel.MEDIUM,
+                "low": IncidentLevel.LOW,
+            }
+            rl = enforcement_result.risk_level
+            level = level_map.get(rl.value if hasattr(rl, 'value') else str(rl), level)
+        
         incident = Incident(
             incident_id=incident_id,
             title=title,
@@ -108,31 +141,45 @@ class IncidentResponder:
             enforcement_result=enforcement_result,
             severity=level,
         )
+        incident.timeline.append({"status": "detected", "timestamp": time.time()})
         self._incidents[incident_id] = incident
+        
+        # Log notification
+        self._notification_log.append({
+            "incident_id": incident_id,
+            "action": "opened",
+            "level": level.value,
+            "timestamp": time.time(),
+        })
+        
         return incident
 
     def handle_enforcement_result(self, result: Any) -> Optional[Incident]:
         """Handle an enforcement result by opening an incident if needed."""
         if result is None:
             return None
-        if hasattr(result, 'allowed') and result.allowed:
-            return None
-        if hasattr(result, 'risk_level') and result.risk_level:
+        
+        # If action is BLOCK or ESCALATE, create an incident
+        action_val = result.action.value if hasattr(result.action, 'value') else str(result.action)
+        
+        if action_val == "block" or action_val == "escalate":
             level_map = {
                 "critical": IncidentLevel.CRITICAL,
                 "high": IncidentLevel.HIGH,
                 "medium": IncidentLevel.MEDIUM,
                 "low": IncidentLevel.LOW,
             }
-            level = level_map.get(result.risk_level.value if hasattr(result.risk_level, 'value') else str(result.risk_level), IncidentLevel.MEDIUM)
-        else:
-            level = IncidentLevel.MEDIUM
-        return self.open_incident(
-            title=f"Enforcement action: {result.action.value if hasattr(result.action, 'value') else result.action}",
-            description=result.reason if hasattr(result, 'reason') else "Enforcement triggered",
-            level=level,
-            enforcement_result=result,
-        )
+            rl = result.risk_level
+            level = level_map.get(rl.value if hasattr(rl, 'value') else str(rl), IncidentLevel.MEDIUM)
+            
+            return self.open_incident(
+                title=f"Enforcement action: {action_val}",
+                description=result.reason if hasattr(result, 'reason') else "Enforcement triggered",
+                level=level,
+                enforcement_result=result,
+            )
+        
+        return None
 
     def acknowledge(self, incident_id: str, by: str = "") -> Optional[Incident]:
         """Acknowledge an incident."""
@@ -140,6 +187,7 @@ class IncidentResponder:
         if incident:
             incident.status = IncidentStatus.ACKNOWLEDGED
             incident.updated_at = time.time()
+            incident.timeline.append({"status": "acknowledged", "by": by, "timestamp": time.time()})
             return incident
         return None
 
@@ -149,22 +197,36 @@ class IncidentResponder:
         if incident:
             incident.status = IncidentStatus.INVESTIGATING
             incident.updated_at = time.time()
+            incident.timeline.append({"status": "investigating", "notes": notes, "timestamp": time.time()})
             return incident
         return None
 
-    def escalate(self, incident_id: str, level: EscalationLevel = EscalationLevel.HIGH) -> Optional[Incident]:
+    def escalate(self, incident_id: str, to_level: Optional[EscalationLevel] = None) -> Optional[Incident]:
         """Escalate an incident."""
         incident = self._incidents.get(incident_id)
         if incident:
             incident.updated_at = time.time()
-            for rule in self._escalation_rules:
-                if rule.level == level and rule.enabled:
-                    self._notification_log.append({
-                        "incident_id": incident_id,
-                        "action": rule.action,
-                        "target": rule.target,
-                        "timestamp": time.time(),
-                    })
+            
+            # Determine escalation level
+            if to_level is not None:
+                incident.escalation_level = to_level
+            else:
+                # Use default rules based on incident level
+                rules = self._escalation_rules.get(incident.level, [])
+                if rules:
+                    incident.escalation_level = rules[0].level
+                else:
+                    incident.escalation_level = EscalationLevel.L1_OPERATIONAL
+            
+            incident.status = IncidentStatus.ESCALATED
+            incident.timeline.append({"status": "escalated", "level": incident.escalation_level.value, "timestamp": time.time()})
+            
+            # Execute handler if exists
+            rules = self._escalation_rules.get(incident.level, [])
+            for rule in rules:
+                if rule.handler:
+                    rule.handler(incident)
+            
             return incident
         return None
 
@@ -174,17 +236,19 @@ class IncidentResponder:
         if incident:
             incident.status = IncidentStatus.CONTAINED
             incident.updated_at = time.time()
+            incident.timeline.append({"status": "contained", "notes": notes, "timestamp": time.time()})
             return incident
         return None
 
     def resolve(self, incident_id: str, resolution: str = "") -> Optional[Incident]:
-        """Resolve an incident."""
+        """Resolve an incident (sets status to CLOSED)."""
         incident = self._incidents.get(incident_id)
         if incident:
-            incident.status = IncidentStatus.RESOLVED
+            incident.status = IncidentStatus.CLOSED
             incident.resolution = resolution
             incident.resolved_at = time.time()
             incident.updated_at = time.time()
+            incident.timeline.append({"status": "closed", "resolution": resolution, "timestamp": time.time()})
             return incident
         return None
 
@@ -234,11 +298,18 @@ class IncidentResponder:
         return True
 
     def add_action(self, incident_id: str, action: str) -> None:
-        """Add an action to an incident (backward compat - no-op)."""
-        pass
+        """Add an action to an incident."""
+        incident = self._incidents.get(incident_id)
+        if incident:
+            if not hasattr(incident, '_actions'):
+                incident._actions = []
+            incident._actions.append(action)
 
     def get_actions(self, incident_id: str) -> list:
-        """Get actions for an incident (backward compat)."""
+        """Get actions for an incident."""
+        incident = self._incidents.get(incident_id)
+        if incident and hasattr(incident, '_actions'):
+            return incident._actions
         return []
 
     def list_incidents(self, status: IncidentStatus | None = None) -> list[Incident]:
@@ -248,7 +319,6 @@ class IncidentResponder:
     def __len__(self) -> int:
         return len(self._incidents)
 
-    @property
     def active_incidents(self) -> list[Incident]:
         """Get active (non-resolved, non-closed) incidents."""
         return [i for i in self._incidents.values() if i.status not in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)]
@@ -268,8 +338,13 @@ class IncidentResponder:
 
     def escalation_rules(self) -> list[EscalationRule]:
         """Get escalation rules."""
-        return self._escalation_rules
+        all_rules = []
+        for rules in self._escalation_rules.values():
+            all_rules.extend(rules)
+        return all_rules
 
-    def add_escalation_rule(self, rule: EscalationRule) -> None:
-        """Add an escalation rule."""
-        self._escalation_rules.append(rule)
+    def add_escalation_rule(self, incident_level: IncidentLevel, rule: EscalationRule) -> None:
+        """Add an escalation rule for a specific incident level."""
+        if incident_level not in self._escalation_rules:
+            self._escalation_rules[incident_level] = []
+        self._escalation_rules[incident_level].append(rule)
