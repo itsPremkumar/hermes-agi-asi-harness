@@ -1,10 +1,11 @@
-"""MMLU Benchmark — 57 categories, 14,042 questions."""
+"""MMLU Benchmark — 57 categories, 14,042 questions with full backward compatibility."""
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 AGENT_API_VERSION = "1.0"
 
@@ -25,7 +26,15 @@ MMLU_CATEGORIES = [
     "security_studies", "sociology", "us_foreign_policy", "virology", "world_religions",
 ]
 
-QUESTIONS_PER_CATEGORY = 246  # 14,042 / 57 ≈ 246
+QUESTIONS_PER_CATEGORY = 246  # 14,042 / 57 = 246
+
+
+class MMLUCategory(str, Enum):
+    """MMLU category classification."""
+    STEM = "stem"
+    SOCIAL_SCIENCES = "social_sciences"
+    HUMANITIES = "humanities"
+    OTHER = "other"
 
 
 class QuestionStatus(str, Enum):
@@ -37,12 +46,23 @@ class QuestionStatus(str, Enum):
 
 @dataclass
 class Question:
+    """Question with int-based correct_answer (0-3) for backward compat."""
     id: str
     category: str
     text: str
     options: list[str]
     correct_answer: int
     status: QuestionStatus = QuestionStatus.PENDING
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "category": self.category,
+            "text": self.text,
+            "options": self.options,
+            "correct_answer": self.correct_answer,
+            "status": self.status.value,
+        }
 
 
 @dataclass
@@ -54,11 +74,35 @@ class CategoryResult:
     accuracy: float
 
 
-class MMLUBenchmark:
-    """MMLU benchmark with 57 categories and 14,042 questions."""
+@dataclass
+class MMLUQuestion:
+    """Extended MMLU question for newer API."""
+    question_id: str
+    text: str
+    options: list[str]
+    correct_answer: str
+    category: MMLUCategory = MMLUCategory.OTHER
+    subcategory: str = ""
+    status: QuestionStatus = QuestionStatus.PENDING
 
-    def __init__(self):
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "question_id": self.question_id,
+            "text": self.text,
+            "options": self.options,
+            "correct_answer": self.correct_answer,
+            "category": self.category.value,
+            "subcategory": self.subcategory,
+            "status": self.status.value,
+        }
+
+
+class MMLUBenchmark:
+    """MMLU benchmark — supports both old (int answer) and new (str answer) APIs."""
+
+    def __init__(self, data_dir: str = "/tmp/mmlu"):
         self.id = str(uuid.uuid4())
+        self.data_dir = data_dir
         self._questions: dict[str, Question] = {}
         self._category_index: dict[str, list[str]] = {}
 
@@ -99,7 +143,7 @@ class MMLUBenchmark:
         return total
 
     def run_question(self, question_id: str, answer: int) -> bool:
-        """Run a single question and return correctness."""
+        """Run a single question and return correctness. Answer is int (0-3)."""
         if question_id not in self._questions:
             return False
         q = self._questions[question_id]
@@ -174,3 +218,60 @@ class MMLUBenchmark:
 
     def count_questions(self) -> int:
         return len(self._questions)
+
+    def add_question(self, question: Question) -> None:
+        """Add a question to the benchmark."""
+        self._questions[question.id] = question
+        cat = question.category
+        if cat not in self._category_index:
+            self._category_index[cat] = []
+        self._category_index[cat].append(question.id)
+
+    def evaluate(self, question_id: str, answer: str) -> bool:
+        """Evaluate an answer for a question (string-based)."""
+        if question_id not in self._questions:
+            return False
+        q = self._questions[question_id]
+        # Map string answer to int
+        answer_map = {"A": 0, "B": 1, "C": 2, "D": 3}
+        answer_int = answer_map.get(answer, -1)
+        if answer_int == q.correct_answer:
+            q.status = QuestionStatus.CORRECT
+            return True
+        else:
+            q.status = QuestionStatus.INCORRECT
+            return False
+
+    def generate_synthetic_questions(self, count: int) -> list[Question]:
+        """Generate synthetic questions for testing."""
+        questions = []
+        for i in range(count):
+            q = Question(
+                id=str(uuid.uuid4()),
+                category="math",
+                text=f"Synthetic question {i+1}",
+                options=["A. 3", "B. 4", "C. 5", "D. 6"],
+                correct_answer=1,  # B
+            )
+            self._questions[q.id] = q
+            questions.append(q)
+        return questions
+
+    def run_benchmark(self) -> dict[str, Any]:
+        """Run the full benchmark and return results."""
+        total = len(self._questions)
+        correct = sum(1 for q in self._questions.values() if q.status == QuestionStatus.CORRECT)
+        attempted = sum(1 for q in self._questions.values() if q.status in (QuestionStatus.CORRECT, QuestionStatus.INCORRECT))
+        return {
+            "total": total,
+            "attempted": attempted,
+            "correct": correct,
+            "accuracy": correct / attempted if attempted > 0 else 0.0,
+        }
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get benchmark statistics."""
+        return {
+            "total_questions": len(self._questions),
+            "categories": len(self._category_index),
+        }

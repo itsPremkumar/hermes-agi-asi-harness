@@ -12,6 +12,21 @@ class AuditStatus(Enum):
     WARN = "warn"
 
 
+# Alias for backward compatibility
+AuditSeverity = AuditStatus
+
+
+class ComplianceStandard(str, Enum):
+    SOC2 = "soc2"
+    ISO27001 = "iso27001"
+    HIPAA = "hipaa"
+    GDPR = "gdpr"
+    PCI_DSS = "pci_dss"
+    NIST = "nist"
+    CIS = "cis"
+    CUSTOM = "custom"
+
+
 @dataclass
 class AuditFinding:
     finding_id: str
