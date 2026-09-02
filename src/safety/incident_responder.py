@@ -244,7 +244,7 @@ class IncidentResponder:
         """Resolve an incident (sets status to RESOLVED)."""
         incident = self._incidents.get(incident_id)
         if incident:
-            incident.status = IncidentStatus.CLOSED
+            incident.status = IncidentStatus.RESOLVED
             incident.resolution = resolution
             incident.resolved_at = time.time()
             incident.updated_at = time.time()

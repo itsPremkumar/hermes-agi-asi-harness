@@ -102,7 +102,7 @@ def score_to_level(score: float) -> RiskLevel:
         return RiskLevel.HIGH
     elif score >= 0.3:
         return RiskLevel.MEDIUM
-    elif score >= 0.0:
+    elif score > 0.0:
         return RiskLevel.LOW
     return RiskLevel.NONE
 
@@ -125,7 +125,7 @@ class RiskAssessor:
     def assess(self, title: str, likelihood: float, impact: float, mitigations: list[str] | None = None) -> RiskAssessment:
         """Assess a single risk (backward compat)."""
         score = likelihood * impact
-        level = score_to_level(score)
+        level = score_to_level(score) if score > 0.0 else RiskLevel.LOW
         return RiskAssessment(
             risk_id=f"risk-{int(time.time() * 1000)}",
             title=title,

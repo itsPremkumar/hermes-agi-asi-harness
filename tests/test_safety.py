@@ -529,7 +529,7 @@ class TestIncidentResponder:
         resp.default_escalation_rules()
         inc = resp.open_incident("T", "d", IncidentLevel.LOW)
         resp.resolve(inc.incident_id, "fixed")
-        assert inc.status == IncidentStatus.CLOSED
+        assert inc.status == IncidentStatus.RESOLVED
 
     def test_by_level(self):
         resp = IncidentResponder()
