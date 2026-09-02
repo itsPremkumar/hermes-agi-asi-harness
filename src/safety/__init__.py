@@ -1,5 +1,4 @@
 """Advanced Safety Module — threat modeling, risk assessment, policy enforcement, incident response, and compliance auditing."""
-
 from __future__ import annotations
 
 from src.safety.threat_modeler import (
@@ -11,17 +10,11 @@ from src.safety.threat_modeler import (
 )
 from src.safety.risk_assessor import (
     Risk,
-<<<<<<< HEAD
-    RiskAssessor,
-    RiskLevel,
-    RiskProfile,
-    score_to_level,
-=======
     RiskAssessment,
     RiskAssessor,
     RiskLevel,
     RiskProfile,
->>>>>>> fix/collection-errors-and-test-fixes
+    score_to_level,
 )
 from src.safety.safety_enforcer import (
     EnforcementResult,
@@ -32,23 +25,16 @@ from src.safety.safety_enforcer import (
 from src.safety.incident_responder import (
     EscalationLevel,
     EscalationRule,
-<<<<<<< HEAD
-=======
     Incident,
->>>>>>> fix/collection-errors-and-test-fixes
     IncidentLevel,
     IncidentResponder,
     IncidentStatus,
 )
 from src.safety.safety_auditor import (
-<<<<<<< HEAD
-    AuditSeverity,
-=======
     AuditFinding,
     AuditReport,
     AuditSeverity,
     AuditStatus,
->>>>>>> fix/collection-errors-and-test-fixes
     ComplianceStandard,
     SafetyAuditor,
 )
@@ -60,38 +46,25 @@ __all__ = [
     "ThreatModeler",
     "ThreatSeverity",
     "Risk",
-<<<<<<< HEAD
-    "RiskAssessor",
-    "RiskLevel",
-    "RiskProfile",
-    "score_to_level",
-=======
     "RiskAssessment",
     "RiskAssessor",
     "RiskLevel",
     "RiskProfile",
->>>>>>> fix/collection-errors-and-test-fixes
+    "score_to_level",
     "EnforcementResult",
     "PolicyAction",
     "SafetyEnforcer",
     "SafetyPolicy",
     "EscalationLevel",
     "EscalationRule",
-<<<<<<< HEAD
-=======
     "Incident",
->>>>>>> fix/collection-errors-and-test-fixes
     "IncidentLevel",
     "IncidentResponder",
     "IncidentStatus",
-<<<<<<< HEAD
-    "AuditSeverity",
-=======
     "AuditFinding",
     "AuditReport",
     "AuditSeverity",
     "AuditStatus",
->>>>>>> fix/collection-errors-and-test-fixes
     "ComplianceStandard",
     "SafetyAuditor",
 ]
