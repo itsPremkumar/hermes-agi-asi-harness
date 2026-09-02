@@ -1,0 +1,81 @@
+name: cost_enforcer
+version: 1.0.0
+description: "Cost budget enforcement and performance optimization layer"
+author: "Hermes ASI Team"
+category: "infrastructure"
+provides: ["cost_enforcer", "performance_optimizer", "metrics_collector"]
+
+config:
+  max_tokens_per_query:
+    type: integer
+    default: 10000
+    description: "Maximum tokens per query"
+  max_wall_clock_seconds:
+    type: float
+    default: 30.0
+    description: "Maximum wall-clock seconds per query"
+  max_cost_per_query:
+    type: float
+    default: 0.50
+    description: "Maximum cost per query in dollars"
+  cost_per_1k_tokens:
+    type: float
+    default: 0.003
+    description: "Average cost per 1K tokens"
+  cache_ttl_seconds:
+    type: float
+    default: 300.0
+    description: "Cache entry TTL in seconds"
+  cache_max_entries:
+    type: integer
+    default: 10000
+    description: "Maximum cache entries"
+  min_planes_per_query:
+    type: integer
+    default: 3
+    description: "Minimum planes to execute per query"
+  max_planes_per_query:
+    type: integer
+    default: 7
+    description: "Maximum planes to execute per query"
+  enable_parallel_execution:
+    type: boolean
+    default: true
+    description: "Enable parallel plane execution"
+  enable_adaptive_selection:
+    type: boolean
+    default: true
+    description: "Enable adaptive plane selection"
+  enable_caching:
+    type: boolean
+    default: true
+    description: "Enable result caching"
+
+hooks:
+  - name: "query_start"
+    description: "Called when a query starts"
+  - name: "plane_execute"
+    description: "Called before plane execution"
+  - name: "plane_complete"
+    description: "Called after plane execution"
+  - name: "query_end"
+    description: "Called when a query ends"
+  - name: "budget_warning"
+    description: "Called when budget threshold exceeded"
+
+metrics:
+  - name: "cost_per_query"
+    type: histogram
+    description: "Cost per query in dollars"
+  - name: "tokens_per_query"
+    type: histogram
+    description: "Tokens used per query"
+  - name: "plane_latency_ms"
+    type: histogram
+    description: "Plane execution latency in ms"
+  - name: "cache_hit_rate"
+    type: gauge
+    description: "Cache hit rate (0-1)"
+  - name: "budget_exceeded_count"
+    type: counter
+    description: "Number of queries that exceeded budget"

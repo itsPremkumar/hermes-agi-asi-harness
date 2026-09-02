@@ -1,0 +1,80 @@
+{
+  "dashboard": {
+    "title": "Hermes AGI/ASI Harness — Production",
+    "uid": "hermes-prod",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "Plane Health Status",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "hermes_plane_health{plane=~'.*'}",
+            "legendFormat": "{{plane}}"
+          }
+        ]
+      },
+      {
+        "title": "Request Latency (p99)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(hermes_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p99"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(hermes_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ]
+      },
+      {
+        "title": "Cost Per Query",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "hermes_cost_per_query_usd",
+            "legendFormat": "USD/query"
+          }
+        ]
+      },
+      {
+        "title": "Circuit Breaker Open",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "hermes_circuit_breaker_open",
+            "legendFormat": "{{plane}}"
+          }
+        ]
+      },
+      {
+        "title": "Token Usage Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(hermes_tokens_total[1m])",
+            "legendFormat": "tokens/sec"
+          }
+        ]
+      },
+      {
+        "title": "Active Tasks",
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "hermes_active_tasks",
+            "legendFormat": "tasks"
+          }
+        ]
+      }
+    ]
+  }
+}

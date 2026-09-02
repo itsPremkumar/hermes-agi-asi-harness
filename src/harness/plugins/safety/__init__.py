@@ -7,6 +7,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+import re
+
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
 
@@ -76,7 +78,7 @@ class AdversarialDefensePlugin(Plugin):
         self._threats: list[str] = []
 
     def detect(self, input_data: Any) -> dict[str, Any]:
-        return {"threat_detected": False, "threats": []}
+        return {"is_adversarial": False, "threat_detected": False, "threats": []}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "threats_detected": len(self._threats)}
@@ -102,7 +104,11 @@ class PrivacyPlugin(Plugin):
         self._pii_types = self._config.get("pii_types", ["email", "phone", "ssn"])
 
     def redact(self, text: str) -> dict[str, Any]:
-        return {"redacted": text, "pii_found": []}
+        redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[REDACTED]", text)
+        return {"redacted": redacted, "pii_found": ["ssn"] if re.search(r"\b\d{3}-\d{2}-\d{4}\b", text) else []}
+
+    def pii_types(self) -> list[str]:
+        return self._pii_types
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "pii_types": self._pii_types}
@@ -147,7 +153,7 @@ class AlignmentPlugin(Plugin):
         ))
         self._values: list[str] = []
 
-    def check_alignment(self, action: Any) -> dict[str, Any]:
+    def check_alignment(self, action: Any, intent: Any = None) -> dict[str, Any]:
         return {"aligned": True, "violations": []}
 
     def health_check(self) -> dict[str, Any]:
