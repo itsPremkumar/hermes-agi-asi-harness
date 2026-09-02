@@ -1,7 +1,7 @@
 """Tests for openbookqa_benchmark.py — OpenBookQA Benchmark."""
 import pytest
 
-from benchmark.openbookqa_benchmark import (
+from src.benchmark.openbookqa_benchmark import (
     OpenBookQABenchmark, OpenBookProblem, OpenBookResult, ProblemStatus,
 )
 
