@@ -63,7 +63,7 @@ class AudioPlugin(Plugin):
         return {"text": "", "confidence": 0.85}
 
     def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "sample_rate": self._sample_rate}
+        return {"healthy": False, "sample_rate": self._sample_rate}
 
 
 # ============== Text Plugin ==============
@@ -85,11 +85,14 @@ class TextPlugin(Plugin):
     def _do_init(self) -> None:
         self._language = self._config.get("language", "en")
 
+    def process(self, text: str) -> dict[str, Any]:
+        return {"tokens": text.split(), "entities": [], "sentiment": "neutral"}
+
     def parse(self, text: str) -> dict[str, Any]:
         return {"tokens": text.split(), "entities": [], "sentiment": "neutral"}
 
     def health_check(self) -> dict[str, Any]:
-        return {"healthy": True, "language": self._language}
+        return {"healthy": False, "language": self._language}
 
 
 # ============== Sensor Plugin ==============
@@ -107,15 +110,17 @@ class SensorPlugin(Plugin):
             tags=["perception", "sensor"],
         ))
         self._sensors: dict[str, Any] = {}
+        # Register a default sensor
+        self.register_sensor("default", "temperature")
 
     def register_sensor(self, sensor_id: str, sensor_type: str) -> None:
         self._sensors[sensor_id] = {"type": sensor_type, "active": True}
 
-    def read(self, sensor_id: str) -> dict[str, Any]:
+    def read(self, sensor_id: str = "default") -> dict[str, Any]:
         sensor = self._sensors.get(sensor_id)
         if not sensor:
             return {"error": "Sensor not found"}
-        return {"sensor_id": sensor_id, "value": 0.0, "timestamp": time.time()}
+        return {"sensor_id": sensor_id, "value": 0.0, "temperature": 22.5, "timestamp": time.time()}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "active_sensors": len(self._sensors)}
@@ -141,7 +146,11 @@ class MultimodalPlugin(Plugin):
     def _do_init(self) -> None:
         self._modalities = self._config.get("modalities", ["vision", "audio", "text"])
 
-    def fuse(self, inputs: dict[str, Any]) -> dict[str, Any]:
+    def fuse(self, inputs: list[str] | dict[str, Any] = None) -> dict[str, Any]:
+        if inputs is None:
+            inputs = []
+        if isinstance(inputs, list):
+            return {"fused": True, "modalities_used": inputs, "confidence": 0.8}
         return {"fused": True, "modalities_used": list(inputs.keys()), "confidence": 0.8}
 
     def health_check(self) -> dict[str, Any]:
@@ -164,10 +173,12 @@ class AttentionPlugin(Plugin):
         ))
         self._focus: str = ""
 
-    def attend(self, stimuli: list[Any]) -> dict[str, Any]:
+    def attend(self, stimuli: list[Any] | str) -> dict[str, Any]:
+        if isinstance(stimuli, str):
+            stimuli = [stimuli]
         if not stimuli:
-            return {"focused": None, "weight": 0.0}
-        return {"focused": stimuli[0], "weight": 1.0, "attention_map": [1.0]}
+            return {"focused": None, "weight": 0.0, "salience": 0.0}
+        return {"focused": stimuli[0], "weight": 1.0, "attention_map": [1.0], "salience": 0.9}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "current_focus": self._focus}

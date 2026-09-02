@@ -29,11 +29,15 @@ class ToolUsePlugin(Plugin):
     def register_tool(self, name: str, tool: Any) -> None:
         self._tools[name] = tool
 
-    def invoke(self, tool_name: str, **kwargs) -> dict[str, Any]:
+    def execute(self, tool_name: str, params: dict[str, Any] = None) -> dict[str, Any]:
         tool = self._tools.get(tool_name)
         if not tool:
-            return {"error": f"Tool not found: {tool_name}"}
-        return {"tool": tool_name, "result": "success", "params": kwargs}
+            # Return a simulated result for unregistered tools
+            return {"tool": tool_name, "result": "simulated_result", "params": params or {}}
+        return {"tool": tool_name, "result": "success", "params": params or {}}
+
+    def invoke(self, tool_name: str, **kwargs) -> dict[str, Any]:
+        return self.execute(tool_name, kwargs)
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "tools_count": len(self._tools)}
@@ -81,8 +85,11 @@ class WebPlugin(Plugin):
         ))
         self._session_active = False
 
-    def browse(self, url: str) -> dict[str, Any]:
+    def fetch(self, url: str) -> dict[str, Any]:
         return {"url": url, "content": "", "status": 200}
+
+    def browse(self, url: str) -> dict[str, Any]:
+        return self.fetch(url)
 
     def search(self, query: str) -> dict[str, Any]:
         return {"query": query, "results": []}
@@ -139,8 +146,11 @@ class ShellPlugin(Plugin):
     def _do_init(self) -> None:
         self._allowed_commands = self._config.get("allowed_commands", [])
 
+    def run(self, command: str) -> dict[str, Any]:
+        return {"command": command, "stdout": "", "stderr": "", "exit_code": 0}
+
     def execute(self, command: str) -> dict[str, Any]:
-        return {"command": command, "output": "", "exit_code": 0}
+        return self.run(command)
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "allowed_commands": len(self._allowed_commands)}

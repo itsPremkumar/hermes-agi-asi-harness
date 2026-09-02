@@ -15,7 +15,14 @@ class AuditStatus(Enum):
 
 
 # Alias for backward compatibility
-AuditSeverity = AuditStatus
+class AuditSeverity(Enum):
+    PASS = "pass"
+    FAIL = "fail"
+    WARN = "warn"
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 class ComplianceStandard(str, Enum):
@@ -58,6 +65,14 @@ class AuditReport:
     @property
     def fail_count(self) -> int:
         return sum(1 for f in self.findings if f.status == AuditStatus.FAIL)
+
+    @property
+    def pass_count(self) -> int:
+        return sum(1 for f in self.findings if f.status == AuditStatus.PASS)
+
+    @property
+    def overall_pass(self) -> bool:
+        return self.fail_count == 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -107,7 +122,7 @@ class SafetyAuditor:
                     status=AuditStatus.FAIL,
                     description="System has critical risk level",
                     recommendation="Review and mitigate critical risks",
-                    severity=AuditStatus.FAIL,
+                    severity=AuditSeverity.CRITICAL,
                 )
         return None
     
@@ -125,7 +140,7 @@ class SafetyAuditor:
                     status=AuditStatus.FAIL,
                     description=f"{len(critical_active)} critical incidents unresolved",
                     recommendation="Resolve critical incidents immediately",
-                    severity=AuditStatus.FAIL,
+                    severity=AuditSeverity.CRITICAL,
                 )
         return None
 

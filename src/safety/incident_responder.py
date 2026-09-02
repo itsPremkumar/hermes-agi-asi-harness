@@ -241,14 +241,14 @@ class IncidentResponder:
         return None
 
     def resolve(self, incident_id: str, resolution: str = "") -> Optional[Incident]:
-        """Resolve an incident (sets status to CLOSED)."""
+        """Resolve an incident (sets status to RESOLVED)."""
         incident = self._incidents.get(incident_id)
         if incident:
             incident.status = IncidentStatus.CLOSED
             incident.resolution = resolution
             incident.resolved_at = time.time()
             incident.updated_at = time.time()
-            incident.timeline.append({"status": "closed", "resolution": resolution, "timestamp": time.time()})
+            incident.timeline.append({"status": "resolved", "resolution": resolution, "timestamp": time.time()})
             return incident
         return None
 

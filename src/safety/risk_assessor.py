@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+from src.safety.threat_modeler import ThreatSeverity
+
 
 class RiskLevel(str, Enum):
     NONE = "none"
@@ -100,13 +102,22 @@ def score_to_level(score: float) -> RiskLevel:
         return RiskLevel.HIGH
     elif score >= 0.3:
         return RiskLevel.MEDIUM
-    elif score > 0.0:
+    elif score >= 0.0:
         return RiskLevel.LOW
     return RiskLevel.NONE
 
 
 class RiskAssessor:
     """Assess and score risks for agent systems."""
+
+    # Weight mapping for risk assessment (used in profile computation)
+    _RISK_WEIGHT = {
+        ThreatSeverity.CRITICAL: 1.0,
+        ThreatSeverity.HIGH: 0.75,
+        ThreatSeverity.MEDIUM: 0.5,
+        ThreatSeverity.LOW: 0.2,
+        ThreatSeverity.INFO: 0.05,
+    }
 
     def __init__(self):
         self._profiles: dict[str, RiskProfile] = {}
@@ -129,7 +140,8 @@ class RiskAssessor:
         """Assess all threats in a ThreatModel."""
         risks = []
         for threat in model.threats:
-            score = threat.risk_score
+            # Use internal weight mapping for profile score
+            score = self._RISK_WEIGHT.get(threat.severity, 0.5) * threat.likelihood
             level = score_to_level(score)
             risk = Risk(
                 risk_id=threat.threat_id,
@@ -161,7 +173,8 @@ class RiskAssessor:
         """Assess a list of threats directly."""
         risks = []
         for threat in threats:
-            score = threat.risk_score
+            # Use internal weight mapping for profile score
+            score = self._RISK_WEIGHT.get(threat.severity, 0.5) * threat.likelihood
             level = score_to_level(score)
             risk = Risk(
                 risk_id=threat.threat_id,
