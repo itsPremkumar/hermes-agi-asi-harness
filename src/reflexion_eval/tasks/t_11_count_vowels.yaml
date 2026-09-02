@@ -1,0 +1,9 @@
+id: t_11_count_vowels
+description: "Count the vowels (a, e, i, o, u) in the string 'education'."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["count", "Outputs 5 (e, d, u, a, i — note: y not counted)"]
+    - ["clarity", "Lists which characters are vowels"]
+max_iterations: 3

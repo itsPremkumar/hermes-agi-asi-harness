@@ -1,0 +1,9 @@
+id: t_12_merge_sort
+description: "Sort the list [3, 1, 4, 1, 5, 9, 2, 6] in ascending order."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["result", "Outputs [1, 1, 2, 3, 4, 5, 6, 9]"]
+    - ["duplicates", "Preserves both occurrences of duplicate values"]
+max_iterations: 3

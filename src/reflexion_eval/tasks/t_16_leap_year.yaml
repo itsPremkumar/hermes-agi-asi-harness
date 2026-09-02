@@ -1,0 +1,9 @@
+id: t_16_leap_year
+description: "Is 2024 a leap year? Output True or False, then briefly explain the rule."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["answer", "Outputs True (2024 is divisible by 4 and not by 100)"]
+    - ["rule", "Mentions the divisible-by-4, not-by-100, by-400 rule"]
+max_iterations: 3

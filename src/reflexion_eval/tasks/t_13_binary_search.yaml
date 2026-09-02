@@ -1,0 +1,9 @@
+id: t_13_binary_search
+description: "Using binary search, find the index of 5 in the sorted array [1, 3, 5, 7, 9, 11, 13]. Output only the index."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["index", "Outputs 2 (0-indexed)"]
+    - ["method", "Describes the halving approach"]
+max_iterations: 3

@@ -1,0 +1,701 @@
+openapi: 3.0.3
+
+info:
+  title: Agent Rate Limiting Platform API
+  description: |
+    Rate limiting, quota management, and metrics API for the Agent Rate
+    Limiting Platform. Provides a synchronous Decision API used by the
+    Enforcement Point (PEP) and a Management API for operators.
+  version: "1.0.0"
+  contact:
+    name: Agent Rate Limiter Team
+
+servers:
+  - url: https://ratelimit.example.org
+    description: Production endpoint
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Decision
+    description: Synchronous rate-limit decisions consumed by the Enforcement Point (PEP).
+  - name: Policies
+    description: CRUD operations for rate-limiting policies.
+  - name: Quotas
+    description: Query quota configurations and usage.
+  - name: Metrics
+    description: Operational metrics and usage data.
+  - name: Violations
+    description: Inspection of rate-limit violations and quota exhaustion.
+
+components:
+  securitySchemes:
+    AdminApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Admin API key for Management API endpoints.
+    DecisionAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service bearer token for the Decision API.
+
+  schemas:
+    # ── Scope / Identity ──────────────────────────────────────────────
+    Scope:
+      type: object
+      required: [user_id, app_id, model_id]
+      properties:
+        user_id:
+          type: string
+          description: The authenticated end-user identity.
+          example: user_123
+        app_id:
+          type: string
+          description: The application or client-type making the call.
+          example: web_app
+        model_id:
+          type: string
+          description: The underlying LLM/agent model being invoked.
+          example: gpt-4
+
+    # ── Decision ────────────────────────────────────────────────────────
+    DecisionRequest:
+      type: object
+      required: [scope, model]
+      properties:
+        scope:
+          $ref: '#/components/schemas/Scope'
+        model:
+          type: string
+          description: The model identifier for this request.
+          example: gpt-4
+        strategy_hint:
+          type: string
+          description: Optional hint for which strategy to use. If omitted, the policy default is used.
+          enum: [token_bucket, sliding_window, leaky_bucket, adaptive]
+        request_weight:
+          type: integer
+          description: Weight of this single request (e.g. token count). Defaults to 1.
+          default: 1
+          minimum: 1
+        context:
+          type: object
+          description: Additional arbitrary context for adaptive strategies (e.g. current latency, upstream status).
+          additionalProperties: true
+          example:
+            latency_ms: 120
+            upstream_status: "healthy"
+
+    DecisionResponse:
+      type: object
+      required: [allowed, policy_id]
+      properties:
+        allowed:
+          type: boolean
+          description: Whether the request is allowed to proceed.
+        policy_id:
+          type: string
+          description: The ID of the policy that was evaluated.
+          example: rl_user_app_model_gpt4
+        retry_after:
+          type: number
+          description: Seconds the caller should wait before retrying. Present when allowed=false.
+          example: 2.5
+        reason:
+          type: string
+          description: Human-readable reason for the decision.
+          example: "Rate limit exceeded for token_bucket strategy"
+        enforcement_mode:
+          type: string
+          description: The enforcement mode in effect.
+          enum: [hard_limit, soft_limit, graceful_degradation]
+        degradation:
+          type: object
+          description: Degradation instructions when graceful_degradation is active and the request was degraded (not fully rejected).
+          properties:
+            fallback_model:
+              type: string
+              example: gpt-3.5-turbo
+            reduce_context:
+              type: boolean
+          nullable: true
+
+    # ── Policy ──────────────────────────────────────────────────────────
+    Policy:
+      type: object
+      required: [policy_id, scope, strategy, limits, enforcement, version, enabled]
+      properties:
+        policy_id:
+          type: string
+          description: Unique identifier for the policy.
+          example: rl_user_app_model_gpt4
+        scope:
+          $ref: '#/components/schemas/Scope'
+        strategy:
+          type: string
+          enum: [token_bucket, sliding_window, leaky_bucket, adaptive]
+          description: The rate-limiting strategy.
+        limits:
+          type: object
+          required: [requests_per_minute]
+          properties:
+            requests_per_minute:
+              type: integer
+              minimum: 1
+              example: 60
+            burst_capacity:
+              type: integer
+              minimum: 0
+              description: Additional burst tokens for token_bucket strategy.
+              example: 20
+            daily_quota:
+              type: integer
+              minimum: 0
+              description: Hard daily cap.
+              example: 10000
+            monthly_quota:
+              type: integer
+              minimum: 0
+              description: Hard monthly cap.
+              example: 300000
+        enforcement:
+          type: object
+          required: [mode]
+          properties:
+            mode:
+              type: string
+              enum: [hard_limit, soft_limit, graceful_degradation]
+            grace_period_seconds:
+              type: number
+              minimum: 0
+              default: 0
+              example: 5
+            unavailable_behavior:
+              type: string
+              enum: [fail_open, fail_closed]
+              description: PEP behavior when the PDP is unreachable.
+              default: fail_closed
+            degradation:
+              type: object
+              description: Only used when mode == graceful_degradation.
+              properties:
+                fallback_model:
+                  type: string
+                reduce_context:
+                  type: boolean
+        adaptive:
+          type: object
+          description: Only present when strategy == adaptive.
+          properties:
+            metrics:
+              type: array
+              items:
+                type: string
+              example: [latency_p95, error_rate, cpu_util]
+            thresholds:
+              type: object
+              properties:
+                latency_p95_ms:
+                  type: number
+                  example: 2000
+                error_rate_pct:
+                  type: number
+                  example: 5.0
+            scale_down_factor:
+              type: number
+              format: float
+              example: 0.5
+        version:
+          type: integer
+          minimum: 1
+          description: Version of the policy definition for optimistic concurrency.
+        enabled:
+          type: boolean
+          description: Whether the policy is active.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PolicyCreateRequest:
+      type: object
+      required: [policy_id, scope, strategy, limits, enforcement]
+      properties:
+        policy_id:
+          type: string
+        scope:
+          $ref: '#/components/schemas/Scope'
+        strategy:
+          type: string
+          enum: [token_bucket, sliding_window, leaky_bucket, adaptive]
+        limits:
+          type: object
+          required: [requests_per_minute]
+          properties:
+            requests_per_minute:
+              type: integer
+            burst_capacity:
+              type: integer
+            daily_quota:
+              type: integer
+            monthly_quota:
+              type: integer
+        enforcement:
+          type: object
+          required: [mode]
+          properties:
+            mode:
+              type: string
+              enum: [hard_limit, soft_limit, graceful_degradation]
+            grace_period_seconds:
+              type: number
+            unavailable_behavior:
+              type: string
+              enum: [fail_open, fail_closed]
+            degradation:
+              type: object
+              properties:
+                fallback_model:
+                  type: string
+                reduce_context:
+                  type: boolean
+        adaptive:
+          type: object
+          properties:
+            metrics:
+              type: array
+              items: { type: string }
+            thresholds:
+              type: object
+              additionalProperties: { type: number }
+            scale_down_factor:
+              type: number
+
+    PolicyUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/PolicyCreateRequest'
+        - type: object
+          properties:
+            version:
+              type: integer
+              description: Current version for optimistic concurrency control.
+          required: [version]
+
+    PolicyListResponse:
+      type: object
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Policy'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # ── Quota ───────────────────────────────────────────────────────────
+    QuotaInfo:
+      type: object
+      properties:
+        policy_id:
+          type: string
+        scope:
+          $ref: '#/components/schemas/Scope'
+        period:
+          type: string
+          enum: [daily, monthly, burst]
+        limit:
+          type: integer
+        used:
+          type: integer
+        remaining:
+          type: integer
+        reset_at:
+          type: string
+          format: date-time
+        exhausted:
+          type: boolean
+
+    QuotaUsageResponse:
+      type: object
+      properties:
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaInfo'
+
+    # ── Metrics ─────────────────────────────────────────────────────────
+    RateLimitMetrics:
+      type: object
+      properties:
+        total_checks:
+          type: integer
+        allowed:
+          type: integer
+        denied:
+          type: integer
+        denial_rate:
+          type: number
+          format: float
+        avg_decision_latency_ms:
+          type: number
+          format: float
+        strategies:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              checks:
+                type: integer
+              allowed:
+                type: integer
+              denied:
+                type: integer
+
+    # ── Violations ──────────────────────────────────────────────────────
+    Violation:
+      type: object
+      properties:
+        violation_id:
+          type: string
+        policy_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        limit_type:
+          type: string
+          enum: [rpm, daily_quota, monthly_quota, burst]
+        observed_value:
+          type: integer
+        limit_value:
+          type: integer
+        enforcement_mode:
+          type: string
+          enum: [hard_limit, soft_limit, graceful_degradation]
+        action_taken:
+          type: string
+          enum: [rejected, degraded, warned]
+        scope:
+          $ref: '#/components/schemas/Scope'
+
+    ViolationListResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          example: RATE_LIMIT_EXCEEDED
+        details:
+          type: object
+          additionalProperties: true
+
+paths:
+  /v1/decide:
+    post:
+      tags: [Decision]
+      summary: Evaluate a rate-limit decision
+      description: |
+        Synchronous decision endpoint called by the Enforcement Point (PEP)
+        for every incoming request that requires rate limiting.
+      operationId: makeDecision
+      security:
+        - DecisionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Decision returned (allowed or denied).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429':
+          description: Too Many Requests (only if PDP itself is rate-limited)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/policies:
+    get:
+      tags: [Policies]
+      summary: List all active policies
+      operationId: listPolicies
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string }
+          description: Filter policies by user scope.
+        - in: query
+          name: app_id
+          schema: { type: string }
+          description: Filter policies by app scope.
+        - in: query
+          name: model_id
+          schema: { type: string }
+          description: Filter policies by model scope.
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyListResponse'
+        '401':
+          description: Unauthorized
+      post:
+      tags: [Policies]
+      summary: Create a new policy
+      operationId: createPolicy
+      security:
+        - AdminApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreateRequest'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '400':
+          description: Invalid input / policy already exists
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '401':
+          description: Unauthorized
+
+  /v1/policies/{policy_id}:
+    get:
+      tags: [Policies]
+      summary: Get a specific policy
+      operationId: getPolicy
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: The policy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    put:
+      tags: [Policies]
+      summary: Update a policy (full replace with optimistic concurrency)
+      operationId: updatePolicy
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyUpdateRequest'
+      responses:
+        '200':
+          description: Updated policy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '409':
+          description: Version conflict (optimistic concurrency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Policy not found
+    delete:
+      tags: [Policies]
+      summary: Delete a policy
+      operationId: deletePolicy
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Policy deleted
+        '404':
+          description: Policy not found
+
+  /v1/policies/{policy_id}/enable:
+    post:
+      tags: [Policies]
+      summary: Enable a disabled policy
+      operationId: enablePolicy
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Policy enabled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '404':
+          description: Policy not found
+
+  /v1/policies/{policy_id}/disable:
+    post:
+      tags: [Policies]
+      summary: Disable a policy (keeps definition, stops enforcement)
+      operationId: disablePolicy
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policy_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Policy disabled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '404':
+          description: Policy not found
+
+  /v1/quotas:
+    get:
+      tags: [Quotas]
+      summary: Query current quota usage
+      operationId: listQuotas
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string }
+          description: Filter by user scope.
+        - in: query
+          name: app_id
+          schema: { type: string }
+          description: Filter by app scope.
+        - in: query
+          name: policy_id
+          schema: { type: string }
+          description: Filter by specific policy.
+      responses:
+        '200':
+          description: Quota usage for matching scopes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaUsageResponse'
+        '401':
+          description: Unauthorized
+
+  /v1/metrics:
+    get:
+      tags: [Metrics]
+      summary: Get aggregated rate-limit metrics
+      operationId: getMetrics
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: query
+          name: window_seconds
+          schema: { type: integer, default: 60, description: "Time window in seconds to look back." }
+      responses:
+        '200':
+          description: Aggregated metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitMetrics'
+        '401':
+          description: Unauthorized
+
+  /v1/violations:
+    get:
+      tags: [Violations]
+      summary: List recent rate-limit violations
+      operationId: listViolations
+      security:
+        - AdminApiKeyAuth: []
+      parameters:
+        - in: query
+          name: policy_id
+          schema: { type: string }
+        - in: query
+          name: user_id
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: List of violations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationListResponse'
+        '401':
+          description: Unauthorized

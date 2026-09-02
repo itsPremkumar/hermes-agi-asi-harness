@@ -1,0 +1,9 @@
+id: t_18_gcd
+description: "What is the greatest common divisor of 54 and 24?"
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Outputs 6"]
+    - ["method", "Uses Euclidean algorithm or factor listing"]
+max_iterations: 3

@@ -1,0 +1,18 @@
+# Example E2E Test Definition
+name: login_flow
+url: /login
+steps:
+  - action: goto
+    value: /login
+  - action: fill
+    selector: "#email"
+    value: "test@example.com"
+  - action: fill
+    selector: "#password"
+    value: "password123"
+  - action: click
+    selector: "button[type='submit']"
+  - action: assert_url
+    expected: /dashboard
+  - action: screenshot
+    value: "post-login.png"

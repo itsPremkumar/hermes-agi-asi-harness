@@ -1,0 +1,19 @@
+# MCPHub — Universal MCP Server Registry
+
+This directory contains the MCPHub project.
+
+## Structure
+
+```
+mcphub/
+├── backend/           # FastAPI backend
+├── cli/               # CLI tool (mcphub)
+├── sdk/               # Python + TypeScript SDKs
+├── frontend/          # Next.js frontend
+├── vscode-extension/  # VS Code extension
+├── scripts/           # Seed data and utilities
+├── .github/workflows/ # CI/CD
+├── Dockerfile
+├── docker-compose.yml
+└── pyproject.toml
+```

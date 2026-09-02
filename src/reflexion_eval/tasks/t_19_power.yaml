@@ -1,0 +1,9 @@
+id: t_19_power
+description: "Compute 2^10. Output only the number."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Outputs 1024"]
+    - ["conciseness", "Outputs only the number"]
+max_iterations: 3

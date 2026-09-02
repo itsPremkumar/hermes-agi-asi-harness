@@ -1,0 +1,9 @@
+id: t_09_capitalize
+description: "Capitalize the first letter of each word in 'the quick brown fox'."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["result", "Outputs 'The Quick Brown Fox'"]
+    - ["preservation", "Does not change non-first letters"]
+max_iterations: 3
