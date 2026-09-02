@@ -2,7 +2,7 @@
 
 import asyncio
 import pytest
-from benchmark.siqa_benchmark import (
+from src.benchmark.siqa_benchmark import (
     SIQABenchmark, SIQAQuestion, SIQAResult, SIQADataset,
 )
 
