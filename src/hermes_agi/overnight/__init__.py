@@ -18,6 +18,7 @@ from .controller import (
 )
 from .git_manager import GitManager
 from .notes_curator import NotesCurator
+from .branch_summarizer import SemanticBranchSummarizer, BranchSummary
 
 __all__ = [
     "OvernightConfig",
@@ -25,4 +26,6 @@ __all__ = [
     "OvernightSummary",
     "GitManager",
     "NotesCurator",
+    "SemanticBranchSummarizer",
+    "BranchSummary",
 ]

@@ -65,6 +65,13 @@ def main():
     evolve_parser.add_argument("--cycles", type=int, default=1, help="Number of recursive evolution cycles to run")
     evolve_parser.add_argument("--margin", type=float, default=0.015, help="Minimum improvement margin to accept patch")
     evolve_parser.add_argument("--avo", action="store_true", help="Use NVIDIA Agentic Variation Operators (AVO) with lineage DAG")
+
+    # Refine command (Prime Agent Continual Self-Refinement)
+    subparsers.add_parser("refine", help="Run continual harness self-refinement on session logs (/refine)")
+
+    # REPL command (Prime Agent Recursive Language Model)
+    repl_parser = subparsers.add_parser("repl", help="Execute Python code snippet in RLM persistent REPL")
+    repl_parser.add_argument("code", nargs="?", default="", help="Python code to evaluate with 'agent' bridge")
     
     args = parser.parse_args()
     
@@ -153,6 +160,22 @@ async def run_command(args):
                 if res.history:
                     print(f"  Outcome Rationale:   {res.history[0].rationale}")
             print("\n=======================================================\n")
+    elif args.command == "refine":
+        from hermes_agi.refine import HarnessRefiner
+        refiner = HarnessRefiner()
+        report = refiner.refine()
+        report.print_summary()
+    elif args.command == "repl":
+        from hermes_agi.rlm import RLMREPLExecutor
+        executor = RLMREPLExecutor()
+        code = args.code or "print('Hermes RLM REPL Active. Variables and agent.* functions available.')"
+        res = executor.execute(code)
+        if res.stdout:
+            print(res.stdout, end="")
+        if res.stderr:
+            print(res.stderr, end="", file=sys.stderr)
+        if res.returned_value is not None:
+            print(res.returned_value)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,9 @@ src/
 │   ├── overnight/             # Autonomous Overnight Endurance Engine (gnhf-architecture)
 │   ├── causal/                # Dynamic Causal Graph & Counterfactual Simulator
 │   ├── coding/                # Deep Coding & Self-Correction Feedback Loop
+│   ├── rlm/                   # Prime Agent RLM: Persistent in-memory Python REPL Runtime
+│   ├── modes/                 # DeepSeek Harness: Adaptive Spatiotemporal Runtime Modes
+│   ├── refine/                # Prime Agent Continual Self-Refinement Engine (/refine)
 │   ├── agents/                # Swarm Coordinator (26 Bot Profiles)
 │   └── discovery/             # MetaDiscovery Engine (dynamic tool & feature catalog)
 │
@@ -174,6 +177,13 @@ python -m hermes_agi gnhf "reduce complexity of codebase without changing functi
 
 # Run Closed-Loop Recursive Self-Evolution (Darwinian Engine)
 python -m hermes_agi evolve --cycles 3 --margin 0.015
+python -m hermes_agi evolve --avo --cycles 2
+
+# Run Continual Harness Self-Refinement (/refine from Prime Agent)
+python -m hermes_agi refine
+
+# Execute Python in Recursive Language Model REPL (RLM from Prime Agent)
+python -m hermes_agi repl "x = agent.think('cache design', use_mcts=True); print(x['best_strategy'])"
 
 # Conduct autonomous Deep Research with live AgentEye search
 python -m hermes_agi research "quantum computing algorithms" --depth 3
