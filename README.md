@@ -27,6 +27,7 @@ src/
 │   └── verification/          # Multi-Round Proof, Adversarial Verifier, Anti-Goodhart
 ├── mesh/                      # Heterogeneous Multi-Model Adversarial Debate Mesh
 ├── engines/                   # Recursive Self-Evolution, Continuous Dev, & Control Plane
+│   └── avo/                   # NVIDIA AVO: Agentic Variation Operators (Lineage DAG, In-Harness Repair)
 ├── agent_eye/                 # 10+ Zero-API-key live search & academic backends
 ├── plugins/                   # 130+ capability plugins (filesystem, shell, python, git, RAG, MCP)
 ├── hermes_asi_master/         # 24/7 Watchdog, scheduler, and cron runtime

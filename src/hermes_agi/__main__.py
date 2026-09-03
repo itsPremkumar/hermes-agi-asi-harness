@@ -64,6 +64,7 @@ def main():
     evolve_parser = subparsers.add_parser("evolve", help="Run Darwinian Closed-Loop Self-Evolution cycle")
     evolve_parser.add_argument("--cycles", type=int, default=1, help="Number of recursive evolution cycles to run")
     evolve_parser.add_argument("--margin", type=float, default=0.015, help="Minimum improvement margin to accept patch")
+    evolve_parser.add_argument("--avo", action="store_true", help="Use NVIDIA Agentic Variation Operators (AVO) with lineage DAG")
     
     args = parser.parse_args()
     
@@ -122,20 +123,36 @@ async def run_command(args):
     elif args.command == "evolve":
         from engines.self_evolution import SelfEvolutionLoop
         loop = SelfEvolutionLoop(minimum_improvement_margin=args.margin)
-        print("\n=======================================================")
-        print("  HERMES CLOSED-LOOP DARWINIAN SELF-EVOLUTION ENGINE")
-        print("=======================================================")
-        for i in range(1, args.cycles + 1):
-            print(f"\n[Cycle {i}/{args.cycles}] Initiating Darwinian improvement cycle...")
-            res = loop.run_evolution_cycle()
-            print(f"  Baseline Score:      {res.baseline_score:.4f}")
-            print(f"  Final Evolved Score: {res.final_score:.4f}")
-            print(f"  Mutations Evaluated: {res.candidates_evaluated}")
-            print(f"  Mutations Merged:    {res.mutations_merged}")
-            print(f"  Mutations Discarded: {res.mutations_discarded}")
-            if res.history:
-                print(f"  Outcome Rationale:   {res.history[0].rationale}")
-        print("\n=======================================================\n")
+        if args.avo:
+            print("\n=======================================================")
+            print("  HERMES NVIDIA AVO (AGENTIC VARIATION OPERATORS) ENGINE")
+            print("=======================================================")
+            print(f"Running AVO evolution with Lineage DAG & In-Harness Multi-Turn Repair...")
+            res = loop.run_avo_evolution(objective="runtime_performance", generations=args.cycles)
+            print(f"  Generations Completed:  {res['generations_completed']}")
+            print(f"  Candidates Evaluated:   {res['total_candidates_evaluated']}")
+            print(f"  Initial Best Fitness:   {res['initial_fitness']:.4f}")
+            print(f"  Final Best Fitness:     {res['final_fitness']:.4f}")
+            print(f"  Fitness Gain Percent:   {res['fitness_gain_percent']:.2f}%")
+            print(f"  Lineage DAG Nodes:      {res['lineage_nodes_count']}")
+            print(f"  Interventions Issued:   {res['interventions_issued']}")
+            print(f"  Elapsed Time:           {res['elapsed_seconds']:.2f}s")
+            print("=======================================================\n")
+        else:
+            print("\n=======================================================")
+            print("  HERMES CLOSED-LOOP DARWINIAN SELF-EVOLUTION ENGINE")
+            print("=======================================================")
+            for i in range(1, args.cycles + 1):
+                print(f"\n[Cycle {i}/{args.cycles}] Initiating Darwinian improvement cycle...")
+                res = loop.run_evolution_cycle()
+                print(f"  Baseline Score:      {res.baseline_score:.4f}")
+                print(f"  Final Evolved Score: {res.final_score:.4f}")
+                print(f"  Mutations Evaluated: {res.candidates_evaluated}")
+                print(f"  Mutations Merged:    {res.mutations_merged}")
+                print(f"  Mutations Discarded: {res.mutations_discarded}")
+                if res.history:
+                    print(f"  Outcome Rationale:   {res.history[0].rationale}")
+            print("\n=======================================================\n")
 
 
 if __name__ == "__main__":

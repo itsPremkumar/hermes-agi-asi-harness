@@ -279,3 +279,15 @@ class SelfEvolutionLoop:
             status=status,
             rationale=rationale,
         )
+
+    def run_avo_evolution(self, objective: str = "runtime_performance", generations: int = 3) -> dict[str, Any]:
+        """Run evolutionary optimization driven by NVIDIA Agentic Variation Operators (AVO)."""
+        from .avo import AVOEvolutionEngine
+        engine = AVOEvolutionEngine(workspace_root=str(self.workspace_root))
+        seed_code = (
+            "# Hermes Runtime Core Optimizer\n"
+            "def optimize_runtime():\n"
+            "    return {'status': 'optimized', 'cache_lru': True}\n"
+        )
+        res = engine.run(objective=objective, seed_code=seed_code, generations=generations)
+        return res.to_dict()
