@@ -44,6 +44,7 @@ all = [
 ]
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["hermes_agi*", "harnix*"]
 exclude = ["tests*", "plugins*", "core*", "agents*", "scripts*", "workspaces*"]
 
