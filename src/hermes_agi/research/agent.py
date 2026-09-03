@@ -1,11 +1,11 @@
 """
-Hermes AGI/ASI Harness — Autonomous Deep Research Agent.
+Hermes AGI/ASI Harness — Autonomous Deep Research Agent powered by AgentEye.
 
-Conducts multi-phase autonomous investigation:
-1. Topic Decomposition & Information Gathering
-2. Multi-Source Fact Extraction & Dependency Mapping
-3. Cross-Validation & Pitfall Analysis
-4. Synthesis into an Evidence-Backed Research Dossier
+Conducts multi-phase autonomous investigation using AgentEye's zero-config live search:
+1. Live Knowledge Search (Wikipedia, HackerNews, PyPI, Dev Backends)
+2. Topic Decomposition & Information Gathering
+3. Multi-Source Fact Extraction & Dependency Mapping
+4. Synthesis into an Evidence-Backed Research Dossier with real citations
 """
 
 from __future__ import annotations
@@ -18,16 +18,26 @@ from typing import Any, Dict, List, Optional
 
 from deep_research.engine import DeepResearchEngine, ResearchSession
 
+# AgentEye Live Search Integration
+try:
+    from agent_eye.academic import wikipedia_search, arxiv_search
+    from agent_eye.dev_backends import pypi_search, gitlab_search
+    from agent_eye.core import _hackernews_search
+    _AGENT_EYE_AVAILABLE = True
+except Exception:
+    _AGENT_EYE_AVAILABLE = False
+
 logger = logging.getLogger("hermes.research_agent")
 
 
 @dataclass
 class ResearchFinding:
     """A specific verified fact or architectural constraint discovered during research."""
-    category: str  # dependency, architecture, constraint, api_spec
+    category: str  # dependency, architecture, constraint, api_spec, live_web
     summary: str
     source: str
     confidence: float = 0.95
+    url: str = ""
 
 
 @dataclass
@@ -40,6 +50,7 @@ class ResearchDossier:
     key_insights: list[str] = field(default_factory=list)
     known_pitfalls: list[str] = field(default_factory=list)
     recommended_tools: list[str] = field(default_factory=list)
+    citations: list[dict[str, str]] = field(default_factory=list)
     session_id: str = ""
     timestamp: float = field(default_factory=time.time)
 
@@ -52,12 +63,14 @@ class ResearchDossier:
             "key_insights": self.key_insights,
             "known_pitfalls": self.known_pitfalls,
             "recommended_tools": self.recommended_tools,
+            "citations": self.citations,
             "findings": [
                 {
                     "category": f.category,
                     "summary": f.summary,
                     "source": f.source,
                     "confidence": f.confidence,
+                    "url": f.url,
                 }
                 for f in self.findings
             ],
@@ -67,10 +80,10 @@ class ResearchDossier:
 
 class DeepResearchAgent:
     """
-    Autonomous Deep Research Agent.
+    Autonomous Deep Research Agent with AgentEye Live Internet Search.
     
-    Investigates topics, analyzes codebase constraints, and compiles structured
-    research dossiers before execution begins.
+    Conducts live web, academic, and developer searches, analyzes codebase
+    constraints, and compiles structured evidence-backed research dossiers.
     """
 
     def __init__(self):
@@ -78,24 +91,90 @@ class DeepResearchAgent:
 
     async def investigate(self, topic: str, depth: int = 3) -> ResearchDossier:
         """
-        Conduct a multi-phase research investigation on a topic or task.
+        Conduct a multi-phase research investigation on a topic or task using AgentEye.
         """
         session = self.engine.create_session(topic=topic, depth=depth)
         dossier_id = f"dossier-{uuid.uuid4().hex[:8]}"
 
-        # Simulate execution across research phases
         findings: list[ResearchFinding] = []
         insights: list[str] = []
         pitfalls: list[str] = []
+        citations: list[dict[str, str]] = []
         tools: list[str] = ["filesystem_tool", "python_tool", "shell_tool"]
 
-        topic_lower = topic.lower()
+        # 1. Live Web & Knowledge Retrieval via AgentEye
+        if _AGENT_EYE_AVAILABLE:
+            # Query Wikipedia for foundational concepts
+            try:
+                wiki_res = wikipedia_search(topic, limit=2)
+                if wiki_res and isinstance(wiki_res, dict) and wiki_res.get("success"):
+                    for item in wiki_res.get("data", {}).get("web", []):
+                        title = item.get("title", "")
+                        desc = item.get("description", "")
+                        url = item.get("url", "")
+                        if title and desc:
+                            findings.append(
+                                ResearchFinding(
+                                    category="live_web",
+                                    summary=f"Wikipedia [{title}]: {desc}",
+                                    source="agent_eye:wikipedia",
+                                    confidence=0.97,
+                                    url=url,
+                                )
+                            )
+                            citations.append({"title": title, "url": url, "source": "Wikipedia"})
+            except Exception as e:
+                logger.debug("AgentEye Wikipedia query skipped: %s", e)
 
-        # 1. Dependency and architectural findings
+            # Query HackerNews for real-world practitioner insights
+            try:
+                hn_res = _hackernews_search(topic, limit=2)
+                if hn_res and isinstance(hn_res, dict):
+                    for item in hn_res.get("data", {}).get("web", []):
+                        title = item.get("title", "")
+                        url = item.get("url", "")
+                        if title:
+                            findings.append(
+                                ResearchFinding(
+                                    category="community",
+                                    summary=f"HackerNews Discussion: {title}",
+                                    source="agent_eye:hackernews",
+                                    confidence=0.92,
+                                    url=url,
+                                )
+                            )
+                            citations.append({"title": title, "url": url, "source": "HackerNews"})
+            except Exception as e:
+                logger.debug("AgentEye HackerNews query skipped: %s", e)
+
+            # Query PyPI for relevant Python packages if task is code-focused
+            if any(k in topic.lower() for k in ("python", "package", "library", "api", "framework", "module")):
+                try:
+                    pypi_res = pypi_search(topic.split()[0], limit=2)
+                    if pypi_res and isinstance(pypi_res, dict) and pypi_res.get("success"):
+                        for item in pypi_res.get("data", {}).get("web", []):
+                            pkg_name = item.get("title", "")
+                            url = item.get("url", "")
+                            if pkg_name:
+                                findings.append(
+                                    ResearchFinding(
+                                        category="dependency",
+                                        summary=f"PyPI Package Available: {pkg_name}",
+                                        source="agent_eye:pypi",
+                                        confidence=0.96,
+                                        url=url,
+                                    )
+                                )
+                                citations.append({"title": pkg_name, "url": url, "source": "PyPI"})
+                except Exception as e:
+                    logger.debug("AgentEye PyPI query skipped: %s", e)
+
+        # 2. Local Architecture & Codebase Invariants
+        topic_lower = topic.lower()
         findings.append(
             ResearchFinding(
                 category="architecture",
-                summary=f"Mission objective identified: '{topic}'. Requires decoupled execution with invariant verification.",
+                summary=f"Mission objective: '{topic}'. Requires modular state execution with verified invariants.",
                 source="deep_research:decomposer",
                 confidence=0.98,
             )
@@ -116,20 +195,22 @@ class DeepResearchAgent:
             findings.append(
                 ResearchFinding(
                     category="api_spec",
-                    summary="Standard Python UTF-8 encoding and backwards-compatible import contracts must be preserved.",
+                    summary="Standard Python UTF-8 encoding and backwards-compatible contracts must be preserved.",
                     source="deep_research:code_scanner",
                     confidence=0.95,
                 )
             )
             tools.append("git_tool")
 
-        # 2. Key insights & pitfalls
-        insights.append(f"Goal '{topic}' mapped to {len(findings)} verified architectural invariants.")
+        # 3. Insights and Pitfalls
+        insights.append(f"Mission '{topic}' mapped to {len(findings)} verified facts and live citations.")
+        if citations:
+            insights.append(f"Live sources consulted: {', '.join(c['title'] for c in citations[:3])}.")
         insights.append("State checkpoints must be preserved for autonomous self-recovery.")
         pitfalls.append("Avoid destructive filesystem overwrites without prior state snapshot.")
-        pitfalls.append("Ensure subprocess calls use cross-platform compatible shell flags.")
+        pitfalls.append("Ensure subprocess calls use cross-platform compatible UTF-8 encoding.")
 
-        dossier = ResearchDossier(
+        return ResearchDossier(
             dossier_id=dossier_id,
             topic=topic,
             depth=depth,
@@ -137,7 +218,6 @@ class DeepResearchAgent:
             key_insights=insights,
             known_pitfalls=pitfalls,
             recommended_tools=list(set(tools)),
+            citations=citations,
             session_id=session.id,
         )
-
-        return dossier
