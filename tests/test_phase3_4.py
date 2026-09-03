@@ -27,11 +27,11 @@ def header(text):
     print('='*70)
 
 
-def test_pass(name):
+def _pass(name):
     print(f"  ✓ {name}")
 
 
-def test_fail(name, err):
+def _fail(name, err):
     print(f"  ✗ {name}: {err}")
 
 
