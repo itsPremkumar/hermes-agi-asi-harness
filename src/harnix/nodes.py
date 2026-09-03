@@ -28,11 +28,13 @@ try:
     from hermes_agi.research import DeepResearchAgent
     from hermes_agi.thinking import DeepThinkingEngine
     from hermes_agi.allocation import HermesMissionPacket, HermesWatchdogMonitor
+    from core.verification.adversarial import AdversarialVerifier
 except ImportError:
     DeepResearchAgent = None
     DeepThinkingEngine = None
     HermesMissionPacket = None
     HermesWatchdogMonitor = None
+    AdversarialVerifier = None
 
 
 def _run_sync(coro: Any) -> Any:
@@ -391,23 +393,44 @@ def verify_node(state: AgentState) -> AgentState:
     current = state["current_step"]
     all_passed = current >= total and len(state.get("errors", [])) == 0
 
+    evidence = [f"Step {r.get('step_id')}: {r.get('result')}" for r in state.get("results", [])]
+    claims = [f"Executed {state['task_description']} successfully", f"Total steps {current}/{total} completed"]
+
+    # Run Adversarial Proposer-Critic Verification
+    consensus_score = 1.0 if all_passed else 0.5
+    brier_score = 0.0 if all_passed else 0.25
+    critiques = []
+    if AdversarialVerifier is not None:
+        try:
+            verifier = AdversarialVerifier()
+            verdict = verifier.verify(claims=claims, evidence=evidence, context=state.get("context", {}))
+            consensus_score = verdict.consensus_score
+            brier_score = verdict.brier_score
+            critiques = [c.vulnerability for c in verdict.critiques]
+        except Exception:
+            pass
+
+    verified = all_passed and consensus_score >= 0.80
+
     proof = {
         "goal_id": state["run_id"],
-        "status": "verified" if all_passed else "failed",
+        "status": "verified" if verified else "failed",
         "expected_steps": total,
         "executed_steps": current,
-        "evidence": [f"Step {r.get('step_id')}: {r.get('result')}" for r in state.get("results", [])],
-        "confidence": 1.0 if all_passed else 0.5,
+        "evidence": evidence,
+        "confidence": consensus_score,
+        "brier_score": brier_score,
+        "adversarial_critiques": critiques,
         "timestamp": time.time(),
     }
     state["completion_proof"] = proof
 
-    if all_passed:
+    if verified:
         state["status"] = "completed"
         state["phase"] = AgentPhase.COMPLETED
-        msg = f"[verify] Proof verified with confidence {proof['confidence']:.2f}"
+        msg = f"[verify] Proof verified with adversarial consensus {consensus_score:.2f} (Brier: {brier_score:.4f})"
     else:
-        msg = "[verify] Verification found discrepancies or incomplete steps"
+        msg = f"[verify] Verification flagged discrepancies: consensus={consensus_score:.2f}, critiques={len(critiques)}"
 
     state["messages"] = [msg]
     state["memory"] = [msg]

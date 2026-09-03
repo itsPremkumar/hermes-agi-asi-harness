@@ -322,3 +322,17 @@ async def create(kernel=None):
     if kernel:
         plugin._kernel = kernel
     return plugin
+
+
+from .adversarial import AdversarialVerifier, VerificationVerdict, CritiqueFinding
+
+__all__ = [
+    "VerificationEngine",
+    "VerificationPlan",
+    "VerificationResult",
+    "VerificationPlugin",
+    "AdversarialVerifier",
+    "VerificationVerdict",
+    "CritiqueFinding",
+    "create",
+]

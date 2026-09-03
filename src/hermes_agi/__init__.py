@@ -238,6 +238,29 @@ class Harness:
             "packet": packet.to_dict(),
             "telemetry": monitor.get_telemetry_summary(),
         }
+
+    def run_overnight(
+        self,
+        objective: str,
+        max_iterations: int = 10,
+        max_consecutive_failures: int = 3,
+        use_current_branch: bool = False,
+        stop_when: str = "",
+        **kwargs,
+    ) -> dict:
+        """Run an autonomous overnight endurance loop (gnhf architecture)."""
+        from .overnight import OvernightConfig, OvernightLoopController
+        config = OvernightConfig(
+            objective=objective,
+            max_iterations=max_iterations,
+            max_consecutive_failures=max_consecutive_failures,
+            use_current_branch=use_current_branch,
+            stop_when=stop_when,
+            workspace_root=kwargs.get("workspace_root", "."),
+        )
+        controller = OvernightLoopController(config)
+        summary = controller.run()
+        return summary.to_dict()
     
     async def benchmark(self, name: str = "all") -> dict:
         """Run benchmarks through the harness."""

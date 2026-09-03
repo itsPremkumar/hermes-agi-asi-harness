@@ -50,6 +50,15 @@ def main():
     # Discover command
     discover_parser = subparsers.add_parser("discover", help="Discover features")
     discover_parser.add_argument("query", nargs="?", default="", help="Search query")
+
+    # Overnight (gnhf) command
+    for name in ("overnight", "gnhf"):
+        ov_parser = subparsers.add_parser(name, help="Run autonomous overnight endurance loop (gnhf pattern)")
+        ov_parser.add_argument("objective", help="High-level engineering objective")
+        ov_parser.add_argument("--max-iterations", type=int, default=10, help="Maximum iterations to run")
+        ov_parser.add_argument("--max-failures", type=int, default=3, help="Consecutive failure abort limit")
+        ov_parser.add_argument("--current-branch", action="store_true", help="Commit directly on current branch")
+        ov_parser.add_argument("--stop-when", default="", help="Natural language stopping condition")
     
     args = parser.parse_args()
     
@@ -93,6 +102,18 @@ async def run_command(args):
     elif args.command == "discover":
         result = await harness.discover(args.query)
         print(result)
+    elif args.command in ("overnight", "gnhf"):
+        from hermes_agi.overnight import OvernightConfig, OvernightLoopController
+        config = OvernightConfig(
+            objective=args.objective,
+            max_iterations=args.max_iterations,
+            max_consecutive_failures=args.max_failures,
+            use_current_branch=args.current_branch,
+            stop_when=args.stop_when,
+        )
+        controller = OvernightLoopController(config)
+        summary = controller.run()
+        summary.print_summary()
 
 
 if __name__ == "__main__":

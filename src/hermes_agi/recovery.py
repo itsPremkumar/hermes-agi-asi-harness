@@ -97,12 +97,79 @@ class Checkpoint:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class Diagnosis:
+    """Root-cause diagnosis and corrective action produced by DeepHealingAgent."""
+    category: str
+    root_cause: str
+    suggested_action: str
+    recoverable: bool = True
+    suggested_strategy: RecoveryStrategy = RecoveryStrategy.RETRY
+
+
+class DeepHealingAgent:
+    """
+    Autonomous Diagnostic & Self-Healing Agent.
+    
+    Parses stack traces, error patterns, and execution context to formulate
+    root-cause diagnoses and dynamic repair strategies.
+    """
+
+    def diagnose(self, error: str, context: dict[str, Any] | None = None) -> Diagnosis:
+        err_lower = error.lower()
+        ctx = context or {}
+
+        # 1. Encoding / Subprocess errors
+        if "unicodedecodeerror" in err_lower or "charmap" in err_lower:
+            return Diagnosis(
+                category="encoding",
+                root_cause="Windows ANSI / cp1252 character map collision on non-ASCII output.",
+                suggested_action="Re-run subprocess with explicit encoding='utf-8' and errors='replace'.",
+                suggested_strategy=RecoveryStrategy.RECONFIGURE,
+            )
+
+        # 2. File / Directory missing
+        if "filenotfounderror" in err_lower or "no such file" in err_lower:
+            return Diagnosis(
+                category="filesystem",
+                root_cause="Target path or prerequisite artifact does not exist in workspace.",
+                suggested_action="Create parent directories and initialize missing fallback artifact.",
+                suggested_strategy=RecoveryStrategy.FALLBACK,
+            )
+
+        # 3. Timeout / Resource exhaustion
+        if "timeoutexpired" in err_lower or "timeout" in err_lower:
+            return Diagnosis(
+                category="timeout",
+                root_cause="Execution exceeded designated budget timeout window.",
+                suggested_action="Scale budget/timeout limit and batch tasks into smaller chunks.",
+                suggested_strategy=RecoveryStrategy.RECONFIGURE,
+            )
+
+        # 4. Import / Missing dependency
+        if "modulenotfounderror" in err_lower or "no module named" in err_lower:
+            return Diagnosis(
+                category="dependency",
+                root_cause="Required third-party library or package not present in current environment.",
+                suggested_action="Activate safe fallback mock or pip install required dependency.",
+                suggested_strategy=RecoveryStrategy.FALLBACK,
+            )
+
+        # Default: General execution exception
+        return Diagnosis(
+            category="general_fault",
+            root_cause=f"Runtime exception in component: {error[:120]}",
+            suggested_action="Roll back to previous verified checkpoint and retry with defensive assertions.",
+            suggested_strategy=RecoveryStrategy.RETRY,
+        )
+
+
 # ──────────────────────────── Self-Recovery System ────────────────────────────
 
 
 class SelfRecoverySystem:
     """
-    Automatic failure detection and self-healing.
+    Automatic failure detection, deep diagnosis, and self-healing.
     
     Strategies:
     1. Retry — Re-execute with exponential backoff
@@ -115,6 +182,7 @@ class SelfRecoverySystem:
     
     def __init__(self, state_dir: str = None):
         self.state_dir = state_dir or os.path.join(os.getcwd(), "state")
+        self.healing_agent = DeepHealingAgent()
         self._health_records: dict[str, HealthRecord] = {}
         self._failure_log: list[FailureEvent] = []
         self._checkpoints: list[Checkpoint] = []

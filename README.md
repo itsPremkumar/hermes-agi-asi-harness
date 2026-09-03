@@ -161,7 +161,11 @@ The Harness provides a unified CLI via `python -m hermes_agi`:
 # Run an autonomous multi-step mission
 python -m hermes_agi run "write file output.txt containing HELLO"
 
-# Conduct autonomous Deep Research
+# Run autonomous overnight endurance loop (gnhf architecture)
+python -m hermes_agi overnight "refactor auth module and improve test coverage" --max-iterations 15
+python -m hermes_agi gnhf "reduce complexity of codebase without changing functionality"
+
+# Conduct autonomous Deep Research with live AgentEye search
 python -m hermes_agi research "quantum computing algorithms" --depth 3
 
 # Deliberate with Deep Thinking
