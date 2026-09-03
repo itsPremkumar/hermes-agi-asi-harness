@@ -6,6 +6,7 @@ __version__ = "2.0.0"
 
 from .config import Config, load_config
 from .exceptions import HarnessError, KernelError, PluginError, SafetyError, BenchmarkError
+from .planning import Planner, plan, get_all_features, get_all_capabilities, search_features, find_by_capability
 
 __all__ = [
     "Config",
@@ -15,4 +16,10 @@ __all__ = [
     "PluginError",
     "SafetyError",
     "BenchmarkError",
+    "Planner",
+    "plan",
+    "get_all_features",
+    "get_all_capabilities",
+    "search_features",
+    "find_by_capability",
 ]
