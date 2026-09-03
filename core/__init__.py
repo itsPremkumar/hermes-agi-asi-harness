@@ -1,34 +1,17 @@
-"""
-Hermes AGI/ASI Harness — Core Package v7.0
+"""Backward-compatibility facade: core source is now in src/core."""
+import sys
+from pathlib import Path
 
-Contains the trusted kernel and all core subsystems.
-Import individual modules directly for advanced features.
-"""
+_ROOT = Path(__file__).resolve().parent.parent
+_SRC = str(_ROOT / "src")
+_SRC_PKG = str(_ROOT / "src" / "core")
 
-# Core runtime
-from .agents import AgentRegistry, active, spawn, terminate
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
 
-# Brain and memory
-from .brain import BrainError, EchoBrain, HermesBrain, ModelResponse, PlannerBrain
-from .cognition import CognitiveRouter, CognitiveState
-from .context_os import ContextOS
+__path__ = [_SRC_PKG]
 
-# Evaluation and planning
-from .evaluator import EvalResult, evaluate
-
-# Events and state
-from .events.event_bus import Event, EventBus, EventType
-from .frontier import STRATEGIES, select_next_parent
-from .governance import check_plan, plan_hash, require_goal, round_budget_ok, supervise
-from .memory import MemoryStore, retrieve, semantic_search
-from .mission_compiler import MissionCompiler
-from .planning import PlanningEngine
-from .research_engine import ResearchEngine
-from .runtime.kernel import HermesKernel, KernelConfig, KernelState, Task
-from .runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions, PluginState
-from .selfheal import RetryPolicy, self_heal
-
-# Soul and mission
-from .soul import Claim, CognitiveMode, EpistemicStatus, Mission, RiskTier
-from .supervisor import Supervisor, Goal, Task, SupervisorState, TaskType
-from .world_model import CausalModel, Confidence, Entity, WorldModel, WorldTransition
+try:
+    from src.core import *
+except Exception:
+    pass

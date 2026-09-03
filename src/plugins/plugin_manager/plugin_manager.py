@@ -46,7 +46,12 @@ class BasePlugin:
 class PluginManager:
     def __init__(self, plugins_root: Path | None = None, kernel: Any = None):
         self.kernel = kernel
-        self.plugins_root = plugins_root or Path("plugins")
+        if plugins_root is not None and (Path(plugins_root) != Path("plugins") or not Path("src/plugins").exists()):
+            self.plugins_root = Path(plugins_root)
+        elif Path("src/plugins").exists():
+            self.plugins_root = Path("src/plugins")
+        else:
+            self.plugins_root = Path("plugins")
         self._plugins: dict[str, BasePlugin] = {}
         self._tool_registry: dict[str, tuple] = {}
         self._capabilities: dict[str, list[str]] = {}

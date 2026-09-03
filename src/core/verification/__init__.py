@@ -178,9 +178,11 @@ class MultiRoundVerifier:
         env["HERMES_HOME"] = hermes_home
 
         try:
+            env["PYTHONIOENCODING"] = "utf-8"
             result = subprocess.run(
                 [sys.executable, test_file],
                 capture_output=True, text=True, timeout=timeout,
+                encoding="utf-8", errors="replace",
                 env=env,
                 cwd=self._project_root,
             )

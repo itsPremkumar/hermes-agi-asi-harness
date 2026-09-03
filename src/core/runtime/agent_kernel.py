@@ -27,7 +27,12 @@ class AgentKernel:
     """
 
     def __init__(self, plugins_root: str = "plugins"):
-        self.plugins_root = Path(plugins_root)
+        if plugins_root != "plugins":
+            self.plugins_root = Path(plugins_root)
+        elif Path("src/plugins").exists():
+            self.plugins_root = Path("src/plugins")
+        else:
+            self.plugins_root = Path(plugins_root)
         self._instances: dict[str, Any] = {}
         self._capabilities: dict[str, list[str]] = {}
         self._loaded = False

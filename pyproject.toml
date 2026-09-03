@@ -45,8 +45,8 @@ all = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["hermes_agi*", "harnix*"]
-exclude = ["tests*", "plugins*", "core*", "agents*", "scripts*", "workspaces*"]
+include = ["*"]
+exclude = ["tests*", "workspaces*", "docs*", "scripts*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

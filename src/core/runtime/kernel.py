@@ -46,7 +46,7 @@ class KernelConfig:
     max_retries: int = 3
     max_iterations: int = 25
     checkpoint_interval: int = 30  # seconds
-    plugins_root: Path = Path("plugins")
+    plugins_root: Path = Path("src/plugins") if Path("src/plugins").exists() else Path("plugins")
     state_path: Path = Path("state")
     log_level: str = "INFO"
     hermes_home: Path = Path.home() / ".hermes-agi"

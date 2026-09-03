@@ -24,7 +24,7 @@ async def main():
     verifier = MultiRoundVerifier(project_root=os.getcwd())
 
     # All test files in dependency order
-    test_files = [
+    candidate_files = [
         "test_phase1.py",
         "test_phase2.py",
         "test_phase3_4.py",
@@ -37,6 +37,12 @@ async def main():
         "test_working_plugins.py",
         "test_kernel_integration.py",
     ]
+    test_files = []
+    for f in candidate_files:
+        if Path("tests", f).exists():
+            test_files.append(str(Path("tests", f)))
+        elif Path(f).exists():
+            test_files.append(f)
 
     # Filter to existing files
     existing = [f for f in test_files if Path(f).exists()]
