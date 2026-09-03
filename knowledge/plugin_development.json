@@ -1,0 +1,11 @@
+{
+  "id": "plugin_development",
+  "title": "Plugin Development",
+  "content": "All capabilities are plugins. Use PluginBase. Define PLUGIN_METADATA. Implement lifecycle methods.",
+  "keywords": [
+    "plugins",
+    "development",
+    "extension"
+  ],
+  "category": "development"
+}

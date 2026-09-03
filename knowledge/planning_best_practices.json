@@ -1,0 +1,12 @@
+{
+  "id": "planning_best_practices",
+  "title": "Planning Best Practices",
+  "content": "Break complex goals into sub-goals. Use DAG for dependencies. Estimate time and cost. Identify risks.",
+  "keywords": [
+    "planning",
+    "strategy",
+    "goals",
+    "decomposition"
+  ],
+  "category": "methodology"
+}

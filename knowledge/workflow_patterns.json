@@ -1,0 +1,12 @@
+{
+  "id": "workflow_patterns",
+  "title": "Workflow Patterns",
+  "content": "DAG execution. Circuit breaker. Retry with backoff. Timeout handling. Fallback chains.",
+  "keywords": [
+    "workflow",
+    "dag",
+    "execution",
+    "retry"
+  ],
+  "category": "architecture"
+}

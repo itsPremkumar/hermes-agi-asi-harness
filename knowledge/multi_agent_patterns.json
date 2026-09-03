@@ -1,0 +1,12 @@
+{
+  "id": "multi_agent_patterns",
+  "title": "Multi-Agent Patterns",
+  "content": "Pipeline, Debate, Divide-and-Conquer, Assembly Line, Consensus, Dynamic topologies.",
+  "keywords": [
+    "agents",
+    "swarm",
+    "multi-agent",
+    "orchestration"
+  ],
+  "category": "architecture"
+}

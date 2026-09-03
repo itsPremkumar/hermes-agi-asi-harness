@@ -1,398 +1,439 @@
-# Agent Rate Limiting Platform — Architecture
+# Hermes AGI/ASI Harness — Architecture
 
-**Status**: Draft (v1.0)
-**Project**: Agent Rate Limiter
-**Push target**: `itsPremkumar/agent-rate-limiter`
+> Comprehensive architecture for the Hermes AGI/ASI Harness: executive control plane,
+> plugin system, safety architecture, AVO search engine, and 24/7 runtime.
+> Owner: @cto. Markdown only — no code.
 
----
+## Table of Contents
 
-## 1. Overview
-
-The Agent Rate Limiting Platform is a multi-dimensional rate-limiting and
-quota-management service that protects agent infrastructure from abuse while
-enabling fine-grained control over resource consumption. It enforces limits
-**per-user**, **per-app**, and **per-model** using a pluggable strategy
-framework (Token Bucket, Sliding Window, Leaky Bucket, Adaptive).
-
-The platform is designed as a **Policy Decision Point (PDP)** that integrates
-with an **Enforcement Point (PEP)** — typically an API gateway or an
-agent-execution proxy — and a streaming metrics backend for observability.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Client / Agent Caller                   │
-└──────────────────────┬──────────────────────────────────────┘
-                       │  HTTP / gRPC / LangGraph edge call
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│         Enforcement Point (PEP)  —  API Gateway / Proxy     │
-│   ┌─────────────┐  ┌─────────────┐  ┌────────────────────┐  │
-│   │ Decision    │  │ Rate Limit  │  │ Forward / Reject / │  │
-│   │ Request     │  │ Check Cache │  │ Graceful Degradation│  │
-│   └─────────────┘  └─────────────┘  └────────────────────┘  │
-└──────────┬──────────────┬─────────────────┬─────────────────┘
-           │ gRPC/Redis   │ async events    │ HTTP response
-           ▼              ▼                 ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Rate Limiting Service (core PDP)              │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐ │
-│  │  Policy      │  │  Strategy    │  │  Counter / State   │ │
-│  │  Engine      │  │  Factory     │  │  Store (Redis)     │ │
-│  └──────────────┘  └──────────────┘  └────────────────────┘ │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  Quotas & Limits Registry  (config DB / KV store)      │ │
-│  └────────────────────────────────────────────────────────┘ │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  Observability Pipeline (metrics → Prometheus / OTel)  │ │
-│  └────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
+1. Executive Control Plane
+2. Plugin System
+3. Safety Architecture
+4. AVO Search Engine
+5. 24/7 Runtime
 
 ---
 
-## 2. Core Concepts
+## 1. Executive Control Plane
 
-### 2.1 Dimensions (Scopes)
+The **Executive Control Plane** is the central nervous system of the Hermes AGI/ASI Harness. It sits between the raw agent runtime (Hermes) and the capability surface (plugins), providing task routing, scheduling, safety gating, observability, and lifecycle management.
 
-Every rate-limit/quota evaluation is scoped across three first-class
-dimensions:
+### 1.1 Responsibilities
 
-| Dimension | Example | Description |
-|-----------|---------|-------------|
-| **User** | `user_123` | The authenticated end-user identity. |
-| **App**  | `web_app`, `mobile_app`, `cli` | The application or client-type making the call. |
-| **Model** | `gpt-4`, `claude-3-opus`, `llama-3-70b` | The underlying LLM/agent model being invoked. |
+- **Task routing** — dispatch incoming work to the right plugin by capability
+- **Scheduling** — priority-preemptive execution with concurrency limits
+- **Safety gating** — every task is evaluated before execution
+- **Observability** — full trace, SLO monitoring, and audit trail
+- **Lifecycle management** — boot → ready → running → paused → shutdown
 
-A limit key is the **composite** of all active dimensions, e.g.:
+### 1.2 State Machine
 
 ```
-key = "limit:{user_id}:{app_id}:{model_id}"
+┌────────────┐     ┌────────────┐     ┌────────────┐
+│INITIALIZING│────▶│   READY    │◀───▶│  RUNNING   │
+└────────────┘     └────────────┘     └────────────┘
+                         │                   │
+                         ▼                   ▼
+                   ┌────────────┐     ┌────────────┐
+                   │  PAUSED    │     │  ERROR     │
+                   └────────────┘     └────────────┘
+                                            │
+                                            ▼
+                                     ┌────────────┐
+                                     │SHUTTING_DOWN│
+                                     └────────────┘
 ```
 
-This enables combinations like: *"user A may call gpt-4 at most 60 RPM, but
-claude-3 at 30 RPM, while user B has different allowances."*
+| State | Description | Transitions |
+|-------|-------------|-------------|
+| `INITIALIZING` | System boot, plugin loading | → READY on success, → ERROR on failure |
+| `READY` | All systems nominal, accepting tasks | → RUNNING on task ingest, → PAUSED on pause signal |
+| `RUNNING` | Actively executing tasks | → READY when queue drains, → PAUSED on pause |
+| `PAUSED` | No new tasks accepted, in-flight continue | → READY on resume |
+| `ERROR` | Fault detected, automatic recovery attempted | → READY on self-heal, → SHUTTING_DOWN on unrecoverable |
+| `SHUTTING_DOWN` | Graceful teardown | → INITIALIZING when complete |
 
-### 2.2 Strategies
+### 1.3 Perceive → Reason → Act → Learn → Evolve Loop
 
-The platform supports four interchangeable rate-limiting strategies. Each is
-implemented as a strategy class conforming to the `RateLimitingStrategy`
-interface (see API spec).
+Each executive cycle is a closed loop:
 
-| Strategy | Mechanism | Use Case | Characteristics |
-|----------|-----------|----------|-----------------|
-| **Token Bucket** | A bucket with capacity *C*; tokens refill at rate *R* per second; each request consumes one token. | General-purpose bursty traffic; allows short bursts up to *C*. | Simple, efficient, allows bursting. Clock-skew sensitive. |
-| **Sliding Window** | Counts requests in a rolling time window (e.g. last 60 s). | Rolling-window limits where "N requests per minute" must be strictly enforced. | Higher memory overhead for sub-windows. Accurate for fixed windows. |
-| **Leaky Bucket** | Requests fill a bucket that drains at a constant rate *L*; if bucket overflows, requests are delayed or dropped. | Smoothing output to a fixed rate (e.g. upstream model API quota). | Provides consistent output rate; no bursting. |
-| **Adaptive** | Dynamically adjusts the rate limit based on real-time signal (latency, error rate, CPU load). | Protecting degraded backends; throttling under high load. | Feedback control loop; requires metrics integration. |
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐
+│ PERCEIVE │────▶│ REASON  │────▶│  ACT    │
+└─────────┘     └─────────┘     └─────────┘
+     ▲                                │
+     │          ┌─────────┐           │
+     └─────────│  LEARN  │◀──────────┘
+               └─────────┘
+                    │
+                    ▼
+               ┌─────────┐
+               │ EVOLVE  │
+               └─────────┘
+```
 
-**Strategy selection** is part of the policy configuration per scope.
+| Phase | Behavior |
+|-------|----------|
+| PERCEIVE | Ingest task requests, gather system state, sense anomalies via statistical process control |
+| REASON | Evaluate task against capability registry, run safety gates (R0-R6), select optimal plugin, determine human approval |
+| ACT | Dispatch via capability contract, enforce timeouts/quotas/rate limits, capture traces |
+| LEARN | Record execution metrics, update plugin health scores, feed anomaly detector |
+| EVOLVE | Re-evaluate capability coverage, trigger self-healing, propose upgrades via governance |
 
-### 2.3 Enforcement Modes
+### 1.4 Integration Points
 
-| Mode | Behavior |
-|------|----------|
-| **Hard limit** | Requests exceeding the limit are immediately rejected with HTTP `429 Too Many Requests`. |
-| **Soft limit** | Requests are allowed but flagged/queued; warnings are generated. |
-| **Graceful degradation** | Under soft-limit conditions, non-critical features are degraded (e.g. fallback to cheaper model, reduced context length) rather than fully rejected. |
+| System | Integration | Protocol |
+|--------|-------------|----------|
+| Hermes Agent | Profile lifecycle, memory, skills | Native Python bindings |
+| Kanban | Task board sync, state machine | SQLite + kanban_* tools |
+| Cron | Recurring job scheduling | Cron expressions + deliver |
+| MCP | Tool server bridge | Model Context Protocol |
+| Agent Mesh | Decentralized P2P | A2AP messaging |
 
 ---
 
-## 3. Quota System
+## 2. Plugin System
 
-### 3.1 Quota Granularity
+The plugin system is the capability extension surface of the Harness. Every capability — from formal reasoning to memory management — is delivered as a plugin conforming to a single interface.
 
-| Level | Period | Description |
-|-------|--------|-------------|
-| **Daily** | 24 h rolling or fixed-day | e.g. 1 000 model calls per day per user. |
-| **Monthly** | Calendar month or 30-day rolling | e.g. 30 000 model calls per month per app. |
-| **Burst** | Instantaneous window (e.g. 10 s) | Short-time spikes allowed above steady-state rate. |
+### 2.1 Design Principles
 
-### 3.2 Quota Tracking
+- **Single contract** — every plugin implements `IPlugin`
+- **Hot-loadable** — register/unregister without downtime
+- **Sandboxed** — resource quotas, rate limits, timeouts per plugin
+- **Observable** — health checks, traces, metrics per plugin
+- **Composable** — capabilities combine via routing, not code coupling
 
-Each quota is tracked with a **counter** that records consumption against a
-reset schedule:
+### 2.2 IPlugin Contract
 
-- **Fixed window**: resets at a deterministic calendar boundary.
-- **Rolling window**: 30-day sliding window for monthly, 24-hour sliding for
-  daily.
-- **Burst window**: per-strategy burst counter; refills based on strategy
-  parameters.
+Every plugin implements:
 
-Counters live in a fast KV store (Redis) with atomic increment operations
-(`INCR` + `EXPIRE`) and are replicated asynchronously to the metrics store.
+| Method | Purpose |
+|--------|--------|
+| `name` property | Unique plugin identifier |
+| `version` property | Semver version |
+| `capabilities` property | What this plugin can do |
+| `initialize(config)` | Setup with plugin-specific config |
+| `execute(task)` | Run the task, return TaskResult |
+| `shutdown()` | Teardown, release resources |
+| `health_check()` | Returns True if healthy |
 
-### 3.3 Quota Lifecycle
+### 2.3 Plugin Lifecycle
 
 ```
-┌────────┐  configure  ┌────────┐  evaluate  ┌──────────┐  exceeded  ┌────────┐
-│  Plan  │ ─────────> │  Active │ ─────────> │ Enforcing │ ─────────> │ Blocked  │
-└────────┘            └────────┘            └──────────┘            └────────┘
-                          │                       │
-                          │ reset window          │ grace period
-                          ▼                       ▼
-                    ┌────────┐            ┌────────────┐
-                    │  Plan  │            │  Violation  │
-                    │(next)  │            │   record    │
-                    └────────┘            └────────────┘
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│ DISCOVER │───▶│  LOAD    │───▶│INITIALIZE│───▶│  ACTIVE  │───▶│   IDLE   │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+                                                        │                │
+                                                        ▼                ▼
+                                                  ┌──────────┐    ┌──────────┐
+                                                  │ UNLOAD   │    │ SHUTDOWN │
+                                                  └──────────┘    └──────────┘
 ```
 
-When a quota is **exhausted**, the strategy shifts to enforcement-mode
-behavior (reject, degrade, or warn). A configurable **grace period** (default
-0 s) may let requests through with a warning before hard rejection.
+| Phase | Behavior |
+|-------|----------|
+| DISCOVER | Scan plugin directory, validate checksums |
+| LOAD | Import module, instantiate plugin class |
+| INITIALIZE | Call `plugin.initialize(config)` |
+| ACTIVE | Accepting and executing tasks |
+| IDLE | Healthy but not currently executing |
+| UNLOAD | Remove from registry, drain in-flight |
+| SHUTDOWN | Call `plugin.shutdown()`, release resources |
+
+### 2.4 Capability-Based Routing
+
+Tasks carry a `task_type` field. The control plane routes to the first plugin whose `capabilities` list includes that type. This decouples task specification from plugin implementation.
+
+### 2.5 Plugin Isolation Model
+
+| Mechanism | What it protects against |
+|-----------|--------------------------|
+| Per-plugin rate limits | Runaway loops, DDoS |
+| Resource quotas | CPU/memory/API exhaustion |
+| Execution timeouts | Infinite hangs |
+| Checksum verification | Tampered plugin code |
+| Capability scoping | Plugin overreach |
+
+### 2.6 Default Plugin Set
+
+| Plugin | Capabilities | ASI Pathway |
+|--------|-------------|-------------|
+| `safety` | safety_check, rate_limit, quota_enforce, anomaly_detect | Collaborative |
+| `hermes-integration` | profile_lifecycle, memory_read, memory_write, skill_hook, gateway_bridge | Autonomous |
+| `formal-reasoning` | proof_engine, verification, model_checking | Formal |
+| `scientific-discovery` | hypothesis_gen, evidence_synthesis, experiment_loop | Autonomous |
+| `scheduler` | task_scheduling, priority_queue, cron_dispatch | Autonomous |
+| `kanban` | board_sync, state_machine, task_routing | Collaborative |
 
 ---
 
-## 4. Data Model
+## 3. Safety Architecture
 
-### 4.1 Policy Document
+The safety architecture is a layered defense system — no single gate is trusted alone. Every task passes through all applicable gates before execution.
 
-```jsonc
-{
-  "policy_id": "rl_user_app_model_gpt4",
-  "scope": {          // composite key dimensions
-    "user_id": "user_123",
-    "app_id": "web_app",
-    "model_id": "gpt-4"
-  },
-  "strategy": "token_bucket",
-  "limits": {
-    "requests_per_minute": 60,   // RPM
-    "burst_capacity": 20,        // extra burst tokens
-    "daily_quota": 10000,        // hard daily cap
-    "monthly_quota": 300000
-  },
-  "enforcement": {
-    "mode": "hard_limit",         // hard_limit | soft_limit | graceful_degradation
-    "grace_period_seconds": 5,
-    "degradation": {              // only if mode == graceful_degradation
-      "fallback_model": "gpt-3.5-turbo",
-      "reduce_context": true
-    }
-  },
-  "adaptive": {                    // only if strategy == adaptive
-    "metrics": ["latency_p95", "error_rate", "cpu_util"],
-    "thresholds": {
-      "latency_p95_ms": 2000,
-      "error_rate_pct": 5.0
-    },
-    "scale_down_factor": 0.5
-  },
-  "version": 1,
-  "enabled": true,
-  "created_at": "2026-09-01T00:00:00Z",
-  "updated_at": "2026-09-01T00:00:00Z"
-}
+### 3.1 Design Principles
+
+- **Defense in depth** — independent layers, each independently sufficient to halt
+- **Fail-closed** — if a gate cannot be evaluated, the task is rejected
+- **Human override at Level 10** — autonomous safety never overrides explicit human approval
+- **Audit everything** — every decision is logged, traceable, replayable
+- **No silent degradation** — gates do not weaken themselves
+
+### 3.2 Safety Level Taxonomy
+
+| Level | Name | Default Action |
+|-------|------|----------------|
+| 0 | Informational | Auto-execute |
+| 1 | Routine | Auto-execute |
+| 2 | Semi-autonomous | Auto-execute with logging |
+| 3 | Elevated | Auto-execute with confirmation |
+| 4 | High-impact | Auto-execute, post-review |
+| 5 | Sensitive data | Restrict + audit |
+| 6 | Destructive-capable | Restrict + audit + rate limit |
+| 7 | System-modifying | Require pre-checkpoint |
+| 8 | Multi-agent coordination | Consensus required |
+| 9 | Near-autonomous | Human notification required |
+| 10 | Critical / ASI-level | Human approval required |
+
+### 3.3 Gate Definitions (R0-R6)
+
+| Gate | Purpose | Scope | Failure |
+|------|---------|-------|---------|
+| R0 — Input Sanitization | Reject malformed/oversized/injection-bearing inputs | All incoming task payloads | Task rejected, `SafetyViolation("R0", "malformed_input")` |
+| R1 — Authorization | Verify caller has permission to request this action | Every task | Task rejected, `SafetyViolation("R1", "unauthorized")` |
+| R2 — Rate Limiting | Prevent runaway loops and resource exhaustion | Per-profile, per-capability, global | Task rejected, `SafetyViolation("R2", "rate_limited")` |
+| R3 — Capability Scoping | Prevent plugin overreach beyond declared capabilities | Plugin dispatch | Task rejected, `SafetyViolation("R3", "capability_overreach")` |
+| R4 — Resource Quotas | Enforce CPU, memory, API-call, and storage limits | Per-execution | Task rejected or killed mid-flight, `SafetyViolation("R4", "quota_exceeded")` |
+| R5 — Anomaly Detection | Detect behavioral drift and emergent harmful patterns | Per-execution and aggregate | Task flagged for review, `SafetyViolation("R5", "anomaly_detected")` |
+| R6 — Semantic Policy | Enforce high-level policy constraints | Pre- and post-execution | Task rejected, `SafetyViolation("R6", "policy_violation")` |
+
+### 3.4 Human Approval Flow (Level 10)
+
+Tasks at SafetyLevel.CRITICAL (Level ≥10) require explicit human approval:
+
+1. Task ingested → SafetyGuard evaluates R0-R6
+2. CRITICAL? → Queue for human approval
+3. Human reviews in dashboard/gateway
+4. Approve → Route to plugin | Reject → Audit + discard
+
+**Approval constraints:**
+- Synchronous: task blocks until human responds
+- 24-hour timeout: auto-rejected after timeout
+- Non-delegable: must come from Level-authorized human, not an agent
+- Immutable audit trail
+
+### 3.5 Audit Trail
+
+Every safety decision is appended to an append-only, chain-hashed audit log:
+
+```
+~/.hermes-asi/audit/YYYY-MM-DD.jsonl
 ```
 
-### 4.2 Counter / State Schema (Redis)
-
-Keys follow the pattern:
-
-```
-rate:counter:{policy_id}          # current token count / request count
-rate:window:{policy_id}:{epoch}   # per-window counters (sliding window)
-rate:bucket:{policy_id}            # last refill timestamp + tokens (token bucket)
-quota:daily:{policy_id}:{date_key}  # daily quota counter
-quota:monthly:{policy_id}:{month_key} # monthly quota counter
-```
-
-### 4.3 Violation Record
-
-```jsonc
-{
-  "violation_id": "vln_abc123",
-  "policy_id": "rl_user_app_model_gpt4",
-  "timestamp": "2026-09-01T12:34:56Z",
-  "limit_type": "rpm",            // rpm | daily_quota | monthly_quota | burst
-  "observed_value": 61,
-  "limit_value": 60,
-  "enforcement_mode": "hard_limit",
-  "action_taken": "rejected"      // rejected | degraded | warned
-}
-```
+Each entry includes: timestamp, task_id, profile, level, report, and chain-hash for tamper evidence.
 
 ---
 
-## 5. Component Architecture
+## 4. AVO Search Engine
 
-### 5.1 Enforcement Point (PEP)
+The **AVO Search Engine** (Agent Virtual Orchestra) is the discovery and orchestration intelligence layer of the Harness. It enables agents, plugins, tasks, and capabilities to find each other across the distributed runtime.
 
-- **Location**: API gateway (Nginx + Lua / Envoy / Kong) or agent-execution
-  proxy layer.
-- **Responsibility**: Receive the incoming request, extract identity context
-  (user, app, model), call the Rate Limiting Service synchronously, and act on
-  the decision.
-- **Caching**: Local LRU cache of recent decisions (TTL ~100 ms) to reduce
-  round-trips under high QPS. Cache is invalidated by `invalidate` events
-  over a message bus.
-- **Fallback**: If the Rate Limiting Service is unreachable, the PEP can
-  fail-open (allow) or fail-closed (reject) based on a per-policy
-  `unavailable_behavior` setting.
+### 4.1 Purpose
 
-### 5.2 Rate Limiting Service (PDP)
+AVO solves the "who can do this?" problem at scale:
 
-- **Language**: Python (>=3.11) or Go; stateless horizontal pod behind a load
-  balancer.
-- **State store**: Redis (standalone with replication, or Redis Cluster for
-  HA) for counter state with sub-millisecond latency.
-- **Policy store**: PostgreSQL (or SQLite for single-instance deployments)
-  holding policy definitions; changes pushed to Redis via pub/sub for hot
-  reload.
-- **Strategy engine**: Pluggable strategy dispatch via a factory that maps
-  `"strategy"` string → strategy handler. Strategies receive the current
-  counter state and return `(allowed: bool, retry_after: float, info: dict)`.
-- **Quota engine**: Separate subsystem that wraps strategy decisions with
-  hard/soft quota enforcement and graceful-degradation logic.
+- **Agent discovery** — find agents by capability, availability, reputation
+- **Plugin discovery** — find plugins by capability, version, health
+- **Task routing** — match tasks to best-executor based on multi-factor scoring
+- **Knowledge retrieval** — semantic search across memory, skills, and traces
 
-### 5.3 Observability Pipeline
+### 4.2 Architecture
 
-- **Metrics**: Prometheus metrics exported:
-  - `rate_limit_checks_total{result="allowed|denied", strategy="..."}`
-  - `rate_limit_decision_latency_seconds`
-  - `quota_usage_ratio{period="daily|monthly", ...}`
-  - `quota_exhaustion_events_total`
-- **Tracing**: OpenTelemetry spans on each decision request.
-- **Logging**: Structured JSON logs of every denied request and quota
-  exhaustion event.
-- **Alerting**: Alertmanager rules for high denial rates, quota exhaustion
-  spikes, and service-unavailable fallback triggers.
+```
+┌─────────────────────────────────────────────────────────┐
+│                   AVO Search Engine                      │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │  Semantic   │  │  Capability  │  │  Reputation   │  │
+│  │  Index      │  │  Registry    │  │  Scorer       │  │
+│  └──────┬──────┘  └──────┬───────┘  └──────┬────────┘  │
+│         │                │                  │           │
+│  ┌──────┴────────────────┴──────────────────┴────────┐  │
+│  │              Query Planner & Ranker                │  │
+│  └──────────────────────┬─────────────────────────────┘  │
+│                         │                                │
+│  ┌──────────────────────┴─────────────────────────────┐  │
+│  │           Distributed Gossip Protocol               │  │
+│  └────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
 
-### 5.4 Management API (Admin)
+### 4.3 Semantic Index
 
-A separate REST API (see API spec) for creating/updating/deleting policies,
-viewing quota usage, and inspecting violation history. Auth-gated behind
-admin API keys / OAuth scopes.
+- Embeddings of all agent capabilities, plugin metadata, and historical task traces
+- Vector similarity search for fuzzy/semantic matching
+- Updated in real-time as plugins register/unregister
+
+### 4.4 Capability Registry
+
+- Ground truth for what each plugin/agent can do
+- Versioned capability contracts
+- Health-aware filtering (unhealthy plugins excluded from results)
+
+### 4.5 Reputation Scorer
+
+Multi-factor ranking:
+
+| Factor | Weight | Source |
+|--------|--------|--------|
+| Task success rate | 40% | Execution history |
+| Response latency | 25% | Health check p99 |
+| Peer endorsements | 20% | AgentMesh gossip |
+| Recency | 15% | Time since last successful execution |
+
+### 4.6 Query Flow
+
+1. Query arrives with intent + constraints
+2. Semantic index returns candidate set
+3. Capability registry filters by exact capability match
+4. Reputation scorer ranks survivors
+5. Top-N results returned with confidence scores
+
+### 4.7 Integration Points
+
+- **Executive Control Plane** — primary consumer for task routing
+- **AgentMesh** — decentralized gossip for cross-host discovery
+- **Hermes memory** — persistent storage for learned preferences
+- **Kanban** — task board for human-browsable search results
 
 ---
 
-## 6. Request Flow
+## 5. 24/7 Runtime
+
+The **24/7 Runtime** is the always-on execution substrate that keeps the Harness operational around the clock. It is the operational backbone that enables continuous monitoring, task execution, and self-healing.
+
+### 5.1 Design Principles
+
+- **Zero-downtime upgrades** — plugins hot-swapped without restart
+- **Self-healing** — automatic recovery from faults without human intervention
+- **Graceful degradation** — partial availability beats total outage
+- **Observability-first** — every state change emitted as trace/metric
+
+### 5.2 Runtime Topology
 
 ```
-1. Client -> PEP (API Gateway / Proxy)
-2. PEP extracts: user_id, app_id, model_id
-3. PEP -> PDP: POST /v1/decide  {scope, model, strategy_hint?}
-4. PDP:
-   4a. Lookup active policy for (user_id, app_id, model_id)
-   4b. Check daily/monthly quota counters (Redis atomic incr/expire)
-   4c. Run strategy check (token bucket refill + token consume)
-   4d. Apply enforcement mode (hard/soft/degrade)
-   4e. If denied: record violation, return {allowed: false, retry_after, reason}
-       If allowed: increment counters, return {allowed: true}
-5. PEP acts on decision:
-   - allowed=true  -> forward request to upstream model/agent
-   - allowed=false -> return 429 / degrade / warn
-6. PDP emits metrics + (async) writes violation/usage logs
+┌─────────────────────────────────────────────────────────┐
+│                   24/7 Runtime Layer                     │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │  Main       │  │  Watchdog    │  │  Health       │  │
+│  │  Event Loop │  │  Daemon      │  │  Monitor      │  │
+│  └──────┬──────┘  └──────┬───────┘  └──────┬────────┘  │
+│         │                │                  │           │
+│  ┌──────┴────────────────┴──────────────────┴────────┐  │
+│  │              Process Supervisor                     │  │
+│  └──────────────────────┬─────────────────────────────┘  │
+│                         │                                │
+│  ┌──────────────────────┴─────────────────────────────┐  │
+│  │           Plugin Sandbox Processes                  │  │
+│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐      │  │
+│  │  │Plugin A│ │Plugin B│ │Plugin C│ │Plugin D│      │  │
+│  │  └────────┘ └────────┘ └────────┘ └────────┘      │  │
+│  └────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
 ```
+
+### 5.3 Main Event Loop
+
+- Async-first (asyncio) for high-concurrency task execution
+- Priority queue with preemption for safety-critical tasks
+- Backpressure when resource quotas approached
+
+### 5.4 Watchdog Daemon
+
+- External process monitors the main loop
+- Heartbeat protocol: if no heartbeat in 60s, watchdog initiates restart
+- Triple-modular redundancy for the watchdog itself (prevents split-brain)
+
+### 5.5 Health Monitor
+
+| Check | Cadence | Action on Failure |
+|-------|---------|-------------------|
+| Plugin health | 10s | Restart unhealthy plugin |
+| Resource utilization | 30s | Enforce quotas, shed load |
+| Safety gate integrity | 60s | Fail-closed, alert human |
+| Audit log chain | 5min | Halt + alert (tamper evidence) |
+
+### 5.6 Self-Healing Protocol
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Detect     │────▶│  Isolate    │────▶│  Recover    │
+│  Fault      │     │  Fault      │     │  System     │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                                        │
+       │          ┌─────────────┐               │
+       └─────────│  Alert      │◀──────────────┘
+                  │  Human      │
+                  └─────────────┘
+```
+
+| Fault | Detection | Recovery |
+|-------|-----------|----------|
+| Plugin crash | Health check failure | Restart from clean state |
+| Plugin hang | Timeout exceeded | Kill + restart |
+| Resource exhaustion | Quota breach | Shed low-priority tasks |
+| Safety gate failure | Gate evaluation error | Fail-closed, queue tasks |
+| Host failure | Watchdog timeout | Failover to secondary host |
+
+### 5.7 Uptime Guarantees
+
+| Tier | Target | Mechanism |
+|------|--------|-----------|
+| Single plugin | 99.5% | Auto-restart |
+| Full harness | 99.9% | Self-healing + failover |
+| Critical safety | 99.99% | Fail-closed + triple-modular watchdog |
+
+### 5.8 Deployment Topology
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Multi-Host Deployment                  │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │  Primary    │  │  Secondary   │  │  Standby      │  │
+│  │  Host       │  │  Host        │  │  Host         │  │
+│  │  (Active)   │  │  (Hot)       │  │  (Cold)       │  │
+│  └─────────────┘  └──────────────┘  └───────────────┘  │
+│         │                │                  │           │
+│         └────────────────┴──────────────────┘           │
+│                              │                           │
+│                    ┌─────────┴─────────┐                 │
+│                    │  State Sync       │                 │
+│                    │  (Raft consensus) │                 │
+│                    └───────────────────┘                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+State synchronization across hosts uses Raft consensus for consistency. The hot secondary takes over within 60s of primary failure.
 
 ---
 
-## 7. Strategy Implementation Details
+## Key Design Decisions
 
-### 7.1 Token Bucket
-
-```
-State: { tokens: float, last_refill: unix_ms }
-On each request:
-  1. tokens = min(capacity, tokens + (now - last_refill) * refill_rate)
-  2. if tokens >= 1:
-       tokens -= 1
-       last_refill = now
-       allowed = true
-     else:
-       allowed = false
-  3. Persist { tokens, last_refill }
-```
-
-- `refill_rate = requests_per_minute / 60`
-- `capacity = requests_per_minute + burst_capacity`
-
-### 7.2 Sliding Window
-
-Uses a **fixed-window log** or **rolling-sum** approach depending on precision
-vs. memory tradeoff:
-
-- **Log-based** (high precision): store timestamps of each request in a sorted
-  set; trim entries older than the window; count = length of the set.
-- **Counter-based** (lower precision, less memory): keep two counters for the
-  current and previous sub-windows and interpolate.
-
-### 7.3 Leaky Bucket
-
-```
-State: { water: float, last_drain: unix_ms }
-On each request:
-  1. water = max(0, water - (now - last_drain) * leak_rate)
-  2. if water + request_size <= capacity:
-       water += request_size
-       allowed = true
-     else:
-       allowed = false  // or queue for delay
-  3. Persist { water, last_drain }
-```
-
-### 7.4 Adaptive
-
-A feedback controller that adjusts the effective `requests_per_minute` based
-on upstream health signals:
-
-```
-if latency_p95 > threshold OR error_rate > threshold:
-    effective_rpm = base_rpm * scale_down_factor
-else:
-    effective_rpm = base_rpm
-```
-
-Health signals are pulled from Prometheus or pushed via a metrics feed
-(e.g. OpenTelemetry PipelineSignal).
+| Decision | Rationale |
+|----------|-----------|
+| Plugin registry over hard-coded modules | Hot-loadable, independently versioned, sandboxed |
+| Async-first (asyncio) | High-concurrency task execution without threads |
+| Capability-based routing | Decouples task intent from plugin implementation |
+| Safety as first-class, not bolted-on | Every task passes through guardrails by default |
+| AVO as separate search layer | Decouples discovery from execution |
+| Fail-closed gates | A broken gate must not become an open door |
+| Human approval for Level 10 | ASI-level actions must have human judgment |
+| Chain-hashed audit | Tamper evidence without a full blockchain |
+| Triple-modular watchdog | Prevents split-brain in self-healing |
+| Raft consensus for state sync | Strong consistency across hosts |
 
 ---
 
-## 8. High Availability & Reliability
-
-| Concern | Approach |
-|---------|----------|
-| **Counter state** | Redis with AOF persistence + replication. For multi-region, use Redis Enterprise or CRDT-based stores. |
-| **Policy config** | PostgreSQL with synchronous replicas; hot-reload via Redis pub/sub `policy:update` channel. |
-| **PEP failover** | PEP caches last N decisions locally; fail-open or fail-closed configurable. |
-| **PDP scaling** | Stateless pods behind load balancer; Redis connection pooling per pod. |
-| **Race conditions** | All counter mutations use Redis Lua scripts or `MULTI/EXEC` for atomicity. |
-
----
-
-## 9. Security Considerations
-
-- **Policy integrity**: All policy mutations require admin auth (OAuth2
-  `admin:policies` scope). No anonymous write access.
-- **Rate limit on the rate limiter**: Meta-rate-limiting to prevent a flood of
-  decide-requests from overwhelming the PDP itself.
-- **No secrets in violations**: Violation records contain no PII or API keys.
-- **Audit log**: All policy create/update/delete events are written to an
-  append-only audit stream.
-
----
-
-## 10. Deployment
-
-- **Single-instance**: SQLite (policy store) + Redis (state) + in-process PEP
-  for simplicity in dev / small deployments.
-- **Production**: Kubernetes Deployment for PDP pods, StatefulSet for Redis
-  (or managed Redis), PostgreSQL HA cluster, Envoy as PEP.
-- **CI/CD**: Pushes to `main` trigger Docker image build + Helm chart deploy.
-
----
-
-## 11. API Integration Points
-
-The platform exposes two API surfaces:
-
-1. **Decision API** (sync, low-latency) — used by the PEP:
-   - `POST /v1/decide`
-2. **Management API** (admin, async) — used by operators and dashboards:
-   - `GET/POST/PUT/DELETE /v1/policies`
-   - `GET /v1/quotas`
-   - `GET /v1/metrics`
-   - `GET /v1/violations`
-
-Full contract is specified in `docs/api-spec.yaml`.
-Quota definitions and lifecycle are specified in `docs/quota-spec.md`.
+Author: @cto

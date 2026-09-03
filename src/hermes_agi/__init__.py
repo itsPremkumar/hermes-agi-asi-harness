@@ -2,21 +2,28 @@
 Hermes AGI/ASI Harness — Unified AI Agent Runtime.
 
 All capabilities are plugins. The harness is the kernel that manages plugins.
+Includes LLM-powered planning, real plugin execution, and Hermes integration.
 """
 
 from __future__ import annotations
 
-__version__ = "2.0.0"
+__version__ = "3.0.0"
 
 from .config import Config, load_config
 from .exceptions import HarnessError, KernelError, PluginError, SafetyError, BenchmarkError
 from .planning import Planner, plan, get_all_features, get_all_capabilities, search_features, find_by_capability
+from .llm_planning import LLMClient, KnowledgeBase, EvaluationUtility, RealPlanner
 from .plugins.manager import PluginManager, PluginBase, PluginState, PluginPriority, PluginMetadata
 from .plugins.core_plugins import ALL_PLUGINS, register_all_plugins
 from .plugins.core_plugins import (
     PlanningPlugin, ResearchPlugin, CodingPlugin, TestingPlugin,
     BenchmarkPlugin, SafetyPlugin, MemoryPlugin, DiscoveryPlugin,
     WorkflowPlugin, SelfImprovementPlugin,
+)
+from .plugins.real_plugins import ALL_REAL_PLUGINS, register_all_real_plugins
+from .plugins.real_plugins import (
+    RealPlanningPlugin, RealResearchPlugin, RealCodingPlugin,
+    RealTestingPlugin, RealBenchmarkPlugin, RealDiscoveryPlugin,
 )
 from .recovery import SelfRecoverySystem, DegradationManager, with_fallback, with_retry, with_circuit_breaker
 from .workflow import WorkflowEngine, WorkflowBuilder, WorkflowLibrary, Task
@@ -36,6 +43,10 @@ __all__ = [
     "get_all_capabilities",
     "search_features",
     "find_by_capability",
+    "LLMClient",
+    "KnowledgeBase",
+    "EvaluationUtility",
+    "RealPlanner",
     "PluginManager",
     "PluginBase",
     "PluginState",
@@ -53,6 +64,14 @@ __all__ = [
     "DiscoveryPlugin",
     "WorkflowPlugin",
     "SelfImprovementPlugin",
+    "ALL_REAL_PLUGINS",
+    "register_all_real_plugins",
+    "RealPlanningPlugin",
+    "RealResearchPlugin",
+    "RealCodingPlugin",
+    "RealTestingPlugin",
+    "RealBenchmarkPlugin",
+    "RealDiscoveryPlugin",
     "SelfRecoverySystem",
     "DegradationManager",
     "with_fallback",
@@ -78,17 +97,18 @@ class Harness:
         status = await harness.status()
     """
     
-    def __init__(self, config: Config = None):
+    def __init__(self, config: Config = None, use_real_plugins: bool = True):
         self.config = config or load_config()
         self.plugin_manager = PluginManager()
         self.recovery = SelfRecoverySystem(self.config.state_dir)
         self.workflow_engine = WorkflowEngine()
+        self.use_real_plugins = use_real_plugins
         self._initialized = False
     
     @classmethod
-    async def create(cls, config: Config = None) -> "Harness":
+    async def create(cls, config: Config = None, use_real_plugins: bool = True) -> "Harness":
         """Create and initialize a harness instance."""
-        harness = cls(config)
+        harness = cls(config, use_real_plugins)
         await harness.initialize()
         return harness
     
@@ -97,8 +117,11 @@ class Harness:
         if self._initialized:
             return
         
-        # Register all plugins
-        register_all_plugins(self.plugin_manager)
+        # Register plugins (real or mock)
+        if self.use_real_plugins:
+            register_all_real_plugins(self.plugin_manager)
+        else:
+            register_all_plugins(self.plugin_manager)
         
         # Load all plugins
         load_results = await self.plugin_manager.load_all()
@@ -121,16 +144,21 @@ class Harness:
             plan_result = await self.plugin_manager.execute("planning", "plan", goal=task)
             
             # Execute workflow if available
-            if plan_result and "steps" in plan_result:
-                workflow_tasks = [
-                    {
-                        "id": s["step_id"],
-                        "name": s["name"],
-                    }
-                    for s in plan_result["steps"]
-                ]
-                workflow_result = await self.plugin_manager.execute("workflow", "execute", tasks=workflow_tasks)
-                plan_result["workflow"] = workflow_result
+            if plan_result and isinstance(plan_result, dict):
+                steps = plan_result.get("plan", {}).get("steps", [])
+                if steps:
+                    workflow_tasks = [
+                        {
+                            "id": s.get("id", f"s{i}"),
+                            "name": s.get("name", f"step_{i}"),
+                        }
+                        for i, s in enumerate(steps)
+                    ]
+                    try:
+                        workflow_result = await self.plugin_manager.execute("workflow", "execute", tasks=workflow_tasks)
+                        plan_result["workflow"] = workflow_result
+                    except Exception as e:
+                        plan_result["workflow_error"] = str(e)
             
             return {
                 "status": "completed",

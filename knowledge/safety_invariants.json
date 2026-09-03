@@ -1,0 +1,12 @@
+{
+  "id": "safety_invariants",
+  "title": "Safety Invariants",
+  "content": "R0-R6 risk classification. Never fabricate evidence. Never bypass approval gates. Never allow value drift.",
+  "keywords": [
+    "safety",
+    "risk",
+    "invariants",
+    "governance"
+  ],
+  "category": "safety"
+}

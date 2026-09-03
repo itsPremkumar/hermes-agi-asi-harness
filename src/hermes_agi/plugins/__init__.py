@@ -1,4 +1,4 @@
-"""Plugins package."""
+"""Plugins package — all plugin implementations."""
 
 from .manager import (
     PluginManager,
@@ -28,6 +28,16 @@ from .core_plugins import (
     DiscoveryPlugin,
     WorkflowPlugin,
     SelfImprovementPlugin,
+)
+from .real_plugins import (
+    ALL_REAL_PLUGINS,
+    register_all_real_plugins,
+    RealPlanningPlugin,
+    RealResearchPlugin,
+    RealCodingPlugin,
+    RealTestingPlugin,
+    RealBenchmarkPlugin,
+    RealDiscoveryPlugin,
 )
 from .hermes_integration import (
     HermesDetector,
@@ -63,6 +73,14 @@ __all__ = [
     "DiscoveryPlugin",
     "WorkflowPlugin",
     "SelfImprovementPlugin",
+    "ALL_REAL_PLUGINS",
+    "register_all_real_plugins",
+    "RealPlanningPlugin",
+    "RealResearchPlugin",
+    "RealCodingPlugin",
+    "RealTestingPlugin",
+    "RealBenchmarkPlugin",
+    "RealDiscoveryPlugin",
     "HermesDetector",
     "HermesIntegrator",
     "AutoInstaller",
