@@ -1,11 +1,71 @@
-"""Plugins package — plugin system management."""
+"""Plugins package."""
 
-from __future__ import annotations
-
-from .manager import PluginManager, PluginBase, PluginState
+from .manager import (
+    PluginManager,
+    PluginBase,
+    PluginState,
+    PluginPriority,
+    PluginMetadata,
+    PluginHealth,
+    PluginEvent,
+    PluginError,
+    PluginLoadError,
+    PluginStartError,
+    PluginDependencyError,
+    PluginTimeoutError,
+    PluginRecoveryError,
+)
+from .core_plugins import (
+    ALL_PLUGINS,
+    register_all_plugins,
+    PlanningPlugin,
+    ResearchPlugin,
+    CodingPlugin,
+    TestingPlugin,
+    BenchmarkPlugin,
+    SafetyPlugin,
+    MemoryPlugin,
+    DiscoveryPlugin,
+    WorkflowPlugin,
+    SelfImprovementPlugin,
+)
+from .hermes_integration import (
+    HermesDetector,
+    HermesIntegrator,
+    AutoInstaller,
+    HermesConfig,
+    IntegrationStatus,
+)
 
 __all__ = [
     "PluginManager",
     "PluginBase",
     "PluginState",
+    "PluginPriority",
+    "PluginMetadata",
+    "PluginHealth",
+    "PluginEvent",
+    "PluginError",
+    "PluginLoadError",
+    "PluginStartError",
+    "PluginDependencyError",
+    "PluginTimeoutError",
+    "PluginRecoveryError",
+    "ALL_PLUGINS",
+    "register_all_plugins",
+    "PlanningPlugin",
+    "ResearchPlugin",
+    "CodingPlugin",
+    "TestingPlugin",
+    "BenchmarkPlugin",
+    "SafetyPlugin",
+    "MemoryPlugin",
+    "DiscoveryPlugin",
+    "WorkflowPlugin",
+    "SelfImprovementPlugin",
+    "HermesDetector",
+    "HermesIntegrator",
+    "AutoInstaller",
+    "HermesConfig",
+    "IntegrationStatus",
 ]
