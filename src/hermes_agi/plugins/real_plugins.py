@@ -59,7 +59,7 @@ class RealPlanningPlugin(PluginBase):
     
     async def _create_plan(self, goal: str, **kwargs) -> dict:
         """Create a real execution plan using LLM."""
-        from .llm_planning import RealPlanner
+        from ..llm_planning import RealPlanner
         
         planner = RealPlanner(self.llm, self.kb)
         result = await planner.think_and_plan(goal, kwargs.get("context"))
@@ -421,7 +421,7 @@ class RealBenchmarkPlugin(PluginBase):
     
     async def _run_benchmark(self, name: str, **kwargs) -> dict:
         """Run a real benchmark."""
-        from .benchmarks import BENCHMARK_REGISTRY
+        from ..benchmarks import BENCHMARK_REGISTRY
         
         if name not in BENCHMARK_REGISTRY and name != "all":
             return {"error": f"Unknown benchmark: {name}"}
@@ -466,7 +466,7 @@ class RealBenchmarkPlugin(PluginBase):
     
     async def _list_benchmarks(self) -> dict:
         """List available benchmarks."""
-        from .benchmarks import BENCHMARK_REGISTRY
+        from ..benchmarks import BENCHMARK_REGISTRY
         
         return {
             "benchmarks": list(BENCHMARK_REGISTRY.keys()),
@@ -500,7 +500,7 @@ class RealDiscoveryPlugin(PluginBase):
     
     async def _discover_all(self) -> dict:
         """Discover all plugins and their capabilities."""
-        from .plugins import PluginManager
+        from .manager import PluginManager
         
         # Get all registered plugins
         manager = PluginManager()
@@ -522,7 +522,7 @@ class RealDiscoveryPlugin(PluginBase):
     
     async def _search_features(self, query: str, **kwargs) -> dict:
         """Search for features by capability."""
-        from .planning import search_features
+        from ..planning import search_features
         
         results = search_features(query)
         return {

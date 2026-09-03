@@ -1,7 +1,7 @@
 """Quick smoke test for both benchmark modules."""
 
 from src.security.benchmark_security import SecurityBenchmark
-from src.benchmark.winogender_benchmark import WinogenderBenchmark
+from benchmarks.winogender_benchmark import WinogenderBenchmark
 
 
 def main():

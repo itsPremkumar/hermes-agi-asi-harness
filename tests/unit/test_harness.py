@@ -1,8 +1,4 @@
-"""Test suite for Hermes AGI/ASI Harness.
-
-NOTE: Harness/Config API not yet implemented in hermes_agi module.
-Tests are no-ops until the public API is exported.
-"""
+"""Test suite for Hermes AGI/ASI Harness."""
 
 import pytest
 
@@ -14,51 +10,59 @@ except ImportError:
 
 
 @pytest.fixture
-def harness():
-    """Create a harness instance."""
+async def harness():
+    """Create and initialize a harness instance."""
     if not HAS_HARNESS:
         pytest.skip("Harness/Config API not yet implemented")
-    return Harness(Config(project_path=".", state_dir="/tmp/test_state"))
+    h = await Harness.create(Config(project_path=".", state_dir="/tmp/test_state"), use_real_plugins=False)
+    yield h
+    await h.shutdown()
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_creation(harness):
+@pytest.mark.asyncio
+async def test_harness_creation(harness):
     """Test harness creation."""
     assert harness is not None
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_run(harness):
+@pytest.mark.asyncio
+async def test_harness_run(harness):
     """Test running a task."""
-    result = pytest.run_async(harness.run("test task"))
+    result = await harness.run("test task")
     assert result["status"] == "completed"
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_benchmark(harness):
+@pytest.mark.asyncio
+async def test_harness_benchmark(harness):
     """Test running benchmarks."""
-    result = pytest.run_async(harness.benchmark("mmlu"))
+    result = await harness.benchmark("mmlu")
     assert result["status"] == "completed"
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_spawn(harness):
+@pytest.mark.asyncio
+async def test_harness_spawn(harness):
     """Test spawning a bot."""
-    result = pytest.run_async(harness.spawn("harness-coder", "test command"))
+    result = await harness.spawn("harness-coder", "test command")
     assert result["status"] == "spawned"
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_status(harness):
+@pytest.mark.asyncio
+async def test_harness_status(harness):
     """Test getting status."""
-    result = pytest.run_async(harness.status())
+    result = await harness.status()
     assert "kernel" in result
     assert "bots" in result
     assert "benchmarks" in result
 
 
 @pytest.mark.skipif(not HAS_HARNESS, reason="Harness/Config API not yet implemented")
-def test_harness_health(harness):
+@pytest.mark.asyncio
+async def test_harness_health(harness):
     """Test health check."""
-    result = pytest.run_async(harness.health())
+    result = await harness.health()
     assert result["status"] == "healthy"

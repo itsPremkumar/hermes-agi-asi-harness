@@ -1,13 +1,23 @@
 """Tests for FullEvaluationSuite."""
 import pytest
-from src.benchmark.arc_agi_3_full_eval import (
-    FullEvaluationSuite,
-    FullEvalResult,
-    LevelInfo,
-    NUM_ENVIRONMENTS,
-    NUM_LEVELS,
-    LEVELS_PER_ENVIRONMENT,
-)
+try:
+    from benchmarks.arc_agi_3_full_eval import (
+        FullEvaluationSuite,
+        FullEvalResult,
+        LevelInfo,
+        NUM_ENVIRONMENTS,
+        NUM_LEVELS,
+        LEVELS_PER_ENVIRONMENT,
+    )
+except ImportError:
+    from src.benchmark.arc_agi_3_full_eval import (
+        FullEvaluationSuite,
+        FullEvalResult,
+        LevelInfo,
+        NUM_ENVIRONMENTS,
+        NUM_LEVELS,
+        LEVELS_PER_ENVIRONMENT,
+    )
 
 
 class TestFullEvaluationSuite:

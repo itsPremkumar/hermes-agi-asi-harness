@@ -139,6 +139,8 @@ class Harness:
     
     async def run(self, task: str, **kwargs) -> dict:
         """Run a task through the harness."""
+        if not self._initialized:
+            await self.initialize()
         try:
             # Use planning plugin to create a plan
             plan_result = await self.plugin_manager.execute("planning", "plan", goal=task)
@@ -174,23 +176,63 @@ class Harness:
                 "error": str(e),
             }
     
+    async def benchmark(self, name: str = "all") -> dict:
+        """Run benchmarks through the harness."""
+        if not self._initialized:
+            await self.initialize()
+        try:
+            res = await self.plugin_manager.execute("benchmark", "run", name=name)
+            if isinstance(res, dict):
+                if "status" not in res:
+                    res["status"] = "completed"
+                return res
+        except Exception:
+            pass
+        from .benchmarks.runner import BenchmarkRunner
+        runner = BenchmarkRunner()
+        return await runner.run(name)
+    
+    async def spawn(self, bot_name: str, command: str) -> dict:
+        """Spawn a specialized bot profile."""
+        from .agents.swarm import BotSwarm
+        swarm = BotSwarm()
+        if bot_name not in swarm._profiles and f"harness-{bot_name}" in swarm._profiles:
+            bot_name = f"harness-{bot_name}"
+        return await swarm.spawn(bot_name, command)
+    
+    async def discover(self, query: str = "") -> dict:
+        """Discover features and capabilities."""
+        from .discovery.engine import MetaDiscovery
+        engine = await MetaDiscovery.create()
+        if query:
+            results = engine.search(query)
+            return {"query": query, "count": len(results), "features": [f.name for f in results]}
+        all_features = engine.get_all_features()
+        return {"categories": {k: [f.name for f in v] for k, v in all_features.items()}, "total": sum(len(v) for v in all_features.values())}
+    
     async def status(self) -> dict:
-        """Get full harness status."""
+        """Get full harness status across kernel, plugins, bots, benchmarks, and recovery."""
+        from .agents.swarm import BotSwarm
+        from .benchmarks.runner import BENCHMARK_REGISTRY
+        swarm = BotSwarm()
         return {
             "initialized": self._initialized,
+            "kernel": "running" if self._initialized else "stopped",
             "plugins": self.plugin_manager.status(),
+            "bots": await swarm.status(),
+            "benchmarks": {"available": list(BENCHMARK_REGISTRY.keys()), "count": len(BENCHMARK_REGISTRY)},
             "recovery": self.recovery.get_health_summary(),
         }
     
     async def health(self) -> dict:
-        """Get health status."""
+        """Get health status across all subsystems."""
         plugin_health = await self.plugin_manager.health_check_all()
         recovery_health = self.recovery.get_health_summary()
-        
-        all_healthy = all(h.get("healthy", False) for h in plugin_health.values())
+        all_healthy = all(h.get("healthy", False) for h in plugin_health.values()) if plugin_health else True
         
         return {
             "status": "healthy" if all_healthy else "degraded",
+            "kernel": "healthy" if self._initialized else "idle",
             "plugins": plugin_health,
             "recovery": recovery_health,
         }

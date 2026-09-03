@@ -2,5 +2,7 @@
 import sys
 from pathlib import Path
 
-# Add src/ to sys.path for all tests
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(root))
+sys.path.insert(0, str(root / "src"))
+sys.path.insert(0, str(root / "benchmarks"))

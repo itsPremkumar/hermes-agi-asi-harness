@@ -8,8 +8,12 @@ import logging
 import time
 from typing import Any
 
-from src.benchmark.mmlu_benchmark import MMLUBenchmark
-from src.benchmark.gsm8k_benchmark import GSM8KBenchmark
+try:
+    from benchmarks.mmlu_benchmark import MMLUBenchmark
+    from benchmarks.gsm8k_benchmark import GSM8KBenchmark
+except ImportError:
+    from src.benchmark.mmlu_benchmark import MMLUBenchmark
+    from src.benchmark.gsm8k_benchmark import GSM8KBenchmark
 
 logger = logging.getLogger(__name__)
 
