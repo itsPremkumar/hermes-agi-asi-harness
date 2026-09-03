@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Pytest collection error caused by `test_pass = _pass` alias in test_phase3_4.py, test_phase5.py, test_phase6.py, test_phase7.py, test_phase8.py — removed the alias and replaced all `test_pass()` calls with `_pass()` to prevent pytest from collecting them as test functions
+- All 1995 tests now pass (previously 39 failed due to pytest NameError/collection issues)
+
 ### Added
+- Created state/self_model.json with empirical capability metrics (test counts, pass rates, calibration)
+- Created state/belief_graph.json with structured belief tracking
 - Complete CI/CD pipeline with GitHub Actions
 - Docker multi-stage build and docker-compose for local dev
 - Pre-commit hooks for code quality

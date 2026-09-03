@@ -44,45 +44,45 @@ async def test_1_observability():
     for i in range(10):
         plugin.engine.record_metric("cpu_usage", 30.0 + i, unit="%")
         plugin.engine.record_metric("memory_mb", 100.0 + i * 5, unit="MB")
-    test_pass("Recorded 20 metrics (10 cpu, 10 memory)")
+    _pass("Recorded 20 metrics (10 cpu, 10 memory)")
 
     # Get stats
     cpu_stats = plugin.engine.get_metric_stats("cpu_usage")
     assert cpu_stats["count"] == 10
     assert cpu_stats["min"] == 30.0
     assert cpu_stats["max"] == 39.0
-    test_pass(f"CPU stats: min={cpu_stats['min']}, max={cpu_stats['max']}, avg={cpu_stats['avg']:.1f}")
+    _pass(f"CPU stats: min={cpu_stats['min']}, max={cpu_stats['max']}, avg={cpu_stats['avg']:.1f}")
 
     # Register plugin health
     plugin.engine.register_plugin_health("kernel", {"status": "healthy", "uptime": 3600})
     plugin.engine.register_plugin_health("watchdog", {"status": "healthy", "anomalies": 0})
-    test_pass("Registered 2 plugin health statuses")
+    _pass("Registered 2 plugin health statuses")
 
     # Get health
     h = plugin.engine.get_plugin_health("kernel")
     assert h["status"] == "healthy"
-    test_pass(f"Retrieved kernel health: {h['status']}")
+    _pass(f"Retrieved kernel health: {h['status']}")
 
     # Raise alert
     plugin.engine.raise_alert("warning", "watchdog", "Memory usage high")
     plugin.engine.raise_alert("critical", "kernel", "Plugin failed")
-    test_pass("Raised 2 alerts")
+    _pass("Raised 2 alerts")
 
     # Active alerts
     active = plugin.engine.get_active_alerts()
     assert len(active) == 2
-    test_pass(f"Active alerts: {len(active)}")
+    _pass(f"Active alerts: {len(active)}")
 
     # Acknowledge
     plugin.engine.acknowledge_alert(0)
     active = plugin.engine.get_active_alerts()
     assert len(active) == 1
-    test_pass(f"After ack: {len(active)} active alerts")
+    _pass(f"After ack: {len(active)} active alerts")
 
     # Summary
     summary = plugin.engine.get_dashboard_summary()
     assert summary["plugins_healthy"] == 2
-    test_pass(f"Summary: {summary}")
+    _pass(f"Summary: {summary}")
 
     return True
 
@@ -93,23 +93,23 @@ def test_2_dockerfile():
 
     dockerfile = Path("Dockerfile")
     assert dockerfile.exists(), "Dockerfile not found"
-    test_pass("Dockerfile exists")
+    _pass("Dockerfile exists")
 
     content = dockerfile.read_text()
     assert "FROM python" in content, "Missing FROM python"
-    test_pass("Has FROM python")
+    _pass("Has FROM python")
 
     assert "WORKDIR" in content
-    test_pass("Has WORKDIR")
+    _pass("Has WORKDIR")
 
     assert "HEALTHCHECK" in content
-    test_pass("Has HEALTHCHECK")
+    _pass("Has HEALTHCHECK")
 
     assert "CMD" in content
-    test_pass("Has CMD")
+    _pass("Has CMD")
 
     assert "EXPOSE" in content
-    test_pass("Has EXPOSE")
+    _pass("Has EXPOSE")
 
     return True
 
@@ -120,16 +120,16 @@ def test_3_requirements():
 
     req_file = Path("requirements.txt")
     assert req_file.exists()
-    test_pass("requirements.txt exists")
+    _pass("requirements.txt exists")
 
     content = req_file.read_text()
     assert "pyyaml" in content.lower() or "yaml" in content.lower()
-    test_pass("Has YAML dependency")
+    _pass("Has YAML dependency")
 
     # Count packages
     packages = [l.strip() for l in content.splitlines() if l.strip() and not l.startswith("#")]
     assert len(packages) >= 3, f"Too few packages: {len(packages)}"
-    test_pass(f"Has {len(packages)} package entries")
+    _pass(f"Has {len(packages)} package entries")
 
     return True
 
@@ -140,7 +140,7 @@ def test_4_install_script():
 
     install = Path("install.py")
     assert install.exists()
-    test_pass("install.py exists")
+    _pass("install.py exists")
 
     # Verify it's syntactically valid (compile)
     result = subprocess.run(
@@ -148,7 +148,7 @@ def test_4_install_script():
         capture_output=True, text=True
     )
     assert result.returncode == 0, f"install.py invalid: {result.stderr}"
-    test_pass("install.py syntactically valid")
+    _pass("install.py syntactically valid")
 
     # Run in dry mode (just check it doesn't crash on imports)
     # We won't actually install, just verify the script can be parsed
@@ -166,7 +166,7 @@ async def test_5_e2e():
 
     # Count all plugins
     total_plugins = len(kernel._plugins)
-    test_pass(f"Total plugins loaded: {total_plugins}")
+    _pass(f"Total plugins loaded: {total_plugins}")
 
     # Verify all 8 phases are represented
     phase_plugins = {
@@ -187,7 +187,7 @@ async def test_5_e2e():
                 test_fail(phase, f"Missing: {plugin_name}")
                 all_healthy = False
         if all_healthy:
-            test_pass(f"{phase}: all {len(plugins)} plugins loaded")
+            _pass(f"{phase}: all {len(plugins)} plugins loaded")
 
     assert all_healthy, "Some phases have missing plugins"
 
@@ -202,7 +202,7 @@ async def test_5_e2e():
                 except Exception:
                     pass
         summary = od.engine.get_dashboard_summary()
-        test_pass(f"Observability: {summary['plugins_healthy']}/{summary['plugins_total']} healthy")
+        _pass(f"Observability: {summary['plugins_healthy']}/{summary['plugins_total']} healthy")
 
     await kernel.shutdown()
     return True

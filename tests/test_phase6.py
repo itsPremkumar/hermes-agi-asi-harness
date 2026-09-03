@@ -52,7 +52,7 @@ async def test_1_evolution_safety_loop():
         rollback_plan="Restore previous workflow from version control",
     )
     assert safe.approved, f"Safe mod should be approved: {safe.rejection_reason}"
-    test_pass(f"Safe modification approved: {safe.modification_id}")
+    _pass(f"Safe modification approved: {safe.modification_id}")
 
     # Submit a HIGH-RISK modification (should be rejected)
     risky = plugin.engine.submit_modification(
@@ -65,7 +65,7 @@ async def test_1_evolution_safety_loop():
         rollback_plan="",  # empty
     )
     assert risky.rejected, f"Risky mod should be rejected: {risky.to_dict()}"
-    test_pass(f"Risky modification rejected: {risky.rejection_reason}")
+    _pass(f"Risky modification rejected: {risky.rejection_reason}")
 
     # Submit a FORBIDDEN modification
     forbidden = plugin.engine.submit_modification(
@@ -78,11 +78,11 @@ async def test_1_evolution_safety_loop():
         rollback_plan="restore",
     )
     assert forbidden.rejected, "Constitution changes must be forbidden"
-    test_pass(f"Constitution change rejected: {forbidden.rejection_reason}")
+    _pass(f"Constitution change rejected: {forbidden.rejection_reason}")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -102,27 +102,27 @@ async def test_2_benchmark_db():
             score=score,
             duration_seconds=2.0,
         )
-    test_pass("Recorded 7 runs")
+    _pass("Recorded 7 runs")
 
     # Get trend
     trend = plugin.engine.get_trend("reasoning_v1", limit=5)
     assert len(trend) == 5
-    test_pass(f"Recent trend: {[f'{s:.2f}' for s in trend]}")
+    _pass(f"Recent trend: {[f'{s:.2f}' for s in trend]}")
 
     # Detect regression
     regression = plugin.engine.detect_regression("reasoning_v1", threshold=0.1)
     assert regression is not None
     assert regression["regression_detected"]
-    test_pass(f"Regression detected: recent={regression['recent_avg']:.2f}, baseline={regression['baseline_avg']:.2f}")
+    _pass(f"Regression detected: recent={regression['recent_avg']:.2f}, baseline={regression['baseline_avg']:.2f}")
 
     # Leaderboard
     lb = plugin.engine.get_leaderboard()
     assert len(lb) >= 1
-    test_pass(f"Leaderboard: {lb[0]['benchmark']} = {lb[0]['best_score']:.2f}")
+    _pass(f"Leaderboard: {lb[0]['benchmark']} = {lb[0]['best_score']:.2f}")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -139,29 +139,29 @@ async def test_3_self_improvement_boundary():
 
     # Test can_change
     assert plugin.engine.can_change("workflow_procedure")
-    test_pass("Can change workflow_procedure autonomously")
+    _pass("Can change workflow_procedure autonomously")
 
     assert not plugin.engine.can_change("constitution")
-    test_pass("Cannot change constitution (forbidden)")
+    _pass("Cannot change constitution (forbidden)")
 
     assert not plugin.engine.can_change("shutdown_mechanisms")
-    test_pass("Cannot change shutdown_mechanisms (forbidden)")
+    _pass("Cannot change shutdown_mechanisms (forbidden)")
 
     # Required level
     level = plugin.engine.get_required_level("model_selection")
     assert level == ChangeLevel.APPROVED
-    test_pass(f"model_selection requires: {level.value}")
+    _pass(f"model_selection requires: {level.value}")
 
     # Log change
     plugin.engine.log_change("workflow_procedure", ChangeLevel.AUTONOMOUS,
                              "Optimized file read")
     log = plugin.engine.get_change_log()
     assert len(log) == 1
-    test_pass(f"Change logged: {log[0]['target']}")
+    _pass(f"Change logged: {log[0]['target']}")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -198,31 +198,31 @@ async def test_4_world_sync():
         summary="noise",
         relevance_score=0.2,
     )
-    test_pass("Ingested 3 changes")
+    _pass("Ingested 3 changes")
 
     # Get relevant
     relevant = plugin.engine.get_relevant_changes(min_relevance=0.5)
     assert len(relevant) == 2
-    test_pass(f"Found {len(relevant)} relevant changes (min_relevance=0.5)")
+    _pass(f"Found {len(relevant)} relevant changes (min_relevance=0.5)")
 
     # Get by source
     gh = plugin.engine.get_changes_by_source(SyncSource.GITHUB.value)
     assert len(gh) == 2
-    test_pass(f"GitHub changes: {len(gh)}")
+    _pass(f"GitHub changes: {len(gh)}")
 
     # Get opportunities
     opps = plugin.engine.get_opportunities()
     assert len(opps) == 1
-    test_pass(f"Found {len(opps)} opportunities")
+    _pass(f"Found {len(opps)} opportunities")
 
     # Sync check
     assert plugin.engine.should_sync(SyncSource.GITHUB.value)
     plugin.engine.record_sync(SyncSource.GITHUB.value)
-    test_pass("Recorded GitHub sync timestamp")
+    _pass("Recorded GitHub sync timestamp")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -238,7 +238,7 @@ async def test_5_e2e():
 
     for name in ["evolution_safety_loop", "benchmark_db", "self_improvement_boundary", "world_sync"]:
         assert name in kernel._plugins, f"{name} not loaded"
-    test_pass("All 4 Phase 6 plugins loaded in kernel")
+    _pass("All 4 Phase 6 plugins loaded in kernel")
 
     # Use evolution_safety_loop
     esl = kernel._plugins["evolution_safety_loop"]
@@ -249,24 +249,24 @@ async def test_5_e2e():
         rollback_plan="rollback procedure",
     )
     assert mod.approved
-    test_pass("Evolution safety: e2e mod approved")
+    _pass("Evolution safety: e2e mod approved")
 
     # Use benchmark_db
     bdb = kernel._plugins["benchmark_db"]
     run = bdb.engine.record_run("e2e_bench", score=0.85)
-    test_pass(f"Benchmark DB: recorded run {run.run_id}")
+    _pass(f"Benchmark DB: recorded run {run.run_id}")
 
     # Use self_improvement_boundary
     sib = kernel._plugins["self_improvement_boundary"]
     assert sib.engine.can_change("skill_library")
-    test_pass("Self-improvement boundary: skill_library changeable")
+    _pass("Self-improvement boundary: skill_library changeable")
 
     # Use world_sync
     ws = kernel._plugins["world_sync"]
     change = ws.engine.ingest_change(
         "github", "E2E test change", "https://e2e", "test", 0.5
     )
-    test_pass(f"World sync: ingested change {change.change_id}")
+    _pass(f"World sync: ingested change {change.change_id}")
 
     # All healthy
     for name in ["evolution_safety_loop", "benchmark_db", "self_improvement_boundary", "world_sync"]:
@@ -275,7 +275,7 @@ async def test_5_e2e():
             health = await plugin.health()
             assert health.get("status") == "healthy", f"{name} unhealthy: {health}"
 
-    test_pass("All Phase 6 plugins report healthy")
+    _pass("All Phase 6 plugins report healthy")
 
     await kernel.shutdown()
     return True

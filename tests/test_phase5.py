@@ -43,29 +43,29 @@ async def test_1_self_evaluation():
     plugin.engine.evaluate("task_001", success=True, quality_score=0.85,
                           accuracy=0.9, hallucination_score=0.05,
                           user_satisfaction=0.8, duration_seconds=10.0)
-    test_pass("Recorded high-quality task")
+    _pass("Recorded high-quality task")
 
     plugin.engine.evaluate("task_002", success=False, quality_score=0.3,
                           accuracy=0.4, hallucination_score=0.4,
                           user_satisfaction=0.3, duration_seconds=20.0,
                           mistakes=["hallucination", "slow"])
-    test_pass("Recorded failed task with mistakes")
+    _pass("Recorded failed task with mistakes")
 
     # Get summary
     summary = plugin.engine.get_summary()
     assert summary["total_evaluations"] == 2, f"Expected 2, got {summary}"
     assert summary["success_rate"] == 0.5, f"Expected 0.5, got {summary}"
-    test_pass(f"Summary: success_rate={summary['success_rate']}, avg_quality={summary['avg_quality']:.2f}")
+    _pass(f"Summary: success_rate={summary['success_rate']}, avg_quality={summary['avg_quality']:.2f}")
 
     # Mistake patterns
     patterns = plugin.engine.get_mistake_patterns()
     assert len(patterns) > 0
-    test_pass(f"Found {len(patterns)} mistake patterns: {patterns[0]['type']}")
+    _pass(f"Found {len(patterns)} mistake patterns: {patterns[0]['type']}")
 
     # Improvement signals
     signals = plugin.engine.get_improvement_signals()
     assert len(signals) > 0
-    test_pass(f"Generated {len(signals)} improvement signals: {signals}")
+    _pass(f"Generated {len(signals)} improvement signals: {signals}")
 
     return True
 
@@ -87,30 +87,30 @@ async def test_2_skill_forge():
         preconditions=["file exists", "file is valid CSV"],
     )
     assert skill.status == SkillStatus.TESTING
-    test_pass(f"Forged skill: {skill.skill_id} ({skill.name})")
+    _pass(f"Forged skill: {skill.skill_id} ({skill.name})")
 
     # Deploy
     plugin.engine.deploy_skill(skill.skill_id)
     assert plugin.engine._skills[skill.skill_id].status == SkillStatus.DEPLOYED
-    test_pass("Skill deployed")
+    _pass("Skill deployed")
 
     # Find matching skill
     matched = plugin.engine.find_matching_skill("Please read csv file sales.csv")
     assert matched is not None
     assert matched.skill_id == skill.skill_id
-    test_pass(f"Found matching skill: {matched.name}")
+    _pass(f"Found matching skill: {matched.name}")
 
     # Record usage
     plugin.engine.record_usage(skill.skill_id, success=True)
     plugin.engine.record_usage(skill.skill_id, success=True)
     plugin.engine.record_usage(skill.skill_id, success=False)
     assert plugin.engine._skills[skill.skill_id].usage_count == 3
-    test_pass(f"Recorded 3 usages, success_rate={plugin.engine._skills[skill.skill_id].success_rate:.2f}")
+    _pass(f"Recorded 3 usages, success_rate={plugin.engine._skills[skill.skill_id].success_rate:.2f}")
 
     # Stats
     stats = plugin.engine.get_stats()
     assert stats["deployed"] >= 1
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -138,26 +138,26 @@ async def test_3_curriculum_engine():
         domain="programming", difficulty=0.5, prerequisites=["syntax", "control_flow"],
         skills=["syntax", "functions"], estimated_minutes=45,
     ))
-    test_pass("Added 3 learning tasks")
+    _pass("Added 3 learning tasks")
 
     # Update mastery
     plugin.engine.update_mastery("syntax", success=True, quality=0.8)
     plugin.engine.update_mastery("control_flow", success=True, quality=0.7)
-    test_pass("Updated mastery for syntax and control_flow")
+    _pass("Updated mastery for syntax and control_flow")
 
     # Select next task
     next_task = plugin.engine.select_next_task(available_time_minutes=60)
     assert next_task is not None
-    test_pass(f"Next task: {next_task.name} (difficulty={next_task.difficulty})")
+    _pass(f"Next task: {next_task.name} (difficulty={next_task.difficulty})")
 
     # Get learning path
     path = plugin.engine.get_learning_path("functions")
     assert len(path) >= 1
-    test_pass(f"Learning path for 'functions': {[t.name for t in path]}")
+    _pass(f"Learning path for 'functions': {[t.name for t in path]}")
 
     # Stats
     stats = plugin.engine.get_curriculum_stats()
-    test_pass(f"Curriculum stats: {stats}")
+    _pass(f"Curriculum stats: {stats}")
 
     return True
 
@@ -172,29 +172,29 @@ async def test_4_sleep_cycle():
 
     # Verify 13 steps
     assert len(plugin.engine._steps) == 13, f"Expected 13 steps, got {len(plugin.engine._steps)}"
-    test_pass(f"Has 13 sleep steps: {[s.name for s in plugin.engine._steps[:3]]}...")
+    _pass(f"Has 13 sleep steps: {[s.name for s in plugin.engine._steps[:3]]}...")
 
     # Register a custom handler
     async def custom_handler(kernel):
         return {"custom": True, "step_complete": True}
 
     plugin.engine.register_handler(1, custom_handler)
-    test_pass("Registered custom handler for step 1")
+    _pass("Registered custom handler for step 1")
 
     # Run a cycle
     result = await plugin.engine.run_cycle()
     assert result["all_completed"], f"Not all completed: {result}"
-    test_pass(f"Sleep cycle #{result['cycle_number']} completed in {result['total_duration']:.3f}s")
+    _pass(f"Sleep cycle #{result['cycle_number']} completed in {result['total_duration']:.3f}s")
 
     # Verify all steps completed
     completed = sum(1 for s in plugin.engine._steps if s.status == SleepStepStatus.COMPLETED)
     assert completed == 13
-    test_pass(f"All 13 steps completed: {completed}/13")
+    _pass(f"All 13 steps completed: {completed}/13")
 
     # Progress
     progress = plugin.engine.get_progress()
     assert progress["cycle_count"] == 1
-    test_pass(f"Progress: {progress['progress']} steps in {progress['cycle_count']} cycles")
+    _pass(f"Progress: {progress['progress']} steps in {progress['cycle_count']} cycles")
 
     return True
 
@@ -210,18 +210,18 @@ async def test_5_e2e():
 
     for name in ["self_evaluation", "skill_forge", "curriculum_engine", "sleep_cycle"]:
         assert name in kernel._plugins, f"{name} not loaded"
-    test_pass("All 4 Phase 5 plugins loaded in kernel")
+    _pass("All 4 Phase 5 plugins loaded in kernel")
 
     # Use self_evaluation through kernel
     se = kernel._plugins["self_evaluation"]
     se.engine.evaluate("e2e_task", success=True, quality_score=0.9)
-    test_pass("Self-evaluation recorded task")
+    _pass("Self-evaluation recorded task")
 
     # Use skill_forge through kernel
     sf = kernel._plugins["skill_forge"]
     skill = sf.engine.forge_skill("e2e_skill", "test", "test_proc")
     sf.engine.deploy_skill(skill.skill_id)
-    test_pass(f"Skill forge: {skill.skill_id} deployed")
+    _pass(f"Skill forge: {skill.skill_id} deployed")
 
     # Use curriculum_engine through kernel
     from plugins.curriculum_engine import LearningTask
@@ -230,12 +230,12 @@ async def test_5_e2e():
         task_id="e2e_lesson", name="E2E Lesson", description="test",
         domain="test", difficulty=0.5, estimated_minutes=30,
     ))
-    test_pass("Curriculum engine: added task")
+    _pass("Curriculum engine: added task")
 
     # Use sleep_cycle through kernel
     sc = kernel._plugins["sleep_cycle"]
     result = await sc.engine.run_cycle()
-    test_pass(f"Sleep cycle #{result['cycle_number']} completed via kernel")
+    _pass(f"Sleep cycle #{result['cycle_number']} completed via kernel")
 
     # Verify all healthy
     for name in ["self_evaluation", "skill_forge", "curriculum_engine", "sleep_cycle"]:
@@ -244,7 +244,7 @@ async def test_5_e2e():
             health = await plugin.health()
             assert health.get("status") == "healthy", f"{name} unhealthy: {health}"
 
-    test_pass("All Phase 5 plugins report healthy")
+    _pass("All Phase 5 plugins report healthy")
 
     await kernel.shutdown()
     return True

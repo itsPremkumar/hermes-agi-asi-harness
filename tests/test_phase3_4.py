@@ -46,7 +46,7 @@ async def test_1_watchdog():
 
     # Test basic recording
     plugin.record_event("test_event", {"data": "value"})
-    test_pass("record_event doesn't crash")
+    _pass("record_event doesn't crash")
 
     # Test loop detection
     for i in range(8):
@@ -54,12 +54,12 @@ async def test_1_watchdog():
     anomalies = plugin.engine.detect_anomalies()
     has_loop = any(a.type == AnomalyType.AGENT_LOOP.value for a in anomalies)
     assert has_loop, f"Expected loop anomaly, got: {anomalies}"
-    test_pass("Loop detection works (8 events in window)")
+    _pass("Loop detection works (8 events in window)")
 
     # Test health
     health = await plugin.health()
     assert "metrics" in health, f"Health missing metrics: {health}"
-    test_pass(f"Health report: {health.get('status')}")
+    _pass(f"Health report: {health.get('status')}")
 
     await plugin.stop()
     return True
@@ -80,34 +80,34 @@ async def test_2_economic_ledger():
         monetary_limit=10.0,
     )
     plugin.engine.set_budget("mission_001", budget)
-    test_pass("Budget set")
+    _pass("Budget set")
 
     # Record token usage
     plugin.engine.record_token_usage("mission_001", 500, cost=5.0)
-    test_pass("Recorded 500 tokens ($5.0)")
+    _pass("Recorded 500 tokens ($5.0)")
 
     # Check budget
     status = plugin.engine.check_budget("mission_001")
     assert status["within_budget"], f"Should be within budget: {status}"
     assert status["utilization"]["tokens"] == 0.5, f"Token utilization should be 0.5: {status}"
-    test_pass(f"Budget check: {status['utilization']}")
+    _pass(f"Budget check: {status['utilization']}")
 
     # Record time
     plugin.engine.record_time("mission_001", 30.0)
     status = plugin.engine.check_budget("mission_001")
     assert status["utilization"]["time"] == 0.5, f"Time utilization should be 0.5: {status}"
-    test_pass(f"Time tracked: {status['utilization']['time']}")
+    _pass(f"Time tracked: {status['utilization']['time']}")
 
     # Expected value
     ev = plugin.engine.expected_value(expected_benefit=100.0, cost=10.0, probability=0.5)
     assert ev == 40.0, f"EV should be 40.0, got {ev}"
-    test_pass("Expected value: $40.0 (0.5 * $100 - $10)")
+    _pass("Expected value: $40.0 (0.5 * $100 - $10)")
 
     # Test budget exhaustion
     plugin.engine.record_token_usage("mission_001", 600, cost=5.0)
     status = plugin.engine.check_budget("mission_001")
     assert "token_budget_90_percent" in status["alerts"], f"Expected alert: {status}"
-    test_pass(f"Budget alert fired: {status['alerts']}")
+    _pass(f"Budget alert fired: {status['alerts']}")
 
     return True
 
@@ -128,18 +128,18 @@ async def test_3_independent_critic():
         critic_b_id="critic_b",
     )
     review1, review2 = decision.critic_reviews[0], decision.critic_reviews[1]
-    test_pass(f"Two independent reviews: {review1.critic_id} vs {review2.critic_id}")
+    _pass(f"Two independent reviews: {review1.critic_id} vs {review2.critic_id}")
 
     # Check reviews
     assert 0 <= review1.confidence <= 1, f"Confidence out of range: {review1.confidence}"
-    test_pass(f"Review 1: verdict={review1.verdict.value}, confidence={review1.confidence:.2f}")
+    _pass(f"Review 1: verdict={review1.verdict.value}, confidence={review1.confidence:.2f}")
 
     assert 0 <= review2.confidence <= 1, f"Confidence out of range: {review2.confidence}"
-    test_pass(f"Review 2: verdict={review2.verdict.value}, confidence={review2.confidence:.2f}")
+    _pass(f"Review 2: verdict={review2.verdict.value}, confidence={review2.confidence:.2f}")
 
     # Verify decision
     assert decision.decision in ["accept", "revise", "reject"], f"Bad decision: {decision.decision}"
-    test_pass(f"Executive decision: {decision.decision} (consensus: {decision.consensus})")
+    _pass(f"Executive decision: {decision.decision} (consensus: {decision.consensus})")
 
     # Test critique method
     single_review = plugin.engine.critique(
@@ -147,12 +147,12 @@ async def test_3_independent_critic():
         criteria=["security", "scalability"],
         critic_id="solo_critic",
     )
-    test_pass(f"Single critique: verdict={single_review.verdict.value}, confidence={single_review.confidence:.2f}")
+    _pass(f"Single critique: verdict={single_review.verdict.value}, confidence={single_review.confidence:.2f}")
 
     # Get history
     history = plugin.engine.get_history()
     assert len(history) >= 1, f"Expected at least 1 decision in history, got {len(history)}"
-    test_pass(f"History: {len(history)} decisions")
+    _pass(f"History: {len(history)} decisions")
 
     return True
 
@@ -171,23 +171,23 @@ async def test_4_debate_protocol():
         initial_proposal="Yes, adopt microservices for better scalability",
         rounds=2,
     )
-    test_pass(f"Debate {outcome.debate_id} completed in {outcome.duration_seconds:.2f}s")
+    _pass(f"Debate {outcome.debate_id} completed in {outcome.duration_seconds:.2f}s")
 
     # Verify outcome structure
     assert outcome.winner is not None, "No winner decided"
-    test_pass(f"Winner: {outcome.winner.value}")
+    _pass(f"Winner: {outcome.winner.value}")
 
     assert outcome.executive_decision, "No executive decision"
-    test_pass(f"Executive decision: {outcome.executive_decision}")
+    _pass(f"Executive decision: {outcome.executive_decision}")
 
     # Check arguments
     assert len(outcome.arguments) >= 4, f"Expected 4+ arguments, got {len(outcome.arguments)}"
-    test_pass(f"Recorded {len(outcome.arguments)} arguments")
+    _pass(f"Recorded {len(outcome.arguments)} arguments")
 
     # Stats
     stats = plugin.engine.get_stats()
     assert stats["total_debates"] == 1
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -203,12 +203,12 @@ async def test_5_e2e():
     # Verify all 4 new plugins are loaded
     for name in ["watchdog", "economic_ledger", "independent_critic", "debate_protocol"]:
         assert name in kernel._plugins, f"{name} not loaded in kernel"
-    test_pass("All 4 Phase 3+4 plugins loaded in kernel")
+    _pass("All 4 Phase 3+4 plugins loaded in kernel")
 
     # Use watchdog
     if kernel._plugins.get("watchdog"):
         kernel._plugins["watchdog"].record_event("e2e_test")
-        test_pass("Watchdog recorded E2E event")
+        _pass("Watchdog recorded E2E event")
 
     # Use economic ledger
     if kernel._plugins.get("economic_ledger"):
@@ -218,7 +218,7 @@ async def test_5_e2e():
         kernel._plugins["economic_ledger"].engine.record_token_usage("e2e_mission", 100, cost=0.001)
         status = kernel._plugins["economic_ledger"].engine.check_budget("e2e_mission")
         assert status["within_budget"], f"Not within budget: {status}"
-        test_pass(f"Economic ledger: {status['utilization']}")
+        _pass(f"Economic ledger: {status['utilization']}")
 
     # Use independent critic
     if kernel._plugins.get("independent_critic"):
@@ -228,7 +228,7 @@ async def test_5_e2e():
             critic_a_id="critic_a",
             critic_b_id="critic_b",
         )
-        test_pass(f"Independent critic: decision={decision.decision}, consensus={decision.consensus}")
+        _pass(f"Independent critic: decision={decision.decision}, consensus={decision.consensus}")
 
     # Use debate protocol
     if kernel._plugins.get("debate_protocol"):
@@ -238,7 +238,7 @@ async def test_5_e2e():
             rounds=1,
         )
         assert outcome.winner is not None
-        test_pass(f"Debate {outcome.debate_id}: winner = {outcome.winner.value}")
+        _pass(f"Debate {outcome.debate_id}: winner = {outcome.winner.value}")
 
     # Verify health
     for name in ["watchdog", "economic_ledger", "independent_critic", "debate_protocol"]:
@@ -247,7 +247,7 @@ async def test_5_e2e():
             health = await plugin.health()
             assert health.get("status") in ("healthy", "degraded", "ok"), f"{name} unhealthy: {health}"
 
-    test_pass("All plugins report healthy status")
+    _pass("All plugins report healthy status")
 
     await kernel.shutdown()
     return True
