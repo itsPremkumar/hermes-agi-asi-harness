@@ -69,3 +69,21 @@ class NodeManager:
 
     def count(self) -> int:
         return len(self._nodes)
+
+
+from .debate_mesh import (
+    HeterogeneousDebateMesh,
+    DebateSynthesis,
+    DebateTurn,
+    DebatePerspective,
+)
+
+__all__ = [
+    "NodeStatus",
+    "MeshNode",
+    "NodeManager",
+    "HeterogeneousDebateMesh",
+    "DebateSynthesis",
+    "DebateTurn",
+    "DebatePerspective",
+]

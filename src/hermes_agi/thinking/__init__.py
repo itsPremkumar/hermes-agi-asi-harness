@@ -9,6 +9,11 @@ from .engine import (
     Critique,
     Invariant,
 )
+from .mcts import (
+    MCTSSearchEngine,
+    MCTSResult,
+    MCTSNode,
+)
 
 __all__ = [
     "DeepThinkingEngine",
@@ -16,4 +21,7 @@ __all__ = [
     "Hypothesis",
     "Critique",
     "Invariant",
+    "MCTSSearchEngine",
+    "MCTSResult",
+    "MCTSNode",
 ]

@@ -9,20 +9,26 @@ A state-of-the-art **Executive AI Agent Harness** designed for multi-step autono
 ```
 src/
 ├── hermes_agi/                # Core Public Harness API, CLI, Planning, Workflow
-│   ├── research/              # Deep Research Agent (autonomous fact gathering & dossiers)
-│   ├── thinking/              # Deep Thinking & Graph-of-Thought (GoT) Deliberator
+│   ├── thinking/              # Deep Thinking & MCTS (Q*-style Tree-of-Thoughts Search)
+│   ├── research/              # Deep Research Agent powered by live AgentEye
 │   ├── allocation/            # Hermes Mission Packet Dispatch & Watchdog Monitor
+│   ├── overnight/             # Autonomous Overnight Endurance Engine (gnhf-architecture)
+│   ├── causal/                # Dynamic Causal Graph & Counterfactual Simulator
+│   ├── coding/                # Deep Coding & Self-Correction Feedback Loop
 │   ├── agents/                # Swarm Coordinator (26 Bot Profiles)
 │   └── discovery/             # MetaDiscovery Engine (dynamic tool & feature catalog)
 │
 ├── harnix/                    # LangGraph StateGraph Multi-Step Cognitive Runtime
 │   ├── kernel.py              # HarnessRuntimeKernel (LangGraph StateGraph builder)
-│   ├── nodes.py               # Cognitive & execution pure state nodes
+│   ├── nodes.py               # Cognitive state nodes (MCTS, Anti-Goodhart, Adversarial)
 │   └── state.py               # TypedDict AgentState schema & lifecycle phases
 │
-├── core/                      # Foundational runtime kernel (HermesKernel), supervisor, memory
+├── core/                      # Foundational runtime kernel, verification & Anti-Goodhart
+│   └── verification/          # Multi-Round Proof, Adversarial Verifier, Anti-Goodhart
+├── mesh/                      # Heterogeneous Multi-Model Adversarial Debate Mesh
+├── engines/                   # Recursive Self-Evolution, Continuous Dev, & Control Plane
+├── agent_eye/                 # 10+ Zero-API-key live search & academic backends
 ├── plugins/                   # 130+ capability plugins (filesystem, shell, python, git, RAG, MCP)
-├── engines/                   # Autonomous continuous dev, ultimate engine, & control plane
 ├── hermes_asi_master/         # 24/7 Watchdog, scheduler, and cron runtime
 ├── tools/                     # Tool registry and execution plane
 │
@@ -164,6 +170,9 @@ python -m hermes_agi run "write file output.txt containing HELLO"
 # Run autonomous overnight endurance loop (gnhf architecture)
 python -m hermes_agi overnight "refactor auth module and improve test coverage" --max-iterations 15
 python -m hermes_agi gnhf "reduce complexity of codebase without changing functionality"
+
+# Run Closed-Loop Recursive Self-Evolution (Darwinian Engine)
+python -m hermes_agi evolve --cycles 3 --margin 0.015
 
 # Conduct autonomous Deep Research with live AgentEye search
 python -m hermes_agi research "quantum computing algorithms" --depth 3

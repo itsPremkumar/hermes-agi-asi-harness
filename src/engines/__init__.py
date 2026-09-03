@@ -18,8 +18,8 @@ from .harness_control_plane import (
     HarnessState,
     SafetyLevel,
     TaskRequest,
-    SafetyGuardrail,
-    HermesBridge,
+    SafetyGuard,
+    PluginRegistry,
 )
 from .continuous_dev import (
     DailyImprovementCron,
@@ -29,16 +29,20 @@ from .continuous_dev import (
     ProgressDashboard,
 )
 
+from .self_evolution import SelfEvolutionLoop, EvolutionCandidate
+
 __all__ = [
     "ExecutiveControlPlane",
     "HarnessState",
     "SafetyLevel",
     "TaskRequest",
-    "SafetyGuardrail",
-    "HermesBridge",
+    "SafetyGuard",
+    "PluginRegistry",
     "DailyImprovementCron",
     "CanaryDeploymentManager",
     "ABTestingFramework",
     "RollbackManager",
     "ProgressDashboard",
+    "SelfEvolutionLoop",
+    "EvolutionCandidate",
 ]

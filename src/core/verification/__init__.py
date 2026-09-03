@@ -325,6 +325,7 @@ async def create(kernel=None):
 
 
 from .adversarial import AdversarialVerifier, VerificationVerdict, CritiqueFinding
+from .anti_goodhart import AntiGoodhartVerifier, HoldoutVerdict, HoldoutTest
 
 __all__ = [
     "VerificationEngine",
@@ -334,5 +335,8 @@ __all__ = [
     "AdversarialVerifier",
     "VerificationVerdict",
     "CritiqueFinding",
+    "AntiGoodhartVerifier",
+    "HoldoutVerdict",
+    "HoldoutTest",
     "create",
 ]

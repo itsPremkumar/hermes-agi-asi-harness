@@ -59,6 +59,11 @@ def main():
         ov_parser.add_argument("--max-failures", type=int, default=3, help="Consecutive failure abort limit")
         ov_parser.add_argument("--current-branch", action="store_true", help="Commit directly on current branch")
         ov_parser.add_argument("--stop-when", default="", help="Natural language stopping condition")
+
+    # Evolve command (Darwinian Closed-Loop Self-Improvement)
+    evolve_parser = subparsers.add_parser("evolve", help="Run Darwinian Closed-Loop Self-Evolution cycle")
+    evolve_parser.add_argument("--cycles", type=int, default=1, help="Number of recursive evolution cycles to run")
+    evolve_parser.add_argument("--margin", type=float, default=0.015, help="Minimum improvement margin to accept patch")
     
     args = parser.parse_args()
     
@@ -114,6 +119,23 @@ async def run_command(args):
         controller = OvernightLoopController(config)
         summary = controller.run()
         summary.print_summary()
+    elif args.command == "evolve":
+        from engines.self_evolution import SelfEvolutionLoop
+        loop = SelfEvolutionLoop(minimum_improvement_margin=args.margin)
+        print("\n=======================================================")
+        print("  HERMES CLOSED-LOOP DARWINIAN SELF-EVOLUTION ENGINE")
+        print("=======================================================")
+        for i in range(1, args.cycles + 1):
+            print(f"\n[Cycle {i}/{args.cycles}] Initiating Darwinian improvement cycle...")
+            res = loop.run_evolution_cycle()
+            print(f"  Baseline Score:      {res.baseline_score:.4f}")
+            print(f"  Final Evolved Score: {res.final_score:.4f}")
+            print(f"  Mutations Evaluated: {res.candidates_evaluated}")
+            print(f"  Mutations Merged:    {res.mutations_merged}")
+            print(f"  Mutations Discarded: {res.mutations_discarded}")
+            if res.history:
+                print(f"  Outcome Rationale:   {res.history[0].rationale}")
+        print("\n=======================================================\n")
 
 
 if __name__ == "__main__":

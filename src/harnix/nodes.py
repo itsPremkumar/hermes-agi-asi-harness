@@ -29,12 +29,14 @@ try:
     from hermes_agi.thinking import DeepThinkingEngine
     from hermes_agi.allocation import HermesMissionPacket, HermesWatchdogMonitor
     from core.verification.adversarial import AdversarialVerifier
+    from core.verification.anti_goodhart import AntiGoodhartVerifier
 except ImportError:
     DeepResearchAgent = None
     DeepThinkingEngine = None
     HermesMissionPacket = None
     HermesWatchdogMonitor = None
     AdversarialVerifier = None
+    AntiGoodhartVerifier = None
 
 
 def _run_sync(coro: Any) -> Any:
@@ -410,7 +412,26 @@ def verify_node(state: AgentState) -> AgentState:
         except Exception:
             pass
 
-    verified = all_passed and consensus_score >= 0.80
+    # Run Anti-Goodhart Hidden Holdouts
+    anti_gaming_passed = True
+    if AntiGoodhartVerifier is not None:
+        try:
+            ag_verifier = AntiGoodhartVerifier()
+            for r in state.get("results", []):
+                # Inspect write_file operations for gaming
+                if r.get("action") == "write_file":
+                    args = r.get("args", [])
+                    file_name = args[0] if len(args) > 0 else "output.py"
+                    content = args[1] if len(args) > 1 else ""
+                    hv = ag_verifier.verify(file_name, content)
+                    if hv.detected_gaming:
+                        anti_gaming_passed = False
+                        critiques.append("Anti-Goodhart: Metric gaming / trivial assertion detected in generated code.")
+                        consensus_score *= 0.5
+        except Exception:
+            pass
+
+    verified = all_passed and consensus_score >= 0.80 and anti_gaming_passed
 
     proof = {
         "goal_id": state["run_id"],
