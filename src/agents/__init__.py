@@ -163,3 +163,21 @@ class AgentRegistry:
             objective=overrides.get("objective", base.objective),
             system_prompt=overrides.get("system", base.system_prompt),
         )
+
+
+# Executive Agent exports
+try:
+    from .executive_agent import (
+        BenchmarkOrchestrator,
+        BenchmarkResult,
+        BenchmarkTask,
+        DailyCycle,
+        DailyReport,
+        ImprovementPlan,
+        ImprovementPlanner,
+        ReportGenerator,
+        ScoreAggregator,
+        Scorecard,
+    )
+except ImportError:
+    pass
