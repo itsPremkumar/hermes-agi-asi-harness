@@ -13,11 +13,15 @@ import operator
 class AgentPhase:
     """Agent lifecycle phases."""
     INIT = "init"
+    RESEARCHING = "researching"
+    THINKING = "thinking"
+    GOAL_SETTING = "goal_setting"
     PLANNING = "planning"
     DISPATCHING = "dispatching"
     EXECUTING = "executing"
     MONITORING = "monitoring"
     ADJUSTING = "adjusting"
+    VERIFYING = "verifying"
     EVOLVING = "evolving"
     COMPLETING = "completing"
     COMPLETED = "completed"
@@ -41,6 +45,12 @@ class AgentState(TypedDict):
     iteration: int
     max_iterations: int
 
+    # Cognitive: Deep Research & Deep Thinking
+    research_dossier: dict[str, Any]
+    thinking_summary: dict[str, Any]
+    goal_contract: dict[str, Any]
+    hermes_packet: dict[str, Any]
+
     # Planning
     plan: list[dict[str, Any]]  # list of plan steps
     current_step: int
@@ -52,11 +62,13 @@ class AgentState(TypedDict):
     errors: Annotated[list[str], operator.add]
     step_outputs: Annotated[list[Any], operator.add]
 
-    # Monitoring
+    # Monitoring & Telemetry
     score: float
     stall_count: int
     max_stalls: int
     last_progress_iteration: int
+    telemetry: list[dict[str, Any]]
+    completion_proof: dict[str, Any]
 
     # Evolution
     evolution_history: Annotated[list[dict[str, Any]], operator.add]
@@ -81,6 +93,10 @@ def create_initial_state(task_description: str, agent_id: str = "", **kwargs: An
         status="running",
         iteration=0,
         max_iterations=kwargs.get("max_iterations", 20),
+        research_dossier={},
+        thinking_summary={},
+        goal_contract={},
+        hermes_packet={},
         plan=[],
         current_step=0,
         total_steps=0,
@@ -92,6 +108,8 @@ def create_initial_state(task_description: str, agent_id: str = "", **kwargs: An
         stall_count=0,
         max_stalls=kwargs.get("max_stalls", 5),
         last_progress_iteration=0,
+        telemetry=[],
+        completion_proof={},
         evolution_history=[],
         strategy_stack=["default"],
         context=kwargs.get("context", {}),

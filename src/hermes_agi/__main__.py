@@ -33,6 +33,20 @@ def main():
     # Health command
     subparsers.add_parser("health", help="Show health status")
     
+    # Research command
+    research_parser = subparsers.add_parser("research", help="Run autonomous deep research on a topic")
+    research_parser.add_argument("topic", help="Research topic or question")
+    research_parser.add_argument("--depth", type=int, default=3, help="Research depth (1-5)")
+
+    # Think command
+    think_parser = subparsers.add_parser("think", help="Run deep thinking deliberation on a goal")
+    think_parser.add_argument("goal", help="Goal to deliberate")
+
+    # Allocate command
+    allocate_parser = subparsers.add_parser("allocate", help="Allocate a mission packet to Hermes")
+    allocate_parser.add_argument("task", help="Task description")
+    allocate_parser.add_argument("--role", default="hermes-coder", help="Assigned agent role")
+
     # Discover command
     discover_parser = subparsers.add_parser("discover", help="Discover features")
     discover_parser.add_argument("query", nargs="?", default="", help="Search query")
@@ -54,6 +68,15 @@ async def run_command(args):
     
     if args.command == "run":
         result = await harness.run(args.task)
+        print(result)
+    elif args.command == "research":
+        result = await harness.research(args.topic, depth=args.depth)
+        print(result)
+    elif args.command == "think":
+        result = await harness.think(args.goal)
+        print(result)
+    elif args.command == "allocate":
+        result = await harness.allocate_hermes(args.task, role=args.role)
         print(result)
     elif args.command == "benchmark":
         result = await harness.benchmark(args.name)

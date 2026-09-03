@@ -84,7 +84,15 @@ __all__ = [
     "HermesDetector",
     "HermesIntegrator",
     "AutoInstaller",
+    "DeepResearchAgent",
+    "DeepThinkingEngine",
+    "HermesMissionPacket",
+    "HermesWatchdogMonitor",
 ]
+
+from .research import DeepResearchAgent
+from .thinking import DeepThinkingEngine
+from .allocation import HermesMissionPacket, HermesWatchdogMonitor
 
 
 class Harness:
@@ -137,7 +145,7 @@ class Harness:
         
         self._initialized = True
     
-    async def run(self, task: str, **kwargs) -> dict:
+    async def run(self, task: str, multi_step: bool = True, **kwargs) -> dict:
         """Run a task through the harness."""
         if not self._initialized:
             await self.initialize()
@@ -161,12 +169,36 @@ class Harness:
                         plan_result["workflow"] = workflow_result
                     except Exception as e:
                         plan_result["workflow_error"] = str(e)
+
+            # Multi-Step LangGraph StateGraph Execution
+            multi_step_payload = {}
+            if multi_step:
+                try:
+                    from harnix.kernel import HarnessRuntimeKernel
+                    kernel = HarnessRuntimeKernel()
+                    state = kernel.run(task, **kwargs)
+                    multi_step_payload = {
+                        "run_id": state.get("run_id"),
+                        "status": state.get("status"),
+                        "score": state.get("score"),
+                        "plan": state.get("plan", []),
+                        "results": state.get("results", []),
+                        "research": state.get("research_dossier", {}),
+                        "thinking": state.get("thinking_summary", {}),
+                        "hermes_packet": state.get("hermes_packet", {}),
+                        "proof": state.get("completion_proof", {}),
+                    }
+                except Exception as ex:
+                    multi_step_payload = {"error": str(ex)}
             
-            return {
+            response = {
                 "status": "completed",
                 "task": task,
                 "plan": plan_result,
             }
+            if multi_step_payload:
+                response["multi_step"] = multi_step_payload
+            return response
         except Exception as e:
             # Attempt recovery
             await self.recovery.report_failure("harness", str(e))
@@ -175,6 +207,37 @@ class Harness:
                 "task": task,
                 "error": str(e),
             }
+
+    async def research(self, topic: str, depth: int = 3) -> dict:
+        """Run deep research on a topic or task."""
+        from .research import DeepResearchAgent
+        agent = DeepResearchAgent()
+        dossier = await agent.investigate(topic, depth=depth)
+        return dossier.to_dict()
+
+    async def think(self, goal: str, context: dict = None) -> dict:
+        """Run deep thinking and Graph-of-Thought deliberation on a goal."""
+        from .thinking import DeepThinkingEngine
+        engine = DeepThinkingEngine()
+        result = await engine.deliberate(goal, context=context)
+        return result.to_dict()
+
+    async def allocate_hermes(self, task: str, role: str = "hermes-coder", **kwargs) -> dict:
+        """Allocate a formal mission packet to Hermes with active watchdog monitoring."""
+        from .allocation import HermesMissionPacket, HermesWatchdogMonitor
+        packet = HermesMissionPacket(
+            goal=task,
+            assigned_role=role,
+            goal_contract={"objective": task, "status": "active"},
+            tool_whitelist=["filesystem_tool", "python_tool", "shell_tool", "git_tool"],
+            completion_criteria=[f"Execute steps for: {task}"],
+        )
+        monitor = HermesWatchdogMonitor(mission_id=packet.mission_id)
+        monitor.record_heartbeat()
+        return {
+            "packet": packet.to_dict(),
+            "telemetry": monitor.get_telemetry_summary(),
+        }
     
     async def benchmark(self, name: str = "all") -> dict:
         """Run benchmarks through the harness."""

@@ -1,7 +1,15 @@
-"""Research package — deep research capabilities."""
+"""
+Hermes AGI/ASI Harness — Autonomous Deep Research Package.
+"""
 
-from __future__ import annotations
+from .agent import (
+    DeepResearchAgent,
+    ResearchDossier,
+    ResearchFinding,
+)
 
-from .engine import ResearchEngine, ResearchReport
-
-__all__ = ["ResearchEngine", "ResearchReport"]
+__all__ = [
+    "DeepResearchAgent",
+    "ResearchDossier",
+    "ResearchFinding",
+]
