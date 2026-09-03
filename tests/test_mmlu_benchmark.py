@@ -1,6 +1,6 @@
 """Tests for MMLUBenchmark."""
 import pytest
-from src.benchmark.mmlu_benchmark import (
+from benchmarks.mmlu_benchmark import (
     MMLUBenchmark,
     MMLU_CATEGORIES,
     AGENT_API_VERSION,
