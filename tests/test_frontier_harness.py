@@ -29,12 +29,15 @@ class TestRLMREPL:
 
     def test_agent_bridge_callable_inside_repl(self):
         repl = RLMREPLExecutor()
-        code = "t = agent.think('verify caching invariant', use_mcts=True)\n"
-        res = repl.execute(code)
-        assert res.success is True
-        t_var = repl.get_variable("t")
-        assert t_var is not None
-        assert "best_strategy" in t_var
+        try:
+            code = "t = await agent.think('verify caching invariant', use_mcts=True)\n"
+            res = repl.execute(code)
+            assert res.success is True
+            t_var = repl.get_variable("t")
+            assert t_var is not None
+            assert "best_strategy" in t_var
+        finally:
+            repl.close()
 
 
 class TestRuntimeModes:

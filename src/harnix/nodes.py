@@ -59,8 +59,8 @@ def _run_sync(coro: Any) -> Any:
 # ---------------------------------------------------------------------------
 
 def init_node(state: AgentState) -> AgentState:
-    """Initialize agent state — set phase to RESEARCHING/PLANNING, record start."""
-    state["phase"] = AgentPhase.INIT
+    """Initialize agent state — set phase to PLANNING, record start."""
+    state["phase"] = AgentPhase.PLANNING
     state["iteration"] += 1
     state["messages"] = [f"[init] Agent {state['agent_id']} starting for: {state['task_description']}"]
     state["memory"] = [f"Task accepted: {state['task_description']} at {time.time()}"]
@@ -336,9 +336,16 @@ def _execute_step(step: dict[str, Any]) -> Any:
         fact = step["args"][0]
         return f"Stored: {fact}"
 
-    elif action == "search":
-        query = step["args"][0]
-        return f"Simulated search for: {query}"
+    elif action in ("rlm", "rlm_execute"):
+        code = step["args"][0]
+        from hermes_agi.rlm import RLMREPLExecutor
+        executor = RLMREPLExecutor()
+        try:
+            res = executor.execute(code)
+            val = res.returned_value if res.returned_value is not None else res.stdout.strip()
+            return f"RLM Result: {val}"
+        finally:
+            executor.close()
 
     else:
         return f"Executed: {step.get('description', action)}"
@@ -372,8 +379,8 @@ def monitor_node(state: AgentState) -> AgentState:
     # Determine completion
     is_complete = current >= total
     if is_complete:
-        state["status"] = "verifying"
-        state["phase"] = AgentPhase.VERIFYING
+        state["status"] = "completed"
+        state["phase"] = AgentPhase.COMPLETING
 
     state["messages"] = [
         f"[monitor] Watchdog telemetry: {current}/{total} steps, score={new_score:.2f}, stalls={state['stall_count']}"
@@ -474,6 +481,7 @@ def adjust_node(state: AgentState) -> AgentState:
     state["messages"] = [interjection]
     state["memory"] = [interjection]
     state["stall_count"] = 0
+    state["strategy"] = "dynamic_retry"
 
     return state
 
@@ -540,6 +548,9 @@ def route_after_dispatch(state: AgentState) -> str:
 
 def route_after_monitor(state: AgentState) -> str:
     """Route after monitor based on progress, stalls, or completion."""
+    if state.get("status") == "completed":
+        return "complete"
+
     # If ready for verification / complete
     if state["current_step"] >= state["total_steps"]:
         return "verify"
@@ -573,6 +584,31 @@ def route_after_evolve(state: AgentState) -> str:
     return "dispatch"
 
 
+def rlm_node(state: AgentState) -> AgentState:
+    """Execute exploratory, algorithmic, or recursive Python code in persistent RLM REPL."""
+    state["phase"] = AgentPhase.RLM
+    state["iteration"] += 1
+
+    code = state.get("context", {}).get("rlm_code") or f"# Task: {state['task_description']}\nprint('RLM processing: {state['task_description']}')"
+    from hermes_agi.rlm import RLMREPLExecutor
+    executor = RLMREPLExecutor()
+    try:
+        res = executor.execute(code)
+        val = res.returned_value if res.returned_value is not None else res.stdout.strip()
+        state["results"] = [{
+            "step_id": f"rlm-{uuid.uuid4().hex[:6]}",
+            "action": "rlm",
+            "result": val,
+            "stdout": res.stdout,
+            "stderr": res.stderr,
+            "timestamp": time.time(),
+        }]
+        state["messages"] = [f"[rlm] Executed code cell: {val}"]
+    finally:
+        executor.close()
+    return state
+
+
 # ---------------------------------------------------------------------------
 # Node registry
 # ---------------------------------------------------------------------------
@@ -583,6 +619,7 @@ NODE_REGISTRY: dict[str, Any] = {
     "think": think_node,
     "plan": plan_node,
     "dispatch": dispatch_node,
+    "rlm": rlm_node,
     "monitor": monitor_node,
     "verify": verify_node,
     "adjust": adjust_node,

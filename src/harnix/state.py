@@ -19,6 +19,7 @@ class AgentPhase:
     PLANNING = "planning"
     DISPATCHING = "dispatching"
     EXECUTING = "executing"
+    RLM = "rlm"
     MONITORING = "monitoring"
     ADJUSTING = "adjusting"
     VERIFYING = "verifying"

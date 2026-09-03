@@ -1,10 +1,11 @@
 """
 Hermes AGI/ASI Harness — Recursive Language Model (RLM) REPL Runtime.
 
-Inspired by Prime Agent:
-- Treats context as persistent Python variables
-- Exposes subagents and harness tools as callable Python functions
-- Allows arbitrary programmatic iteration and data filtering without token explosion
+Ported & Enhanced from Prime Agent (prime-agent-runtime/src/rlm/repl.py):
+- Persistent CPython execution with top-level `await` (PyCF_ALLOW_TOP_LEVEL_AWAIT)
+- Dedicated persistent asyncio event loop running on a background worker thread
+- Exposes `rlm` (RLMBridge) with recursive subagents (`await rlm.run()`)
+- In-memory Python heap snapshots and restorations
 """
 
 from __future__ import annotations
@@ -12,93 +13,22 @@ from __future__ import annotations
 import ast
 import asyncio
 import io
+import inspect
+import linecache
 import logging
 import math
 import os
 import sys
+import threading
 import time
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from hermes_agi.research import DeepResearchAgent
-from hermes_agi.thinking import DeepThinkingEngine, MCTSSearchEngine
-from core.verification.anti_goodhart import AntiGoodhartVerifier
-from core.verification.adversarial import AdversarialVerifier
+from .bridge import RLMBridge, RLMSpawnHandle
 
 logger = logging.getLogger("hermes.rlm.environment")
-
-
-class AgentContextBridge:
-    """
-    Exposes harness subagents, search, and verifiers as callable functions
-    inside the agent's Python REPL execution environment.
-    """
-
-    def __init__(self, workspace_root: str = "."):
-        self.workspace_root = Path(workspace_root).resolve()
-        self._research_agent = DeepResearchAgent()
-        self._thinking_engine = DeepThinkingEngine()
-        self._mcts_engine = MCTSSearchEngine()
-        self._anti_goodhart = AntiGoodhartVerifier(workspace_root=str(self.workspace_root))
-        self._adversarial = AdversarialVerifier()
-
-    def research(self, topic: str, depth: int = 2) -> dict[str, Any]:
-        """Callable research subagent."""
-        try:
-            # Run async coro synchronously inside REPL
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    dossier = pool.submit(asyncio.run, self._research_agent.investigate(topic, depth=depth)).result()
-            else:
-                dossier = loop.run_until_complete(self._research_agent.investigate(topic, depth=depth))
-            return dossier.to_dict()
-        except Exception as e:
-            logger.debug("REPL research fallback: %s", e)
-            return {"topic": topic, "findings": [], "error": str(e)}
-
-    def think(self, goal: str, use_mcts: bool = False) -> dict[str, Any]:
-        """Callable thinking & MCTS deliberator."""
-        if use_mcts:
-            res = self._mcts_engine.search(goal)
-            return res.to_dict()
-        else:
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        t = pool.submit(asyncio.run, self._thinking_engine.deliberate(goal)).result()
-                else:
-                    t = loop.run_until_complete(self._thinking_engine.deliberate(goal))
-                return t.to_dict()
-            except Exception as e:
-                return {"goal": goal, "strategy": "direct", "error": str(e)}
-
-    def verify(self, file_name: str, code: str) -> dict[str, Any]:
-        """Callable anti-goodhart and adversarial verification."""
-        ag_verdict = self._anti_goodhart.verify(file_name, code)
-        adv_verdict = self._adversarial.verify(claims=[f"Verify {file_name}"], evidence=["Static code passed"])
-        return {
-            "anti_goodhart": ag_verdict.to_dict(),
-            "adversarial": adv_verdict.to_dict(),
-            "overall_passed": ag_verdict.passed and adv_verdict.consensus_score >= 0.80,
-        }
-
-    def read_file(self, relative_path: str) -> str:
-        """Read a file from the workspace."""
-        p = (self.workspace_root / relative_path).resolve()
-        return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
-
-    def write_file(self, relative_path: str, content: str) -> bool:
-        """Write a file to the workspace."""
-        p = (self.workspace_root / relative_path).resolve()
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content, encoding="utf-8")
-        return True
 
 
 @dataclass
@@ -125,24 +55,63 @@ class REPLExecutionResult:
 
 class RLMREPLExecutor:
     """
-    Persistent in-memory Python REPL execution environment.
-    Retains variables across calls, enabling recursive subagent calls.
+    Persistent in-memory Python REPL execution environment with top-level await.
+    Runs on a persistent background asyncio loop, enabling native `await rlm.run()`.
     """
 
     def __init__(self, workspace_root: str = "."):
-        self.workspace_root = workspace_root
-        self.bridge = AgentContextBridge(workspace_root=workspace_root)
+        self.workspace_root = Path(workspace_root).resolve()
+        self.bridge = RLMBridge(workspace_root=str(self.workspace_root))
+
+        # Start persistent background asyncio event loop
+        self._loop = asyncio.new_event_loop()
+        self._loop_thread = threading.Thread(target=self._run_event_loop, daemon=True)
+        self._loop_thread.start()
+
+        self._cell_counter = 0
+
+        # Persistent REPL globals
         self.globals_env: dict[str, Any] = {
+            "rlm": self.bridge,
             "agent": self.bridge,
+            "asyncio": asyncio,
             "os": os,
             "sys": sys,
             "math": math,
             "time": time,
             "Path": Path,
+            "_": None,
         }
 
+    def _run_event_loop(self) -> None:
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_forever()
+
     def execute(self, code_snippet: str) -> REPLExecutionResult:
-        """Execute a Python code snippet within the persistent REPL environment."""
+        """
+        Execute a Python code snippet with top-level await in the persistent environment.
+        Dispatches to the background loop thread and waits synchronously for completion.
+        """
+        future = asyncio.run_coroutine_threadsafe(self._execute_async(code_snippet), self._loop)
+        try:
+            return future.result(timeout=60)
+        except Exception as e:
+            return REPLExecutionResult(
+                code=code_snippet,
+                stdout="",
+                stderr=str(e),
+                returned_value=None,
+                success=False,
+                duration_seconds=0.0,
+                error=f"{type(e).__name__}: {e}",
+            )
+
+    async def _execute_async(self, code_snippet: str) -> REPLExecutionResult:
+        """Internal asynchronous cell executor with top-level await compilation."""
+        self._cell_counter += 1
+        cell_name = f"<cell-{self._cell_counter}>"
+        linecache.cache[cell_name] = (len(code_snippet), None, code_snippet.splitlines(keepends=True), cell_name)
+
         start_time = time.time()
         stdout_buf = io.StringIO()
         stderr_buf = io.StringIO()
@@ -151,21 +120,41 @@ class RLMREPLExecutor:
         error_str = ""
 
         try:
-            # Parse code to check if last statement is an expression
-            tree = ast.parse(code_snippet)
+            # Parse AST to check trailing expression
+            tree = ast.parse(code_snippet, filename=cell_name)
+            last_expr = None
             if tree.body and isinstance(tree.body[-1], ast.Expr):
-                # Split last expression to capture its evaluation value
                 last_expr = tree.body.pop()
-                exec_code = compile(tree, filename="<rlm_repl>", mode="exec")
-                eval_code = compile(ast.Expression(last_expr.value), filename="<rlm_repl>", mode="eval")
 
-                with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
-                    exec(exec_code, self.globals_env)
-                    returned_val = eval(eval_code, self.globals_env)
-            else:
-                compiled = compile(code_snippet, filename="<rlm_repl>", mode="exec")
-                with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
-                    exec(compiled, self.globals_env)
+            with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
+                # 1. Execute body statements with top-level await enabled
+                if tree.body:
+                    co_exec = compile(
+                        tree,
+                        filename=cell_name,
+                        mode="exec",
+                        flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+                    )
+                    res_exec = eval(co_exec, self.globals_env)
+                    if inspect.iscoroutine(res_exec):
+                        await res_exec
+
+                # 2. Evaluate trailing expression if present
+                if last_expr is not None:
+                    expr_ast = ast.Expression(last_expr.value)
+                    co_eval = compile(
+                        expr_ast,
+                        filename=cell_name,
+                        mode="eval",
+                        flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
+                    )
+                    res_eval = eval(co_eval, self.globals_env)
+                    if inspect.iscoroutine(res_eval):
+                        returned_val = await res_eval
+                    else:
+                        returned_val = res_eval
+
+                    self.globals_env["_"] = returned_val
 
         except Exception as e:
             success = False
@@ -187,3 +176,20 @@ class RLMREPLExecutor:
 
     def set_variable(self, name: str, val: Any) -> None:
         self.globals_env[name] = val
+
+    def snapshot_memory(self, snapshot_name: str) -> str:
+        """Snapshot current REPL variables to disk."""
+        return self.bridge.snapshot(snapshot_name, self.globals_env)
+
+    def restore_memory(self, snapshot_name: str) -> bool:
+        """Restore variables from a disk snapshot into REPL globals."""
+        loaded = self.bridge.restore(snapshot_name)
+        if loaded:
+            self.globals_env.update(loaded)
+            return True
+        return False
+
+    def close(self) -> None:
+        """Stop background event loop cleanly."""
+        if self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._loop.stop)

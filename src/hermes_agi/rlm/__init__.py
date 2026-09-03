@@ -1,20 +1,25 @@
 """
 Hermes AGI/ASI Harness — Recursive Language Model (RLM) Package.
 
-Inspired by Prime Agent:
-- Persistent in-memory Python REPL execution
-- Exposing subagents as callable Python functions
-- Programmatic manipulation of massive context variables
+Ported & Enhanced from Prime Agent (prime-agent-runtime/src/rlm/):
+- Persistent CPython REPL with top-level `await`
+- Recursive subagent spawning (`await rlm.run()`)
+- Parallel fan-out (`await asyncio.gather(...)`)
+- Memory heap snapshots and restorations
 """
 
 from .environment import (
     RLMREPLExecutor,
-    AgentContextBridge,
     REPLExecutionResult,
+)
+from .bridge import (
+    RLMBridge,
+    RLMSpawnHandle,
 )
 
 __all__ = [
     "RLMREPLExecutor",
-    "AgentContextBridge",
     "REPLExecutionResult",
+    "RLMBridge",
+    "RLMSpawnHandle",
 ]

@@ -21,6 +21,7 @@ from harnix.nodes import (
     think_node,
     plan_node,
     dispatch_node,
+    rlm_node,
     monitor_node,
     verify_node,
     adjust_node,
@@ -66,6 +67,7 @@ class HarnessRuntimeKernel:
         builder.add_node("think", think_node)
         builder.add_node("plan", plan_node)
         builder.add_node("dispatch", dispatch_node)
+        builder.add_node("rlm", rlm_node)
         builder.add_node("monitor", monitor_node)
         builder.add_node("verify", verify_node)
         builder.add_node("adjust", adjust_node)
@@ -79,6 +81,7 @@ class HarnessRuntimeKernel:
         builder.add_edge("think", "plan")
         builder.add_edge("plan", "dispatch")
         builder.add_edge("dispatch", "monitor")
+        builder.add_edge("rlm", "monitor")
 
         # Conditional edges from monitor
         builder.add_conditional_edges(
@@ -89,6 +92,7 @@ class HarnessRuntimeKernel:
                 "adjust": "adjust",
                 "evolve": "evolve",
                 "verify": "verify",
+                "complete": "complete",
             },
         )
 

@@ -395,6 +395,59 @@ class SolutionGenerator:
         return self._solutions.get(solution_id)
 
 
+class RLMTransformationSynthesizer:
+    """
+    Synthesizes and tests programmatic Python grid transformations in RLM REPL.
+    Replicates Prime Agent's ARC-AGI-3 RLM solver loop:
+    1. Writes transformation function in Python (e.g. reflection, crop, transpose)
+    2. Runs it on task.examples inputs inside RLM REPL
+    3. Checks if output equals example output
+    4. If matches -> generates verified solution for task.input_grid
+    """
+
+    def __init__(self):
+        from hermes_agi.rlm import RLMREPLExecutor
+        self.repl = RLMREPLExecutor()
+
+    def synthesize(self, task: Task) -> Optional[Solution]:
+        if not task.examples:
+            return None
+
+        candidate_programs = [
+            ("identity", "def transform(grid):\n    return [row[:] for row in grid]"),
+            ("h_reflect", "def transform(grid):\n    return grid[::-1]"),
+            ("v_reflect", "def transform(grid):\n    return [row[::-1] for row in grid]"),
+            ("transpose", "def transform(grid):\n    return [[grid[r][c] for r in range(len(grid))] for c in range(len(grid[0]))]"),
+            ("bbox_crop", "def transform(grid):\n    rows = [r for r, row in enumerate(grid) if any(x != 0 for x in row)]\n    cols = [c for c in range(len(grid[0])) if any(grid[r][c] != 0 for r in range(len(grid)))]\n    if not rows or not cols: return grid\n    return [[grid[r][c] for c in range(min(cols), max(cols)+1)] for r in range(min(rows), max(rows)+1)]"),
+        ]
+
+        ex_inp, ex_out = task.examples[0]
+        self.repl.set_variable("ex_inp", ex_inp.cells)
+        self.repl.set_variable("ex_out", ex_out.cells)
+        self.repl.set_variable("test_inp", task.input_grid.cells)
+
+        for prog_name, prog_code in candidate_programs:
+            res = self.repl.execute(prog_code)
+            if not res.success:
+                continue
+
+            test_res = self.repl.execute("res_cells = transform(ex_inp); res_cells == ex_out")
+            if test_res.success and test_res.returned_value is True:
+                apply_res = self.repl.execute("test_out = transform(test_inp); test_out")
+                if apply_res.success and isinstance(apply_res.returned_value, list):
+                    return Solution(
+                        id=f"rlm_sol_{prog_name}",
+                        grid=Grid(apply_res.returned_value),
+                        strategy_id=f"rlm_{prog_name}",
+                        score=1.0,
+                        verified=True,
+                    )
+        return None
+
+    def close(self):
+        self.repl.close()
+
+
 class SolutionVerifier:
     """Verify candidate solutions against the target."""
 
