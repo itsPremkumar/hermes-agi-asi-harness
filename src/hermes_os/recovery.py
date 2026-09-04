@@ -75,9 +75,17 @@ class AVOStagnationDetector:
         self._action_history: list[str] = []
         self._error_history: list[str] = []
         self._last_progress_time: float = time.time()
+        self._total_recorded: int = 0
+
+    @property
+    def has_signal(self) -> bool:
+        """True once any step was ever recorded. Without signal, wall-clock
+        alone must never read as stagnation (else idle missions 'plateau')."""
+        return self._total_recorded > 0
 
     def record_step(self, action_name: str, success: bool, error: Optional[str] = None) -> None:
         self._action_history.append(action_name)
+        self._total_recorded += 1
         if success:
             self._last_progress_time = time.time()
         elif error:
@@ -132,6 +140,7 @@ class AVOStagnationDetector:
         self._action_history.clear()
         self._error_history.clear()
         self._last_progress_time = time.time()
+        self._total_recorded = 0
 
 
 class RecoveryEngine:

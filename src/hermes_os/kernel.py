@@ -399,11 +399,22 @@ class HermesIntelligenceOS:
             mission_id=mission_id, active_agent_id="primary_worker",
             elapsed_seconds=1.2, tokens_consumed=tokens_used,
             tool_calls_count=len(steps), stagnation=stag,
+            has_signal=self.recovery.stagnation_detector.has_signal,
         )
         supervisor_action = self.supervisor.ingest_telemetry(telemetry)
 
         # 10b. Dual-Substrate Execution via RuntimeRouter
         runtime_res = await self.execute_plan_with_runtime(plan_ir)
+
+        # 10b2. Feed real step signals into the stagnation detector so its
+        # verdicts reflect observed progress, not wall-clock alone.
+        try:
+            for tid in getattr(runtime_res, "completed_tasks", []) or []:
+                self.recovery.stagnation_detector.record_step(f"wave:{tid}", True)
+            for tid in getattr(runtime_res, "failed_tasks", []) or []:
+                self.recovery.stagnation_detector.record_step(f"wave:{tid}", False, error=f"task failed:{tid}")
+        except Exception:
+            pass
 
         # 10c. Actuate supervisor intervention (pause/resume/restore actually take effect)
         try:

@@ -157,8 +157,13 @@ class ExternalSupervisor:
     def build_telemetry(self, mission_id: str, active_agent_id: str = "primary_worker",
                         elapsed_seconds: float = 0.0, tokens_consumed: int = 0,
                         tool_calls_count: int = 0, stagnation: Any = None,
-                        anomaly: str = "") -> SupervisorTelemetry:
-        """Build real telemetry from stagnation detector + counters (replaces hardcoded values)."""
+                        anomaly: str = "", has_signal: Optional[bool] = None) -> SupervisorTelemetry:
+        """Build real telemetry from stagnation detector + counters (replaces hardcoded values).
+
+        has_signal must come from the DETECTOR (AVOStagnationDetector.has_signal),
+        not the telemetry snapshot — pass it explicitly. With zero recorded steps,
+        wall-clock alone is not stagnation evidence.
+        """
         stag_detected = False
         stag_reason = ""
         if stagnation is not None:
@@ -167,8 +172,11 @@ class ExternalSupervisor:
             rec = str(getattr(stagnation, "recommended_intervention", "") or "")
             # Only real traps count: PLATEAU / CRITICAL_LOOP. NOMINAL and
             # SLOW_PROGRESS ("continue_with_monitoring") must stay CONTINUE.
-            stag_detected = level.lower() in ("plateau", "critical_loop")
+            signal = bool(getattr(stagnation, "has_signal", True)) if has_signal is None else bool(has_signal)
+            stag_detected = level.lower() in ("plateau", "critical_loop") and signal
             stag_reason = rec or level
+            if level.lower() in ("plateau", "critical_loop") and not signal:
+                stag_reason = f"{rec or level} (no recorded steps; treated nominal)"
         return SupervisorTelemetry(
             mission_id=mission_id, active_agent_id=active_agent_id,
             elapsed_seconds=elapsed_seconds, tokens_consumed=tokens_consumed,
