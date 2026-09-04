@@ -30,7 +30,8 @@ class LLMClient:
     def __init__(self, api_key: str = None, base_url: str = None, model: str = None):
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")
         self.base_url = base_url or os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        self.model = model or os.getenv("LLM_MODEL", "meituan/longcat-2.0:free")
+        default_model = "google/gemini-2.0-flash-exp:free" if "openrouter" in self.base_url.lower() else "gpt-4o-mini"
+        self.model = model or os.getenv("LLM_MODEL") or os.getenv("OPENROUTER_MODEL") or default_model
         self._client = None
     
     async def _get_client(self):

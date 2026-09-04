@@ -56,12 +56,33 @@ class SafetyKernel:
 
     def __init__(self):
         self._blocked_commands = [
+            # POSIX destruction
             r"rm\s+-rf\s+/",
+            r"rm\s+-rf\s+~",
             r"mkfs",
             r":\(\)\s*\{\s*:\|:&\s*\};:",
             r"dd\s+if=/dev/zero",
             r"chmod\s+-R\s+777\s+/",
             r">\s*/dev/sda",
+            r">\s*/dev/sd[a-z]",
+            r"shutdown\s+-[hr]\s+now",
+            # Windows PowerShell & CMD destruction
+            r"Remove-Item\s+.*-(?:Recurse|Force).*(?:[Cc]:[\\/]|SystemRoot|windir)",
+            r"del\s+/[sSfFqQ]\s+[cC]:\\",
+            r"Format-Volume",
+            r"Initialize-Disk",
+            r"Clear-Disk",
+            r"diskpart\s+/s",
+            # In-memory execution cradles & downloaders
+            r"iex\s*\(?(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod)",
+            r"Invoke-Expression.*(?:Invoke-WebRequest|iwr|curl|wget)",
+            r"powershell(?:\.exe)?\s+-[eE](?:nc|ncodedCommand)\s+[A-Za-z0-9+/=]{10,}",
+            # Persistence & registry tampering
+            r"(?:reg\s+add|Set-ItemProperty).*\\(?:CurrentVersion\\Run|Services)",
+            # Sensitive file exfiltration & path traversal
+            r"(?:\.\.[\\/]){2,}.*(?:etc[\\/](?:passwd|shadow)|Windows[\\/]System32[\\/]config[\\/]SAM|id_rsa|\.env)",
+            r"(?:curl|wget)\s+.*(?:@|--data).*(?:id_rsa|\.env|passwd|shadow|SAM)",
+            r"nc\s+.*-e\s+(?:/bin/sh|/bin/bash|cmd\.exe|powershell\.exe)",
         ]
         self._audit_logs: list[SafetyAuditLog] = []
         self._tainted_entities: set[str] = set()
@@ -135,6 +156,14 @@ class SafetyKernel:
             taint_present=taint,
         )
         self._audit_logs.append(log)
+
+    def is_command_safe(self, cmd_str: str) -> tuple[bool, list[str]]:
+        """Audit a shell/CLI command string directly against safety patterns."""
+        reasons = []
+        for pattern in self._blocked_commands:
+            if re.search(pattern, cmd_str, re.IGNORECASE):
+                reasons.append(f"Dangerous system command pattern detected: '{pattern}'")
+        return len(reasons) == 0, reasons
 
     def get_audit_logs(self, limit: int = 50) -> list[SafetyAuditLog]:
         return self._audit_logs[-limit:]

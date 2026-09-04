@@ -224,10 +224,17 @@ class CognitiveCompiler:
     """
     The Master Pre-Execution Intelligence Engine.
     Executes the 22 planning phases sequentially with intermediate phase checkpointing.
+    Supports multi-provider LLM deliberation with zero-latency deterministic fallback.
     """
 
-    def __init__(self, workspace_root: str = "."):
+    def __init__(
+        self,
+        workspace_root: str = ".",
+        llm_client: Optional[Any] = None,
+        enable_llm: bool = True,
+    ):
         self.workspace_root = workspace_root
+        self.enable_llm = enable_llm
         self.recon = EnvironmentReconEngine(workspace_root=workspace_root)
         self.capabilities = CapabilityRegistry(workspace_root=workspace_root)
         self.selector = CapabilitySelector(registry=self.capabilities)
@@ -236,6 +243,75 @@ class CognitiveCompiler:
         self.critic = PlanCritic()
         self.goal_memory = GoalMemory()
         self.validity_monitor = PlanValidityMonitor()
+
+        if llm_client is not None:
+            self.llm_client = llm_client
+        elif self.enable_llm:
+            try:
+                import os
+                if os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
+                    from hermes_agi.llm_planning import LLMClient
+                    self.llm_client = LLMClient()
+                else:
+                    self.llm_client = None
+            except Exception:
+                self.llm_client = None
+        else:
+            self.llm_client = None
+
+    def _deliberate_llm(
+        self,
+        prompt: str,
+        system_prompt: str = "You are Hermes Pre-Execution Cognitive Engine.",
+    ) -> Optional[str]:
+        """Query LLM provider for pre-execution cognition with safe deterministic fallback."""
+        if not self.llm_client or not self.enable_llm:
+            return None
+        try:
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ]
+            if hasattr(self.llm_client, "chat"):
+                import asyncio
+                import inspect
+                if inspect.iscoroutinefunction(self.llm_client.chat):
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if loop.is_running():
+                            import concurrent.futures
+                            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                                return pool.submit(asyncio.run, self.llm_client.chat(messages)).result()
+                        else:
+                            return loop.run_until_complete(self.llm_client.chat(messages))
+                    except RuntimeError:
+                        return asyncio.run(self.llm_client.chat(messages))
+                else:
+                    return self.llm_client.chat(messages)
+            elif hasattr(self.llm_client, "generate"):
+                import asyncio
+                import inspect
+                if inspect.iscoroutinefunction(self.llm_client.generate):
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if loop.is_running():
+                            import concurrent.futures
+                            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                                res = pool.submit(asyncio.run, self.llm_client.generate(prompt)).result()
+                                return getattr(res, "content", str(res))
+                        else:
+                            res = loop.run_until_complete(self.llm_client.generate(prompt))
+                            return getattr(res, "content", str(res))
+                    except RuntimeError:
+                        res = asyncio.run(self.llm_client.generate(prompt))
+                        return getattr(res, "content", str(res))
+                else:
+                    res = self.llm_client.generate(prompt)
+                    return getattr(res, "content", str(res))
+        except Exception as e:
+            logger.warning(f"Cognitive deliberation fallback: {e}")
+            return None
+        return None
 
     def compile(
         self,
@@ -251,14 +327,40 @@ class CognitiveCompiler:
         record = PlanningRecord(mission_id=mission_id)
         logger.info(f"Initiating Cognitive Compilation for mission {mission_id}: '{request}'")
 
-        # P0. Mission Understanding
-        record.goal_understanding = f"Execute objective: '{request}' safely and provably."
-        record.record_decision(
-            question="What is the primary intent?",
-            candidates=["Direct task execution", "Exploratory research", "System modification"],
-            selected="Direct task execution",
-            reason="User request provides concrete functional requirement",
+        # P0. Mission Understanding (Deliberated + Heuristic)
+        llm_p0 = self._deliberate_llm(
+            prompt=f"Analyze mission request: '{request}'. Extract goal understanding, intent, and implicit assumptions. Output json with keys: goal_understanding, intent, assumptions."
         )
+        p0_done = False
+        if llm_p0:
+            try:
+                import json
+                import re
+                m = re.search(r"\{.*\}", llm_p0, re.DOTALL)
+                if m:
+                    data = json.loads(m.group(0))
+                    record.goal_understanding = data.get("goal_understanding", f"Execute objective: '{request}' safely and provably.")
+                    if data.get("assumptions") and isinstance(data["assumptions"], list):
+                        record.assumptions.extend(data["assumptions"])
+                    record.record_decision(
+                        question="What is the primary intent?",
+                        candidates=["Direct task execution", "Exploratory research", "System modification"],
+                        selected=data.get("intent", "Direct task execution"),
+                        reason="LLM cognitive deliberation",
+                        confidence=0.96,
+                    )
+                    p0_done = True
+            except Exception:
+                pass
+
+        if not p0_done:
+            record.goal_understanding = f"Execute objective: '{request}' safely and provably."
+            record.record_decision(
+                question="What is the primary intent?",
+                candidates=["Direct task execution", "Exploratory research", "System modification"],
+                selected="Direct task execution",
+                reason="User request provides concrete functional requirement",
+            )
 
         # P1. Goal Construction
         invariants_list = [
@@ -313,6 +415,25 @@ class CognitiveCompiler:
             constraints=[inv.description for inv in invariants_list],
             risk_level=risk_level,
         )
+        llm_strat = self._deliberate_llm(
+            prompt=f"Propose an innovative, resilient execution strategy for objective: '{request}'. Invariants: {[inv.description for inv in invariants_list]}."
+        )
+        if llm_strat:
+            llm_candidate = StrategyCandidate(
+                strategy_id=f"strat-llm-{uuid.uuid4().hex[:6]}",
+                name="LLM-Deliberated Adaptive Strategy",
+                description=llm_strat[:160].strip(),
+                approach="adaptive_deliberation",
+                assumptions=["Dynamic contextual feedback loop enabled"],
+                key_steps=["Domain analysis and pre-checks", "Isolated execution in sandboxes", "Empirical verification test suites"],
+                estimated_cost_tokens=14000,
+                estimated_time_seconds=40.0,
+                reversibility=0.92,
+                probability_of_success=0.90,
+                composite_score=0.88,
+            )
+            candidates.append(llm_candidate)
+
         chosen_strat = self.strategy_search.select_best_strategy(candidates, risk_level=risk_level)
         record.candidate_strategies = [c.to_dict() for c in candidates]
         record.chosen_strategy = chosen_strat.to_dict()
@@ -445,6 +566,13 @@ class CognitiveCompiler:
             tasks=[node.to_dict() for node in subgoal_nodes],
             verifiers=list(verifiers.values()),
         )
+
+        llm_critique = self._deliberate_llm(
+            prompt=f"Adversarially critique the plan for '{request}'. Strategy: {chosen_strat.name}. Invariants: {[inv.description for inv in invariants_list]}. Identify unverified edge cases or safety hazards.",
+            system_prompt="You are a strict adversarial plan reviewer and safety critic.",
+        )
+        if llm_critique:
+            record.rationale_summary += f" | Adversarial review note: {llm_critique[:120].strip()}"
 
         if review.approved:
             plan_ir.status = "PLAN_APPROVED"
