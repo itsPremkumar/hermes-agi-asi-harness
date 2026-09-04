@@ -162,9 +162,12 @@ class ExternalSupervisor:
         stag_detected = False
         stag_reason = ""
         if stagnation is not None:
-            level = str(getattr(stagnation, "level", "") or getattr(stagnation, "get", lambda *_: "")(""))
-            rec = str(getattr(stagnation, "recommended_intervention", ""))
-            stag_detected = "nominal" not in level.lower() if level else bool(rec and "nominal" not in rec)
+            lvl = getattr(stagnation, "level", "")
+            level = str(getattr(lvl, "value", lvl) or "")
+            rec = str(getattr(stagnation, "recommended_intervention", "") or "")
+            # Only real traps count: PLATEAU / CRITICAL_LOOP. NOMINAL and
+            # SLOW_PROGRESS ("continue_with_monitoring") must stay CONTINUE.
+            stag_detected = level.lower() in ("plateau", "critical_loop")
             stag_reason = rec or level
         return SupervisorTelemetry(
             mission_id=mission_id, active_agent_id=active_agent_id,

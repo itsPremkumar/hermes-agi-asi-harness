@@ -180,6 +180,7 @@ from .plugin_manifest import PermissionRing, PluginManifest, check_free_gate, lo
 from .evolution_lab import ApprovalGate, BaselineTracker
 from .skills import SkillForge, SkillRegistry, SkillVersion
 from .model_router import ModelEntry, ModelPortfolio
+from .hermes_llm import HermesFirstLLMClient, hermes_local_available, resolve_tier
 from .experiments import Experiment, ExperimentEngine
 from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
 from .watchdog import Watchdog, find_cycle
@@ -283,6 +284,9 @@ __all__ = [
     "SkillVersion",
     "ModelPortfolio",
     "ModelEntry",
+    "HermesFirstLLMClient",
+    "hermes_local_available",
+    "resolve_tier",
     "ExperimentEngine",
     "Experiment",
     "ArchSearchEngine",

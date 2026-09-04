@@ -92,6 +92,9 @@ def main():
     # Consolidate (P22 sleep cycle) + invariants
     subparsers.add_parser("consolidate", help="Run P22 memory consolidation (sleep cycle)")
     subparsers.add_parser("invariants", help="Verify 22 safety invariants")
+    llm_parser = subparsers.add_parser("llm", help="Hermes-first LLM chain status")
+    llm_parser.add_argument("action", nargs="?", default="status", help="status|refresh")
+    llm_parser.add_argument("--ask", default="", help="Test prompt sent through the chain")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
     
@@ -249,6 +252,18 @@ async def run_command(args):
         from hermes_os.safety_kernel import SafetyKernel
         sk = SafetyKernel()
         print(sk.verify_invariants({"action_type": "mission_dispatch", "action_args": {}, "principal": "system:master"}))
+    elif args.command == "llm":
+        from hermes_os.hermes_llm import HermesFirstLLMClient, resolve_tier
+        if args.action == "refresh":
+            print(resolve_tier(force_refresh=True))
+            return
+        client = HermesFirstLLMClient()
+        if args.ask:
+            out = client.generate(args.ask)
+            print({"tier": client.active_tier, "model": client.active_model,
+                   "output": (out[:500] if out else None)})
+        else:
+            print(client.status())
     elif args.command == "killswitch":
         from hermes_os.safety_kernel import SafetyKernel
         sk = SafetyKernel()

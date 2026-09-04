@@ -247,15 +247,19 @@ class CognitiveCompiler:
         if llm_client is not None:
             self.llm_client = llm_client
         elif self.enable_llm:
+            # Hermes-first: local Hermes models -> cloud providers -> deterministic.
             try:
-                import os
-                if os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
-                    from hermes_agi.llm_planning import LLMClient
-                    self.llm_client = LLMClient()
-                else:
-                    self.llm_client = None
+                from .hermes_llm import HermesFirstLLMClient
+                self.llm_client = HermesFirstLLMClient()
             except Exception:
                 self.llm_client = None
+                try:
+                    import os
+                    if os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
+                        from hermes_agi.llm_planning import LLMClient
+                        self.llm_client = LLMClient()
+                except Exception:
+                    self.llm_client = None
         else:
             self.llm_client = None
 
