@@ -437,6 +437,27 @@ class CapabilitySelector:
     def __init__(self, registry: CapabilityRegistry):
         self.registry = registry
 
+    def select_with_scores(
+        self,
+        task_id: str,
+        task_description: str,
+        risk_level: str = "medium",
+    ) -> ExecutionCapabilityPlan:
+        """Utility-ranked selection: outcome − cost − risk (scorecard-backed)."""
+        plan = self.select_for_task(task_id, task_description, risk_level)
+        try:
+            from .tool_scoring import ToolScorecard
+            sc = ToolScorecard(workspace_root=self.registry.workspace_root)
+            cands = [{"name": t.replace("tool.", ""), "risk": "medium", "est_tokens": 500}
+                     for t in plan.selected_tools]
+            # Map short names back to tool.* ids for ranking
+            ranked = sc.rank([{"name": t, "risk": "medium", "est_tokens": 500} for t in plan.selected_tools])
+            plan.selected_tools = [r["name"] for r in ranked] or plan.selected_tools
+            plan.required_capabilities = plan.selected_tools + plan.selected_skills + plan.selected_plugins
+        except Exception:
+            pass
+        return plan
+
     def select_for_task(
         self,
         task_id: str,

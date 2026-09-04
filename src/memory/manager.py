@@ -106,6 +106,84 @@ class MemoryOS:
         """Convenience alias to flush all memories to disk."""
         return self.save_to_disk()
 
+    # -- Continuous-operation helpers (P22 + ranked recall) --------------
+    def rank_relevant(self, query: str, limit: int = 8) -> dict[str, Any]:
+        """AGX-style ranked recall across semantic/procedural/failure for prompt injection."""
+        try:
+            from .ranking import memory_str, rank_lessons
+        except Exception:
+            return {"bullets": "", "count": 0}
+        items: list[Any] = []
+        try:
+            items.extend(list(getattr(self.semantic, "_entries", {}).values()))
+        except Exception:
+            pass
+        try:
+            items.extend(list(getattr(self.procedural, "_procedures", {}).values()))
+        except Exception:
+            pass
+        try:
+            items.extend(list(getattr(self.failure, "_failures", {}).values()))
+        except Exception:
+            pass
+        ranked = rank_lessons(items, query, limit=limit)
+        return {"bullets": memory_str(ranked), "count": len(ranked)}
+
+    def consolidate_p22(self) -> dict[str, Any]:
+        """P22 sleep/dream consolidation: dedupe + archive + calibrate + flush."""
+        try:
+            from .consolidation import consolidate
+            return consolidate(self)
+        except Exception as e:
+            return {"merged": 0, "archived": 0, "calibrated": 0, "error": str(e)}
+
+    def index_vector(self, doc_id: str, text: str, tags: Any = None) -> bool:
+        try:
+            from .vector_graph import VectorStore
+            VectorStore(workspace_root=self.workspace_root).add(doc_id, text, list(tags or []))
+            return True
+        except Exception:
+            return False
+
+    def semantic_search(self, query: str, limit: int = 8) -> list[dict[str, Any]]:
+        try:
+            from .vector_graph import VectorStore
+            hits = VectorStore(workspace_root=self.workspace_root).search(query, limit=limit)
+            sem = getattr(self, "semantic", None)
+            out: list[dict[str, Any]] = []
+            for doc_id, score in hits:
+                fact = doc_id
+                try:
+                    entry = sem._entries.get(doc_id) if sem and hasattr(sem, "_entries") else None
+                    if entry is not None:
+                        fact = getattr(entry, "fact", doc_id)
+                except Exception:
+                    pass
+                out.append({"doc_id": doc_id, "score": score, "fact": fact})
+            return out
+        except Exception:
+            return []
+
+    def kg_link(self, src: str, rel: str, dst: str, src_type: str = "entity", dst_type: str = "entity") -> bool:
+        try:
+            from .vector_graph import KnowledgeGraph
+            kg = KnowledgeGraph(workspace_root=self.workspace_root)
+            if src not in getattr(kg, "_nodes", {}):
+                kg.add_node(src, src_type)
+            if dst not in getattr(kg, "_nodes", {}):
+                kg.add_node(dst, dst_type)
+            kg.add_edge(src, rel, dst)
+            return True
+        except Exception:
+            return False
+
+    def record_usage(self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0) -> dict[str, Any]:
+        try:
+            from .ledger import EconomicLedger
+            return EconomicLedger(workspace_root=self.workspace_root).record(mission_id, tokens, runtime, workers)
+        except Exception as e:
+            return {"mission_id": mission_id, "tokens": tokens, "error": str(e)}
+
     def stats(self) -> dict[str, Any]:
         return {
             "semantic_entries": self.semantic.count(),

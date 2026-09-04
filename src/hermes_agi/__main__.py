@@ -72,6 +72,28 @@ def main():
     # REPL command (Prime Agent Recursive Language Model)
     repl_parser = subparsers.add_parser("repl", help="Execute Python code snippet in RLM persistent REPL")
     repl_parser.add_argument("code", nargs="?", default="", help="Python code to evaluate with 'agent' bridge")
+
+    # Daemon command (24/7 continuous operation)
+    daemon_parser = subparsers.add_parser("daemon", help="Run 24/7 continuous daemon loop")
+    daemon_parser.add_argument("action", nargs="?", default="run", help="run|enqueue|status|stop")
+    daemon_parser.add_argument("request", nargs="?", default="", help="Mission request (for enqueue)")
+    daemon_parser.add_argument("--max-iterations", type=int, default=0, help="0 = infinite")
+    daemon_parser.add_argument("--poll", type=float, default=2.0, help="Poll interval seconds")
+
+    # Hermes control command
+    hx_parser = subparsers.add_parser("hermes", help="Hermes lifecycle control")
+    hx_parser.add_argument("action", nargs="?", default="health", help="health|spawn|delegate|kill|update|list")
+    hx_parser.add_argument("task", nargs="?", default="", help="Task text for spawn/delegate")
+    hx_parser.add_argument("--profile", default="default", help="Hermes profile")
+    hx_parser.add_argument("--role", default="leaf", help="leaf|orchestrator")
+    hx_parser.add_argument("--background", action="store_true", help="Background spawn")
+    hx_parser.add_argument("--iid", default="", help="Instance id for kill")
+
+    # Consolidate (P22 sleep cycle) + invariants
+    subparsers.add_parser("consolidate", help="Run P22 memory consolidation (sleep cycle)")
+    subparsers.add_parser("invariants", help="Verify 22 safety invariants")
+    kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
+    kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
     
     args = parser.parse_args()
     
@@ -176,6 +198,65 @@ async def run_command(args):
             print(res.stderr, end="", file=sys.stderr)
         if res.returned_value is not None:
             print(res.returned_value)
+    elif args.command == "daemon":
+        from hermes_os.kernel import HermesIntelligenceOS
+        os_kernel = HermesIntelligenceOS()
+        if args.action == "enqueue" and args.request:
+            mid = os_kernel.enqueue(args.request)
+            print(f"enqueued {mid}")
+        elif args.action == "status":
+            print(os_kernel.daemon.stats())
+            if getattr(os_kernel, "scheduler", None) is not None:
+                print(os_kernel.scheduler.stats())
+        elif args.action == "stop":
+            os_kernel.daemon.request_stop()
+            print("stop requested")
+        else:
+            max_iter = args.max_iterations or None
+            print(f"Starting 24/7 daemon (max_iter={max_iter})... Ctrl+C to stop.")
+            try:
+                summary = asyncio.run(os_kernel.run_daemon_forever(
+                    poll_interval_seconds=args.poll, max_iterations=max_iter))
+                print(summary)
+            except KeyboardInterrupt:
+                os_kernel.daemon.request_stop()
+                print("stopped by user")
+    elif args.command == "hermes":
+        from hermes_os.kernel import HermesIntelligenceOS
+        os_kernel = HermesIntelligenceOS()
+        ctl = os_kernel.hermes
+        if ctl is None:
+            print("Hermes controller unavailable"); return
+        if args.action == "spawn" and args.task:
+            print(ctl.spawn(args.task, profile=args.profile, role=args.role, background=args.background).to_dict())
+        elif args.action == "delegate" and args.task:
+            print(ctl.delegate_task(args.task, role=args.role, background=args.background, profile=args.profile))
+        elif args.action == "kill" and args.iid:
+            print({"killed": ctl.kill(args.iid)})
+        elif args.action == "update":
+            print(ctl.update())
+        elif args.action == "list":
+            print(ctl.list_instances())
+        else:
+            print(ctl.health())
+            print(ctl.poll_completions())
+    elif args.command == "consolidate":
+        from hermes_os.kernel import HermesIntelligenceOS
+        os_kernel = HermesIntelligenceOS()
+        print(os_kernel.memory.consolidate_p22())
+    elif args.command == "invariants":
+        from hermes_os.safety_kernel import SafetyKernel
+        sk = SafetyKernel()
+        print(sk.verify_invariants({"action_type": "mission_dispatch", "action_args": {}, "principal": "system:master"}))
+    elif args.command == "killswitch":
+        from hermes_os.safety_kernel import SafetyKernel
+        sk = SafetyKernel()
+        if args.action == "engage":
+            print({"engaged": sk.engage_kill_switch("manual")})
+        elif args.action == "release":
+            print({"released": sk.release_kill_switch()})
+        else:
+            print({"engaged": sk.kill_engaged()})
 
 
 if __name__ == "__main__":

@@ -139,6 +139,19 @@ class UniversalEventBus:
         self._event_count += 1
         if len(self._history) > self.max_history:
             self._history.pop(0)
+        # Persistent JSONL audit log (rotation by size, best-effort, offline-safe)
+        try:
+            audit = self.log_dir / "audit.jsonl"
+            with open(audit, "a", encoding="utf-8") as f:
+                f.write(json.dumps(event.to_dict()) + "\n")
+            try:
+                if audit.stat().st_size > 5_000_000:
+                    (self.log_dir / "audit.prev.jsonl").write_bytes(audit.read_bytes()[-2_000_000:])
+                    audit.write_text("", encoding="utf-8")
+            except Exception:
+                pass
+        except Exception as e:
+            logger.debug("Event audit persist failed: %s", e)
 
     def get_history(self, filter_type: Optional[str] = None, limit: int = 50) -> list[HermesEvent]:
         """Retrieve recent events matching an optional glob pattern."""

@@ -275,6 +275,29 @@ class PopulationEvolutionLab:
             "evidence": execution_evidence,
         }
 
+    def promote_with_baseline(self, candidate_id: str, baseline_tracker: Any = None,
+                              approval_gate: Any = None) -> dict[str, Any]:
+        """Regression-protected promotion: baseline check + human gate for breaking changes."""
+        candidate = self._population.get(candidate_id)
+        if not candidate:
+            return {"success": False, "reason": "Candidate not found"}
+        if baseline_tracker is not None:
+            try:
+                reg = baseline_tracker.check_regression(candidate.fitness_score)
+                if reg.get("regression"):
+                    candidate.status = "archived"
+                    return {"success": False, "status": "archived", "reason": "regression vs baseline", "detail": reg}
+            except Exception as e:
+                return {"success": False, "reason": f"baseline check failed: {e}"}
+        if approval_gate is not None:
+            try:
+                if not approval_gate.is_approved(candidate_id):
+                    return {"success": False, "status": "awaiting_approval",
+                            "reason": "Level-10 human approval required for self-modification"}
+            except Exception as e:
+                return {"success": False, "reason": f"approval check failed: {e}"}
+        return self.evaluate_and_select(candidate_id)
+
     def all_variants(self) -> list[HermesVariant]:
         return list(self._population.values())
 
@@ -289,4 +312,57 @@ class PopulationEvolutionLab:
             "diversity_entropy": round(min(1.0, total * 0.15), 3),
             "meta_rule": "maintain_multi_variant_archive_and_anti_hacking",
         }
+
+
+class BaselineTracker:
+    """hermes-asi-master pattern: record baseline scores, detect regressions."""
+
+    def __init__(self, baseline: float = 0.85, tolerance: float = 0.02):
+        self.baseline = baseline
+        self.tolerance = tolerance
+        self.history: list[float] = [baseline]
+
+    def record(self, score: float) -> None:
+        self.history.append(float(score))
+
+    def check_regression(self, candidate_score: float) -> dict[str, Any]:
+        drop = self.baseline - float(candidate_score)
+        return {"regression": drop > self.tolerance, "drop": round(drop, 4),
+                "baseline": self.baseline, "candidate": float(candidate_score)}
+
+
+class ApprovalGate:
+    """Level-10 human gate for harness self-modification (Ring1 transitions)."""
+
+    def __init__(self, workspace_root: str = "."):
+        from pathlib import Path as _P
+        self.workspace_root = workspace_root
+        self._dir = _P(workspace_root) / ".hermes" / "approvals"
+        self._dir.mkdir(parents=True, exist_ok=True)
+
+    def request_approval(self, change_id: str, summary: str = "") -> str:
+        import json as _j, time as _t
+        p = self._dir / f"{change_id}.json"
+        p.write_text(_j.dumps({"change_id": change_id, "summary": summary,
+                               "approved": False, "requested_at": _t.time()}), encoding="utf-8")
+        return str(p)
+
+    def approve(self, change_id: str, approver: str = "human") -> bool:
+        import json as _j, time as _t
+        p = self._dir / f"{change_id}.json"
+        try:
+            data = _j.loads(p.read_text(encoding="utf-8")) if p.exists() else {"change_id": change_id}
+            data.update({"approved": True, "approver": approver, "approved_at": _t.time()})
+            p.write_text(_j.dumps(data, indent=2), encoding="utf-8")
+            return True
+        except Exception:
+            return False
+
+    def is_approved(self, change_id: str) -> bool:
+        import json as _j
+        p = self._dir / f"{change_id}.json"
+        try:
+            return bool(_j.loads(p.read_text(encoding="utf-8")).get("approved"))
+        except Exception:
+            return False
 

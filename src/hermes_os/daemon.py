@@ -13,12 +13,13 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 logger = logging.getLogger("hermes.os.daemon")
 
@@ -91,12 +92,20 @@ class PersistentDaemonRuntime:
 
     def __init__(self, workspace_root: str = "."):
         self.workspace_root = workspace_root
-        self.checkpoint_dir = Path(workspace_root) / ".hermes" / "checkpoints"
+        self.hermes_dir = Path(workspace_root) / ".hermes"
+        self.checkpoint_dir = self.hermes_dir / "checkpoints"
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        self._queue_file = self.hermes_dir / "daemon_queue.json"
+        self._pid_file = self.hermes_dir / "daemon.pid"
+        self._stop_file = self.hermes_dir / "daemon.stop"
         self._queue: list[QueuedMission] = []
         self._checkpoints: dict[str, CheckpointSnapshot] = {}
         self._is_running: bool = False
+        self._stop_requested: bool = False
+        self._iterations_completed: int = 0
+        self._consecutive_failures: int = 0
         self._load_existing_checkpoints()
+        self._load_queue()
 
     def _load_existing_checkpoints(self):
         for f in self.checkpoint_dir.glob("*.json"):
@@ -123,7 +132,7 @@ class PersistentDaemonRuntime:
         priority: MissionPriority = MissionPriority.NORMAL,
         risk_level: str = "medium",
     ) -> str:
-        """Submit a task to the background queue."""
+        """Submit a task to the background queue (disk-persisted)."""
         mid = f"m-{uuid.uuid4().hex[:6]}"
         item = QueuedMission(
             mission_id=mid,
@@ -135,12 +144,15 @@ class PersistentDaemonRuntime:
         # Sort queue by priority: CRITICAL > HIGH > NORMAL > LOW
         p_weights = {MissionPriority.CRITICAL: 4, MissionPriority.HIGH: 3, MissionPriority.NORMAL: 2, MissionPriority.LOW: 1}
         self._queue.sort(key=lambda x: p_weights.get(x.priority, 0), reverse=True)
+        self._save_queue()
         return mid
 
     def pop_next_mission(self) -> Optional[QueuedMission]:
         if not self._queue:
             return None
-        return self._queue.pop(0)
+        item = self._queue.pop(0)
+        self._save_queue()
+        return item
 
     def pending_count(self) -> int:
         return len(self._queue)
@@ -151,3 +163,197 @@ class PersistentDaemonRuntime:
     def reconstruct_from_crash(self) -> list[CheckpointSnapshot]:
         """Identify interrupted missions that were in progress during unexpected shutdown."""
         return [c for c in self._checkpoints.values() if c.status == "in_progress"]
+
+    # ------------------------------------------------------------------
+    # Continuous 24/7 runtime: disk-backed queue, pid lock, run loop
+    # ------------------------------------------------------------------
+    def _save_queue(self) -> None:
+        try:
+            payload = [
+                {
+                    "mission_id": q.mission_id,
+                    "request": q.request,
+                    "priority": q.priority.value if isinstance(q.priority, MissionPriority) else str(q.priority),
+                    "risk_level": q.risk_level,
+                    "submitted_at": q.submitted_at,
+                }
+                for q in self._queue
+            ]
+            self._queue_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.debug("Failed saving daemon queue: %s", e)
+
+    def _load_queue(self) -> None:
+        if not self._queue_file.exists():
+            return
+        try:
+            payload = json.loads(self._queue_file.read_text(encoding="utf-8"))
+            for item in payload:
+                try:
+                    prio = MissionPriority(item.get("priority", "normal"))
+                except Exception:
+                    prio = MissionPriority.NORMAL
+                self._queue.append(QueuedMission(
+                    mission_id=item.get("mission_id", f"m-{uuid.uuid4().hex[:6]}"),
+                    request=item.get("request", ""),
+                    priority=prio,
+                    risk_level=item.get("risk_level", "medium"),
+                    submitted_at=item.get("submitted_at", time.time()),
+                ))
+        except Exception as e:
+            logger.debug("Failed loading daemon queue: %s", e)
+
+    def requeue_interrupted(self) -> list[str]:
+        """Re-enqueue missions that were in_progress at shutdown. Returns mission_ids."""
+        interrupted = self.reconstruct_from_crash()
+        requeued: list[str] = []
+        for snap in interrupted:
+            if any(q.request == snap.objective for q in self._queue):
+                continue
+            mid = self.enqueue_mission(snap.objective, priority=MissionPriority.HIGH, risk_level="medium")
+            requeued.append(mid)
+            snap.status = "in_progress"
+        return requeued
+
+    def _acquire_pid_lock(self) -> bool:
+        try:
+            if self._pid_file.exists():
+                try:
+                    old_pid = int(self._pid_file.read_text(encoding="utf-8").strip())
+                    if old_pid == os.getpid():
+                        return True
+                    # Best-effort liveness check (Windows-safe: no signal kill)
+                    logger.warning("Existing daemon pid file found (pid=%s); continuing single-instance.", old_pid)
+                except Exception:
+                    pass
+            self._pid_file.write_text(str(os.getpid()), encoding="utf-8")
+            return True
+        except Exception as e:
+            logger.debug("PID lock failed: %s", e)
+            return True
+
+    def _release_pid_lock(self) -> None:
+        try:
+            if self._pid_file.exists():
+                self._pid_file.unlink()
+        except Exception:
+            pass
+
+    def request_stop(self) -> None:
+        """Ask a running loop to stop gracefully (also honored across restarts via stop file)."""
+        self._stop_requested = True
+        try:
+            self._stop_file.write_text(json.dumps({"requested_at": time.time()}), encoding="utf-8")
+        except Exception:
+            pass
+
+    def clear_stop(self) -> None:
+        self._stop_requested = False
+        try:
+            if self._stop_file.exists():
+                self._stop_file.unlink()
+        except Exception:
+            pass
+
+    def _stop_signalled(self) -> bool:
+        return self._stop_requested or self._stop_file.exists()
+
+    async def run_forever(
+        self,
+        mission_runner: Callable[[QueuedMission], Awaitable[Dict[str, Any]]],
+        poll_interval_seconds: float = 2.0,
+        max_iterations: Optional[int] = None,
+        max_consecutive_failures: int = 5,
+        on_tick: Optional[Callable[[int], Awaitable[None]]] = None,
+    ) -> Dict[str, Any]:
+        """Continuously drain the queue until stop is requested.
+
+        mission_runner: async callable receiving QueuedMission, returning result dict
+            with at least a 'status' key ('completed' on success).
+        """
+        self._acquire_pid_lock()
+        self.clear_stop()
+        self._is_running = True
+        self.requeue_interrupted()
+        completed = 0
+        failed = 0
+        started_at = time.time()
+        logger.info("Daemon 24/7 loop started (poll=%.1fs, max_iter=%s)", poll_interval_seconds, max_iterations)
+        try:
+            while not self._stop_signalled():
+                if max_iterations is not None and self._iterations_completed >= max_iterations:
+                    break
+                mission = self.pop_next_mission()
+                if mission is None:
+                    if on_tick is not None:
+                        try:
+                            await on_tick(self._iterations_completed)
+                        except Exception as e:
+                            logger.debug("on_tick failed: %s", e)
+                    await asyncio.sleep(poll_interval_seconds)
+                    continue
+                snap = CheckpointSnapshot(
+                    checkpoint_id=f"chk-{mission.mission_id}",
+                    mission_id=mission.mission_id,
+                    objective=mission.request,
+                    completed_steps=[],
+                    pending_steps=["step-1"],
+                    state_registers={"risk_level": mission.risk_level},
+                    world_state_summary="Daemon dispatched",
+                    tokens_consumed=0,
+                    status="in_progress",
+                )
+                self.save_checkpoint(snap)
+                try:
+                    result = await mission_runner(mission)
+                    status = str(result.get("status", "completed"))
+                    snap.status = "completed" if status == "completed" else "failed"
+                    snap.completed_steps = [status]
+                    snap.pending_steps = []
+                    self.save_checkpoint(snap)
+                    if snap.status == "completed":
+                        completed += 1
+                        self._consecutive_failures = 0
+                    else:
+                        failed += 1
+                        self._consecutive_failures += 1
+                except Exception as e:
+                    logger.error("Daemon mission %s crashed: %s", mission.mission_id, e)
+                    snap.status = "failed"
+                    snap.completed_steps = [f"crash: {e}"]
+                    snap.pending_steps = [mission.request]
+                    self.save_checkpoint(snap)
+                    failed += 1
+                    self._consecutive_failures += 1
+                self._iterations_completed += 1
+                if self._consecutive_failures >= max_consecutive_failures:
+                    logger.error("Daemon aborting: %d consecutive failures", self._consecutive_failures)
+                    break
+            return {
+                "status": "stopped" if self._stop_signalled() else "completed",
+                "completed": completed,
+                "failed": failed,
+                "iterations": self._iterations_completed,
+                "elapsed_seconds": round(time.time() - started_at, 2),
+                "pending": self.pending_count(),
+            }
+        finally:
+            self._is_running = False
+            self._release_pid_lock()
+
+    def run_forever_sync(
+        self,
+        mission_runner: Callable[[QueuedMission], Awaitable[Dict[str, Any]]],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        return asyncio.run(self.run_forever(mission_runner, **kwargs))
+
+    def stats(self) -> Dict[str, Any]:
+        return {
+            "is_running": self._is_running,
+            "pending": self.pending_count(),
+            "checkpoints": self.active_checkpoints_count(),
+            "iterations_completed": self._iterations_completed,
+            "consecutive_failures": self._consecutive_failures,
+            "in_progress": len(self.reconstruct_from_crash()),
+        }

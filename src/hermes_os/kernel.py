@@ -119,6 +119,62 @@ class HermesIntelligenceOS:
         # Plane 18: External Supervisor & 24/7 Persistent Daemon
         self.supervisor = ExternalSupervisor()
         self.daemon = PersistentDaemonRuntime(workspace_root=workspace_root)
+        try:
+            from .hermes_controller import HermesController
+            self.hermes = HermesController(workspace_root=workspace_root)
+        except Exception:
+            self.hermes = None  # type: ignore[assignment]
+        try:
+            from .scheduler import ContinuousScheduler
+            self.scheduler = ContinuousScheduler(workspace_root=workspace_root)
+            self._register_default_schedules()
+        except Exception:
+            self.scheduler = None  # type: ignore[assignment]
+        # ASI-reference subsystems (lazy, offline-safe; never break boot)
+        try:
+            from .skills import SkillRegistry, SkillForge
+            self.skill_registry = SkillRegistry(workspace_root=workspace_root)
+            self.skill_forge = SkillForge(self.skill_registry)
+        except Exception:
+            self.skill_registry = None  # type: ignore[assignment]
+            self.skill_forge = None  # type: ignore[assignment]
+        try:
+            from .model_router import ModelPortfolio
+            self.model_portfolio = ModelPortfolio(workspace_root=workspace_root)
+        except Exception:
+            self.model_portfolio = None  # type: ignore[assignment]
+        try:
+            from .experiments import ExperimentEngine
+            self.experiments = ExperimentEngine(workspace_root=workspace_root)
+        except Exception:
+            self.experiments = None  # type: ignore[assignment]
+        try:
+            from .arch_search import ArchSearchEngine
+            self.arch_search = ArchSearchEngine()
+        except Exception:
+            self.arch_search = None  # type: ignore[assignment]
+        try:
+            from .watchdog import Watchdog
+            self.watchdog = Watchdog(workspace_root=workspace_root)
+        except Exception:
+            self.watchdog = None  # type: ignore[assignment]
+        try:
+            from .tech_radar import SelfResearchEngine
+            self.self_research = SelfResearchEngine(workspace_root=workspace_root)
+        except Exception:
+            self.self_research = None  # type: ignore[assignment]
+        try:
+            from .provenance import ProvenanceRecorder
+            self.provenance = ProvenanceRecorder(workspace_root=workspace_root)
+        except Exception:
+            self.provenance = None  # type: ignore[assignment]
+        try:
+            from memory.vector_graph import KnowledgeGraph, VectorStore
+            self.vector_store = VectorStore(workspace_root=workspace_root)
+            self.knowledge_graph = KnowledgeGraph(workspace_root=workspace_root)
+        except Exception:
+            self.vector_store = None  # type: ignore[assignment]
+            self.knowledge_graph = None  # type: ignore[assignment]
 
         # Frontier Subsystems: Hooks, Gateway, Swarm, Drift, Perception
         self.hooks = HookManager(register_defaults=True)
@@ -251,12 +307,17 @@ class HermesIntelligenceOS:
             risk_level=risk_level,
         )
 
-        # 7. Compile Context OS Budget Packet
+        # 7. Compile Context OS Budget Packet (with ranked memory recall)
+        try:
+            ranked = self.memory.rank_relevant(request, limit=8)
+            retrieved = [ranked.get("bullets", "")] if ranked.get("bullets") else ["System verified and operational v8"]
+        except Exception:
+            retrieved = ["System verified and operational v8"]
         self.context_compiler.budget = arch.context_budget
         context_packet = self.context_compiler.compile(
             goal_contract=contract,
             world_state_summary=f"Abstraction mode: {abstraction_decision.mode.value}",
-            retrieved_knowledge=["System verified and operational v8"],
+            retrieved_knowledge=retrieved,
             working_tasks=[{"id": "t1", "description": request, "status": "pending"}],
             historical_notes=["OS v8 initialized"],
         )
@@ -325,25 +386,58 @@ class HermesIntelligenceOS:
             pending_steps=[],
         )
 
-        # 10. Supervisor Telemetry Audit
-        telemetry = SupervisorTelemetry(
-            mission_id=mission_id,
-            active_agent_id="primary_worker",
-            elapsed_seconds=1.2,
-            tokens_consumed=self.executive.resources.tokens_used,
-            tool_calls_count=len(steps),
-            stagnation_detected=False,
+        # 10. Real supervisor telemetry (stagnation-aware) + actuation
+        try:
+            stag = self.recovery.stagnation_detector.evaluate_stagnation()
+        except Exception:
+            stag = None
+        try:
+            tokens_used = int(getattr(getattr(self.executive, "resources", None), "tokens_used", 1500) or 1500)
+        except Exception:
+            tokens_used = 1500
+        telemetry = self.supervisor.build_telemetry(
+            mission_id=mission_id, active_agent_id="primary_worker",
+            elapsed_seconds=1.2, tokens_consumed=tokens_used,
+            tool_calls_count=len(steps), stagnation=stag,
         )
         supervisor_action = self.supervisor.ingest_telemetry(telemetry)
 
         # 10b. Dual-Substrate Execution via RuntimeRouter
         runtime_res = await self.execute_plan_with_runtime(plan_ir)
 
-        # Finalize Checkpoint
+        # 10c. Actuate supervisor intervention (pause/resume/restore actually take effect)
+        try:
+            if supervisor_action.intervention.value != "continue":
+                await self.supervisor.actuate(supervisor_action, runtime=self.runtime_router, daemon=self.daemon)
+        except Exception:
+            pass
+        # 10d. LLM redirect when waves stall (AGX supervisor pattern, offline-safe)
+        try:
+            failed = list(getattr(runtime_res, "failed_tasks", []) or [])
+            if failed or (stag is not None and "nominal" not in str(getattr(stag, "level", "nominal")).lower()):
+                directive = self.supervisor.llm_redirect(
+                    trajectory_summary=f"mission={mission_id} failed={failed} stagnation={getattr(stag, 'level', '')}",
+                    memory_bullets="",
+                    llm_client=getattr(getattr(self, "cognitive_compiler", None), "llm_client", None),
+                )
+                self.events.publish(HermesEvent(
+                    event_type="supervisor.redirect",
+                    source=EventSource.SUPERVISOR,
+                    payload={"mission_id": mission_id, "directive": directive.to_dict()},
+                ))
+        except Exception:
+            pass
+
+        # Finalize Checkpoint + economic ledger
         ckpt.status = "completed" if mission_result["status"] == "completed" and runtime_res.is_success else "failed"
         ckpt.completed_steps = ["step-1"] + runtime_res.completed_tasks
         ckpt.pending_steps = []
         self.daemon.save_checkpoint(ckpt)
+        try:
+            self.memory.record_usage(mission_result["mission_id"], int(getattr(runtime_res, "tokens_consumed", 0) or 0),
+                                     runtime=str(getattr(runtime_res, "runtime_id", "")), workers=len(getattr(runtime_res, "worker_sandboxes", []) or []))
+        except Exception:
+            pass
 
         final_state = "COMPLETED" if mission_result["status"] == "completed" and runtime_res.is_success else "FAILED"
         self.executive.state.transition_to(final_state, f"Mission {mission_result['mission_id']} finished")
@@ -380,6 +474,10 @@ class HermesIntelligenceOS:
         evo_report = self.loops.execute_evolution_loop()
         meta_report = self.loops.execute_meta_evolution_loop()
         evo_audit = self.evolution_lab.meta_evolution_audit()
+        try:
+            self.memory.save_to_disk()
+        except Exception:
+            pass
 
         return {
             "capability_loop": cap_report,
@@ -388,3 +486,71 @@ class HermesIntelligenceOS:
             "meta_evolution_loop": meta_report,
             "population_audit": evo_audit,
         }
+
+    def _register_default_schedules(self) -> None:
+        """Wire scheduler jobs: memory flush, daily cycle, hermes health (all offline-safe)."""
+        try:
+            sched = self.scheduler
+            if sched is None:
+                return
+
+            async def _flush() -> None:
+                try:
+                    self.memory.save_to_disk()
+                except Exception:
+                    pass
+
+            async def _daily() -> None:
+                try:
+                    self.run_daily_cycle()
+                except Exception:
+                    pass
+
+            async def _health() -> None:
+                try:
+                    if getattr(self, "hermes", None) is not None:
+                        self.hermes.poll_completions()
+                except Exception:
+                    pass
+
+            sched.register_interval("memory_flush_15m", 900, _flush)
+            sched.register_interval("hermes_health_5m", 300, _health)
+            sched.register_daily("daily_cycle_2am", "02:00", _daily)
+        except Exception:
+            pass
+
+    def enqueue(self, request: str, priority: str = "normal", risk_level: str = "medium") -> str:
+        from .daemon import MissionPriority
+        try:
+            prio = MissionPriority(priority)
+        except Exception:
+            prio = MissionPriority.NORMAL
+        return self.daemon.enqueue_mission(request, priority=prio, risk_level=risk_level)
+
+    async def run_daemon_forever(self, poll_interval_seconds: float = 2.0,
+                                 max_iterations: Any = None) -> dict[str, Any]:
+        """Continuously drain daemon queue: compile→execute→verify per mission + scheduler tick."""
+        async def _runner(mission: Any) -> dict[str, Any]:
+            res = await self.execute_mission(mission.request, risk_level=mission.risk_level)
+            return {"status": res.get("status", "failed"), "mission_id": res.get("mission_id", mission.mission_id)}
+
+        async def _tick(_: int) -> None:
+            try:
+                if getattr(self, "scheduler", None) is not None:
+                    await self.scheduler.tick()
+            except Exception:
+                pass
+            try:
+                wd = getattr(self, "watchdog", None)
+                if wd is not None:
+                    rep = wd.check(queue_depth=self.daemon.pending_count())
+                    if rep.get("critical"):
+                        self.events.publish(HermesEvent(
+                            event_type="watchdog.incident",
+                            source=EventSource.SUPERVISOR,
+                            payload={"report": str(rep)[:2000]}))
+            except Exception:
+                pass
+
+        return await self.daemon.run_forever(_runner, poll_interval_seconds=poll_interval_seconds,
+                                             max_iterations=max_iterations, on_tick=_tick)

@@ -54,7 +54,8 @@ class SafetyKernel:
     Monitors all outbound actions and inbound observations.
     """
 
-    def __init__(self):
+    def __init__(self, workspace_root: str = "."):
+        self.workspace_root = workspace_root
         self._blocked_commands = [
             # POSIX destruction
             r"rm\s+-rf\s+/",
@@ -143,9 +144,64 @@ class SafetyKernel:
                 self._record_audit(action_type, SafetyVerdict.BLOCK, risk_score, reasons, taint_present)
                 return SafetyVerdict.BLOCK, "; ".join(reasons), risk_score
 
-        # 5. Passed all checks
+        # 5. Executable 22-invariant gate (replaces dead strings)
+        try:
+            from .invariants import verify_invariants
+            from pathlib import Path as _P
+            kill = (_P(self.workspace_root) / ".hermes" / "KILL").exists()
+            inv_state = {
+                "action_type": action_type, "action_args": dict(action_args or {}),
+                "principal": caller_identity, "taint_present": taint_present,
+                "kill_switch": kill,
+                "human_approved": bool((action_args or {}).get("human_approved")),
+                "risk_level": str((action_args or {}).get("risk_level", "medium")),
+                "goal_violations": [],
+            }
+            inv_res = verify_invariants(inv_state)
+            if not inv_res.get("passed"):
+                first = (inv_res.get("failures") or [{}])[0]
+                reasons.append(f"Invariant {first.get('invariant')}: {first.get('reason')}")
+                risk_score = 1.0
+                self._record_audit(action_type, SafetyVerdict.BLOCK, risk_score, reasons, taint_present)
+                return SafetyVerdict.BLOCK, "; ".join(reasons), risk_score
+        except Exception as e:
+            logger.debug("Invariant gate error (non-blocking): %s", e)
+
+        # 6. Passed all checks
         self._record_audit(action_type, SafetyVerdict.ALLOW, risk_score, ["Action conforms to safety policies"], taint_present)
         return SafetyVerdict.ALLOW, "Authorized and safe", risk_score
+
+    def verify_invariants(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Public entry: run all 22 executable invariants, return detailed report."""
+        try:
+            from .invariants import INVARIANTS, verify_invariants
+            res = verify_invariants(state)
+            res["invariant_names"] = [n for n, _ in INVARIANTS]
+            return res
+        except Exception as e:
+            return {"passed": False, "failures": [{"invariant": "gate", "reason": str(e)}], "checked": 0}
+
+    def engage_kill_switch(self, reason: str = "") -> str:
+        from pathlib import Path as _P
+        p = _P(self.workspace_root) / ".hermes" / "KILL"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(reason or "engaged", encoding="utf-8")
+        return str(p)
+
+    def release_kill_switch(self) -> bool:
+        from pathlib import Path as _P
+        p = _P(self.workspace_root) / ".hermes" / "KILL"
+        try:
+            if p.exists():
+                p.unlink()
+                return True
+        except Exception:
+            pass
+        return False
+
+    def kill_engaged(self) -> bool:
+        from pathlib import Path as _P
+        return (_P(self.workspace_root) / ".hermes" / "KILL").exists()
 
     def _record_audit(self, action_type: str, verdict: SafetyVerdict, risk: float, reasons: list[str], taint: bool):
         log = SafetyAuditLog(

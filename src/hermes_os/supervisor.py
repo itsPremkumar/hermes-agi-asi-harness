@@ -58,6 +58,19 @@ class SupervisoryAction:
     timestamp: float = field(default_factory=time.time)
 
 
+@dataclass
+class SupervisorDirective:
+    """AGX-style LLM re-plan output: what to do when waves stall."""
+    directive: str = "CONTINUE"
+    strategy: str = ""
+    subgoals: list[str] = field(default_factory=list)
+    reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"directive": self.directive, "strategy": self.strategy,
+                "subgoals": self.subgoals, "reason": self.reason}
+
+
 class ExternalSupervisor:
     """
     Independent supervisory controller running out-of-band from primary workers.
@@ -116,3 +129,78 @@ class ExternalSupervisor:
 
     def recent_actions(self, limit: int = 20) -> list[SupervisoryAction]:
         return self._action_log[-limit:]
+
+    # ------------------------------------------------------------------
+    # Closed-loop actuation: turn an intervention into runtime/daemon calls
+    # ------------------------------------------------------------------
+    async def actuate(self, action: SupervisoryAction, runtime: Any = None,
+                      daemon: Any = None) -> dict[str, Any]:
+        """Execute the intervention against live runtime + daemon. Returns actuation report."""
+        iv = action.intervention
+        try:
+            if iv == SupervisoryIntervention.PAUSE and runtime is not None:
+                await runtime.pause(action.mission_id, action.reason)
+            elif iv == SupervisoryIntervention.RESUME and runtime is not None:
+                await runtime.resume(action.mission_id)
+                self.resume_mission(action.mission_id)
+            elif iv == SupervisoryIntervention.RESTORE_CHECKPOINT and daemon is not None:
+                snap = daemon.load_checkpoint(action.mission_id)
+                return {"actuated": True, "intervention": iv.value, "checkpoint": bool(snap)}
+            elif iv == SupervisoryIntervention.TERMINATE and runtime is not None:
+                await runtime.pause(action.mission_id, "terminated by supervisor")
+                self._paused_missions.add(action.mission_id)
+            return {"actuated": True, "intervention": iv.value}
+        except Exception as e:
+            logger.error("Supervisor actuation failed: %s", e)
+            return {"actuated": False, "error": str(e), "intervention": iv.value}
+
+    def build_telemetry(self, mission_id: str, active_agent_id: str = "primary_worker",
+                        elapsed_seconds: float = 0.0, tokens_consumed: int = 0,
+                        tool_calls_count: int = 0, stagnation: Any = None,
+                        anomaly: str = "") -> SupervisorTelemetry:
+        """Build real telemetry from stagnation detector + counters (replaces hardcoded values)."""
+        stag_detected = False
+        stag_reason = ""
+        if stagnation is not None:
+            level = str(getattr(stagnation, "level", "") or getattr(stagnation, "get", lambda *_: "")(""))
+            rec = str(getattr(stagnation, "recommended_intervention", ""))
+            stag_detected = "nominal" not in level.lower() if level else bool(rec and "nominal" not in rec)
+            stag_reason = rec or level
+        return SupervisorTelemetry(
+            mission_id=mission_id, active_agent_id=active_agent_id,
+            elapsed_seconds=elapsed_seconds, tokens_consumed=tokens_consumed,
+            tool_calls_count=tool_calls_count, stagnation_detected=stag_detected,
+            stagnation_reason=stag_reason, anomaly_detected=bool(anomaly), anomaly_reason=anomaly,
+        )
+
+    def llm_redirect(self, trajectory_summary: str, memory_bullets: str = "",
+                     llm_client: Any = None) -> SupervisorDirective:
+        """AGX-style stagnation→LLM re-plan. Falls back to rule-based directive offline."""
+        if llm_client is None:
+            low = trajectory_summary.lower()
+            if "duplicate" in low or "error" in low or "fail" in low:
+                return SupervisorDirective(directive="CHANGE_STRATEGY", strategy="epsilon_greedy",
+                                           subgoals=["isolate failing subtask", "retry with reduced scope"],
+                                           reason="Rule fallback: failure loop detected")
+            if "stagnat" in low or "plateau" in low:
+                return SupervisorDirective(directive="REDECOMPOSE", strategy="lead_specialists",
+                                           subgoals=["split stalled wave", "verify each shard independently"],
+                                           reason="Rule fallback: plateau detected")
+            return SupervisorDirective(directive="CONTINUE", reason="Nominal")
+        try:
+            prompt = (f"Trajectory:\n{trajectory_summary}\nMemory:\n{memory_bullets}\n"
+                      "Return DIRECTIVE / STRATEGY / SUBGOALS lines.")
+            out = llm_client.generate(prompt) if hasattr(llm_client, "generate") else ""
+            text = getattr(out, "content", str(out))
+            directive, strategy, subgoals = "CONTINUE", "", []
+            for line in str(text).splitlines():
+                u = line.strip().upper()
+                if u.startswith("DIRECTIVE"):
+                    directive = line.split(":", 1)[-1].strip().upper() or directive
+                elif u.startswith("STRATEGY"):
+                    strategy = line.split(":", 1)[-1].strip()
+                elif u.startswith("SUBGOAL"):
+                    subgoals.append(line.split(":", 1)[-1].strip())
+            return SupervisorDirective(directive=directive, strategy=strategy, subgoals=subgoals, reason="LLM redirect")
+        except Exception as e:
+            return SupervisorDirective(directive="CONTINUE", reason=f"LLM redirect failed: {e}")

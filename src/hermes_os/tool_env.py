@@ -9,6 +9,7 @@ Formal tool execution envelope and persistent programmable REPL:
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
 import inspect
 import logging
@@ -169,35 +170,105 @@ class ToolEnvironmentOS:
     def list_tools(self) -> list[dict[str, Any]]:
         return [t.to_dict() for t in self._tools.values()]
 
-    async def execute_tool(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
-        """Execute a registered tool with timeout and failure insulation."""
+    async def execute_tool(self, tool_name: str, args: dict[str, Any],
+                           goal_contract: Optional[Any] = None,
+                           caller_identity: str = "agent:worker") -> dict[str, Any]:
+        """Execute a registered tool behind SafetyKernel + timeout + failure insulation."""
         tool = self._tools.get(tool_name)
         if not tool:
             return {"success": False, "error": f"Tool '{tool_name}' not found", "output": None}
 
+        # 1. Universal safety gate (all tools, not just shell)
+        try:
+            verdict, reason, risk = self.safety_kernel.evaluate_action(
+                action_type=tool_name,
+                action_args=dict(args or {}),
+                goal_contract=goal_contract,
+                caller_identity=caller_identity,
+            )
+            if verdict == SafetyVerdict.BLOCK:
+                logger.warning("Tool '%s' blocked by SafetyKernel: %s", tool_name, reason)
+                return {"success": False, "tool": tool_name, "error": f"Blocked: {reason}",
+                        "output": None, "result": None, "verdict": "block", "risk": risk}
+            escalated = verdict == SafetyVerdict.ESCALATE
+        except Exception as e:
+            logger.debug("Safety gate error (fail-open to handler): %s", e)
+            escalated = False
+            risk = 0.1
+
+        # 2. Timeout-guarded execution (threads for sync handlers so event loop never blocks)
         t0 = time.time()
         try:
             if inspect.iscoroutinefunction(tool.handler):
-                result = await tool.handler(**args)
+                result = await asyncio.wait_for(tool.handler(**args), timeout=tool.timeout_seconds)
             else:
-                result = tool.handler(**args)
-            return {
+                import concurrent.futures as _cf
+                loop = asyncio.get_running_loop()
+                with _cf.ThreadPoolExecutor(max_workers=1) as pool:
+                    result = await asyncio.wait_for(
+                        loop.run_in_executor(pool, lambda: tool.handler(**args)),
+                        timeout=tool.timeout_seconds,
+                    )
+            out: dict[str, Any] = {
                 "success": True,
                 "tool": tool_name,
                 "output": result,
                 "result": result,
                 "duration": time.time() - t0,
+                "verdict": "escalated" if escalated else "allow",
             }
+            try:
+                from .tool_scoring import ToolScorecard
+                ToolScorecard(workspace_root=self.workspace_root).record(
+                    tool_name, True, latency_s=time.time() - t0,
+                    tokens=getattr(tool, "estimated_cost_tokens", 100),
+                    risk=getattr(tool, "risk_level", "low"),
+                    verdict=out["verdict"])
+            except Exception:
+                pass
+            # 3. OUTPUT LAW metadata for mutating tools: capture git diff stat
+            if tool.has_side_effects and tool_name in ("write_file", "edit_file", "apply_patch", "execute_shell"):
+                try:
+                    out["output_law"] = self.output_law_report()
+                except Exception:
+                    pass
+            return out
+        except asyncio.TimeoutError:
+            logger.error("Tool '%s' timed out after %.1fs", tool_name, tool.timeout_seconds)
+            return {"success": False, "tool": tool_name, "error": "timeout", "output": None,
+                    "result": None, "duration": time.time() - t0}
         except Exception as e:
             logger.error("Tool '%s' execution failed: %s", tool_name, e)
-            return {
-                "success": False,
-                "tool": tool_name,
-                "error": str(e),
-                "output": None,
-                "result": None,
-                "duration": time.time() - t0,
-            }
+            try:
+                from .tool_scoring import ToolScorecard
+                ToolScorecard(workspace_root=self.workspace_root).record(
+                    tool_name, False, latency_s=time.time() - t0,
+                    tokens=getattr(tool, "estimated_cost_tokens", 100),
+                    risk=getattr(tool, "risk_level", "low"), verdict="error")
+            except Exception:
+                pass
+            return {"success": False, "tool": tool_name, "error": str(e), "output": None,
+                    "result": None, "duration": time.time() - t0}
+
+    def output_law_report(self) -> dict[str, Any]:
+        """AGX-style OUTPUT LAW: every mutation must yield an observable diff or artifact."""
+        try:
+            st = subprocess.run(["git", "status", "--short"], cwd=self.workspace_root,
+                                capture_output=True, text=True, timeout=10)
+            df = subprocess.run(["git", "diff", "--stat"], cwd=self.workspace_root,
+                                capture_output=True, text=True, timeout=10)
+            status = (st.stdout or "").strip()
+            stat = (df.stdout or "").strip()
+            return {"has_diff": bool(status or stat), "status_short": status[:2000], "diff_stat": stat[:2000]}
+        except Exception as e:
+            return {"has_diff": False, "error": str(e)}
+
+    def verify_output_law(self, require_diff: bool = True) -> tuple[bool, str]:
+        """Returns (ok, reason). No-op mutations fail when require_diff=True."""
+        rep = self.output_law_report()
+        if require_diff and not rep.get("has_diff"):
+            return False, "OUTPUT LAW violation: mutation produced no observable diff/artifact"
+        return True, "OUTPUT LAW satisfied"
 
     def _execute_python_repl(self, code: str) -> Any:
         from hermes_agi.rlm import RLMREPLExecutor

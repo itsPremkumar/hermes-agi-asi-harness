@@ -28,6 +28,19 @@ from .runtime_spi import ExecutionResult, ExecutionStatus, RuntimeAdapter
 logger = logging.getLogger("hermes.os.runtime_adapters")
 
 
+def _output_law_ok(artifact_path: str) -> tuple[bool, str]:
+    """OUTPUT LAW: artifact must exist and be non-empty. Returns (ok, reason)."""
+    try:
+        p = Path(artifact_path)
+        if not p.exists():
+            return False, f"missing artifact {artifact_path}"
+        if p.stat().st_size == 0:
+            return False, f"empty artifact {artifact_path}"
+        return True, "ok"
+    except Exception as e:
+        return False, str(e)
+
+
 # =====================================================================
 # 1. LangGraph Runtime Adapter (Durable Foundation Runtime)
 # =====================================================================
@@ -377,10 +390,18 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
 
             wave_results = await asyncio.gather(*[_run_sandboxed_task(tid) for tid in wave.task_ids])
 
+            failed_tasks: List[str] = []
             for tid, art in wave_results:
-                completed_tasks.append(tid)
                 if art:
-                    artifacts.append(art)
+                    ok, reason = _output_law_ok(art)
+                    if ok:
+                        completed_tasks.append(tid)
+                        artifacts.append(art)
+                    else:
+                        failed_tasks.append(tid)
+                        logger.warning("[DualSubstrate] OUTPUT LAW fail %s: %s", tid, reason)
+                else:
+                    failed_tasks.append(tid)
 
             # 2. Checkpoint wave boundary in LangGraph
             ckpt_id = f"ckpt-dual-{plan.mission_id}-w{wave.wave_number}"
@@ -400,21 +421,25 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
                 artifacts=artifacts,
             )
 
+        status = ExecutionStatus.COMPLETED if not failed_tasks else (
+            ExecutionStatus.FAILED if not completed_tasks else ExecutionStatus.COMPLETED)
         return ExecutionResult(
             mission_id=plan.mission_id,
             runtime_id=self.runtime_id,
-            status=ExecutionStatus.COMPLETED,
+            status=status,
             completed_tasks=completed_tasks,
+            failed_tasks=failed_tasks,
             checkpoints_created=checkpoints,
             tokens_consumed=plan.resource_budget.get("max_tokens", 10000),
             elapsed_seconds=elapsed,
-            proof={"verified": True, "proof_hash": proof_hash, "tier": "L5_compiler_proof"},
+            proof={"verified": bool(completed_tasks), "proof_hash": proof_hash, "tier": "L5_compiler_proof"},
             artifacts_produced=artifacts,
             metadata={
                 "waves_executed": len(plan.execution_waves),
                 "waves_completed": [w.wave_number for w in plan.execution_waves],
                 "sandboxes_active": len(workspaces),
                 "worker_sandboxes": [ws.workspace_dir for ws in workspaces.values()],
+                "output_law_failed": failed_tasks,
             },
         )
 

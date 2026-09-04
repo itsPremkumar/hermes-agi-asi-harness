@@ -173,6 +173,19 @@ from .runtime_adapters import (
     PrimeRuntimeAdapter,
 )
 from .runtime_router import RuntimeRouter
+from .scheduler import ContinuousScheduler, ScheduledJob
+from .hermes_controller import HermesController, HermesInstance, ensure_hermes_on_path, get_hermes_home
+from .invariants import INVARIANTS, verify_invariants
+from .plugin_manifest import PermissionRing, PluginManifest, check_free_gate, load_manifest, ring_allows
+from .evolution_lab import ApprovalGate, BaselineTracker
+from .skills import SkillForge, SkillRegistry, SkillVersion
+from .model_router import ModelEntry, ModelPortfolio
+from .experiments import Experiment, ExperimentEngine
+from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
+from .watchdog import Watchdog, find_cycle
+from .tech_radar import RadarItem, SelfResearchEngine, TechRadar
+from .provenance import ProvenanceRecorder
+from .tool_scoring import ToolScorecard
 from .langsmith_exporter import (
     LangSmithConfig,
     LangSmithTelemetryExporter,
@@ -250,6 +263,39 @@ __all__ = [
     "CheckpointSnapshot",
     "QueuedMission",
     "MissionPriority",
+    "ContinuousScheduler",
+    "ScheduledJob",
+    "HermesController",
+    "HermesInstance",
+    "ensure_hermes_on_path",
+    "get_hermes_home",
+    "INVARIANTS",
+    "verify_invariants",
+    "PermissionRing",
+    "PluginManifest",
+    "check_free_gate",
+    "load_manifest",
+    "ring_allows",
+    "ApprovalGate",
+    "BaselineTracker",
+    "SkillRegistry",
+    "SkillForge",
+    "SkillVersion",
+    "ModelPortfolio",
+    "ModelEntry",
+    "ExperimentEngine",
+    "Experiment",
+    "ArchSearchEngine",
+    "SearchSpace",
+    "ArchCandidate",
+    "pareto_front",
+    "Watchdog",
+    "find_cycle",
+    "TechRadar",
+    "SelfResearchEngine",
+    "RadarItem",
+    "ProvenanceRecorder",
+    "ToolScorecard",
     # Frontier Additions: Hooks
     "HookEventType",
     "HookAction",

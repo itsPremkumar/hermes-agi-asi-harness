@@ -207,6 +207,76 @@ class GoalGraph:
 
         return waves
 
+    # ------------------------------------------------------------------
+    # Dynamic mutation API (workers can rewrite the graph at runtime)
+    # ------------------------------------------------------------------
+    def insert_subgoal(self, parent_id: str, title: str, description: str = "",
+                       depends_on: Optional[List[str]] = None,
+                       evidence: str = "", owner_agent: Optional[str] = None) -> GoalNode:
+        """Discover-new-requirement → create subgoal → insert → execute."""
+        import uuid as _uuid, time as _t
+        gid = f"g-{_uuid.uuid4().hex[:8]}"
+        node = GoalNode(goal_id=gid, title=title, description=description or title,
+                        parent_id=parent_id, depends_on=list(depends_on or []),
+                        owner_agent=owner_agent, status=GoalLifecycle.PLANNED)
+        if evidence:
+            node.evidence_refs.append(evidence)
+        node.updated_at = _t.time()
+        parent = self._nodes.get(parent_id)
+        if parent is not None and gid not in parent.subgoal_ids:
+            parent.subgoal_ids.append(gid)
+        self.add_goal(node)
+        if self.detect_cycles():
+            # rollback on cycle
+            self._nodes.pop(gid, None)
+            if parent is not None and gid in parent.subgoal_ids:
+                parent.subgoal_ids.remove(gid)
+            raise ValueError(f"insert_subgoal would create cycle (parent={parent_id})")
+        return node
+
+    def move_dependency(self, goal_id: str, new_depends_on: List[str]) -> None:
+        node = self._nodes.get(goal_id)
+        if not node:
+            raise KeyError(f"Unknown goal {goal_id}")
+        old_deps = list(node.depends_on)
+        old_blocks: Dict[str, List[str]] = {gid: list(n.blocks) for gid, n in self._nodes.items()}
+        node.depends_on = list(new_depends_on)
+        # rebuild blocks
+        for n in self._nodes.values():
+            n.blocks = [b for b in n.blocks if b != goal_id]
+        for dep in node.depends_on:
+            if dep in self._nodes and goal_id not in self._nodes[dep].blocks:
+                self._nodes[dep].blocks.append(goal_id)
+        if self.detect_cycles():
+            node.depends_on = old_deps
+            for gid, bl in old_blocks.items():
+                if gid in self._nodes:
+                    self._nodes[gid].blocks = bl
+            raise ValueError("move_dependency would create cycle")
+
+    def mark_progress(self, goal_id: str, progress: float, evidence: str = "",
+                      status: Optional[GoalLifecycle] = None) -> None:
+        import time as _t
+        node = self._nodes.get(goal_id)
+        if not node:
+            raise KeyError(f"Unknown goal {goal_id}")
+        node.progress = max(0.0, min(1.0, float(progress)))
+        if evidence and evidence not in node.evidence_refs:
+            node.evidence_refs.append(evidence)
+        if status is not None:
+            node.transition_to(status, "mark_progress")
+        elif node.progress >= 1.0 and node.status not in (GoalLifecycle.COMPLETED, GoalLifecycle.FAILED):
+            node.transition_to(GoalLifecycle.VERIFYING, "progress=1.0 awaiting verification")
+        node.updated_at = _t.time()
+
+    def replan_waves(self) -> List[List[str]]:
+        """Recompute parallel waves after mutation. Raises on cycle/deadlock."""
+        return self.compute_execution_waves()
+
+    def blocked_by(self, goal_id: str) -> List[str]:
+        node = self._nodes.get(goal_id)
+        return list(node.depends_on) if node else []
+
     def extract_critical_path(self) -> List[str]:
         """Identify the longest dependency path (critical path) determining total project duration."""
         topo = self.topological_sort()
