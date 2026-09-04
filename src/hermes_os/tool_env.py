@@ -9,12 +9,19 @@ Formal tool execution envelope and persistent programmable REPL:
 
 from __future__ import annotations
 
+import fnmatch
 import inspect
 import logging
+import os
+from pathlib import Path
+import re
+import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+from .safety_kernel import SafetyKernel, SafetyVerdict
 
 logger = logging.getLogger("hermes.os.tool_env")
 
@@ -32,6 +39,7 @@ class ToolDescriptor:
     has_side_effects: bool = False
     sandbox_required: bool = True
     rollback_supported: bool = False
+    parameters_schema: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -44,21 +52,24 @@ class ToolDescriptor:
             "has_side_effects": self.has_side_effects,
             "sandbox_required": self.sandbox_required,
             "rollback_supported": self.rollback_supported,
+            "parameters_schema": self.parameters_schema,
         }
 
 
 class ToolEnvironmentOS:
     """
     Central registry and execution coordinator for all tools, sandboxes,
-    and programmable REPL kernels.
+    developer agency tools, and programmable REPL kernels.
     """
 
-    def __init__(self, workspace_root: str = "."):
+    def __init__(self, workspace_root: str = ".", safety_kernel: Optional[SafetyKernel] = None):
         self.workspace_root = workspace_root
+        self.safety_kernel = safety_kernel or SafetyKernel()
         self._tools: dict[str, ToolDescriptor] = {}
         self._init_standard_tools()
 
     def _init_standard_tools(self):
+        # 1. REPL & Read
         self.register(ToolDescriptor(
             name="python_repl",
             description="Execute Python code in persistent isolated memory heap",
@@ -74,6 +85,79 @@ class ToolEnvironmentOS:
             required_permission="read",
             risk_level="low",
             sandbox_required=False,
+        ))
+        # 2. File Modification Tools
+        self.register(ToolDescriptor(
+            name="write_file",
+            description="Write or overwrite a file in the workspace",
+            handler=self._write_file,
+            required_permission="write",
+            risk_level="medium",
+            has_side_effects=True,
+        ))
+        self.register(ToolDescriptor(
+            name="edit_file",
+            description="Surgically replace target content in an existing file",
+            handler=self._edit_file,
+            required_permission="write",
+            risk_level="medium",
+            has_side_effects=True,
+            rollback_supported=True,
+        ))
+        # 3. Filesystem Exploration & Search Tools
+        self.register(ToolDescriptor(
+            name="list_dir",
+            description="List directory contents with file metadata",
+            handler=self._list_dir,
+            required_permission="read",
+            risk_level="low",
+        ))
+        self.register(ToolDescriptor(
+            name="grep_search",
+            description="Ripgrep-style pattern matching across files",
+            handler=self._grep_search,
+            required_permission="read",
+            risk_level="low",
+        ))
+        self.register(ToolDescriptor(
+            name="find_by_name",
+            description="Find files matching a glob pattern",
+            handler=self._find_by_name,
+            required_permission="read",
+            risk_level="low",
+        ))
+        # 4. Sandboxed Shell Execution
+        self.register(ToolDescriptor(
+            name="execute_shell",
+            description="Execute shell command safely under SafetyKernel policy",
+            handler=self._execute_shell,
+            required_permission="exec:shell",
+            risk_level="high",
+            has_side_effects=True,
+        ))
+        # 5. Version Control & Patching Tools
+        self.register(ToolDescriptor(
+            name="git_status",
+            description="Get workspace git status",
+            handler=self._git_status,
+            required_permission="read",
+            risk_level="low",
+        ))
+        self.register(ToolDescriptor(
+            name="git_diff",
+            description="Get workspace git diff",
+            handler=self._git_diff,
+            required_permission="read",
+            risk_level="low",
+        ))
+        self.register(ToolDescriptor(
+            name="apply_patch",
+            description="Apply a unified git diff patch to the workspace",
+            handler=self._apply_patch,
+            required_permission="write",
+            risk_level="high",
+            has_side_effects=True,
+            rollback_supported=True,
         ))
 
     def register(self, tool: ToolDescriptor) -> None:
@@ -101,6 +185,7 @@ class ToolEnvironmentOS:
                 "success": True,
                 "tool": tool_name,
                 "output": result,
+                "result": result,
                 "duration": time.time() - t0,
             }
         except Exception as e:
@@ -110,6 +195,7 @@ class ToolEnvironmentOS:
                 "tool": tool_name,
                 "error": str(e),
                 "output": None,
+                "result": None,
                 "duration": time.time() - t0,
             }
 
@@ -123,8 +209,185 @@ class ToolEnvironmentOS:
             executor.close()
 
     def _read_file(self, path: str) -> str:
-        from pathlib import Path
         p = Path(self.workspace_root) / path
         if not p.exists():
             raise FileNotFoundError(f"File not found: {path}")
         return p.read_text(encoding="utf-8", errors="replace")
+
+    def _write_file(self, path: str, content: str, overwrite: bool = True) -> str:
+        p = Path(self.workspace_root) / path
+        if p.exists() and not overwrite:
+            raise FileExistsError(f"File already exists: {path}")
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content, encoding="utf-8")
+        return f"Successfully wrote {len(content)} bytes to {path}"
+
+    def _edit_file(
+        self,
+        path: str,
+        target_content: Optional[str] = None,
+        replacement_content: Optional[str] = None,
+        old_str: Optional[str] = None,
+        new_str: Optional[str] = None,
+    ) -> str:
+        target = target_content if target_content is not None else old_str
+        replacement = replacement_content if replacement_content is not None else new_str
+        if target is None or replacement is None:
+            raise ValueError("Either (target_content, replacement_content) or (old_str, new_str) must be provided")
+        p = Path(self.workspace_root) / path
+        if not p.exists():
+            raise FileNotFoundError(f"File not found: {path}")
+        text = p.read_text(encoding="utf-8")
+        if target not in text:
+            raise ValueError(f"Target content not found in {path}")
+        new_text = text.replace(target, replacement, 1)
+        p.write_text(new_text, encoding="utf-8")
+        return f"Successfully edited {path}"
+
+    def _list_dir(self, path: str = ".", recursive: bool = False, max_depth: int = 2) -> list[dict[str, Any]]:
+        target_dir = Path(self.workspace_root) / path
+        if not target_dir.exists():
+            raise FileNotFoundError(f"Path not found: {path}")
+        results: list[dict[str, Any]] = []
+        if recursive:
+            for root, dirs, files in os.walk(target_dir):
+                if ".git" in root or "__pycache__" in root:
+                    continue
+                rel = Path(root).relative_to(target_dir)
+                if len(rel.parts) > max_depth:
+                    continue
+                for f in files:
+                    fp = Path(root) / f
+                    results.append({"name": f, "path": str(fp.relative_to(self.workspace_root)), "type": "file", "size": fp.stat().st_size})
+                for d in dirs:
+                    dp = Path(root) / d
+                    results.append({"name": d, "path": str(dp.relative_to(self.workspace_root)), "type": "directory"})
+        else:
+            for item in target_dir.iterdir():
+                if item.name.startswith(".git"):
+                    continue
+                results.append({
+                    "name": item.name,
+                    "path": str(item.relative_to(self.workspace_root)),
+                    "type": "directory" if item.is_dir() else "file",
+                    "size": item.stat().st_size if item.is_file() else 0,
+                })
+        return results
+
+    def _grep_search(self, query: str, path: str = ".", is_regex: bool = False, case_sensitive: bool = True) -> list[dict[str, Any]]:
+        target_dir = Path(self.workspace_root) / path
+        flags = 0 if case_sensitive else re.IGNORECASE
+        pat = re.compile(query if is_regex else re.escape(query), flags)
+        matches: list[dict[str, Any]] = []
+        for root, _, files in os.walk(target_dir):
+            if ".git" in root or "__pycache__" in root:
+                continue
+            for f in files:
+                fp = Path(root) / f
+                try:
+                    text = fp.read_text(encoding="utf-8", errors="ignore")
+                    for line_num, line in enumerate(text.splitlines(), start=1):
+                        if pat.search(line):
+                            matches.append({
+                                "file": str(fp.relative_to(self.workspace_root)),
+                                "line_number": line_num,
+                                "line": line.strip()[:200],
+                            })
+                            if len(matches) >= 50:
+                                return matches
+                except Exception:
+                    continue
+        return matches
+
+    def _find_by_name(self, pattern: str, path: str = ".") -> list[str]:
+        target_dir = Path(self.workspace_root) / path
+        found: list[str] = []
+        for root, _, files in os.walk(target_dir):
+            if ".git" in root or "__pycache__" in root:
+                continue
+            for f in files:
+                if fnmatch.fnmatch(f, pattern):
+                    found.append(str((Path(root) / f).relative_to(self.workspace_root)))
+                    if len(found) >= 50:
+                        return found
+        return found
+
+    def _execute_shell(self, command: str, timeout: float = 30.0, cwd: Optional[str] = None) -> dict[str, Any]:
+        verdict, reason, risk = self.safety_kernel.evaluate_action(
+            action_type="execute_shell",
+            action_args={"command": command},
+        )
+        if verdict == SafetyVerdict.BLOCK:
+            raise PermissionError(f"SafetyKernel blocked command execution: {reason} (risk: {risk})")
+
+        run_dir = Path(self.workspace_root) / (cwd or ".")
+        proc = subprocess.run(
+            command,
+            cwd=str(run_dir),
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return {
+            "exit_code": proc.returncode,
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+            "command": command,
+        }
+
+    def _git_status(self) -> str:
+        proc = subprocess.run(["git", "status", "--short"], cwd=self.workspace_root, capture_output=True, text=True)
+        return proc.stdout.strip()
+
+    def _git_diff(self) -> str:
+        proc = subprocess.run(["git", "diff"], cwd=self.workspace_root, capture_output=True, text=True)
+        return proc.stdout.strip()
+
+    def _apply_patch(self, patch_str: str) -> str:
+        proc = subprocess.run(
+            ["git", "apply", "-"],
+            input=patch_str,
+            cwd=self.workspace_root,
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"git apply failed: {proc.stderr}")
+        return "Patch applied successfully"
+
+    def connect_mcp_client(self, mcp_client: Any, server_name: str, capability_registry: Optional[Any] = None) -> list[str]:
+        """
+        Dynamically discover and register tools exposed by an MCP client server into ToolEnvironmentOS,
+        and optionally propagate them into CapabilityRegistry.
+        """
+        tools = mcp_client.list_tools(server_name)
+        registered_names: list[str] = []
+        for tool_spec in tools:
+            t_name = tool_spec.get("name")
+            if not t_name:
+                continue
+            qualified_name = f"mcp_{server_name}_{t_name}"
+
+            def make_handler(srv: str, t_orig: str):
+                def _handler(**kwargs: Any) -> Any:
+                    return mcp_client.call_tool(srv, t_orig, kwargs)
+                return _handler
+
+            descriptor = ToolDescriptor(
+                name=qualified_name,
+                description=tool_spec.get("description", f"Dynamic MCP tool from {server_name}"),
+                handler=make_handler(server_name, t_name),
+                parameters_schema=tool_spec.get("input_schema", {}),
+                required_permission="exec:mcp",
+                risk_level=tool_spec.get("risk", "medium"),
+                has_side_effects=tool_spec.get("side_effects", True),
+            )
+            self.register(descriptor)
+            registered_names.append(qualified_name)
+
+        if capability_registry is not None and hasattr(capability_registry, "register_mcp_tools"):
+            capability_registry.register_mcp_tools(tools, server_name=server_name)
+
+        return registered_names
+

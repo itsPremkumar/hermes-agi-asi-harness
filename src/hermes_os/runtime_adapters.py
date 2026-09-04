@@ -292,6 +292,7 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
             elapsed_seconds=elapsed,
             proof={"verified": True, "proof_hash": proof_hash, "tier": "L4_reproduction"},
             artifacts_produced=artifacts,
+            metadata={"worker_sandboxes": [ws.workspace_dir for ws in workspaces.values()]},
         )
 
     async def pause(self, mission_id: str, reason: str = "") -> bool:
@@ -409,7 +410,12 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
             elapsed_seconds=elapsed,
             proof={"verified": True, "proof_hash": proof_hash, "tier": "L5_compiler_proof"},
             artifacts_produced=artifacts,
-            metadata={"waves_executed": len(plan.execution_waves), "sandboxes_active": len(workspaces)},
+            metadata={
+                "waves_executed": len(plan.execution_waves),
+                "waves_completed": [w.wave_number for w in plan.execution_waves],
+                "sandboxes_active": len(workspaces),
+                "worker_sandboxes": [ws.workspace_dir for ws in workspaces.values()],
+            },
         )
 
     async def pause(self, mission_id: str, reason: str = "") -> bool:

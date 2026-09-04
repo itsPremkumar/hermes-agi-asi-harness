@@ -88,11 +88,13 @@ __all__ = [
     "DeepThinkingEngine",
     "HermesMissionPacket",
     "HermesWatchdogMonitor",
+    "HermesIntelligenceOS",
 ]
 
 from .research import DeepResearchAgent
 from .thinking import DeepThinkingEngine
 from .allocation import HermesMissionPacket, HermesWatchdogMonitor
+from hermes_os.kernel import HermesIntelligenceOS
 
 
 class Harness:
@@ -145,10 +147,59 @@ class Harness:
         
         self._initialized = True
     
-    async def run(self, task: str, multi_step: bool = True, **kwargs) -> dict:
+    async def run(self, task: str, multi_step: bool = True, mode: str = "auto", **kwargs) -> dict:
         """Run a task through the harness."""
         if not self._initialized:
             await self.initialize()
+
+        effective_mode = kwargs.get("mode", mode)
+        if effective_mode in ("dual_substrate", "intelligence_os"):
+            try:
+                ws_root = kwargs.get("workspace_root", getattr(self.config, "state_dir", "."))
+                intel_os = HermesIntelligenceOS(workspace_root=ws_root)
+                invariants = kwargs.get("invariants", ["preserve_backwards_compatibility", "zero_downtime"])
+                risk_level = kwargs.get("risk_level", "low")
+                principal = kwargs.get("principal", "system:master")
+                plan_ir = intel_os.compile_mission(
+                    request=task,
+                    invariants=invariants,
+                    risk_level=risk_level,
+                    principal=principal,
+                )
+                runtime_id = kwargs.get("runtime_id", "composite_dual_substrate" if effective_mode == "dual_substrate" else None)
+                exec_res = await intel_os.execute_plan_with_runtime(plan_ir, runtime_id=runtime_id)
+
+                return {
+                    "status": "completed" if exec_res.success else "failed",
+                    "task": task,
+                    "mode": effective_mode,
+                    "plan": plan_ir.to_dict(),
+                    "execution_result": {
+                        "success": exec_res.success,
+                        "runtime_used": exec_res.runtime_used,
+                        "waves_completed": exec_res.waves_completed,
+                        "step_outputs": exec_res.step_outputs,
+                        "worker_sandboxes": exec_res.worker_sandboxes,
+                        "proof_hash": exec_res.proof_hash,
+                        "duration_s": exec_res.duration_s,
+                        "error": exec_res.error,
+                    },
+                    "multi_step": {
+                        "run_id": plan_ir.mission_id,
+                        "status": "completed" if exec_res.success else "failed",
+                        "score": 1.0 if exec_res.success else 0.0,
+                        "proof": {"proof_hash": exec_res.proof_hash},
+                        "waves": exec_res.waves_completed,
+                    },
+                }
+            except Exception as e:
+                await self.recovery.report_failure("intelligence_os", str(e))
+                return {
+                    "status": "failed",
+                    "task": task,
+                    "mode": effective_mode,
+                    "error": str(e),
+                }
         try:
             # Use planning plugin to create a plan
             plan_result = await self.plugin_manager.execute("planning", "plan", goal=task)

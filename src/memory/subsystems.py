@@ -62,6 +62,28 @@ class SemanticMemory:
     def count(self) -> int:
         return len(self._entries)
 
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "entry_id": e.entry_id,
+                "fact": e.fact,
+                "category": e.category,
+                "tags": e.tags,
+                "confidence": e.confidence,
+                "source": e.source,
+                "created_at": e.created_at,
+            }
+            for e in self._entries.values()
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            entry = SemanticEntry(**r)
+            self._entries[entry.entry_id] = entry
+            loaded += 1
+        return loaded
+
 
 @dataclass
 class EpisodicEvent:
@@ -72,6 +94,10 @@ class EpisodicEvent:
     details: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
+    @property
+    def mission_id(self) -> str:
+        return self.details.get("mission_id", self.event_id)
+
 
 class EpisodicMemory:
     """Chronological event log tracking what happened during missions."""
@@ -79,13 +105,24 @@ class EpisodicMemory:
     def __init__(self):
         self._events: list[EpisodicEvent] = []
 
-    def record(self, event_type: str, description: str, actor: str = "system", details: Optional[dict[str, Any]] = None) -> EpisodicEvent:
+    def record(
+        self,
+        event_type: str = "mission_step",
+        description: str = "",
+        actor: str = "system",
+        details: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> EpisodicEvent:
+        merged_details = dict(details or {})
+        merged_details.update(kwargs)
+        if not description and kwargs:
+            description = str(kwargs.get("user_request") or kwargs.get("plan_summary") or kwargs.get("mission_id") or "Mission event")
         ev = EpisodicEvent(
-            event_id=f"epi-{uuid.uuid4().hex[:8]}",
+            event_id=kwargs.get("mission_id") or f"epi-{uuid.uuid4().hex[:8]}",
             event_type=event_type,
             description=description,
             actor=actor,
-            details=details or {},
+            details=merged_details,
         )
         self._events.append(ev)
         return ev
@@ -95,6 +132,27 @@ class EpisodicMemory:
 
     def count(self) -> int:
         return len(self._events)
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "event_id": ev.event_id,
+                "event_type": ev.event_type,
+                "description": ev.description,
+                "actor": ev.actor,
+                "details": ev.details,
+                "timestamp": ev.timestamp,
+            }
+            for ev in self._events
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            ev = EpisodicEvent(**r)
+            self._events.append(ev)
+            loaded += 1
+        return loaded
 
 
 @dataclass
@@ -126,11 +184,53 @@ class ProceduralMemory:
         self._procedures[name] = proc
         return proc
 
+    def store_skill(
+        self,
+        name: str,
+        trigger_context: str = "",
+        preconditions: Optional[list[str]] = None,
+        action_sequence: Optional[list[str]] = None,
+        steps: Optional[list[str]] = None,
+        verification_method: str = "oracle_check",
+        tags: Optional[list[str]] = None,
+    ) -> Procedure:
+        step_list = action_sequence or steps or []
+        t = list(tags or [])
+        if trigger_context:
+            t.append(f"context:{trigger_context}")
+        t.append(f"verify:{verification_method}")
+        return self.store_procedure(name=name, steps=step_list, preconditions=preconditions, tags=t)
+
     def get_procedure(self, name: str) -> Optional[Procedure]:
         return self._procedures.get(name)
 
+    def get_skill(self, name: str) -> Optional[Procedure]:
+        return self.get_procedure(name)
+
     def count(self) -> int:
         return len(self._procedures)
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "procedure_id": p.procedure_id,
+                "name": p.name,
+                "steps": p.steps,
+                "preconditions": p.preconditions,
+                "tags": p.tags,
+                "success_rate": p.success_rate,
+                "executions": p.executions,
+            }
+            for p in self._procedures.values()
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            p = Procedure(**r)
+            self._procedures[p.name] = p
+            loaded += 1
+        return loaded
 
 
 class WorkingMemory:
@@ -174,14 +274,30 @@ class FailureMemory:
     def __init__(self):
         self._failures: dict[str, FailureSignature] = {}
 
-    def record_failure(self, error_type: str, component: str, root_cause: str, countermeasures: Optional[list[str]] = None) -> FailureSignature:
-        key = f"{component}:{error_type}"
+    def record_failure(
+        self,
+        error_type: str,
+        component: str = "general",
+        root_cause: str = "",
+        countermeasures: Optional[list[str]] = None,
+        context: Optional[dict[str, Any]] = None,
+        traceback_str: str = "",
+        recovery_attempted: str = "",
+        resolved: bool = True,
+        **kwargs: Any,
+    ) -> FailureSignature:
+        comp = component if component != "general" else (context.get("file") if isinstance(context, dict) else "general")
+        rc = root_cause or traceback_str or "Failure recorded"
+        cms = list(countermeasures or [])
+        if recovery_attempted:
+            cms.append(recovery_attempted)
+        key = f"{comp}:{error_type}"
         if key in self._failures:
             f_sig = self._failures[key]
             f_sig.occurrences += 1
             f_sig.timestamp = time.time()
-            if countermeasures:
-                for cm in countermeasures:
+            if cms:
+                for cm in cms:
                     if cm not in f_sig.countermeasures:
                         f_sig.countermeasures.append(cm)
             return f_sig
@@ -189,12 +305,15 @@ class FailureMemory:
         f_sig = FailureSignature(
             failure_id=f"fail-{uuid.uuid4().hex[:8]}",
             error_type=error_type,
-            component=component,
-            root_cause=root_cause,
-            countermeasures=list(countermeasures or []),
+            component=comp,
+            root_cause=rc,
+            countermeasures=cms,
         )
         self._failures[key] = f_sig
         return f_sig
+
+    def get_failures(self, resolved_only: bool = False) -> list[FailureSignature]:
+        return list(self._failures.values())
 
     def get_countermeasures(self, error_type: str, component: str) -> list[str]:
         key = f"{component}:{error_type}"
@@ -203,6 +322,29 @@ class FailureMemory:
 
     def count(self) -> int:
         return len(self._failures)
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "failure_id": f.failure_id,
+                "error_type": f.error_type,
+                "component": f.component,
+                "root_cause": f.root_cause,
+                "countermeasures": f.countermeasures,
+                "occurrences": f.occurrences,
+                "timestamp": f.timestamp,
+            }
+            for f in self._failures.values()
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            f = FailureSignature(**r)
+            key = f"{f.component}:{f.error_type}"
+            self._failures[key] = f
+            loaded += 1
+        return loaded
 
 
 @dataclass
@@ -215,6 +357,10 @@ class DecisionRecord:
     outcome: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
 
+    @property
+    def chosen(self) -> str:
+        return self.chosen_strategy
+
 
 class DecisionMemory:
     """Records why particular strategies were chosen over alternative paths."""
@@ -222,19 +368,57 @@ class DecisionMemory:
     def __init__(self):
         self._decisions: list[DecisionRecord] = []
 
-    def record_decision(self, context: str, chosen: str, rejected: list[str], rationale: str) -> DecisionRecord:
+    def record_decision(
+        self,
+        context: str = "",
+        chosen: str = "",
+        rejected: Optional[list[str]] = None,
+        rationale: str = "",
+        task_id: str = "",
+        alternatives: Optional[list[str]] = None,
+        **kwargs: Any,
+    ) -> DecisionRecord:
+        ctx = context or task_id or "decision"
+        ch = chosen or kwargs.get("chosen_strategy", "")
+        rej = rejected if rejected is not None else (alternatives or [])
+        rat = rationale or kwargs.get("reason", "")
         d = DecisionRecord(
             decision_id=f"dec-{uuid.uuid4().hex[:8]}",
-            context=context,
-            chosen_strategy=chosen,
-            rejected_alternatives=rejected,
-            rationale=rationale,
+            context=ctx,
+            chosen_strategy=ch,
+            rejected_alternatives=rej,
+            rationale=rat,
         )
         self._decisions.append(d)
         return d
 
     def all_decisions(self) -> list[DecisionRecord]:
         return list(self._decisions)
+
+    def get_history(self) -> list[DecisionRecord]:
+        return self.all_decisions()
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "decision_id": d.decision_id,
+                "context": d.context,
+                "chosen_strategy": d.chosen_strategy,
+                "rejected_alternatives": d.rejected_alternatives,
+                "rationale": d.rationale,
+                "outcome": d.outcome,
+                "timestamp": d.timestamp,
+            }
+            for d in self._decisions
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            d = DecisionRecord(**r)
+            self._decisions.append(d)
+            loaded += 1
+        return loaded
 
 
 class WorldStateMemory:
@@ -250,8 +434,27 @@ class WorldStateMemory:
             "data": state_data,
         })
 
+    def update_state(self, key: str, value: Any, confidence: float = 1.0) -> None:
+        latest = self.get_latest()
+        data = dict(latest.get("data", {})) if latest and isinstance(latest.get("data"), dict) else {}
+        data[key] = value
+        self.record_snapshot(data, label=f"update:{key}")
+
+    def get_state(self, key: str, default: Any = None) -> Any:
+        latest = self.get_latest()
+        if latest and "data" in latest and isinstance(latest["data"], dict):
+            return latest["data"].get(key, default)
+        return default
+
     def get_latest(self) -> Optional[dict[str, Any]]:
         return self._snapshots[-1] if self._snapshots else None
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return list(self._snapshots)
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        self._snapshots.extend(records)
+        return len(records)
 
 
 @dataclass
@@ -288,11 +491,48 @@ class CapabilityMemory:
         cap.success_rate = round(new_rate, 4)
         return cap
 
+    def update_success_rate(self, name: str, success: bool, domain: str = "general") -> CapabilityProfile:
+        return self.update_capability(name=name, domain=domain, success=success)
+
     def get_capability(self, name: str) -> Optional[CapabilityProfile]:
         return self._capabilities.get(name)
 
+    def get_metrics(self, name: str) -> dict[str, Any]:
+        cap = self.get_capability(name)
+        if not cap:
+            return {"successes": 0, "invocations": 0, "success_rate": 0.0}
+        successes = round(cap.success_rate * cap.invocations)
+        return {
+            "name": cap.name,
+            "successes": successes,
+            "invocations": cap.invocations,
+            "success_rate": cap.success_rate,
+        }
+
     def all_capabilities(self) -> list[CapabilityProfile]:
         return list(self._capabilities.values())
+
+    def export_records(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "name": c.name,
+                "domain": c.domain,
+                "success_rate": c.success_rate,
+                "invocations": c.invocations,
+                "tools_required": c.tools_required,
+                "difficulty_ceiling": c.difficulty_ceiling,
+            }
+            for c in self._capabilities.values()
+        ]
+
+    def import_records(self, records: list[dict[str, Any]]) -> int:
+        loaded = 0
+        for r in records:
+            c = CapabilityProfile(**r)
+            self._capabilities[c.name] = c
+            loaded += 1
+        return loaded
+
 
 
 class TrajectoryMemory:

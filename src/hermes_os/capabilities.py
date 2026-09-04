@@ -193,7 +193,7 @@ class CapabilityRegistry:
             avoid_for=["novel_mathematics", "multi-turn_causal_plans"],
         ))
 
-        # 2. Tools
+        # 2. Tools (Standard & Developer Agency Suite)
         self.register(CapabilityManifest(
             id="tool.python_repl",
             kind=CapabilityKind.TOOL,
@@ -212,6 +212,87 @@ class CapabilityRegistry:
             risk="high",
             best_for=["running_tests", "git_operations", "package_management"],
             verification="exit_code_and_stderr_audit",
+        ))
+        self.register(CapabilityManifest(
+            id="tool.write_file",
+            kind=CapabilityKind.TOOL,
+            name="Write File Tool",
+            description="Write or overwrite a file in the workspace",
+            permissions=["write:workspace"],
+            risk="medium",
+            best_for=["creating_files", "overwriting_files", "scaffolding"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.edit_file",
+            kind=CapabilityKind.TOOL,
+            name="Edit File Tool",
+            description="Surgically replace target content in an existing file",
+            permissions=["write:workspace"],
+            risk="medium",
+            best_for=["targeted_code_edits", "bug_fixes", "refactoring"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.list_dir",
+            kind=CapabilityKind.TOOL,
+            name="List Directory Tool",
+            description="List directory contents with file metadata",
+            permissions=["read:workspace"],
+            risk="low",
+            best_for=["directory_exploration", "file_enumeration"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.grep_search",
+            kind=CapabilityKind.TOOL,
+            name="Grep Search Tool",
+            description="Ripgrep-style pattern matching across files",
+            permissions=["read:workspace"],
+            risk="low",
+            best_for=["code_search", "pattern_matching", "symbol_lookup"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.find_by_name",
+            kind=CapabilityKind.TOOL,
+            name="Find By Name Tool",
+            description="Find files matching a glob pattern",
+            permissions=["read:workspace"],
+            risk="low",
+            best_for=["locating_files", "glob_search"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.execute_shell",
+            kind=CapabilityKind.TOOL,
+            name="Execute Shell Tool",
+            description="Execute shell command safely under SafetyKernel policy",
+            permissions=["exec:shell"],
+            risk="high",
+            best_for=["running_tests", "running_scripts", "environment_inspection"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.git_status",
+            kind=CapabilityKind.TOOL,
+            name="Git Status Tool",
+            description="Get workspace git status",
+            permissions=["read:workspace"],
+            risk="low",
+            best_for=["vcs_inspection", "modified_files_check"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.git_diff",
+            kind=CapabilityKind.TOOL,
+            name="Git Diff Tool",
+            description="Get workspace git diff",
+            permissions=["read:workspace"],
+            risk="low",
+            best_for=["patch_review", "diff_generation"],
+        ))
+        self.register(CapabilityManifest(
+            id="tool.apply_patch",
+            kind=CapabilityKind.TOOL,
+            name="Apply Patch Tool",
+            description="Apply a unified git diff patch to the workspace",
+            permissions=["write:workspace"],
+            risk="high",
+            best_for=["applying_patches", "swe_bench_solutions"],
         ))
 
         # 3. Skills (On-Demand loaded)
@@ -313,6 +394,34 @@ class CapabilityRegistry:
         # Fallback synthetic skill body
         manifest.is_loaded = True
         return f"# Skill: {manifest.name}\n\n{manifest.description}\n\nBest for: {', '.join(manifest.best_for)}"
+
+    def register_mcp_tools(self, tools: List[Dict[str, Any]], server_name: str = "mcp") -> List[CapabilityManifest]:
+        """
+        Dynamically register MCP tools into the Capability Awareness OS.
+        """
+        registered = []
+        for tool in tools:
+            name = tool.get("name", "unknown")
+            cap_id = f"mcp.{server_name}.{name}"
+            inputs = []
+            schema = tool.get("input_schema", {})
+            if isinstance(schema, dict) and "properties" in schema:
+                inputs = list(schema["properties"].keys())
+            manifest = CapabilityManifest(
+                id=cap_id,
+                kind=CapabilityKind.MCP,
+                name=f"{server_name}:{name}",
+                description=tool.get("description", "Dynamic MCP tool"),
+                inputs=inputs,
+                risk=tool.get("risk", "low"),
+                cost={"tokens": "low", "latency": "medium"},
+                best_for=["dynamic_mcp_execution", f"{server_name}_operations"],
+                metadata={"server": server_name, "input_schema": schema},
+            )
+            self.register(manifest)
+            registered.append(manifest)
+        return registered
+
 
 
 # =====================================================================

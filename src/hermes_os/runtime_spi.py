@@ -51,6 +51,38 @@ class ExecutionResult:
     def is_success(self) -> bool:
         return self.status == ExecutionStatus.COMPLETED
 
+    @property
+    def success(self) -> bool:
+        return self.is_success
+
+    @property
+    def runtime_used(self) -> str:
+        return self.runtime_id
+
+    @property
+    def duration_s(self) -> float:
+        return self.elapsed_seconds
+
+    @property
+    def proof_hash(self) -> str:
+        return self.proof.get("proof_hash", "")
+
+    @property
+    def waves_completed(self) -> List[int]:
+        return self.metadata.get("waves_completed", [1])
+
+    @property
+    def step_outputs(self) -> Dict[str, Any]:
+        return self.metadata.get("step_outputs", {})
+
+    @property
+    def worker_sandboxes(self) -> List[str]:
+        return self.metadata.get("worker_sandboxes", [])
+
+    @property
+    def error(self) -> Optional[str]:
+        return self.metadata.get("error")
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "mission_id": self.mission_id,
