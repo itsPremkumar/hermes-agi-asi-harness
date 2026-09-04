@@ -222,8 +222,19 @@ class PersistentDaemonRuntime:
                     old_pid = int(self._pid_file.read_text(encoding="utf-8").strip())
                     if old_pid == os.getpid():
                         return True
-                    # Best-effort liveness check (Windows-safe: no signal kill)
-                    logger.warning("Existing daemon pid file found (pid=%s); continuing single-instance.", old_pid)
+                    alive: Optional[bool] = None
+                    try:
+                        import psutil  # type: ignore
+                        alive = psutil.pid_exists(old_pid)
+                    except Exception:
+                        alive = None
+                    if alive is False:
+                        logger.warning("Stale daemon pid file (pid=%s dead); taking over.", old_pid)
+                    elif alive is True:
+                        logger.warning("Another daemon holds the lock (pid=%s); refusing second instance.", old_pid)
+                        return False
+                    else:
+                        logger.warning("Existing daemon pid file found (pid=%s); continuing single-instance.", old_pid)
                 except Exception:
                     pass
             self._pid_file.write_text(str(os.getpid()), encoding="utf-8")
@@ -270,13 +281,19 @@ class PersistentDaemonRuntime:
 
         mission_runner: async callable receiving QueuedMission, returning result dict
             with at least a 'status' key ('completed' on success).
+        Bounded runs (max_iterations set) exit with status 'idle' after a
+        grace period on an empty queue instead of hanging forever.
         """
-        self._acquire_pid_lock()
+        if not self._acquire_pid_lock():
+            return {"status": "locked", "completed": 0, "failed": 0,
+                    "iterations": self._iterations_completed, "elapsed_seconds": 0.0,
+                    "pending": self.pending_count()}
         self.clear_stop()
         self._is_running = True
         self.requeue_interrupted()
         completed = 0
         failed = 0
+        idle_polls = 0
         started_at = time.time()
         logger.info("Daemon 24/7 loop started (poll=%.1fs, max_iter=%s)", poll_interval_seconds, max_iterations)
         try:
@@ -285,13 +302,18 @@ class PersistentDaemonRuntime:
                     break
                 mission = self.pop_next_mission()
                 if mission is None:
+                    idle_polls += 1
                     if on_tick is not None:
                         try:
                             await on_tick(self._iterations_completed)
                         except Exception as e:
                             logger.debug("on_tick failed: %s", e)
+                    if max_iterations is not None and idle_polls >= 3:
+                        logger.info("Daemon idle with empty queue; bounded run exits.")
+                        break
                     await asyncio.sleep(poll_interval_seconds)
                     continue
+                idle_polls = 0
                 snap = CheckpointSnapshot(
                     checkpoint_id=f"chk-{mission.mission_id}",
                     mission_id=mission.mission_id,
@@ -329,8 +351,14 @@ class PersistentDaemonRuntime:
                 if self._consecutive_failures >= max_consecutive_failures:
                     logger.error("Daemon aborting: %d consecutive failures", self._consecutive_failures)
                     break
+            if self._stop_signalled():
+                final = "stopped"
+            elif max_iterations is not None and self._iterations_completed == 0:
+                final = "idle"
+            else:
+                final = "completed"
             return {
-                "status": "stopped" if self._stop_signalled() else "completed",
+                "status": final,
                 "completed": completed,
                 "failed": failed,
                 "iterations": self._iterations_completed,

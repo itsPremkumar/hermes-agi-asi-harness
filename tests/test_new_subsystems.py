@@ -47,6 +47,17 @@ async def test_daemon_run_forever(tmp_path):
     assert out["completed"] == 2 and out["failed"] == 0 and seen == ["one", "two"]
 
 
+async def test_daemon_idle_exit(tmp_path):
+    from hermes_os.daemon import PersistentDaemonRuntime
+    d = PersistentDaemonRuntime(workspace_root=str(tmp_path))
+
+    async def runner(m):
+        return {"status": "completed"}
+
+    out = await d.run_forever(runner, poll_interval_seconds=0.01, max_iterations=3)
+    assert out["status"] == "idle" and out["iterations"] == 0
+
+
 async def test_daemon_failure_abort(tmp_path):
     from hermes_os.daemon import PersistentDaemonRuntime
     d = PersistentDaemonRuntime(workspace_root=str(tmp_path))
