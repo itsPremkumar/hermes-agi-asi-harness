@@ -215,8 +215,9 @@ async def run_command(args):
             max_iter = args.max_iterations or None
             print(f"Starting 24/7 daemon (max_iter={max_iter})... Ctrl+C to stop.")
             try:
-                summary = asyncio.run(os_kernel.run_daemon_forever(
-                    poll_interval_seconds=args.poll, max_iterations=max_iter))
+                # run_command already runs inside asyncio.run — await directly.
+                summary = await os_kernel.run_daemon_forever(
+                    poll_interval_seconds=args.poll, max_iterations=max_iter)
                 print(summary)
             except KeyboardInterrupt:
                 os_kernel.daemon.request_stop()
