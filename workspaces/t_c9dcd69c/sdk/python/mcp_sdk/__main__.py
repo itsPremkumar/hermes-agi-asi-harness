@@ -1,1 +1,0 @@
-"""MCPHub package."""

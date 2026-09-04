@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: contextvault
-  labels:
-    app.kubernetes.io/name: contextvault
-    app.kubernetes.io/managed-by: contextvault-operator
-    app: contextvault
-    component: memory-store
