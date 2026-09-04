@@ -61,6 +61,15 @@ from .mission_ir import GoalGraph, GoalInvariant, GoalLifecycle, GoalMemory, Goa
 from .recon import EnvironmentReconEngine, EnvironmentState
 from .strategy_search import PlanCritic, PlanReviewReport, StrategyCandidate, StrategySearchEngine
 from .uncertainty import EpistemicItem, EpistemicStatus, ResearchPlan, UncertaintyAnalyzer
+from .runtime_spi import ExecutionResult, ExecutionStatus, RuntimeAdapter
+from .runtime_adapters import (
+    CompositeDualSubstrateAdapter,
+    DeepAgentsRuntimeAdapter,
+    LangGraphRuntimeAdapter,
+    OpenClawRuntimeAdapter,
+    PrimeRuntimeAdapter,
+)
+from .runtime_router import RuntimeRouter
 
 logger = logging.getLogger("hermes.os")
 
@@ -125,6 +134,7 @@ class HermesIntelligenceOS:
         self.goal_memory = self.cognitive_compiler.goal_memory
         self.langgraph_adapter = LangGraphDynamicAdapter()
         self.deep_agents_adapter = DeepAgentsAdapter(base_workspace_root=workspace_root)
+        self.runtime_router = RuntimeRouter(workspace_root=workspace_root)
 
         # 6 Nested Control Loops
         self.loops = LoopEngine(
@@ -156,6 +166,17 @@ class HermesIntelligenceOS:
             risk_level=risk_level,
             principal=principal,
         )
+
+    async def execute_plan_with_runtime(
+        self,
+        plan: ExecutionPlanIR,
+        runtime_id: Optional[str] = None,
+    ) -> ExecutionResult:
+        """
+        Execute an ExecutionPlanIR using the registered RuntimeRouter, either by auto-routing
+        to the best runtime substrate or specifying an explicit runtime_id (e.g. 'composite_dual_substrate', 'langgraph', 'deep_agents').
+        """
+        return await self.runtime_router.execute_plan(plan, runtime_id=runtime_id)
 
     async def execute_mission(
         self,
@@ -313,20 +334,23 @@ class HermesIntelligenceOS:
         )
         supervisor_action = self.supervisor.ingest_telemetry(telemetry)
 
+        # 10b. Dual-Substrate Execution via RuntimeRouter
+        runtime_res = await self.execute_plan_with_runtime(plan_ir)
+
         # Finalize Checkpoint
-        ckpt.status = "completed" if mission_result["status"] == "completed" else "failed"
-        ckpt.completed_steps = ["step-1"]
+        ckpt.status = "completed" if mission_result["status"] == "completed" and runtime_res.is_success else "failed"
+        ckpt.completed_steps = ["step-1"] + runtime_res.completed_tasks
         ckpt.pending_steps = []
         self.daemon.save_checkpoint(ckpt)
 
-        final_state = "COMPLETED" if mission_result["status"] == "completed" else "FAILED"
+        final_state = "COMPLETED" if mission_result["status"] == "completed" and runtime_res.is_success else "FAILED"
         self.executive.state.transition_to(final_state, f"Mission {mission_result['mission_id']} finished")
 
         self.events.publish(HermesEvent(
             event_type="mission.completed" if final_state == "COMPLETED" else "mission.failed",
             source=EventSource.SYSTEM,
             identity=principal,
-            payload={"mission_id": mission_result["mission_id"], "status": mission_result["status"]},
+            payload={"mission_id": mission_result["mission_id"], "status": mission_result["status"], "runtime": runtime_res.runtime_id},
         ))
 
         return {
@@ -344,6 +368,7 @@ class HermesIntelligenceOS:
             "hooks_executed": len(self.hooks.get_history()),
             "plan_ir": plan_ir.to_dict(),
             "planning_record": plan_ir.planning_record.to_dict(),
+            "runtime_result": runtime_res.to_dict(),
         }
 
     def run_daily_cycle(self) -> dict[str, Any]:

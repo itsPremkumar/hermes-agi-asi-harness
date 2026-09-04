@@ -160,6 +160,19 @@ from .dynamic_runtime import (
     IsolatedSubagentWorkspace,
     LangGraphDynamicAdapter,
 )
+from .runtime_spi import (
+    ExecutionResult,
+    ExecutionStatus,
+    RuntimeAdapter,
+)
+from .runtime_adapters import (
+    CompositeDualSubstrateAdapter,
+    DeepAgentsRuntimeAdapter,
+    LangGraphRuntimeAdapter,
+    OpenClawRuntimeAdapter,
+    PrimeRuntimeAdapter,
+)
+from .runtime_router import RuntimeRouter
 
 __all__ = [
     # Master OS & Loops
@@ -313,4 +326,14 @@ __all__ = [
     "GraphNode",
     "IsolatedSubagentWorkspace",
     "LangGraphDynamicAdapter",
+    # v9 Runtime Substrate SPI & Adapters (Dual-Substrate LangGraph + Deep Agents)
+    "RuntimeAdapter",
+    "ExecutionResult",
+    "ExecutionStatus",
+    "LangGraphRuntimeAdapter",
+    "DeepAgentsRuntimeAdapter",
+    "CompositeDualSubstrateAdapter",
+    "OpenClawRuntimeAdapter",
+    "PrimeRuntimeAdapter",
+    "RuntimeRouter",
 ]

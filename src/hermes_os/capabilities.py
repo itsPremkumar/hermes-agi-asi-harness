@@ -76,15 +76,15 @@ class CapabilityManifest:
 class ExecutionCapabilityPlan:
     """Explicit capability bindings resolved for a specific task/subgoal."""
     task_id: str
-    required_capabilities: List[str]
-    selected_models: List[str]
-    selected_tools: List[str]
-    selected_skills: List[str]
-    selected_plugins: List[str]
-    selected_commands: List[str]
-    selected_agents: List[str]
-    required_permissions: List[str]
-    verification: str
+    required_capabilities: List[str] = field(default_factory=list)
+    selected_models: List[str] = field(default_factory=list)
+    selected_tools: List[str] = field(default_factory=list)
+    selected_skills: List[str] = field(default_factory=list)
+    selected_plugins: List[str] = field(default_factory=list)
+    selected_commands: List[str] = field(default_factory=list)
+    selected_agents: List[str] = field(default_factory=list)
+    required_permissions: List[str] = field(default_factory=list)
+    verification: str = "oracle_check"
 
     def to_dict(self) -> Dict[str, Any]:
         return {

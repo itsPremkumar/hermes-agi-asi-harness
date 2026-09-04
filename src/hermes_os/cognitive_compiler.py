@@ -145,14 +145,14 @@ class ExecutionPlanIR:
     plan_id: str
     mission_id: str
     objective: str
-    desired_state: str
-    task_graph: GoalGraph
-    execution_waves: List[ExecutionWave]
-    capability_plans: Dict[str, ExecutionCapabilityPlan]
-    resource_budget: Dict[str, Any]
-    verification_contracts: Dict[str, Dict[str, Any]]
-    recovery_contracts: Dict[str, Dict[str, Any]]
-    planning_record: PlanningRecord
+    desired_state: str = "Verified execution"
+    task_graph: GoalGraph = field(default_factory=GoalGraph)
+    execution_waves: List[ExecutionWave] = field(default_factory=list)
+    capability_plans: Dict[str, ExecutionCapabilityPlan] = field(default_factory=dict)
+    resource_budget: Dict[str, Any] = field(default_factory=dict)
+    verification_contracts: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    recovery_contracts: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    planning_record: PlanningRecord = field(default_factory=lambda: PlanningRecord(mission_id=""))
     status: str = "PLAN_APPROVED"
     version: int = 1
     plan_validity_score: float = 1.0
