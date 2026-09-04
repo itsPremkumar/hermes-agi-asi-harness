@@ -95,6 +95,11 @@ def main():
     llm_parser = subparsers.add_parser("llm", help="Hermes-first LLM chain status")
     llm_parser.add_argument("action", nargs="?", default="status", help="status|refresh")
     llm_parser.add_argument("--ask", default="", help="Test prompt sent through the chain")
+    api_parser = subparsers.add_parser("api", help="Status API server")
+    api_parser.add_argument("action", nargs="?", default="serve", help="serve")
+    api_parser.add_argument("--port", type=int, default=8471, help="Local port")
+    sb_parser = subparsers.add_parser("sandbox", help="Sandbox execution probe")
+    sb_parser.add_argument("code", nargs="?", default="print(42)", help="Python code to run")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
     
@@ -252,6 +257,15 @@ async def run_command(args):
         from hermes_os.safety_kernel import SafetyKernel
         sk = SafetyKernel()
         print(sk.verify_invariants({"action_type": "mission_dispatch", "action_args": {}, "principal": "system:master"}))
+    elif args.command == "sandbox":
+        from hermes_os.docker_sandbox import DockerSandbox
+        print(DockerSandbox().run(args.code))
+    elif args.command == "api":
+        from hermes_os.api import create_app
+        import uvicorn
+        app = create_app()
+        print(f"Serving Hermes API on 127.0.0.1:{args.port} (HERMES_API_KEY={'set' if __import__('os').getenv('HERMES_API_KEY') else 'unset-local-only'})")
+        uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
     elif args.command == "llm":
         from hermes_os.hermes_llm import HermesFirstLLMClient, resolve_tier
         if args.action == "refresh":

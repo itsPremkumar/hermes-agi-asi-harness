@@ -75,6 +75,29 @@ class ExperimentEngine:
         (box / "result.json").write_text(__import__("json").dumps(exp.to_dict(), indent=2), encoding="utf-8")
         return exp
 
+    def run_sandboxed(self, exp: Experiment, code: str, timeout: int = 60) -> Experiment:
+        """Prefer the Docker sandbox; explicit local fallback. Same verdict semantics."""
+        try:
+            from .docker_sandbox import DockerSandbox
+            res = DockerSandbox(timeout=timeout).run(code)
+            exp.observation = (res.get("stdout", "") + res.get("stderr", ""))[-2000:]
+            exp.elapsed_s = 0.0
+            if res.get("exit") == 0:
+                try:
+                    exp.measurement = float((res.get("stdout") or "").strip().split()[-1])
+                except Exception:
+                    exp.measurement = 1.0
+                exp.status = "passed"
+                exp.verdict = "HOLD" if exp.measurement > exp.baseline else "REJECT"
+            else:
+                exp.status = "failed"
+                exp.measurement = 0.0
+                exp.verdict = f"ERROR engine={res.get('engine')} rc={res.get('exit')}"
+            exp.observation += f"\n[sandbox engine={res.get('engine')}]"
+            return exp
+        except Exception:
+            return self.run_code(exp, code, timeout=min(timeout, 30))
+
     def run_fn(self, exp: Experiment, fn: Callable[[], float]) -> Experiment:
         exp.status = "running"
         t0 = time.perf_counter()

@@ -145,6 +145,13 @@ class ModelPortfolio:
         return {"winner": winner, "method": "longest_fallback", "n": len(outs)}
 
     def calibration_report(self) -> Dict[str, Any]:
-        return {mid: {"success_rate": m.success_rate, "invocations": m.invocations,
-                      "avg_latency_s": m.avg_latency_s, "role": m.role}
-                for mid, m in self._models.items()}
+        ledger: Dict[str, Any] = {}
+        try:
+            from memory.ledger import EconomicLedger
+            ledger = EconomicLedger(workspace_root=self.workspace_root).totals()
+        except Exception:
+            pass
+        return {"models": {mid: {"success_rate": m.success_rate, "invocations": m.invocations,
+                                 "avg_latency_s": m.avg_latency_s, "role": m.role}
+                           for mid, m in self._models.items()},
+                "ledger": ledger}

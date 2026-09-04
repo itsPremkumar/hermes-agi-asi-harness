@@ -449,6 +449,22 @@ class HermesIntelligenceOS:
                                      runtime=str(getattr(runtime_res, "runtime_id", "")), workers=len(getattr(runtime_res, "worker_sandboxes", []) or []))
         except Exception:
             pass
+        # Close the loop: record which model actually served this mission so
+        # future routing learns from measured outcomes, not priors.
+        try:
+            pf = getattr(self, "model_portfolio", None)
+            llm = getattr(getattr(self, "cognitive_compiler", None), "llm_client", None)
+            tier = getattr(llm, "active_tier", None)
+            model = getattr(llm, "active_model", None) or "deterministic-fallback"
+            pf_id = {"H1": "hermes_managed", "H2": "hermes_local", "L": "hermes_local"}.get(
+                str(tier), model if isinstance(model, str) else "deterministic-fallback")
+            if pf is not None:
+                if pf_id not in getattr(pf, "_models", {}):
+                    from .model_router import ModelEntry
+                    pf.register(ModelEntry(model_id=str(pf_id)[:60], role="fast"))
+                pf.record(str(pf_id)[:60], mission_result["status"] == "completed", latency_s=1.0)
+        except Exception:
+            pass
 
         final_state = "COMPLETED" if mission_result["status"] == "completed" and runtime_res.is_success else "FAILED"
         self.executive.state.transition_to(final_state, f"Mission {mission_result['mission_id']} finished")

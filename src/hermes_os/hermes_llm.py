@@ -20,6 +20,8 @@ Env overrides:
   HERMES_LLM_TIMEOUT  chat timeout seconds (default 120)
   HERMES_LLM_PROBE_TTL seconds to cache tier probes (default 300)
   HERMES_LLM_MODEL    force model id on local tiers
+  HERMES_LLM_CB_FAILS consecutive cloud failures before circuit opens (default 3)
+  HERMES_LLM_CB_COOLDOWN circuit-open seconds before one trial call (default 600)
   LLM_MODEL / OPENROUTER_MODEL honoured by the cloud tier (existing behavior)
 """
 
@@ -43,6 +45,43 @@ LLAMACPP_PORTS = (8080,)
 
 # Last successful tier probe: (tier, base_url, api_key, model, timestamp)
 _last_probe: Dict[str, Any] = {"tier": None, "ts": 0.0}
+
+# Cloud circuit breaker: consecutive failures -> skip cloud tier until cooldown.
+_cloud_breaker: Dict[str, Any] = {"fails": 0, "open_until": 0.0}
+
+
+def _cb_limits() -> Tuple[int, float]:
+    try:
+        fails = max(1, int(os.getenv("HERMES_LLM_CB_FAILS", "3")))
+    except Exception:
+        fails = 3
+    try:
+        cool = max(60.0, float(os.getenv("HERMES_LLM_CB_COOLDOWN", "600")))
+    except Exception:
+        cool = 600.0
+    return fails, cool
+
+
+def _cb_allows() -> bool:
+    return time.time() >= float(_cloud_breaker.get("open_until", 0.0))
+
+
+def _cb_record(success: bool) -> None:
+    fails, cool = _cb_limits()
+    if success:
+        _cloud_breaker["fails"] = 0
+        _cloud_breaker["open_until"] = 0.0
+        return
+    n = int(_cloud_breaker.get("fails", 0)) + 1
+    _cloud_breaker["fails"] = n
+    if n >= fails:
+        _cloud_breaker["open_until"] = time.time() + cool
+        logger.warning("Cloud LLM circuit OPEN after %d fails; cooling %.0fs", n, cool)
+
+
+def _cb_reset() -> None:
+    _cloud_breaker["fails"] = 0
+    _cloud_breaker["open_until"] = 0.0
 
 
 def _probe_ttl() -> float:
@@ -280,6 +319,9 @@ class HermesFirstLLMClient:
             tried.append(tier)
             hit = cur
             if tier == "C":
+                if not _cb_allows():
+                    logger.debug("Cloud tier skipped: circuit open")
+                    continue
                 try:
                     from hermes_agi.llm_planning import LLMClient  # type: ignore
                     import asyncio as _aio
@@ -293,9 +335,12 @@ class HermesFirstLLMClient:
                     with _cf.ThreadPoolExecutor(max_workers=1) as pool:
                         out = pool.submit(_run_cloud).result(timeout=self.timeout)
                     if out and "LLM unavailable" not in out:
+                        _cb_record(True)
                         self.active_tier, self.active_model = tier, client.model
                         return out
+                    _cb_record(False)
                 except Exception as e:
+                    _cb_record(False)
                     logger.debug("Cloud tier chat failed: %s", e)
                 continue
             out = _chat_openai_compat(hit["base_url"], hit.get("api_key", ""), hit["model"],
@@ -327,5 +372,7 @@ class HermesFirstLLMClient:
         return {"order": _order(), "active_tier": self.active_tier,
                 "active_model": self.active_model, "resolved": cur,
                 "probe_ttl_s": _probe_ttl(),
+                "cloud_circuit": {"fails": _cloud_breaker.get("fails", 0),
+                                  "open": not _cb_allows()},
                 "tiers": {t: ("up" if cur.get("tier") == t else "unknown")
                           for t in ("H1", "H2", "L", "C")}}
