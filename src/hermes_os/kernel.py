@@ -54,6 +54,13 @@ from .safety_kernel import SafetyKernel, SafetyVerdict
 from .supervisor import ExternalSupervisor, SupervisorTelemetry
 from .swarm_scaling import KimiSwarmScaler
 from .tool_env import ToolEnvironmentOS
+from .cognitive_compiler import CognitiveCompiler, ExecutionPlanIR, ExecutionWave, PlanningPhase, PlanningRecord, PlanValidityMonitor
+from .capabilities import CapabilityKind, CapabilityManifest, CapabilityRegistry, CapabilitySelector, ExecutionCapabilityPlan
+from .dynamic_runtime import DeepAgentsAdapter, DynamicStateGraph, LangGraphDynamicAdapter
+from .mission_ir import GoalGraph, GoalInvariant, GoalLifecycle, GoalMemory, GoalNode, MissionIR
+from .recon import EnvironmentReconEngine, EnvironmentState
+from .strategy_search import PlanCritic, PlanReviewReport, StrategyCandidate, StrategySearchEngine
+from .uncertainty import EpistemicItem, EpistemicStatus, ResearchPlan, UncertaintyAnalyzer
 
 logger = logging.getLogger("hermes.os")
 
@@ -111,6 +118,14 @@ class HermesIntelligenceOS:
         self.goal_drift_detector = GoalDriftDetector()
         self.perception_store = LosslessPerceptionStore(workspace_root=workspace_root)
 
+        # v9 Cognitive Planning OS Subsystems
+        self.cognitive_compiler = CognitiveCompiler(workspace_root=workspace_root)
+        self.capabilities = self.cognitive_compiler.capabilities
+        self.recon = self.cognitive_compiler.recon
+        self.goal_memory = self.cognitive_compiler.goal_memory
+        self.langgraph_adapter = LangGraphDynamicAdapter()
+        self.deep_agents_adapter = DeepAgentsAdapter(base_workspace_root=workspace_root)
+
         # 6 Nested Control Loops
         self.loops = LoopEngine(
             world_model=self.world_model,
@@ -118,12 +133,29 @@ class HermesIntelligenceOS:
             workspace_root=workspace_root,
         )
 
-        self.executive.state.transition_to("READY", "Hermes Intelligence OS v8 Boot sequence completed")
+        self.executive.state.transition_to("READY", "Hermes Intelligence OS v9 Boot sequence completed")
         self.events.publish(HermesEvent(
             event_type="kernel.booted",
             source=EventSource.SYSTEM,
-            payload={"planes_active": 18, "status": "nominal"},
+            payload={"planes_active": 18, "v9_cognitive_compiler": "active", "status": "nominal"},
         ))
+
+    def compile_mission(
+        self,
+        request: str,
+        invariants: Optional[list[str]] = None,
+        risk_level: str = "medium",
+        principal: str = "system:master",
+    ) -> ExecutionPlanIR:
+        """
+        Execute the 22-phase Cognitive Compiler (P0 to P21) to produce a verified ExecutionPlanIR.
+        """
+        return self.cognitive_compiler.compile(
+            request=request,
+            invariants=invariants,
+            risk_level=risk_level,
+            principal=principal,
+        )
 
     async def execute_mission(
         self,
@@ -165,6 +197,14 @@ class HermesIntelligenceOS:
             request=request,
             invariants=invariants,
             risk_level=risk_level,
+        )
+
+        # 2b. v9 Cognitive Compiler (22 Planning Phases P0 to P21)
+        plan_ir = self.compile_mission(
+            request=request,
+            invariants=invariants,
+            risk_level=risk_level,
+            principal=principal,
         )
 
         # 3. Safety Gate
@@ -302,6 +342,8 @@ class HermesIntelligenceOS:
             "goal_drift": drift_eval.alert_level,
             "perceptions_count": len(self.perception_store.get_by_mission(mission_id)),
             "hooks_executed": len(self.hooks.get_history()),
+            "plan_ir": plan_ir.to_dict(),
+            "planning_record": plan_ir.planning_record.to_dict(),
         }
 
     def run_daily_cycle(self) -> dict[str, Any]:

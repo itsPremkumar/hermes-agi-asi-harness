@@ -108,6 +108,58 @@ from .perception_store import (
     PerceptionModality,
     PerceptionRecord,
 )
+from .mission_ir import (
+    GoalGraph,
+    GoalInvariant,
+    GoalLifecycle,
+    GoalMemory,
+    GoalNode,
+    MissionIR,
+)
+from .recon import (
+    EnvironmentReconEngine,
+    EnvironmentState,
+    HardwareProfile,
+    WorkspaceReconProfile,
+)
+from .capabilities import (
+    CapabilityGraph,
+    CapabilityKind,
+    CapabilityManifest,
+    CapabilityRegistry,
+    CapabilitySelector,
+    ExecutionCapabilityPlan,
+)
+from .uncertainty import (
+    EpistemicItem,
+    EpistemicStatus,
+    ResearchLaneType,
+    ResearchPlan,
+    ResearchQuery,
+    UncertaintyAnalyzer,
+)
+from .strategy_search import (
+    PlanCritic,
+    PlanReviewReport,
+    SecondOpinionJudge,
+    StrategyCandidate,
+    StrategySearchEngine,
+)
+from .cognitive_compiler import (
+    CognitiveCompiler,
+    ExecutionPlanIR,
+    ExecutionWave,
+    PlanningPhase,
+    PlanningRecord,
+    PlanValidityMonitor,
+)
+from .dynamic_runtime import (
+    DeepAgentsAdapter,
+    DynamicStateGraph,
+    GraphNode,
+    IsolatedSubagentWorkspace,
+    LangGraphDynamicAdapter,
+)
 
 __all__ = [
     # Master OS & Loops
@@ -216,4 +268,49 @@ __all__ = [
     "PerceptionModality",
     "PerceptionRecord",
     "LosslessPerceptionStore",
+    # v9 Cognitive Planning OS: Mission IR & Goal Graph
+    "GoalGraph",
+    "GoalInvariant",
+    "GoalLifecycle",
+    "GoalMemory",
+    "GoalNode",
+    "MissionIR",
+    # v9 Cognitive Planning OS: Environment Recon
+    "EnvironmentReconEngine",
+    "EnvironmentState",
+    "HardwareProfile",
+    "WorkspaceReconProfile",
+    # v9 Cognitive Planning OS: Capabilities
+    "CapabilityGraph",
+    "CapabilityKind",
+    "CapabilityManifest",
+    "CapabilityRegistry",
+    "CapabilitySelector",
+    "ExecutionCapabilityPlan",
+    # v9 Cognitive Planning OS: Uncertainty & Research
+    "EpistemicItem",
+    "EpistemicStatus",
+    "ResearchLaneType",
+    "ResearchPlan",
+    "ResearchQuery",
+    "UncertaintyAnalyzer",
+    # v9 Cognitive Planning OS: Strategy & Critic
+    "PlanCritic",
+    "PlanReviewReport",
+    "SecondOpinionJudge",
+    "StrategyCandidate",
+    "StrategySearchEngine",
+    # v9 Cognitive Planning OS: Cognitive Compiler
+    "CognitiveCompiler",
+    "ExecutionPlanIR",
+    "ExecutionWave",
+    "PlanningPhase",
+    "PlanningRecord",
+    "PlanValidityMonitor",
+    # v9 Cognitive Planning OS: Dynamic Runtime Bridges
+    "DeepAgentsAdapter",
+    "DynamicStateGraph",
+    "GraphNode",
+    "IsolatedSubagentWorkspace",
+    "LangGraphDynamicAdapter",
 ]
