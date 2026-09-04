@@ -12,7 +12,7 @@ uv pip install -e ".[dev]"
 pytest tests/ -x
 
 # Run locally
-python hermes.py interactive
+python -m hermes_agi interactive
 ```
 
 ## Features

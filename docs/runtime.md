@@ -25,15 +25,15 @@ No LLM API is required — every capability is a plugin that runs deterministic 
 
 ```bash
 # Run a single task
-python hermes.py run "write file demo.txt containing HELLO"
-python hermes.py run "what is 2**10 + 5?"
-python hermes.py run "optimize sum of squares in [-3,3]"
-python hermes.py run "remember that the project uses MIT license"
-python hermes.py run "search memory for MIT license"
-python hermes.py run "summarize the quick brown fox jumps over the lazy dog"
+python -m hermes_agi run "write file demo.txt containing HELLO"
+python -m hermes_agi run "what is 2**10 + 5?"
+python -m hermes_agi run "optimize sum of squares in [-3,3]"
+python -m hermes_agi run "remember that the project uses MIT license"
+python -m hermes_agi run "search memory for MIT license"
+python -m hermes_agi run "summarize the quick brown fox jumps over the lazy dog"
 
 # Interactive REPL
-python hermes.py interactive
+python -m hermes_agi interactive
 ```
 
 Every action is gated by `permission_system` (R0–R6) and recorded in a
