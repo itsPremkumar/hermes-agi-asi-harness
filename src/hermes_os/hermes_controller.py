@@ -69,9 +69,11 @@ class HermesInstance:
     role: str = "leaf"
     pid: Optional[int] = None
     heartbeat_file: str = ""
-    status: str = "spawned"  # spawned | running | completed | failed | killed
+    status: str = "spawned"  # spawned | running | completed | failed | killed | expired
     created_at: float = field(default_factory=time.time)
     background: bool = False
+    lease_until: Optional[float] = None
+    result: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -82,6 +84,7 @@ class HermesInstance:
             "pid": self.pid,
             "status": self.status,
             "background": self.background,
+            "lease_until": self.lease_until,
             "created_at": self.created_at,
         }
 
@@ -107,7 +110,9 @@ class HermesController:
         background: bool = False,
         depth: int = 0,
         command: Optional[List[str]] = None,
+        lease_seconds: float = 300.0,
     ) -> HermesInstance:
+        self._expire_leases()
         live = [i for i in self._instances.values() if i.status in ("spawned", "running")]
         if len(live) >= self.max_concurrent_children:
             raise RuntimeError(f"Capacity reached ({self.max_concurrent_children} live children); refusing spawn")
@@ -118,7 +123,8 @@ class HermesController:
         hb = home / f"heartbeat-{iid}.json"
         hb.write_text(json.dumps({"instance_id": iid, "status": "spawned", "ts": time.time()}), encoding="utf-8")
         inst = HermesInstance(instance_id=iid, profile=profile, task=task, role=role,
-                              heartbeat_file=str(hb), status="running", background=background)
+                              heartbeat_file=str(hb), status="running", background=background,
+                              lease_until=(time.time() + lease_seconds) if background else None)
         if command:
             try:
                 proc = subprocess.Popen(command, cwd=str(Path(self.workspace_root).resolve()),
@@ -141,15 +147,17 @@ class HermesController:
         background: bool = False,
         profile: str = "default",
         depth: int = 0,
+        lease_seconds: float = 300.0,
     ) -> Dict[str, Any]:
         """Single goal or parallel batch fan-out with caps (hermes-agent delegate pattern)."""
         jobs = tasks or [goal]
         if len(jobs) > self.max_concurrent_children:
             return {"success": False, "error": f"Batch of {len(jobs)} exceeds cap {self.max_concurrent_children}"}
-        spawned = [self.spawn(t, profile=profile, role=role, background=background, depth=depth) for t in jobs]
+        spawned = [self.spawn(t, profile=profile, role=role, background=background,
+                              depth=depth, lease_seconds=lease_seconds) for t in jobs]
         if background:
             return {"success": True, "mode": "background", "instances": [s.to_dict() for s in spawned],
-                    "poll": "controller.poll_completions()"}
+                    "poll": "controller.poll_completions()", "lease_seconds": lease_seconds}
         # Foreground: mark completed immediately (real actuation happens in runtime adapters)
         for s in spawned:
             s.status = "completed"
@@ -157,9 +165,38 @@ class HermesController:
             self._completion_queue.append({"instance_id": s.instance_id, "status": "completed", "task": s.task})
         return {"success": True, "mode": "foreground", "instances": [s.to_dict() for s in spawned]}
 
+    def _expire_leases(self) -> List[Dict[str, Any]]:
+        """Background leases bound async work: expired running instances are
+        reaped as 'expired' so long runs can never saturate capacity."""
+        now = time.time()
+        expired = []
+        for inst in self._instances.values():
+            if inst.status == "running" and inst.lease_until and now > inst.lease_until:
+                inst.status = "expired"
+                self._heartbeat(inst, "expired")
+                expired.append({"instance_id": inst.instance_id, "status": "expired",
+                                "task": inst.task})
+        if expired:
+            self._completion_queue.extend(expired)
+        return expired
+
+    def complete(self, instance_id: str, status: str = "completed",
+                 result: Optional[Dict[str, Any]] = None) -> bool:
+        """Explicitly finish a (background) instance and free its slot."""
+        inst = self._instances.get(instance_id)
+        if not inst or inst.status not in ("spawned", "running"):
+            return False
+        inst.status = status
+        inst.result = dict(result or {})
+        self._heartbeat(inst, status)
+        self._completion_queue.append({"instance_id": instance_id, "status": status,
+                                       "task": inst.task})
+        return True
+
     def poll_completions(self) -> List[Dict[str, Any]]:
         out = list(self._completion_queue)
         self._completion_queue.clear()
+        out += self._expire_leases()
         # Reap finished procs
         for iid, proc in list(self._procs.items()):
             if proc.poll() is not None:
