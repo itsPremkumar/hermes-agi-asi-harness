@@ -70,6 +70,7 @@ from .runtime_adapters import (
     PrimeRuntimeAdapter,
 )
 from .runtime_router import RuntimeRouter
+from .langsmith_exporter import LangSmithConfig, LangSmithTelemetryExporter
 
 logger = logging.getLogger("hermes.os")
 
@@ -134,7 +135,8 @@ class HermesIntelligenceOS:
         self.goal_memory = self.cognitive_compiler.goal_memory
         self.langgraph_adapter = LangGraphDynamicAdapter()
         self.deep_agents_adapter = DeepAgentsAdapter(base_workspace_root=workspace_root)
-        self.runtime_router = RuntimeRouter(workspace_root=workspace_root)
+        self.langsmith_exporter = LangSmithTelemetryExporter(event_bus=self.events)
+        self.runtime_router = RuntimeRouter(workspace_root=workspace_root, exporter=self.langsmith_exporter)
 
         # 6 Nested Control Loops
         self.loops = LoopEngine(

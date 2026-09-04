@@ -35,15 +35,16 @@ class RuntimeRouter:
     Decouples the Hermes Executive from any concrete framework.
     """
 
-    def __init__(self, workspace_root: str = "."):
+    def __init__(self, workspace_root: str = ".", exporter: Optional[Any] = None):
         self.workspace_root = workspace_root
+        self.exporter = exporter
         self._adapters: Dict[str, RuntimeAdapter] = {}
         self._register_default_adapters()
 
     def _register_default_adapters(self) -> None:
-        self.register_adapter(CompositeDualSubstrateAdapter(workspace_root=self.workspace_root))
-        self.register_adapter(LangGraphRuntimeAdapter(workspace_root=self.workspace_root))
-        self.register_adapter(DeepAgentsRuntimeAdapter(workspace_root=self.workspace_root))
+        self.register_adapter(CompositeDualSubstrateAdapter(workspace_root=self.workspace_root, exporter=self.exporter))
+        self.register_adapter(LangGraphRuntimeAdapter(workspace_root=self.workspace_root, exporter=self.exporter))
+        self.register_adapter(DeepAgentsRuntimeAdapter(workspace_root=self.workspace_root, exporter=self.exporter))
         self.register_adapter(OpenClawRuntimeAdapter())
         self.register_adapter(PrimeRuntimeAdapter())
 

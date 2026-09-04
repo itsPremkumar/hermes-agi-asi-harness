@@ -173,6 +173,11 @@ from .runtime_adapters import (
     PrimeRuntimeAdapter,
 )
 from .runtime_router import RuntimeRouter
+from .langsmith_exporter import (
+    LangSmithConfig,
+    LangSmithTelemetryExporter,
+    LocalTraceSpan,
+)
 
 __all__ = [
     # Master OS & Loops
@@ -336,4 +341,8 @@ __all__ = [
     "OpenClawRuntimeAdapter",
     "PrimeRuntimeAdapter",
     "RuntimeRouter",
+    # LangSmith Telemetry & Observability Exporter (Plane 01 & 18)
+    "LangSmithConfig",
+    "LangSmithTelemetryExporter",
+    "LocalTraceSpan",
 ]

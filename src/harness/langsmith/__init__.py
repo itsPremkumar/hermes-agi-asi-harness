@@ -9,6 +9,8 @@ from typing import Any, Optional
 
 from ..errors import LangSmithError
 
+import os
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,13 +35,27 @@ class TraceSpan:
 
 
 class TracingClient:
-    """LangSmith tracing client."""
+    """LangSmith tracing client supporting both local in-memory traces and cloud client."""
 
-    def __init__(self, project_name: str = "harness", enabled: bool = True) -> None:
+    def __init__(self, project_name: str = "harness", enabled: bool = True, api_key: str | None = None) -> None:
         self.project_name = project_name
         self.enabled = enabled
+        self.api_key = api_key or os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
         self._traces: list[TraceSpan] = []
         self._active_spans: dict[str, TraceSpan] = {}
+        self._cloud_client: Any = None
+
+        if self.enabled and self.api_key:
+            try:
+                import langsmith
+                self._cloud_client = langsmith.Client(api_key=self.api_key)
+            except Exception as e:
+                logger.debug(f"LangSmith cloud client fallback to local: {e}")
+                self._cloud_client = None
+
+    @property
+    def is_cloud_connected(self) -> bool:
+        return self._cloud_client is not None
 
     def start_span(self, name: str, inputs: dict[str, Any] | None = None, parent_id: str | None = None) -> TraceSpan:
         span = TraceSpan(name=name, inputs=inputs or {}, parent_id=parent_id)
@@ -91,6 +107,23 @@ class Dataset:
     @property
     def size(self) -> int:
         return len(self.entries)
+
+    def to_langsmith(self, client: Any = None) -> Any:
+        """Export dataset to LangSmith if client is available."""
+        if client is not None:
+            try:
+                ds = client.create_dataset(dataset_name=self.name, description=self.description)
+                for e in self.entries:
+                    client.create_example(
+                        inputs=e.inputs,
+                        outputs={"expected": e.expected_output} if e.expected_output else None,
+                        dataset_id=ds.id,
+                        metadata=e.metadata,
+                    )
+                return ds
+            except Exception as ex:
+                logger.debug(f"LangSmith dataset export error: {ex}")
+        return None
 
 
 @dataclass
