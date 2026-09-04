@@ -50,9 +50,9 @@ from .semantic_index import CodeChunk, IndexLevel, SearchQuery, SearchResult, Se
 from .skill_forge import Skill, SkillForge
 from .strategy_search import Strategy, StrategyEvaluation, StrategySearcher, StrategyType
 from .task_graph import Task, TaskGraph, TaskStatus
-from .test_first import TestFirstPlanner
-from .test_oracle import OracleManager, OracleType, TestOracle
-from .test_pyramid import TestLayer, TestPyramid, TestSuite
+from .tdd_planner import TestFirstPlanner
+from .oracle_strategy import OracleManager, OracleType, TestOracle
+from .pyramid_planner import TestLayer, TestPyramid, TestSuite
 from .transfer_learning import TransferLearning
 from .worker_contract import ContractManager, WorkerContract
 from .worktree_isolation import Worktree, WorktreeManager
