@@ -42,12 +42,17 @@ from .daemon import CheckpointSnapshot, PersistentDaemonRuntime
 from .events import EventSource, HermesEvent, UniversalEventBus
 from .evolution_lab import PopulationEvolutionLab
 from .executive import ExecutiveKernel
+from .drift import EnvironmentDriftDetector, GoalDriftDetector
+from .gateway import OpenClawGateway
+from .hooks import HookEventType, HookManager
 from .loops import LoopEngine
 from .meta_planner import ExecutionArchitecture, MetaPlanner
+from .perception_store import LosslessPerceptionStore, PerceptionModality
 from .recovery import RecoveryEngine
 from .research import CognitiveResearchEngine
 from .safety_kernel import SafetyKernel, SafetyVerdict
 from .supervisor import ExternalSupervisor, SupervisorTelemetry
+from .swarm_scaling import KimiSwarmScaler
 from .tool_env import ToolEnvironmentOS
 
 logger = logging.getLogger("hermes.os")
@@ -97,6 +102,14 @@ class HermesIntelligenceOS:
         # Plane 18: External Supervisor & 24/7 Persistent Daemon
         self.supervisor = ExternalSupervisor()
         self.daemon = PersistentDaemonRuntime(workspace_root=workspace_root)
+
+        # Frontier Subsystems: Hooks, Gateway, Swarm, Drift, Perception
+        self.hooks = HookManager(register_defaults=True)
+        self.gateway = OpenClawGateway()
+        self.swarm_scaler = KimiSwarmScaler()
+        self.drift_detector = EnvironmentDriftDetector(workspace_root=workspace_root)
+        self.goal_drift_detector = GoalDriftDetector()
+        self.perception_store = LosslessPerceptionStore(workspace_root=workspace_root)
 
         # 6 Nested Control Loops
         self.loops = LoopEngine(
@@ -211,10 +224,42 @@ class HermesIntelligenceOS:
             }
         ]
 
+        # Deterministic Pre-Tool Lifecycle Hooks
+        for step in steps:
+            hook_res = self.hooks.dispatch(
+                HookEventType.PRE_TOOL_USE,
+                {"command": step.get("args", {}).get("code", ""), "step_id": step.get("id")},
+            )
+            if hook_res.is_blocked:
+                return {"status": "blocked_by_hook", "reason": hook_res.reason}
+
         mission_result = await self.loops.execute_mission_loop(
             goal_contract=contract,
             steps=steps,
             tier=arch.verification_tier,
+        )
+
+        # Lossless Perception Store Capture (VISTA-inspired)
+        self.perception_store.record_perception(
+            mission_id=mission_id,
+            action_id="step-1",
+            modality=PerceptionModality.TOOL_PAYLOAD,
+            raw_content=steps[0],
+            summary_token=f"step-1: {steps[0].get('action', '')}",
+        )
+
+        # Deterministic Post-Tool Lifecycle Hooks
+        self.hooks.dispatch(
+            HookEventType.POST_TOOL_USE,
+            {"mission_id": mission_id, "step_id": "step-1", "output": str(mission_result.get("status"))},
+        )
+
+        # Goal Drift Evaluation across Trajectory
+        drift_eval = self.goal_drift_detector.evaluate(
+            objective=request,
+            invariants=invariants or [],
+            completed_steps=steps if mission_result["status"] == "completed" else [],
+            pending_steps=[],
         )
 
         # 10. Supervisor Telemetry Audit
@@ -254,6 +299,9 @@ class HermesIntelligenceOS:
             "abstraction": abstraction_decision.mode.value,
             "meta_reasoning": meta_cog.to_dict(),
             "supervisor_action": supervisor_action.intervention.value,
+            "goal_drift": drift_eval.alert_level,
+            "perceptions_count": len(self.perception_store.get_by_mission(mission_id)),
+            "hooks_executed": len(self.hooks.get_history()),
         }
 
     def run_daily_cycle(self) -> dict[str, Any]:

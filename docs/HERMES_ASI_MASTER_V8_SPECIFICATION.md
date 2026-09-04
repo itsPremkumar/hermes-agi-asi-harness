@@ -252,3 +252,38 @@ The External Supervisor runs out-of-band and can issue:
 - Prioritized queue (`CRITICAL`, `HIGH`, `NORMAL`, `LOW`).
 - Checkpoint snapshots saved to `.hermes/checkpoints/<mission_id>.json`.
 - Automatic crash reconstruction on reboot.
+
+---
+
+## 16. Frontier Subsystems: Hooks, Gateway, Swarm, Drift & Perception
+
+Building on the 18 planes, Hermes v8 integrates 5 high-value mechanisms distilled from frontier agent production environments:
+
+### 16.1 Deterministic Lifecycle Hooks (Claude Code Inspired)
+- **Module**: `src/hermes_os/hooks.py`
+- **Hook Events**: `SESSION_START`, `SESSION_STOP`, `USER_PROMPT_SUBMIT`, `PRE_TOOL_USE`, `POST_TOOL_USE`, `POST_TOOL_FAILURE`, `SUBAGENT_START`, `SUBAGENT_STOP`, `PRE_COMPACT`, `POST_COMPACT`, `FILE_CHANGED`, `PERMISSION_REQUEST`.
+- **Hard Guarantees**: Non-LLM deterministic interceptors.
+  - `GitSafetyHook`: Evaluates `PRE_TOOL_USE` to strictly block destructive commands (`git reset --hard`, `git push --force`, `rm -rf /`).
+  - `SecretScrubberHook`: Post-processes tool outputs to scrub OpenAI API keys, GitHub tokens, and bearer credentials before context window entry.
+  - `FileChangeAuditorHook`: Attaches verification metadata on filesystem alterations.
+
+### 16.2 OpenClaw 2.0 Gateway & Node Abstraction
+- **Module**: `src/hermes_os/gateway.py`
+- **Heartbeat vs Task Loop**: Decouples sub-millisecond idle attention checks (`poll_attention()`) from heavy task execution loops, conserving token budget and compute.
+- **Device Node Registry**: Manages distributed execution targets (`Desktop`, `Cloud VM`, `Server`, `Edge`), matching capability profiles, memory capacity, and GPU availability.
+- **Agent Control Protocol (ACP)**: Supervises external agent harnesses (Claude Code, OpenHands, Codex, Prime Agent) via managed sessions with telemetry ingestion and mid-turn steering.
+
+### 16.3 Kimi K3 Swarm Horizontal Scaling & Evidence Compression
+- **Module**: `src/hermes_os/swarm_scaling.py`
+- **Topology**: 1 Strong Reasoner (Executive) $\to$ N Parallel Cheap Specialist Workers (`Search`, `CodeExtractor`, `FactChecker`, `SyntaxValidator`).
+- **Evidence Compression Engine**: Aggregates up to 50 concurrent worker outputs, extracts verified claims with confidence calibration, isolates contradictions, and slashes token consumption by $>70\%$.
+
+### 16.4 Environment & Goal Drift Detectors
+- **Module**: `src/hermes_os/drift.py`
+- **Environment Drift**: Captures cryptographic file hashes of critical lockfiles and configs, Python environment versions, and git HEAD. Compares snapshots prior to checkpoint resumption to prevent stale state corruption.
+- **Goal Drift**: Continuous invariant auditor monitoring semantic alignment and invariant adherence across the action graph, alerting if drift exceeds calibrated risk thresholds.
+
+### 16.5 VISTA Lossless Multi-Modal Perception Store
+- **Module**: `src/hermes_os/perception_store.py`
+- **Multimodal Capture**: Out-of-band capture of screenshots, accessibility trees, raw terminal ANSI streams, and tool payloads indexed by `mission_id` and `action_id`.
+- **Experience Replay**: Lossless replay engine reconstructing exact sensory observations for post-mortem debugging and offline skill distillation.

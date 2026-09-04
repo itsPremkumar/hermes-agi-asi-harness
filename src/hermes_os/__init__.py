@@ -67,6 +67,47 @@ from .supervisor import (
     SupervisorTelemetry,
 )
 from .tool_env import ToolDescriptor, ToolEnvironmentOS
+from .hooks import (
+    HookAction,
+    HookEventType,
+    HookManager,
+    HookResult,
+    LifecycleHook,
+)
+from .gateway import (
+    AttentionPollResult,
+    DeviceNode,
+    ExternalHarnessBridge,
+    ExternalHarnessType,
+    HarnessSession,
+    HeartbeatMonitor,
+    NodeRegistry,
+    NodeStatus,
+    NodeType,
+    OpenClawGateway,
+)
+from .swarm_scaling import (
+    AggregatedEvidencePacket,
+    EvidenceCompressor,
+    EvidenceItem,
+    KimiSwarmScaler,
+    SwarmTask,
+    SwarmWorkerResult,
+    SwarmWorkerRole,
+)
+from .drift import (
+    DriftReport,
+    DriftSeverity,
+    EnvironmentDriftDetector,
+    EnvironmentFingerprint,
+    GoalDriftAlert,
+    GoalDriftDetector,
+)
+from .perception_store import (
+    LosslessPerceptionStore,
+    PerceptionModality,
+    PerceptionRecord,
+)
 
 __all__ = [
     # Master OS & Loops
@@ -139,4 +180,40 @@ __all__ = [
     "CheckpointSnapshot",
     "QueuedMission",
     "MissionPriority",
+    # Frontier Additions: Hooks
+    "HookEventType",
+    "HookAction",
+    "HookResult",
+    "LifecycleHook",
+    "HookManager",
+    # Frontier Additions: Gateway & Nodes
+    "NodeType",
+    "NodeStatus",
+    "DeviceNode",
+    "NodeRegistry",
+    "AttentionPollResult",
+    "HeartbeatMonitor",
+    "ExternalHarnessType",
+    "HarnessSession",
+    "ExternalHarnessBridge",
+    "OpenClawGateway",
+    # Frontier Additions: Kimi Swarm Scaling
+    "SwarmWorkerRole",
+    "SwarmTask",
+    "SwarmWorkerResult",
+    "EvidenceItem",
+    "AggregatedEvidencePacket",
+    "EvidenceCompressor",
+    "KimiSwarmScaler",
+    # Frontier Additions: Drift Detection
+    "DriftSeverity",
+    "EnvironmentFingerprint",
+    "DriftReport",
+    "EnvironmentDriftDetector",
+    "GoalDriftAlert",
+    "GoalDriftDetector",
+    # Frontier Additions: Perception Store
+    "PerceptionModality",
+    "PerceptionRecord",
+    "LosslessPerceptionStore",
 ]
