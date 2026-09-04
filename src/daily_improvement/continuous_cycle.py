@@ -177,6 +177,59 @@ class ContinuousCycle:
             ))
         return results
 
+    def run_darwinian_cycle(self, workspace_root: str = ".") -> dict[str, Any]:
+        """
+        Execute a real Darwinian Self-Evolution cycle powered by NVIDIA AVO and
+        cloned-branch testing.
+        1. Evaluates baseline benchmark score
+        2. Dispatches deep evolution agent with mutation operator
+        3. Tests candidate patch on isolated cloned branch
+        4. Verifies safety gates and strict score dominance (Score_mut > Score_base)
+        5. Merges gain or initiates rollback
+        """
+        cycle_id = f"darwin-{self._cycle_count}-{int(time.time())}"
+        self._cycle_count += 1
+
+        try:
+            from engines.self_evolution import SelfEvolutionLoop
+            evo = SelfEvolutionLoop(workspace_root=workspace_root)
+            cycle_result = evo.run_evolution_cycle(max_mutations=1)
+
+            base_score = cycle_result.baseline_score
+            mut_score = cycle_result.final_score
+            delta = mut_score - base_score
+            accepted = cycle_result.mutations_merged > 0
+
+            score_entry = BenchmarkScore(benchmark="darwinian_overall", score=mut_score, target=1.0)
+            self._scores.append(score_entry)
+
+            progress = ProgressEntry(
+                timestamp=time.time(),
+                benchmark="darwinian_overall",
+                score=mut_score,
+                target=1.0,
+                improvement=delta,
+            )
+            self._progress.append(progress)
+
+            return {
+                "cycle_id": cycle_id,
+                "status": CycleStatus.PASSED if accepted else CycleStatus.FAILED,
+                "accepted": accepted,
+                "baseline_score": base_score,
+                "mutation_score": mut_score,
+                "delta": delta,
+                "details": cycle_result.to_dict(),
+            }
+        except Exception as e:
+            logger.warning("Darwinian cycle fallback: %s", e)
+            return {
+                "cycle_id": cycle_id,
+                "status": CycleStatus.FAILED,
+                "accepted": False,
+                "error": str(e),
+            }
+
     def get_stats(self) -> dict[str, Any]:
         return {
             "benchmarks": len(self._benchmarks),

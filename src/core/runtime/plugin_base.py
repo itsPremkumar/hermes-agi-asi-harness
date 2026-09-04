@@ -51,7 +51,7 @@ class PluginManifest:
     source: str
     capabilities: list[str]
     cost: str  # free | optional-paid
-    permissions: PluginPermissions
+    permissions: PluginPermissions = field(default_factory=PluginPermissions)
     dependencies: list[str] = field(default_factory=list)
     path: Path | None = None
 

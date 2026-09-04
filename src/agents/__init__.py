@@ -181,3 +181,13 @@ try:
     )
 except ImportError:
     pass
+
+# Meta-Agent Factory exports
+try:
+    from .meta_factory import (
+        MetaAgentFactory,
+        MetaAgentInstance,
+        MetaAgentSpec,
+    )
+except ImportError:
+    pass
