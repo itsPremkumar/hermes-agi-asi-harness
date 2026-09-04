@@ -16,6 +16,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ===== Structure Guardrails (no deps, runs first) =====
+  structure:
+    name: Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: No new root-level entry points
+        shell: bash
+        run: |
+          allow="hermes.py continuous_dev.py sitecustomize.py"
+          fail=0
+          for f in *.py; do
+            keep=0
+            for a in $allow; do [ "$f" = "$a" ] && keep=1; done
+            if [ "$keep" = "0" ]; then echo "UNEXPECTED root script: $f"; fail=1; fi
+          done
+          [ -e workspaces ] && { echo "workspaces/ must not return"; fail=1; }
+          [ -e integration ] && { echo "integration/ must not return (see archive/)"; fail=1; }
+          exit $fail
+
   # ===== Lint & Format =====
   lint:
     name: Lint & Format
