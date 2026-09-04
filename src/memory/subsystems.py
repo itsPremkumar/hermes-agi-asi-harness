@@ -293,3 +293,27 @@ class CapabilityMemory:
 
     def all_capabilities(self) -> list[CapabilityProfile]:
         return list(self._capabilities.values())
+
+
+class TrajectoryMemory:
+    """In-memory index and ring-buffer of active and recent execution trajectories."""
+
+    def __init__(self, capacity: int = 100):
+        self.capacity = capacity
+        self._trajectories: dict[str, Any] = {}
+
+    def store(self, trajectory: Any) -> None:
+        self._trajectories[trajectory.trajectory_id] = trajectory
+        if len(self._trajectories) > self.capacity:
+            oldest_key = next(iter(self._trajectories))
+            del self._trajectories[oldest_key]
+
+    def get(self, trajectory_id: str) -> Optional[Any]:
+        return self._trajectories.get(trajectory_id)
+
+    def all_trajectories(self) -> list[Any]:
+        return list(self._trajectories.values())
+
+    def count(self) -> int:
+        return len(self._trajectories)
+

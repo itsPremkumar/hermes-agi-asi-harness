@@ -16,6 +16,7 @@ from .subsystems import (
     Procedure,
     SemanticEntry,
     SemanticMemory,
+    TrajectoryMemory,
     WorkingMemory,
     WorldStateMemory,
 )
@@ -35,6 +36,7 @@ __all__ = [
     "Procedure",
     "SemanticEntry",
     "SemanticMemory",
+    "TrajectoryMemory",
     "WorkingMemory",
     "WorldStateMemory",
     "Trajectory",

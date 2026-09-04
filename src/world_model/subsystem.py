@@ -6,6 +6,7 @@ The unified interface to the external and internal reality model:
 - What is believed true (BeliefSystem)
 - What caused what & counterfactuals (CausalGraph)
 - What actions are possible (ActionAffordanceModel)
+- Active Abstraction Gate (Tycho): Decides when constructing a world model is worth the cost
 """
 
 from __future__ import annotations
@@ -13,14 +14,63 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from .entities import EntityGraph, Entity, EntityType, Relationship
-from .beliefs import BeliefSystem, Belief, BeliefState
-from .causal import CausalGraph, CausalEdge
-from .affordances import ActionAffordanceModel, ActionAffordance
+from .affordances import ActionAffordance, ActionAffordanceModel
+from .beliefs import Belief, BeliefState, BeliefSystem
+from .causal import CausalEdge, CausalGraph
+from .entities import Entity, EntityGraph, EntityType, Relationship
 
 logger = logging.getLogger("hermes.world_model")
+
+
+class AbstractionMode(str, Enum):
+    DIRECT_INTERACTION = "direct_interaction"
+    WORLD_MODEL_GROUNDED = "world_model_grounded"
+
+
+@dataclass
+class AbstractionDecision:
+    mode: AbstractionMode
+    rationale: str
+    estimated_cost_ratio: float  # 0.05 for direct, 1.0 for grounded
+    requires_causal_graph: bool
+
+
+class ActiveAbstractionGate:
+    """
+    Tycho-inspired Active Abstraction Gate.
+    Decides whether constructing or updating an elaborate world model graph is worth
+    the compute and latency cost, or whether direct interaction is optimal.
+    """
+
+    def evaluate(self, task_description: str, risk_level: str = "medium") -> AbstractionDecision:
+        desc_lower = task_description.lower()
+        is_simple = any(k in desc_lower for k in ("read", "view", "cat", "print", "echo", "status", "format", "list"))
+        is_complex = any(k in desc_lower for k in ("refactor", "architect", "consensus", "security", "causal", "optimize", "race_condition", "distributed", "allocator"))
+
+        if risk_level in ("high", "critical") or is_complex:
+            return AbstractionDecision(
+                mode=AbstractionMode.WORLD_MODEL_GROUNDED,
+                rationale="Task involves high complexity or risk; constructing grounded world model is justified.",
+                estimated_cost_ratio=1.0,
+                requires_causal_graph=True,
+            )
+        if is_simple and risk_level == "low":
+            return AbstractionDecision(
+                mode=AbstractionMode.DIRECT_INTERACTION,
+                rationale="Task is simple/stateless; bypassing world model graph to conserve compute and latency.",
+                estimated_cost_ratio=0.05,
+                requires_causal_graph=False,
+            )
+        return AbstractionDecision(
+            mode=AbstractionMode.WORLD_MODEL_GROUNDED,
+            rationale="Standard mission execution; grounded world model enabled.",
+            estimated_cost_ratio=0.5,
+            requires_causal_graph=False,
+        )
 
 
 class WorldModel:
@@ -34,6 +84,7 @@ class WorldModel:
         self.beliefs = BeliefSystem()
         self.causal = CausalGraph()
         self.affordances = ActionAffordanceModel()
+        self.abstraction_gate = ActiveAbstractionGate()
         self._last_snapshot_time = time.time()
 
     def update_from_observation(self, observation: dict[str, Any]) -> None:
