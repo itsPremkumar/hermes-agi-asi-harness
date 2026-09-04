@@ -143,6 +143,71 @@ class SkillRegistry:
     def list(self) -> List[Dict[str, Any]]:
         return [s.to_dict() for s in self._skills.values()]
 
+    def sync_from_dir(self, source_root: str, prefix: str = "hermes",
+                      limit: int = 60) -> Dict[str, Any]:
+        """Import hermes-agent style skills (nested <category>/<name>/SKILL.md).
+
+        Copies bodies into skills/<prefix>-<category>-<name>/ with provenance
+        pointing at the source file. Never overwrites locally-forged skills
+        with the same name unless the source is newer. Returns sync report.
+        """
+        import shutil
+        src = Path(source_root)
+        found = sorted(src.rglob("SKILL.md")) if src.is_dir() else []
+        # Coding-adjacent categories first so limits keep the highest-value skills.
+        priority = ("software-development", "research", "web", "devops", "productivity")
+
+        def _rank(p: Path) -> tuple:
+            s = str(p).lower()
+            for i, key in enumerate(priority):
+                if key in s:
+                    return (i, str(p))
+            return (len(priority), str(p))
+
+        found = sorted(found, key=_rank)
+        imported, skipped, updated = 0, 0, 0
+        for md in found[:limit * 3]:  # scan cap above import cap
+            if imported >= limit:
+                break
+            try:
+                rel = md.parent.relative_to(src)
+                parts = [p for p in rel.parts if p not in (".",)]
+                name = f"{prefix}-" + "-".join(parts)[:60].strip("-")
+                if not name or name == f"{prefix}-":
+                    skipped += 1
+                    continue
+                body = md.read_text(encoding="utf-8", errors="replace")
+                first = next((ln.strip("# ").strip() for ln in body.splitlines() if ln.strip()), name)
+                dest = self.root / name
+                if dest.exists():
+                    # Update only when source is newer
+                    try:
+                        if md.stat().st_mtime <= (dest / "SKILL.md").stat().st_mtime:
+                            skipped += 1
+                            continue
+                    except Exception:
+                        pass
+                    shutil.copy2(str(md), str(dest / "SKILL.md"))
+                    updated += 1
+                else:
+                    dest.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(str(md), str(dest / "SKILL.md"))
+                    (dest / "provenance.json").write_text(json.dumps(
+                        {"name": name, "synced_from": str(md), "synced_at": time.time()}),
+                        encoding="utf-8")
+                    imported += 1
+                if name not in self._skills:
+                    self._skills[name] = SkillVersion(
+                        name=name, description=first[:200],
+                        triggers=[parts[-1].replace("-", " ")] if parts else [],
+                        path=str(dest))
+                    self._persist(self._skills[name])
+            except Exception as e:
+                logger.debug("skill sync skip %s: %s", md, e)
+                skipped += 1
+        return {"scanned": len(found), "imported": imported, "updated": updated,
+                "skipped": skipped, "total": len(self._skills)}
+
 
 class SkillForge:
     """Research→Design→Implement→Sandbox test→Evaluate→Package→Install→Version→Store."""

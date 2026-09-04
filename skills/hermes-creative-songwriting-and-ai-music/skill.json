@@ -1,0 +1,11 @@
+{
+  "name": "hermes-creative-songwriting-and-ai-music",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "songwriting and ai music"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-creative-songwriting-and-ai-music"
+}

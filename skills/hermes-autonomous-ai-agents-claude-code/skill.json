@@ -1,0 +1,11 @@
+{
+  "name": "hermes-autonomous-ai-agents-claude-code",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "claude code"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-autonomous-ai-agents-claude-code"
+}

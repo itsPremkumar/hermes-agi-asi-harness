@@ -7,7 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 24/7 daemon loop with disk-backed queue, crash resume, PID lock, scheduler
+  (interval + daily), watchdog ticks
+- HermesController: profile-isolated lifecycle, role-capped delegation,
+  background leases + explicit complete, safe update
+- Hermes-first LLM chain (managed router → detected servers → local →
+  cloud → deterministic) with TTL probe cache, persistent circuit breaker,
+  `llm status/refresh/--ask` CLI
+- Skill OS: versioned registry + forge + Hermes-agent sync (58 skills) +
+  3 seed skills + `skills` CLI
+- Memory: vector + knowledge-graph backends, ranked recall, P22
+  consolidation, economic ledger, calibration
+- Safety: 22 executable invariants, R0–R3 plugin manifests, kill switch,
+  Level-10 approval gates
+- Experiments engine + Docker sandbox (explicit local fallback) + arch
+  search with Pareto/A-B + BaselineTracker promotion
+- Supervisor closed-loop actuation, LLM redirect, signal-gated stagnation
+  detector fed by real wave outcomes
+- Context compaction runtime (`compact` CLI + `compact_context` tool)
+- MCP durable tasks (submit/poll/cancel with leases)
+- FastAPI status API with key auth (`api serve`), static dashboard builder
+- Ops: CONTINUOUS_OPS.md, Task Scheduler install/uninstall, state
+  backup/restore, 30+ new subsystem tests (213 green)
+
 ### Fixed
+- CLI `daemon run` nested `asyncio.run` crash
+- `SLOW_PROGRESS` misclassified as stagnation; wall-clock-only PLATEAU
+  verdicts require detector signal
+- Background delegates saturating Hermes capacity on long runs
+- `Event loop is closed` httpx noise via in-loop client cleanup
+- Stale editable install shadowing the checkout (`pip install -e .`)
 - Pytest collection error caused by `test_pass = _pass` alias in test_phase3_4.py, test_phase5.py, test_phase6.py, test_phase7.py, test_phase8.py — removed the alias and replaced all `test_pass()` calls with `_pass()` to prevent pytest from collecting them as test functions
 - All 1995 tests now pass (previously 39 failed due to pytest NameError/collection issues)
 

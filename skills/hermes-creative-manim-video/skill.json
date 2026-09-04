@@ -1,0 +1,11 @@
+{
+  "name": "hermes-creative-manim-video",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "manim video"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-creative-manim-video"
+}

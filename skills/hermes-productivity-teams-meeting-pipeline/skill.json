@@ -1,0 +1,11 @@
+{
+  "name": "hermes-productivity-teams-meeting-pipeline",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "teams meeting pipeline"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-productivity-teams-meeting-pipeline"
+}

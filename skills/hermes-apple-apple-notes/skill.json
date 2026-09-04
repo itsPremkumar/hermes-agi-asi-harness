@@ -1,0 +1,11 @@
+{
+  "name": "hermes-apple-apple-notes",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "apple notes"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-apple-apple-notes"
+}

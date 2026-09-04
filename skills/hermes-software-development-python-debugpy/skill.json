@@ -1,0 +1,11 @@
+{
+  "name": "hermes-software-development-python-debugpy",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "python debugpy"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-software-development-python-debugpy"
+}

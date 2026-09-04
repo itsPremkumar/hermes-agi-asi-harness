@@ -393,6 +393,98 @@ def test_dashboard_builds(tmp_path):
     assert (tmp_path / ".hermes" / "dashboard.html").exists()
 
 
+# ---------------- breaker persistence ----------------
+
+def test_breaker_persists(monkeypatch, tmp_path):
+    import json
+    from hermes_os import hermes_llm as HL
+    HL._cb_reset()
+    monkeypatch.setenv("HERMES_LLM_CB_FAILS", "1")
+    monkeypatch.setenv("HERMES_LLM_CB_COOLDOWN", "600")
+    HL._cb_record(False)
+    assert not HL._cb_allows()
+    p = HL._breaker_path()
+    assert p.exists()
+    assert json.loads(p.read_text(encoding="utf-8"))["fails"] >= 1
+    HL._cb_reset()
+    assert HL._cb_allows()
+
+
+# ---------------- skill sync ----------------
+
+def test_skill_sync_dir(tmp_path):
+    from hermes_os.skills import SkillRegistry
+    src = tmp_path / "agent-skills" / "research" / "deep-dive"
+    src.mkdir(parents=True)
+    (src / "SKILL.md").write_text("# Deep Dive\n\nResearch body.\n")
+    reg = SkillRegistry(workspace_root=str(tmp_path))
+    rep = reg.sync_from_dir(str(tmp_path / "agent-skills"), limit=10)
+    assert rep["imported"] == 1
+    assert reg.search("deep dive research")[0].name.startswith("hermes-")
+    rep2 = reg.sync_from_dir(str(tmp_path / "agent-skills"), limit=10)
+    assert rep2["imported"] == 0  # second sync is a no-op
+
+
+# ---------------- compaction ----------------
+
+def test_compaction(tmp_path):
+    from hermes_os.context_compaction import ContextCompactor
+    cc = ContextCompactor(workspace_root=str(tmp_path), max_chars=500, tail_lines=10)
+    small = "hello world"
+    assert not cc.needs_compaction(small)
+    big = "\n".join([f"filler line {i} lorem ipsum dolor" for i in range(200)]
+                     + ["ERROR: invariant violated at step 9", "decision: rollback"])
+    assert cc.needs_compaction(big)
+    rep = cc.compact(big, label="t")
+    assert rep["compacted_flag"] and rep["compacted_chars"] < rep["original_chars"]
+    assert "invariant violated" in rep["compacted"] and rep["archive"] is not None
+
+
+async def test_compact_tool(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.tool_env import ToolEnvironmentOS
+    t = ToolEnvironmentOS(workspace_root=str(tmp_path))
+    out = await t.execute_tool("compact_context", {"text": "x\n" * 5000, "max_chars": 500})
+    assert out["success"] and out["result"]["compacted_flag"]
+
+
+# ---------------- mcp durable tasks ----------------
+
+def test_mcp_durable_tasks():
+    import time
+    from hermes_os.mcp_tasks import DurableMCPTasks
+
+    class FakeClient:
+        def call_tool(self, server, tool, args):
+            if tool == "slow":
+                time.sleep(5)
+                return "late"
+            if tool == "boom":
+                raise RuntimeError("kaput")
+            return {"echo": args}
+
+    d = DurableMCPTasks(FakeClient(), lease_seconds=30.0)
+    t = d.submit("s", "echo", {"a": 1})
+    for _ in range(100):
+        state = d.poll(t.task_id)
+        if state["status"] in ("completed", "failed"):
+            break
+        time.sleep(0.05)
+    assert d.poll(t.task_id)["status"] == "completed"
+    t2 = d.submit("s", "boom")
+    for _ in range(100):
+        if d.poll(t2.task_id)["status"] == "failed":
+            break
+        time.sleep(0.05)
+    assert "kaput" in d.poll(t2.task_id)["error"]
+    t3 = d.submit("s", "slow", lease_seconds=0.2)
+    time.sleep(0.4)
+    assert d.poll(t3.task_id)["status"] == "expired"
+    t4 = d.submit("s", "slow")
+    assert d.cancel(t4.task_id) and d.poll(t4.task_id)["status"] == "cancelled"
+
+
 # ---------------- goal graph mutations ----------------
 
 def test_goal_graph_mutations():

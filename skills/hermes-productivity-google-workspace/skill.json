@@ -1,0 +1,11 @@
+{
+  "name": "hermes-productivity-google-workspace",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "google workspace"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-productivity-google-workspace"
+}

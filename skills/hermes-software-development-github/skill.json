@@ -1,0 +1,11 @@
+{
+  "name": "hermes-software-development-github",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "github"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-software-development-github"
+}

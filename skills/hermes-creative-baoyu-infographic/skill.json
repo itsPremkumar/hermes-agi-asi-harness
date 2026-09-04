@@ -1,0 +1,11 @@
+{
+  "name": "hermes-creative-baoyu-infographic",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "baoyu infographic"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-creative-baoyu-infographic"
+}

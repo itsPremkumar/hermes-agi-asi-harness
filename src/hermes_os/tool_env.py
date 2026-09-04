@@ -160,6 +160,14 @@ class ToolEnvironmentOS:
             has_side_effects=True,
             rollback_supported=True,
         ))
+        self.register(ToolDescriptor(
+            name="compact_context",
+            description="Extractively compact oversized text; full copy archived under .hermes/context_archive",
+            handler=self._compact_context,
+            required_permission="read",
+            risk_level="low",
+            sandbox_required=False,
+        ))
 
     def register(self, tool: ToolDescriptor) -> None:
         self._tools[tool.name] = tool
@@ -415,6 +423,13 @@ class ToolEnvironmentOS:
         proc = subprocess.run(["git", "diff"], cwd=self.workspace_root, capture_output=True, text=True)
         return proc.stdout.strip()
 
+    def _compact_context(self, text: str = "", path: str = "", max_chars: int = 12000) -> dict[str, Any]:
+        from .context_compaction import ContextCompactor
+        if path and not text:
+            text = (Path(self.workspace_root) / path).read_text(encoding="utf-8", errors="replace")
+        rep = ContextCompactor(workspace_root=self.workspace_root, max_chars=max_chars).compact(text)
+        return {k: (v if k != "compacted" else v[:4000]) for k, v in rep.items()}
+
     def _apply_patch(self, patch_str: str) -> str:
         proc = subprocess.run(
             ["git", "apply", "-"],
@@ -426,6 +441,11 @@ class ToolEnvironmentOS:
         if proc.returncode != 0:
             raise RuntimeError(f"git apply failed: {proc.stderr}")
         return "Patch applied successfully"
+
+    def durable_mcp(self, mcp_client: Any, lease_seconds: float = 300.0) -> Any:
+        """Background lease/poll/cancel executor for long MCP calls."""
+        from .mcp_tasks import DurableMCPTasks
+        return DurableMCPTasks(mcp_client, lease_seconds=lease_seconds)
 
     def connect_mcp_client(self, mcp_client: Any, server_name: str, capability_registry: Optional[Any] = None) -> list[str]:
         """

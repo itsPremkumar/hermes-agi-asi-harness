@@ -1,0 +1,11 @@
+{
+  "name": "hermes-productivity-weekly-review-planning",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "weekly review planning"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-productivity-weekly-review-planning"
+}

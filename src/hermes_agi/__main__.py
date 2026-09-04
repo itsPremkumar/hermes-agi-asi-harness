@@ -100,6 +100,13 @@ def main():
     api_parser.add_argument("--port", type=int, default=8471, help="Local port")
     sb_parser = subparsers.add_parser("sandbox", help="Sandbox execution probe")
     sb_parser.add_argument("code", nargs="?", default="print(42)", help="Python code to run")
+    cx_parser = subparsers.add_parser("compact", help="Compact an oversized context file")
+    cx_parser.add_argument("file", help="Text file to compact")
+    cx_parser.add_argument("--max-chars", type=int, default=12000, help="Compaction threshold")
+    sk_parser = subparsers.add_parser("skills", help="Skill registry operations")
+    sk_parser.add_argument("action", nargs="?", default="list", help="list|search|sync")
+    sk_parser.add_argument("query", nargs="?", default="", help="Search text or sync source dir")
+    sk_parser.add_argument("--limit", type=int, default=60, help="Max imports on sync")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
     
@@ -260,6 +267,25 @@ async def run_command(args):
     elif args.command == "sandbox":
         from hermes_os.docker_sandbox import DockerSandbox
         print(DockerSandbox().run(args.code))
+    elif args.command == "compact":
+        from hermes_os.context_compaction import ContextCompactor
+        from pathlib import Path
+        text = Path(args.file).read_text(encoding="utf-8")
+        rep = ContextCompactor(max_chars=args.max_chars).compact(text, label=Path(args.file).stem)
+        print({k: (v if k != "compacted" else f"<{len(v)} chars>") for k, v in rep.items()})
+        if rep["compacted_flag"]:
+            enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+            print(rep["compacted"][:2000].encode(enc, errors="replace").decode(enc))
+    elif args.command == "skills":
+        from hermes_os.skills import SkillRegistry
+        reg = SkillRegistry(workspace_root=".")
+        if args.action == "sync":
+            src = args.query or "../hermes-agent/skills"
+            print(reg.sync_from_dir(src, limit=args.limit))
+        elif args.action == "search" and args.query:
+            print([s.to_dict() for s in reg.search(args.query)])
+        else:
+            print([s["name"] for s in reg.list()])
     elif args.command == "api":
         from hermes_os.api import create_app
         import uvicorn

@@ -47,7 +47,45 @@ LLAMACPP_PORTS = (8080,)
 _last_probe: Dict[str, Any] = {"tier": None, "ts": 0.0}
 
 # Cloud circuit breaker: consecutive failures -> skip cloud tier until cooldown.
+# Persisted under .hermes/ so the 404 tax is paid once ever, not once per process.
 _cloud_breaker: Dict[str, Any] = {"fails": 0, "open_until": 0.0}
+_breaker_file: Optional[str] = None
+
+
+def _breaker_path() -> "Path":
+    global _breaker_file
+    if _breaker_file is None:
+        from pathlib import Path as _P
+        _breaker_file = str(_P(".hermes") / "llm_circuit.json")
+    from pathlib import Path as _P2
+    return _P2(_breaker_file)
+
+
+def _cb_load() -> None:
+    try:
+        p = _breaker_path()
+        if p.exists():
+            data = json.loads(p.read_text(encoding="utf-8"))
+            _cloud_breaker["fails"] = int(data.get("fails", 0))
+            _cloud_breaker["open_until"] = float(data.get("open_until", 0.0))
+            # Expired open state heals on load
+            if time.time() >= _cloud_breaker["open_until"]:
+                _cloud_breaker["fails"] = 0
+                _cloud_breaker["open_until"] = 0.0
+    except Exception:
+        pass
+
+
+def _cb_save() -> None:
+    try:
+        p = _breaker_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(_cloud_breaker), encoding="utf-8")
+    except Exception:
+        pass
+
+
+_cb_load()
 
 
 def _cb_limits() -> Tuple[int, float]:
@@ -71,17 +109,20 @@ def _cb_record(success: bool) -> None:
     if success:
         _cloud_breaker["fails"] = 0
         _cloud_breaker["open_until"] = 0.0
+        _cb_save()
         return
     n = int(_cloud_breaker.get("fails", 0)) + 1
     _cloud_breaker["fails"] = n
     if n >= fails:
         _cloud_breaker["open_until"] = time.time() + cool
         logger.warning("Cloud LLM circuit OPEN after %d fails; cooling %.0fs", n, cool)
+    _cb_save()
 
 
 def _cb_reset() -> None:
     _cloud_breaker["fails"] = 0
     _cloud_breaker["open_until"] = 0.0
+    _cb_save()
 
 
 def _probe_ttl() -> float:
@@ -328,9 +369,25 @@ class HermesFirstLLMClient:
                     import concurrent.futures as _cf
                     client = LLMClient()
 
+                    async def _one_shot() -> Optional[str]:
+                        try:
+                            return await client.chat(messages, temperature=temperature,
+                                                     max_tokens=max_tokens)
+                        finally:
+                            # Close the httpx client inside its own loop; otherwise
+                            # "Task exception was never retrieved / Event loop is
+                            # closed" noise pollutes every fallback mission log.
+                            try:
+                                inner = getattr(client, "_client", None)
+                                if inner is not None and hasattr(inner, "close"):
+                                    res = inner.close()
+                                    if hasattr(res, "__await__"):
+                                        await res
+                            except Exception:
+                                pass
+
                     def _run_cloud() -> Optional[str]:
-                        return _aio.run(client.chat(messages, temperature=temperature,
-                                                    max_tokens=max_tokens))
+                        return _aio.run(_one_shot())
 
                     with _cf.ThreadPoolExecutor(max_workers=1) as pool:
                         out = pool.submit(_run_cloud).result(timeout=self.timeout)

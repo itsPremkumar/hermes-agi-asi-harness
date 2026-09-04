@@ -1,0 +1,11 @@
+{
+  "name": "hermes-email-email-inbox-triage",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "email inbox triage"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-email-email-inbox-triage"
+}

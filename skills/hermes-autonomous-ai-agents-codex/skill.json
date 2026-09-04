@@ -1,0 +1,11 @@
+{
+  "name": "hermes-autonomous-ai-agents-codex",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "codex"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-autonomous-ai-agents-codex"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "hermes-email-himalaya",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "himalaya"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-email-himalaya"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "hermes-research-llm-wiki",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "llm wiki"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-research-llm-wiki"
+}
