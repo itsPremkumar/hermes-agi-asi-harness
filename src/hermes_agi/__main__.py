@@ -114,7 +114,7 @@ def main():
     # Hermes control command
     hx_parser = subparsers.add_parser("hermes", help="Hermes lifecycle control")
     hx_parser.add_argument(
-        "action", nargs="?", default="health", help="health|spawn|delegate|kill|update|list"
+        "action", nargs="?", default="health", help="health|spawn|delegate|kill|update|list|context"
     )
     hx_parser.add_argument("task", nargs="?", default="", help="Task text for spawn/delegate")
     hx_parser.add_argument("--profile", default="default", help="Hermes profile")
@@ -335,6 +335,17 @@ async def run_command(args):
                 os_kernel.daemon.request_stop()
                 print("stopped by user")
     elif args.command == "hermes":
+        if args.action == "context":
+            # Read-only mirror of the live Hermes installation. No kernel
+            # boot, works offline, never writes to the Hermes home.
+            from harness.core.hermes_integration import HermesAgentIntegration
+
+            mirror = HermesAgentIntegration()
+            summary = mirror.mirror_hermes_home()
+            summary["skills_list"] = mirror.list_mirrored_skills()
+            summary["boards_list"] = mirror.list_mirrored_boards()
+            print(summary)
+            return
         from hermes_os.kernel import HermesIntelligenceOS
 
         os_kernel = HermesIntelligenceOS()

@@ -145,3 +145,19 @@ def test_spawn_cli_prints_result():
     )
     assert proc.returncode == 0, proc.stderr[-500:]
     assert "spawned" in proc.stdout, proc.stdout[-500:]
+
+
+def test_hermes_context_cli_prints_mirror():
+    """`hermes_agi hermes context` prints the read-only Hermes-home mirror."""
+    import subprocess
+    import sys
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "hermes_agi", "hermes", "context"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert proc.returncode == 0, proc.stderr[-500:]
+    for key in ("'home'", "'profiles'", "'skills'", "'boards'", "'cron_jobs'"):
+        assert key in proc.stdout, proc.stdout[-500:]
