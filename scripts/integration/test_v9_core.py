@@ -31,7 +31,7 @@ async def main():
     # ── Test 1: Environment Model ──────────────────────────────────────────
     print("\n[1/10] Environment Model...")
     try:
-        from core.environment.model import EnvironmentModel, EntityType, RelationshipType
+        from core.environment.model import EntityType, EnvironmentModel, RelationshipType
 
         model = EnvironmentModel()
 
@@ -68,8 +68,8 @@ async def main():
         assert len(dependents) == 1
 
         # Check permission
-        assert model.check_permission(res.id, "deploy") == True
-        assert model.check_permission(res.id, "delete") == False  # default deny
+        assert model.check_permission(res.id, "deploy")
+        assert not model.check_permission(res.id, "delete")  # default deny
 
         results.append(("Environment Model", True, f"entities={state['entities_count']}"))
         print(f"  ✓ Environment Model: {state['entities_count']} entities, {state['resources_count']} resources")
@@ -120,7 +120,7 @@ async def main():
     # ── Test 3: State Estimation ───────────────────────────────────────────
     print("\n[3/10] State Estimation...")
     try:
-        from core.environment.state_estimation import StateEstimator, ObservationSource
+        from core.environment.state_estimation import ObservationSource, StateEstimator
 
         estimator = StateEstimator()
 
@@ -178,7 +178,7 @@ async def main():
     # ── Test 5: Universal Action Protocol ──────────────────────────────────
     print("\n[5/10] Universal Action Protocol...")
     try:
-        from core.protocols.uap import UniversalActionProtocol, ActionType
+        from core.protocols.uap import ActionType, UniversalActionProtocol
 
         uap = UniversalActionProtocol()
 
@@ -204,9 +204,9 @@ async def main():
         assert event.type == "completed"
 
         # Check action types
-        assert uap.is_read(read_act) == True
-        assert uap.is_write(create_act) == True
-        assert uap.is_safe(read_act) == True
+        assert uap.is_read(read_act)
+        assert uap.is_write(create_act)
+        assert uap.is_safe(read_act)
 
         state = uap.get_state()
         results.append(("UAP", True, f"actions={state['total_actions']}"))
@@ -220,7 +220,7 @@ async def main():
     # ── Test 6: Universal Observation Protocol ─────────────────────────────
     print("\n[6/10] Universal Observation Protocol...")
     try:
-        from core.protocols.uop import PerceptionFusion, ObservationSource
+        from core.protocols.uop import ObservationSource, PerceptionFusion
 
         pf = PerceptionFusion()
 
@@ -287,7 +287,7 @@ async def main():
     # ── Test 8: Transaction Model ──────────────────────────────────────────
     print("\n[8/10] Transaction Model...")
     try:
-        from core.action.transaction import TransactionModel, RollbackType, TransactionState
+        from core.action.transaction import RollbackType, TransactionModel, TransactionState
 
         tm = TransactionModel()
 
@@ -301,7 +301,7 @@ async def main():
 
         # Commit
         result = tm.commit(tid)
-        assert result.success == True
+        assert result.success
         assert result.actions_completed == 2
 
         # Test rollback
@@ -326,7 +326,7 @@ async def main():
     # ── Test 9: Safety Envelope ────────────────────────────────────────────
     print("\n[9/10] Safety Envelope...")
     try:
-        from core.action.safety_envelope import SafetyEnvelopeManager, EnvelopeViolation
+        from core.action.safety_envelope import EnvelopeViolation, SafetyEnvelopeManager
 
         sem = SafetyEnvelopeManager()
 
@@ -342,23 +342,23 @@ async def main():
 
         # Check valid action
         check1 = sem.check_action("act-001", env.id, "service-a", "deploy", cost=0.5, risk_score=0.3)
-        assert check1.passed == True
+        assert check1.passed
         assert len(check1.violations) == 0
 
         # Check invalid target
         check2 = sem.check_action("act-002", env.id, "service-c", "deploy", cost=0.5, risk_score=0.3)
-        assert check2.passed == False
+        assert not check2.passed
         assert EnvelopeViolation.TARGET_NOT_ALLOWED in check2.violations
 
         # Check risk too high
         check3 = sem.check_action("act-003", env.id, "service-a", "deploy", cost=0.5, risk_score=0.9)
-        assert check3.passed == False
+        assert not check3.passed
         assert EnvelopeViolation.RISK_TOO_HIGH in check3.violations
 
         # Test emergency stop
         sem.trigger_emergency_stop(env.id)
         check4 = sem.check_action("act-004", env.id, "service-a", "read", risk_score=0.1)
-        assert check4.passed == False
+        assert not check4.passed
 
         state = sem.get_state()
         results.append(("Safety Envelope", True, f"checks={state['total_checks']}"))
@@ -382,7 +382,7 @@ async def main():
 
         # Execute mission
         result = orch.execute_mission(mission.id)
-        assert result["success"] == True
+        assert result["success"]
         assert mission.status == OrchestratorState.COMPLETED
         assert len(mission.steps) >= 1
 

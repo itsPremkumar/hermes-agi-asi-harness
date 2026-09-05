@@ -13,11 +13,18 @@ import tempfile
 
 sys.path.insert(0, '.')
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Isolate all state to a temp dir
 _TMP = tempfile.mkdtemp(prefix="hermes_rt_")
 os.environ["HERMES_HOME"] = _TMP
 
-from core.runtime.agent import build_agent, AgentResult
+from core.runtime.agent import AgentResult, build_agent
 
 
 async def run(goal: str, verbose: bool = False) -> AgentResult:

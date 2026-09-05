@@ -1,0 +1,9 @@
+id: t_10_sum_list
+description: "What is the sum of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]? Output only the number."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Correctly computes 55"]
+    - ["conciseness", "Outputs only the number"]
+max_iterations: 3

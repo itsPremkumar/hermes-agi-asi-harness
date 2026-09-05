@@ -113,5 +113,10 @@ class DeadLetterError(HarnessError):
         self.attempts = attempts
 
 
-# Also expose resilience classes
-from .resilience import CircuitBreaker, DeadLetterQueue, make_retry_decorator, CircuitState
+# Also expose resilience classes (deferred: resilience imports this package).
+from .resilience import (  # noqa: E402
+    CircuitBreaker,
+    CircuitState,
+    DeadLetterQueue,
+    make_retry_decorator,
+)

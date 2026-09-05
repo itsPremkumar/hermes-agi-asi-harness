@@ -1,7 +1,5 @@
 """Tests for ARC-AGI-3 Rule Inference."""
-from core.arc_agi_3.rule_inference import (
-    RuleInferenceEngine, Rule, RuleType, Example
-)
+from benchmarks.arc_game.rule_inference import Example, Rule, RuleInferenceEngine, RuleType
 
 
 class TestRuleInferenceEngine:

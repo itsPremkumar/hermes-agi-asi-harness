@@ -1,0 +1,11 @@
+{
+  "name": "hermes-software-development-hermes-agent-skill-authoring",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "hermes agent skill authoring"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-software-development-hermes-agent-skill-authoring"
+}

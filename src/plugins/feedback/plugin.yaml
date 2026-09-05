@@ -1,0 +1,21 @@
+name: feedback
+version: 1.0.0
+description: "Continuous learning from feedback"
+license: MIT
+source: internal
+capabilities:
+  - feedback_collection
+  - ab_testing
+  - concept_drift_detection
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

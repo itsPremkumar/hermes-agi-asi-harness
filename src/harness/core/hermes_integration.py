@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import os
 import threading
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -57,6 +60,9 @@ class HermesAgentIntegration:
         self._kanban: dict[str, KanbanCard] = {}
         self._cron_jobs: dict[str, CronJob] = {}
         self._mcp_endpoints: dict[str, MCPEndpoint] = {}
+        self._mirrored_skills: dict[str, dict[str, Any]] = {}
+        self._mirrored_boards: list[str] = []
+        self._mirror_home: str = ""
 
     # ============== Profiles ==============
 
@@ -180,6 +186,111 @@ class HermesAgentIntegration:
     def delete_endpoint(self, endpoint_id: str) -> bool:
         with self._lock:
             return self._mcp_endpoints.pop(endpoint_id, None) is not None
+
+    # ============== Read-only Hermes-home mirror ==============
+
+    @staticmethod
+    def resolve_hermes_home(explicit: str | None = None) -> Path | None:
+        """Locate the Hermes Agent home dir (never creates or writes)."""
+        candidates = []
+        if explicit:
+            # Explicit means exactly this dir: no fallback when it is unusable.
+            cand = Path(explicit)
+            try:
+                if cand.is_dir() and (cand / "profiles").is_dir():
+                    return cand
+            except OSError:
+                pass
+            return None
+        env_home = os.environ.get("HERMES_HOME")
+        if env_home:
+            candidates.append(Path(env_home))
+        local_app = os.environ.get("LOCALAPPDATA")
+        if local_app:
+            candidates.append(Path(local_app) / "hermes")
+        candidates.append(Path.home() / ".hermes")
+        for cand in candidates:
+            try:
+                if cand.is_dir() and (cand / "profiles").is_dir():
+                    return cand
+            except OSError:
+                continue
+        return None
+
+    def mirror_hermes_home(self, home: str | None = None) -> dict[str, Any]:
+        """Mirror the live Hermes installation into this registry (read-only).
+
+        Imports profile dirs, cron jobs.json entries, skill dirs, and kanban
+        board names. Never writes to the Hermes home. Missing pieces yield
+        empty collections, never exceptions.
+        """
+        root = self.resolve_hermes_home(home)
+        summary: dict[str, Any] = {
+            "home": str(root) if root else "",
+            "profiles": 0,
+            "cron_jobs": 0,
+            "skills": 0,
+            "boards": 0,
+        }
+        if root is None:
+            return summary
+        with self._lock:
+            self._mirror_home = str(root)
+            profiles_dir = root / "profiles"
+            try:
+                names = sorted(p.name for p in profiles_dir.iterdir() if p.is_dir())
+            except OSError:
+                names = []
+            for name in names:
+                if name not in self._profiles:
+                    self._profiles[name] = ProfileConfig(
+                        name=name, config={"path": str(profiles_dir / name)}
+                    )
+            summary["profiles"] = len(names)
+            jobs_file = root / "cron" / "jobs.json"
+            try:
+                payload = json.loads(jobs_file.read_text(encoding="utf-8"))
+                jobs = payload.get("jobs", []) if isinstance(payload, dict) else []
+            except (OSError, ValueError):
+                jobs = []
+            for job in jobs:
+                if not isinstance(job, dict) or not job.get("id"):
+                    continue
+                self._cron_jobs[job["id"]] = CronJob(
+                    id=str(job["id"]),
+                    plugin_id="hermes-cron",
+                    action=str(job.get("command", job.get("name", ""))),
+                    schedule=str(job.get("schedule", "")),
+                    enabled=bool(job.get("enabled", True)),
+                )
+            summary["cron_jobs"] = len(jobs)
+            skills_dir = root / "skills"
+            try:
+                skills = sorted(
+                    s.name for s in skills_dir.iterdir()
+                    if s.is_dir() and (s / "SKILL.md").is_file()
+                )
+            except OSError:
+                skills = []
+            for skill in skills:
+                self._mirrored_skills[skill] = {"path": str(skills_dir / skill)}
+            summary["skills"] = len(skills)
+            boards_dir = root / "kanban" / "boards"
+            try:
+                boards = sorted(b.name for b in boards_dir.iterdir() if b.is_dir())
+            except OSError:
+                boards = []
+            self._mirrored_boards = boards
+            summary["boards"] = len(boards)
+        return summary
+
+    def list_mirrored_skills(self) -> list[str]:
+        with self._lock:
+            return sorted(self._mirrored_skills.keys())
+
+    def list_mirrored_boards(self) -> list[str]:
+        with self._lock:
+            return list(self._mirrored_boards)
 
     # ============== Status ==============
 

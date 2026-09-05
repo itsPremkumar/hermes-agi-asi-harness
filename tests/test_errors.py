@@ -4,22 +4,22 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.errors import (
-    HarnessError,
-    NodeError,
-    GraphError,
-    EvalError,
-    ToolError,
-    MemoryError,
-    FeedbackError,
-    PluginError,
-    LangSmithError,
-    DeepAgentError,
+from harness.errors import (
     CircuitBreakerOpenError,
-    RateLimitError,
     DeadLetterError,
+    DeepAgentError,
+    EvalError,
+    FeedbackError,
+    GraphError,
+    HarnessError,
+    LangSmithError,
+    MemoryError,
+    NodeError,
+    PluginError,
+    RateLimitError,
+    ToolError,
 )
-from src.harness.errors.resilience import (
+from harness.errors.resilience import (
     CircuitBreaker,
     CircuitState,
     DeadLetterQueue,

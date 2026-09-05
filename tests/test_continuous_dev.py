@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from continuous_dev import (
+from engines.continuous_dev import (
     ABTestingFramework,
     CanaryDeploymentManager,
     CanaryStatus,

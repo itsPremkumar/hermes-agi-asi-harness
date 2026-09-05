@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.graph import (
-    State,
-    Node,
+from harness.errors import GraphError, NodeError
+from harness.graph import (
     Edge,
     Graph,
+    Node,
+    State,
     create_avopisaging_graph,
 )
-from src.harness.errors import NodeError, GraphError
 
 
 class TestState:

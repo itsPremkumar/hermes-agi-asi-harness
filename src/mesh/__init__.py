@@ -6,6 +6,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from .debate_mesh import (
+    DebatePerspective,
+    DebateSynthesis,
+    DebateTurn,
+    HeterogeneousDebateMesh,
+)
+
 
 class NodeStatus(str, Enum):
     ONLINE = "online"
@@ -69,3 +76,13 @@ class NodeManager:
 
     def count(self) -> int:
         return len(self._nodes)
+
+__all__ = [
+    "NodeStatus",
+    "MeshNode",
+    "NodeManager",
+    "HeterogeneousDebateMesh",
+    "DebateSynthesis",
+    "DebateTurn",
+    "DebatePerspective",
+]

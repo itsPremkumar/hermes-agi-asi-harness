@@ -1,0 +1,9 @@
+id: t_07_prime_check
+description: "Is 17 a prime number? Output True or False, then briefly explain."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["answer", "Outputs True (17 is prime)"]
+    - ["explanation", "Notes that 17 has no divisors other than 1 and itself"]
+max_iterations: 3

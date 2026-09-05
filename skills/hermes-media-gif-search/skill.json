@@ -1,0 +1,11 @@
+{
+  "name": "hermes-media-gif-search",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "gif search"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-media-gif-search"
+}

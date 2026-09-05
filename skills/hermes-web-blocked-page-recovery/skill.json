@@ -1,0 +1,11 @@
+{
+  "name": "hermes-web-blocked-page-recovery",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "blocked page recovery"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-web-blocked-page-recovery"
+}

@@ -47,7 +47,7 @@ async def test_all():
         results.append(("CommunicationProtocol", False, str(e)))
     
     try:
-        from core.metacognition import MetacognitiveMonitor, CognitiveMode
+        from core.metacognition import CognitiveMode, MetacognitiveMonitor
         monitor = MetacognitiveMonitor()
         assessment = await monitor.assess(CognitiveMode.FAST)
         results.append(("MetacognitiveMonitor", True, len(assessment.issues)))

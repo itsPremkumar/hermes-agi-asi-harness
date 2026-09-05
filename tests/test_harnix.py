@@ -1,21 +1,18 @@
 """Tests for Harness Runtime Kernel — LangGraph StateGraph + Agent Lifecycle."""
-import os
-import sys
-
-# Ensure THIS workspace is first on sys.path
-workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if workspace in sys.path:
-    sys.path.remove(workspace)
-sys.path.insert(0, workspace)
-
-import pytest
-from harnix.state import AgentState, AgentPhase, create_initial_state
-from harnix.nodes import (
-    init_node, plan_node, dispatch_node, monitor_node,
-    adjust_node, evolve_node, complete_node,
-    route_after_monitor, route_after_adjust, route_after_evolve,
-)
 from harnix.kernel import HarnessRuntimeKernel
+from harnix.nodes import (
+    adjust_node,
+    complete_node,
+    dispatch_node,
+    evolve_node,
+    init_node,
+    monitor_node,
+    plan_node,
+    route_after_adjust,
+    route_after_evolve,
+    route_after_monitor,
+)
+from harnix.state import AgentPhase, create_initial_state
 
 
 class TestAgentState:

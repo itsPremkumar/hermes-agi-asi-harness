@@ -1,0 +1,26 @@
+name: reasoning
+version: 1.0.0
+description: "Advanced reasoning chains: CoT, ToT, GoT, ReAct, Reflexion, Self-Consistency"
+license: MIT
+source: internal
+capabilities:
+  - chain_of_thought
+  - tree_of_thought
+  - graph_of_thought
+  - react_loop
+  - reflexion
+  - self_consistency
+  - least_to_most
+  - analogical_reasoning
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

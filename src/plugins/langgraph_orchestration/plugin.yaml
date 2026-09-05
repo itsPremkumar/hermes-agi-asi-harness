@@ -1,0 +1,30 @@
+name: langgraph_orchestration
+version: 1.0.0
+description: "LangGraph-based multi-agent orchestration with sub-agents, state management, and deep research patterns"
+license: MIT
+source: internal
+capabilities:
+  - langgraph_orchestration
+  - multi_agent
+  - sub_agent
+  - state_management
+  - deep_research_pattern
+  - react_agent
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed:
+      - "*"
+  shell:
+    allowed: []
+  secrets:
+    access: none
+  max_memory_mb: 1024
+  max_cpu_percent: 70
+dependencies:
+  - langgraph>=0.3.0
+  - langchain-core>=0.3.0

@@ -188,6 +188,40 @@ class MultiAgentOrchestrator:
                 confidence=agreement,
             )
 
+    async def orchestrate_with_dialectical_debate(
+        self,
+        task_id: str,
+        proposal: str,
+        rounds: int = 2,
+    ) -> ConsensusResult:
+        """
+        Conduct a dialectical debate across heterogeneous perspectives using DebateMesh:
+        Proposer (Thesis) <-> Adversary (Antithesis) -> Arbiter (Synthesis).
+        Produces a mathematically weighted ConsensusResult with verifiable consensus score.
+        """
+        from mesh.debate_mesh import HeterogeneousDebateMesh
+        mesh = HeterogeneousDebateMesh(max_rounds=rounds)
+        synthesis = mesh.conduct_debate(topic=proposal)
+        agreed = synthesis.consensus_score >= self._consensus_threshold
+
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task and agreed:
+                task.status = "consensus_approved"
+                task.result = synthesis.winning_synthesis
+
+            votes = {
+                turn.speaker: {"claim": turn.claim, "confidence": turn.confidence}
+                for turn in synthesis.turns
+            }
+            return ConsensusResult(
+                task_id=task_id,
+                agreed=agreed,
+                votes=votes,
+                result=synthesis.winning_synthesis,
+                confidence=synthesis.consensus_score,
+            )
+
     def heartbeat(self, agent_id: str) -> None:
         """Update agent heartbeat."""
         with self._lock:

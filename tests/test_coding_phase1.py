@@ -1,7 +1,6 @@
 """Test Repository Intelligence Layer."""
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,7 +13,7 @@ async def main():
     # Test Repository Twin
     print("[1/4] Repository Digital Twin...")
     try:
-        from core.coding.repository_twin import RepositoryDigitalTwin, SymbolType
+        from core.coding.repository_twin import RepositoryDigitalTwin
         
         twin = RepositoryDigitalTwin(".")
         twin.discover()
@@ -26,7 +25,8 @@ async def main():
         results.append(("Repository Twin", True, f"files={stats['total_files']}, symbols={stats['total_symbols']}"))
         print(f"  ✓ Twin: {stats['total_files']} files, {stats['total_symbols']} symbols")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Repository Twin", False, str(e)[:80]))
         print(f"  ✗ {e}")
     
@@ -50,14 +50,15 @@ async def main():
         results.append(("Code Graph", True, f"nodes={state['nodes']}, edges={state['edges']}"))
         print(f"  ✓ Graph: {state['nodes']} nodes, blast_radius={len(blast.affected_nodes)}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Code Graph", False, str(e)[:80]))
         print(f"  ✗ {e}")
     
     # Test Semantic Index
     print("\n[3/4] Semantic Index...")
     try:
-        from core.coding.semantic_index import SemanticCodeIndex, IndexLevel, SearchQuery
+        from core.coding.semantic_index import SearchQuery, SemanticCodeIndex
         
         idx = SemanticCodeIndex()
         
@@ -81,14 +82,15 @@ def my_function():
         results.append(("Semantic Index", True, f"chunks={state['chunks']}, symbols={state['symbols']}"))
         print(f"  ✓ Index: {state['chunks']} chunks, {state['symbols']} symbols")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Semantic Index", False, str(e)[:80]))
         print(f"  ✗ {e}")
     
     # Test Recon
     print("\n[4/4] Repository Recon...")
     try:
-        from core.coding.recon import RepositoryRecon, ReconStage
+        from core.coding.recon import ReconStage, RepositoryRecon
         
         recon = RepositoryRecon()
         result = recon.run(".")
@@ -100,7 +102,8 @@ def my_function():
         results.append(("Recon", True, f"build={result.build_system}, files={len(result.files)}"))
         print(f"  ✓ Recon: {result.build_system}, {result.test_framework}, {len(result.files)} files")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Recon", False, str(e)[:80]))
         print(f"  ✗ {e}")
     

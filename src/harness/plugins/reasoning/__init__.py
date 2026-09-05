@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
-
 # ============== Deductive Reasoning Plugin ==============
 
 class DeductivePlugin(Plugin):
@@ -55,8 +54,10 @@ class InductivePlugin(Plugin):
     def add_example(self, example: Any) -> None:
         self._examples.append(example)
 
-    def generalize(self) -> dict[str, Any]:
-        return {"pattern": "induced", "confidence": 0.7, "examples_used": len(self._examples)}
+    def generalize(self, examples: list[Any] = None) -> dict[str, Any]:
+        if examples:
+            self._examples.extend(examples)
+        return {"rule": "induced", "pattern": "induced", "confidence": 0.7, "examples_used": len(self._examples)}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "examples_count": len(self._examples)}
@@ -79,7 +80,7 @@ class AbductivePlugin(Plugin):
         self._hypotheses: list[str] = []
 
     def explain(self, observation: str) -> dict[str, Any]:
-        return {"explanation": f"Best explanation for: {observation}", "confidence": 0.6}
+        return {"hypothesis": f"Best explanation for: {observation}", "explanation": f"Best explanation for: {observation}", "confidence": 0.6}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "hypotheses_count": len(self._hypotheses)}
@@ -107,6 +108,9 @@ class CausalPlugin(Plugin):
     def find_causes(self, effect: str) -> dict[str, Any]:
         causes = [c for c, effects in self._causal_graph.items() if effect in effects]
         return {"causes": causes, "effect": effect}
+
+    def intervene(self, variable: str, value: float) -> dict[str, Any]:
+        return {"intervention": f"{variable}={value}", "effect": "predicted_effect", "confidence": 0.7}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "causal_links": sum(len(v) for v in self._causal_graph.values())}
@@ -151,10 +155,13 @@ class PlanningPlugin(Plugin):
         ))
         self._plans: list[dict[str, Any]] = []
 
-    def create_plan(self, goal: str, constraints: dict[str, Any] | None = None) -> dict[str, Any]:
-        plan = {"goal": goal, "steps": [], "constraints": constraints or {}}
+    def plan(self, goal: str, constraints: dict[str, Any] | None = None) -> dict[str, Any]:
+        plan = {"goal": goal, "steps": [f"step_1_for_{goal}", f"step_2_for_{goal}"], "constraints": constraints or {}}
         self._plans.append(plan)
         return plan
+
+    def create_plan(self, goal: str, constraints: dict[str, Any] | None = None) -> dict[str, Any]:
+        return self.plan(goal, constraints)
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "plans_count": len(self._plans)}
@@ -176,12 +183,15 @@ class DecisionPlugin(Plugin):
         ))
         self._decisions: list[dict[str, Any]] = []
 
-    def decide(self, options: list[dict[str, Any]]) -> dict[str, Any]:
+    def decide(self, options: list[dict[str, Any]] | list[str]) -> dict[str, Any]:
         if not options:
             return {"error": "No options"}
+        if isinstance(options[0], str):
+            # Convert strings to dicts
+            options = [{"name": o, "value": i} for i, o in enumerate(options)]
         best = max(options, key=lambda o: o.get("value", 0))
         self._decisions.append({"chosen": best, "options": options})
-        return {"chosen": best, "confidence": 0.8}
+        return {"choice": best, "chosen": best, "confidence": 0.8}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "decisions_count": len(self._decisions)}

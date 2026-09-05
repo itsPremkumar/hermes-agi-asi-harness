@@ -1,0 +1,21 @@
+name: codegen
+version: 1.0.0
+description: "Self-modifying code generation and self-patching"
+license: MIT
+source: internal
+capabilities:
+  - code_generation
+  - self_patching
+  - code_optimization
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

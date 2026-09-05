@@ -1,0 +1,21 @@
+name: research
+version: 1.0.0
+description: "Research agent — search, synthesis, citation validation"
+license: MIT
+source: internal
+capabilities:
+  - search
+  - synthesis
+  - citation_validation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

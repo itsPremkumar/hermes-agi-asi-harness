@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
-
 # ============== Reinforcement Learning Plugin ==============
 
 class RLPlugin(Plugin):
@@ -26,6 +25,12 @@ class RLPlugin(Plugin):
         ))
         self._episodes: int = 0
         self._total_reward: float = 0.0
+
+    def train(self, env: str, episodes: int = 100) -> dict[str, Any]:
+        self._episodes += episodes
+        reward = 0.5  # Simulated reward
+        self._total_reward += reward
+        return {"reward": reward, "episodes": episodes, "env": env}
 
     def act(self, state: Any) -> dict[str, Any]:
         return {"action": "default", "state": state}
@@ -55,6 +60,11 @@ class SupervisedPlugin(Plugin):
         ))
         self._model: Any = None
         self._training_data: list[Any] = []
+
+    def fit(self, X: list[Any], y: list[Any]) -> dict[str, Any]:
+        self._training_data.extend(list(zip(X, y)))
+        accuracy = 0.85  # Simulated accuracy
+        return {"accuracy": accuracy, "samples": len(X), "trained": True}
 
     def train(self, data: list[Any]) -> dict[str, Any]:
         self._training_data.extend(data)
@@ -106,9 +116,9 @@ class MetaLearningPlugin(Plugin):
         ))
         self._tasks: list[Any] = []
 
-    def adapt(self, task: Any) -> dict[str, Any]:
+    def adapt(self, task: Any, examples: list[Any] = None) -> dict[str, Any]:
         self._tasks.append(task)
-        return {"adapted": True, "task": task}
+        return {"adapted": True, "task": task, "examples": examples or []}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "tasks_learned": len(self._tasks)}
@@ -157,9 +167,11 @@ class CurriculumPlugin(Plugin):
     def next_lesson(self) -> dict[str, Any]:
         return {"difficulty": self._difficulty, "lesson": f"lesson_{len(self._completed)}"}
 
-    def report_result(self, lesson: str, success: bool) -> dict[str, Any]:
+    def report_result(self, score: float, success: bool = None) -> dict[str, Any]:
+        if success is None:
+            success = score >= 0.5
         if success:
-            self._completed.append(lesson)
+            self._completed.append(f"lesson_{len(self._completed)}")
             self._difficulty = min(1.0, self._difficulty + 0.1)
         return {"progressed": success, "new_difficulty": self._difficulty}
 

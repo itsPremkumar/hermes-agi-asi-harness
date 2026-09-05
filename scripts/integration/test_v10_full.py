@@ -57,20 +57,21 @@ async def main():
         results.append(("Policy Bridge", True, f"total={stats['total']}"))
         print(f"  ✓ Policy Bridge: {stats['total']} records, exploration={stats['epsilon']}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Policy Bridge", False, str(e)[:100]))
         print(f"  ✗ Policy Bridge failed: {e}")
 
     # ── Test 2: Closed-Loop Orchestrator ───────────────────────────────────
     print("\n[2/7] Closed-Loop Orchestrator...")
     try:
-        from core.learning.policy_learning import PolicyLearner
-        from core.orchestrator.policy_bridge import PolicyBridge
-        from core.orchestrator.closed_loop import ClosedLoopOrchestrator
-        from core.learning.trajectory_store import TrajectoryStore
         from core.action.safety_envelope import SafetyEnvelopeManager
         from core.environment.consequence import ConsequenceSimulator
         from core.environment.model import EnvironmentModel
+        from core.learning.policy_learning import PolicyLearner
+        from core.learning.trajectory_store import TrajectoryStore
+        from core.orchestrator.closed_loop import ClosedLoopOrchestrator
+        from core.orchestrator.policy_bridge import PolicyBridge
 
         learner = PolicyLearner()
         bridge = PolicyBridge(learner)
@@ -93,7 +94,8 @@ async def main():
         results.append(("Closed-Loop Orchestrator", True, f"cycles={state['cycle_count']}"))
         print(f"  ✓ Closed-Loop: {state['cycle_count']} cycles, last_success={state['last_success']}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Closed-Loop Orchestrator", False, str(e)[:100]))
         print(f"  ✗ Closed-Loop failed: {e}")
 
@@ -101,10 +103,10 @@ async def main():
     print("\n[3/7] RSI Integration Engine...")
     try:
         from core.learning.policy_learning import PolicyLearner
+        from core.learning.trajectory_replay import TrajectoryReplay
+        from core.learning.trajectory_store import TrajectoryStore
         from core.orchestrator.policy_bridge import PolicyBridge
         from core.rsi.integration import RSIIntegrationEngine
-        from core.learning.trajectory_store import TrajectoryStore
-        from core.learning.trajectory_replay import TrajectoryReplay
 
         learner = PolicyLearner()
         bridge = PolicyBridge(learner)
@@ -125,7 +127,8 @@ async def main():
         results.append(("RSI Integration", True, f"results={state['results']}"))
         print(f"  ✓ RSI Integration: {state['results']} cycles, {state['promoted']} promoted")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("RSI Integration", False, str(e)[:100]))
         print(f"  ✗ RSI Integration failed: {e}")
 
@@ -152,7 +155,8 @@ async def main():
         results.append(("Multi-Agent Collab", True, f"agents={state['agents']}"))
         print(f"  ✓ Multi-Agent: {state['agents']} agents, {state['sub_goals']} sub-goals")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Multi-Agent Collab", False, str(e)[:100]))
         print(f"  ✗ Multi-Agent failed: {e}")
 
@@ -187,7 +191,8 @@ async def main():
         results.append(("Explanation & Audit", True, f"entries={state['total_entries']}"))
         print(f"  ✓ Explanation: {state['total_entries']} audit entries, {state['action_ids']} actions")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Explanation & Audit", False, str(e)[:100]))
         print(f"  ✗ Explanation failed: {e}")
 
@@ -221,25 +226,26 @@ async def main():
         results.append(("Continuous Benchmark", True, f"cases={state['cases']}"))
         print(f"  ✓ Benchmark: {state['cases']} cases, {state['regressions']} regressions detected")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Continuous Benchmark", False, str(e)[:100]))
         print(f"  ✗ Benchmark failed: {e}")
 
     # ── Test 7: Full Integration (End-to-End) ──────────────────────────────
     print("\n[7/7] Full v10 Integration...")
     try:
-        from core.learning.policy_learning import PolicyLearner
-        from core.orchestrator.policy_bridge import PolicyBridge
-        from core.orchestrator.closed_loop import ClosedLoopOrchestrator
-        from core.rsi.integration import RSIIntegrationEngine
-        from core.collaboration.protocol import AgentCollaborationProtocol, AgentRole
-        from core.explanation.explainer import ActionExplainer, AuditTrail
-        from core.benchmark.continuous import ContinuousBenchmark
-        from core.learning.trajectory_store import TrajectoryStore
-        from core.learning.trajectory_replay import TrajectoryReplay
         from core.action.safety_envelope import SafetyEnvelopeManager
+        from core.benchmark.continuous import ContinuousBenchmark
+        from core.collaboration.protocol import AgentCollaborationProtocol, AgentRole
         from core.environment.consequence import ConsequenceSimulator
         from core.environment.model import EnvironmentModel
+        from core.explanation.explainer import ActionExplainer, AuditTrail
+        from core.learning.policy_learning import PolicyLearner
+        from core.learning.trajectory_replay import TrajectoryReplay
+        from core.learning.trajectory_store import TrajectoryStore
+        from core.orchestrator.closed_loop import ClosedLoopOrchestrator
+        from core.orchestrator.policy_bridge import PolicyBridge
+        from core.rsi.integration import RSIIntegrationEngine
 
         # Initialize all components
         learner = PolicyLearner()
@@ -282,7 +288,8 @@ async def main():
         results.append(("Full Integration", True, "all v10 components"))
         print("  ✓ Full Integration: All v10 components working together")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:100]))
         print(f"  ✗ Full Integration failed: {e}")
 

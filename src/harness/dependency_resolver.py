@@ -6,7 +6,6 @@ import threading
 from dataclasses import dataclass, field
 
 
-
 @dataclass
 class DependencyNode:
     """A node in the dependency graph."""

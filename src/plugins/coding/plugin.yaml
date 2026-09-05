@@ -1,0 +1,22 @@
+name: coding
+version: 1.0.0
+description: "Coding agent — code generation, review, debugging, Git operations"
+license: MIT
+source: internal
+capabilities:
+  - code_generation
+  - code_review
+  - debugging
+  - git_operations
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: project
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

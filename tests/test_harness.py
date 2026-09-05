@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import os
 import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+from harness.config import ConfigValidator, PluginConfig
+from harness.dependency_resolver import DependencyGraph, DependencyResolver
+from harness.health import HealthCheckResult, HealthMonitor, HealthStatus
+from harness.lifecycle import LifecycleEvent, LifecycleHook, LifecycleManager
 from harness.plugin_base import Plugin, PluginMetadata, PluginStatus
 from harness.registry import PluginRegistry
-from harness.lifecycle import LifecycleManager, LifecycleEvent, LifecycleHook
-from harness.dependency_resolver import DependencyGraph, DependencyResolver
-from harness.config import PluginConfig, ConfigValidator
-from harness.health import HealthMonitor, HealthStatus, HealthCheckResult
-from harness.versioning import Version, VersionRange, Compatibility
-
+from harness.versioning import Compatibility, Version, VersionRange
 
 # ==================== Plugin Base Tests ====================
 
@@ -344,34 +344,49 @@ class TestLifecycleManager:
 
     def test_add_hook(self):
         lc = LifecycleManager()
-        callback = lambda p: None
+
+        def callback(p):
+            return None
+
         hook = LifecycleHook(event=LifecycleEvent.BEFORE_LOAD, callback=callback)
         lc.add_hook(hook)
         assert len(lc._hooks[LifecycleEvent.BEFORE_LOAD]) == 1
 
     def test_remove_hook(self):
         lc = LifecycleManager()
-        callback = lambda p: None
+
+        def callback(p):
+            return None
+
         hook = LifecycleHook(event=LifecycleEvent.BEFORE_LOAD, callback=callback)
         lc.add_hook(hook)
         assert lc.remove_hook(LifecycleEvent.BEFORE_LOAD, callback) is True
 
     def test_add_listener(self):
         lc = LifecycleManager()
-        listener = lambda e, p: None
+
+        def listener(e, p):
+            return None
+
         lc.add_listener(listener)
         assert len(lc._listeners) == 1
 
     def test_remove_listener(self):
         lc = LifecycleManager()
-        listener = lambda e, p: None
+
+        def listener(e, p):
+            return None
+
         lc.add_listener(listener)
         assert lc.remove_listener(listener) is True
 
     def test_hook_fired_on_load(self):
         lc = LifecycleManager()
         fired = []
-        callback = lambda p: fired.append("loaded")
+
+        def callback(p):
+            fired.append("loaded")
+
         lc.add_hook(LifecycleHook(event=LifecycleEvent.AFTER_LOAD, callback=callback))
         lc.start(Plugin(PluginMetadata(id="test", name="Test")))
         assert "loaded" in fired

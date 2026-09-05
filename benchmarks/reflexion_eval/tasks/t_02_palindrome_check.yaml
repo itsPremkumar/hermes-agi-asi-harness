@@ -1,0 +1,9 @@
+id: t_02_palindrome_check
+description: "Determine whether 'A man a plan a canal Panama' is a palindrome (ignoring case, spaces, and punctuation). Output True or False."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["answer", "Outputs True (it is a palindrome)"]
+    - ["explanation", "Briefly explains the normalization step"]
+max_iterations: 3

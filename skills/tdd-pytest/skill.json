@@ -1,0 +1,1 @@
+{"name": "tdd-pytest", "version": "0.1.0", "description": "Test-driven pytest workflow for Python services", "triggers": ["pytest", "TDD", "test suite"], "success_rate": 0.5, "invocations": 0, "path": "skills/tdd-pytest"}

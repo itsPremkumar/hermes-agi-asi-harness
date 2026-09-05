@@ -3,16 +3,16 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "harnix"
-version = "3.0.0"
-description = "Hermes AGI/ASI Harness — Unified agent runtime kernel"
+name = "hermes-agi-asi-harness"
+version = "2.0.0"
+description = "Hermes AGI/ASI Harness — Unified AI Agent Runtime with Kernel, Plugins, Bot Swarms, and Benchmarks"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "Hermes AGI/ASI Contributors"},
 ]
-keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph", "plugin", "safety"]
+keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph", "mcp", "bot-swarm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -25,98 +25,80 @@ classifiers = [
 ]
 
 dependencies = [
-    # Core runtime
     "langgraph>=1.0.0",
-    "langchain_core>=0.3.0",
-    "langchain>=1.0.0",
-
-    # LLM providers
-    "anthropic>=0.20.0",
-    "openai>=1.0.0",
-    "httpx>=0.25.0",
-
-    # Configuration & parsing
-    "pyyaml>=6.0",
-    "tomli>=2.0.0; python_version<'3.11'",
-    "tomllib>=2.0.0; python_version>='3.11'",
-    "pydantic>=2.0.0",
-
-    # Testing
-    "pytest>=7.0",
-    "pytest-asyncio>=0.21",
-    "coverage>=7.0",
-
-    # Async I/O
-    "aiofiles>=23.0",
-    "aiosqlite>=0.19.0",
-
-    # Terminal UI
-    "rich>=13.0",
-    "typer>=0.9.0",
-
-    # Data processing
-    "numpy>=1.24.0",
-    "pandas>=2.0.0",
-
-    # ML / embeddings
-    "sentence-transformers>=2.0.0",
-    "faiss-cpu>=1.7.0",
-    "chromadb>=0.4.0",
-    "qdrant-client>=1.7.0",
-
-    # Vector search
-    "redis>=4.5.0",
-
-    # PDF processing
-    "pymupdf>=1.23.0",
-
-    # Tokenization
-    "tiktoken>=0.5.0",
-
-    # Visualization
-    "matplotlib>=3.7.0",
-    "seaborn>=0.12.0",
-
-    # Graph analysis
-    "networkx>=3.0",
-
-    # Progress
-    "tqdm>=4.65.0",
+    "langchain-core>=0.3.0",
+    "pyyaml>=6.0.3",
+    "psutil>=5.9.0",
+    "aiofiles>=23.2.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "trafilatura>=2.2.0",
+    "ddgs>=9.0.0",
 ]
 
 [project.optional-dependencies]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+]
+mcp = [
+    "mcp>=2.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
     "black",
-    "ruff",
-    "mypy",
-    "bandit",
-    "pip-audit",
+    "ruff>=0.16.5",
+    "mypy>=2.3.1",
+    "mcp",
+    "hermes-agi-asi-harness[api]",
+]
+all = [
+    "hermes-agi-asi-harness[dev,api]",
 ]
 
 [project.scripts]
-hermes = "hermes_agi_v2:main"
-hermes-agi = "hermes_agi_v2:main"
+hermes-agi = "hermes_agi.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["harnix*", "core*", "plugins*", "agents*", "src*"]
+where = ["src"]
+include = ["*"]
+exclude = ["tests*", "workspaces*", "docs*", "scripts*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --tb=short"
 
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+# archive/ holds read-only legacy snapshots (see archive/*/README.md);
+# it is intentionally not lint-gated.
+exclude = ["archive/*", ".venv/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Package __init__ files are re-export facades: imported names form the
+# public API even when unused inside the file itself.
+"src/**/__init__.py" = ["F401"]
+"benchmarks/**/__init__.py" = ["F401"]
+"profiles/**/__init__.py" = ["F401"]
+"tests/**/__init__.py" = ["F401"]
+# E402 false positives: sys.path / environment bootstrapping that MUST run
+# before the following imports.
+"benchmarks/__init__.py" = ["E402"] # sys.path bootstrap + "benchmark" alias
+"scripts/run_benchmarks.py" = ["E402"] # project-root path bootstrap
+"tests/test_runtime.py" = ["E402"] # HERMES_HOME isolation must precede imports
+"profiles/**/tests/*.py" = ["E402"] # standalone harnesses bootstrap sys.path
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true

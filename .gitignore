@@ -72,7 +72,10 @@ venv.bak/
 
 # Project specific
 .hermes/
+.hermes-backup/
 state/
+workspaces/
+skills/*.local/
 logs/
 *.db
 *.sqlite

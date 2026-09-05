@@ -1,6 +1,7 @@
 """Tests for Debug Engine."""
 import pytest
-from core.debug import DebugEngine, BugReport
+
+from core.debug import BugReport, DebugEngine
 
 
 class TestDebugEngine:

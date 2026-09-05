@@ -2,25 +2,28 @@
 import sys
 from pathlib import Path
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.supervisor import (
-    Supervisor, SupervisorState, TaskType,
+    Supervisor,
+    SupervisorState,
+    TaskType,
+)
+from core.supervisor.evaluation import (
+    EvaluationGate,
+    TestCase,
 )
 from core.supervisor.memory import (
     PersistentMemory,
 )
-from core.supervisor.evaluation import (
-    EvaluationGate, TestCase,
+from core.supervisor.orchestrator import (
+    Agent,
+    AgentRole,
+    MultiAgentOrchestrator,
 )
 from core.supervisor.variation import (
     VariationOperator,
 )
-from core.supervisor.orchestrator import (
-    MultiAgentOrchestrator, Agent, AgentRole,
-)
-
 
 # ---------------------------------------------------------------------------
 # Supervisor Core tests

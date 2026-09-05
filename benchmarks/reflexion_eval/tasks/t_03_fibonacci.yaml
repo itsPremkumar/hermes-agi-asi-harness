@@ -1,0 +1,9 @@
+id: t_03_fibonacci
+description: "What is the 10th number in the Fibonacci sequence (starting from F(0)=0, F(1)=1)? Output only the number."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Correctly computes F(10) = 55"]
+    - ["conciseness", "Outputs only the number with no extra prose"]
+max_iterations: 3

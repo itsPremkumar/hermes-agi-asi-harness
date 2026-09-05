@@ -1,0 +1,1 @@
+{"name": "evidence-synthesis", "version": "0.1.0", "description": "Multi-source evidence synthesis with provenance", "triggers": ["research", "evidence", "synthesis"], "success_rate": 0.5, "invocations": 0, "path": "skills/evidence-synthesis"}

@@ -1,0 +1,9 @@
+id: t_04_fizzbuzz
+description: "Print numbers 1 to 100, but for multiples of 3 print 'Fizz', for multiples of 5 print 'Buzz', and for multiples of both print 'FizzBuzz'. Output the first 15 lines."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["logic", "Correctly applies Fizz/Buzz/FizzBuzz rules"]
+    - ["range", "Covers numbers 1 through 15"]
+max_iterations: 3

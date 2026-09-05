@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.memory import (
-    MemoryEntry,
+from harness.memory import (
     EmbeddingModel,
-    ShortTermMemory,
     LongTermMemory,
+    MemoryEntry,
     MemoryLayer,
+    ShortTermMemory,
 )
 
 

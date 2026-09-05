@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from src.harness.errors import GraphError, NodeError, DeadLetterQueue, CircuitBreaker
+from harness.errors import CircuitBreaker, DeadLetterQueue, GraphError, NodeError
 
 logger = logging.getLogger(__name__)
 

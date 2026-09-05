@@ -1,0 +1,24 @@
+name: circuit_breaker
+version: 1.0.0
+description: "Circuit breaker and failure recovery layer for ASI cognitive architecture. Per-plane health monitoring, automatic retry with exponential backoff, fallback chains, checkpoint/resume, and graceful degradation."
+license: MIT
+source: internal
+capabilities:
+  - circuit_breaker
+  - health_monitor
+  - fallback_router
+  - checkpoint_recovery
+  - graceful_degradation
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none
+dependencies: []

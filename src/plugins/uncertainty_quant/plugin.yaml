@@ -1,0 +1,10 @@
+name: uncertainty_quant
+title: Uncertainty Quantification Engine
+description: Track and propagate uncertainty through all plugin outputs with confidence intervals.
+domain: accuracy
+priority: 0.9
+impact: 0.95
+effort: 0.65
+phase: advanced
+requires: []
+provides: ["uncertainty_quant"]

@@ -1,0 +1,11 @@
+{
+  "name": "hermes-creative-design-md",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "design md"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-creative-design-md"
+}

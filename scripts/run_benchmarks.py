@@ -15,12 +15,16 @@ PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 sys.path = [p for p in sys.path if 'kanban' not in p and 'it-company-ops' not in p]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from core.benchmarks import (
-    MultiBenchmarkEngine, BenchmarkType,
-    HumanEvalAdapter, MBPPAdapter, GPQAAdapter,
+from benchmarks.core_suites import (
+    BenchmarkType,
+    GAIAAdapter,
+    GPQAAdapter,
+    HumanEvalAdapter,
+    MBPPAdapter,
+    MultiBenchmarkEngine,
 )
-from core.benchmarks.llm_client import LLMClient, LLMConfig
-from core.benchmarks.evaluator import BenchmarkEvaluator
+from benchmarks.core_suites.evaluator import BenchmarkEvaluator
+from benchmarks.core_suites.llm_client import LLMClient, LLMConfig
 
 
 def create_sample_tasks(data_dir: Path):

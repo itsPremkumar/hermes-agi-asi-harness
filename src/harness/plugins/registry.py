@@ -5,11 +5,10 @@ Plugin Registry — manages plugin discovery, versioning, and dependency resolut
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Optional
 
 from .base import Plugin, PluginManifest, PluginType
-
 
 logger = logging.getLogger(__name__)
 

@@ -12,11 +12,9 @@ Defines the core abstractions for the plugin system:
 from __future__ import annotations
 
 import enum
-import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Optional
 
 
 class PluginType(enum.Enum):

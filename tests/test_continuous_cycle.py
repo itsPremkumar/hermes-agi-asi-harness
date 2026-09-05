@@ -11,7 +11,6 @@ from src.daily_improvement.continuous_cycle import (
     BenchmarkScore,
     ContinuousCycle,
     CycleStage,
-    CycleStatus,
     Improvement,
     ProgressEntry,
     Weakness,

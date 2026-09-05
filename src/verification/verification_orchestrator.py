@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-import time
 import threading
-from dataclasses import dataclass, field
-from typing import Any, Optional
+import time
+from typing import Any
 
-from verification.proof_checker import ProofChecker, Proof, ProofStep, ProofStatus, CheckResult
-from verification.specification_parser import SpecificationParser, Specification, SpecFormat, ParseResult
-from verification.formal_verifier import FormalVerifier, VerifyStatus, VerificationResult
-from verification.counterexample_generator import CounterexampleGenerator, Counterexample
+from verification.counterexample_generator import CounterexampleGenerator
+from verification.formal_verifier import FormalVerifier, VerifyStatus
+from verification.proof_checker import CheckResult, Proof, ProofChecker
+from verification.specification_parser import (
+    ParseResult,
+    SpecFormat,
+    SpecificationParser,
+)
 
 
 class VerificationOrchestrator:

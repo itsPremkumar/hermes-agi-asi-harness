@@ -3,31 +3,22 @@ import asyncio
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from plugins.user_interaction import (
     Channel,
-    Clarifier,
-    ClarificationRequest,
     ClarificationResponse,
-    DeliveryRequest,
-    DeliveryResponse,
-    ExplanationRequest,
-    ExplanationResponse,
+    Clarifier,
     Explainer,
+    ExplanationResponse,
     ResultDeliverer,
     UserInteractionPlugin,
 )
-from plugins.user_interaction.clarifier import Clarifier as ClarifierClass
-from plugins.user_interaction.explainer import Explainer as ExplainerClass
-from plugins.user_interaction.deliverer import ResultDeliverer as DelivererClass
 
 
 class TestClarifier:
     def test_detect_scope_ambiguity(self):
-        asyncio.get_event_loop().run_until_complete(self._async_detect())
+        asyncio.run(self._async_detect())
 
     async def _async_detect(self):
         c = Clarifier()
@@ -37,7 +28,7 @@ class TestClarifier:
         assert resp.priority == 1
 
     def test_detect_detail_ambiguity(self):
-        asyncio.get_event_loop().run_until_complete(self._async_detect_detail())
+        asyncio.run(self._async_detect_detail())
 
     async def _async_detect_detail(self):
         c = Clarifier()
@@ -45,7 +36,7 @@ class TestClarifier:
         assert not resp.is_resolved
 
     def test_no_ambiguity(self):
-        asyncio.get_event_loop().run_until_complete(self._async_no_ambiguity())
+        asyncio.run(self._async_no_ambiguity())
 
     async def _async_no_ambiguity(self):
         c = Clarifier()
@@ -83,7 +74,7 @@ class TestClarifier:
 
 class TestExplainer:
     def test_explain_simple_result(self):
-        asyncio.get_event_loop().run_until_complete(self._async_explain())
+        asyncio.run(self._async_explain())
 
     async def _async_explain(self):
         e = Explainer()
@@ -99,7 +90,7 @@ class TestExplainer:
         assert resp.confidence_label in resp.summary
 
     def test_explain_low_confidence(self):
-        asyncio.get_event_loop().run_until_complete(self._async_explain_low())
+        asyncio.run(self._async_explain_low())
 
     async def _async_explain_low(self):
         e = Explainer()
@@ -140,7 +131,7 @@ class TestExplainer:
 
 class TestDeliverer:
     def test_deliver_chat(self):
-        asyncio.get_event_loop().run_until_complete(self._async_deliver_chat())
+        asyncio.run(self._async_deliver_chat())
 
     async def _async_deliver_chat(self):
         d = ResultDeliverer()
@@ -165,7 +156,7 @@ class TestDeliverer:
         assert "python.org" in resp.content
 
     def test_deliver_email(self):
-        asyncio.get_event_loop().run_until_complete(self._async_deliver_email())
+        asyncio.run(self._async_deliver_email())
 
     async def _async_deliver_email(self):
         d = ResultDeliverer()
@@ -188,7 +179,7 @@ class TestDeliverer:
         assert "Subject:" in resp.content
 
     def test_deliver_report(self):
-        asyncio.get_event_loop().run_until_complete(self._async_deliver_report())
+        asyncio.run(self._async_deliver_report())
 
     async def _async_deliver_report(self):
         d = ResultDeliverer()
@@ -212,7 +203,7 @@ class TestDeliverer:
         assert "Executive Summary" in resp.content
 
     def test_deliver_json(self):
-        asyncio.get_event_loop().run_until_complete(self._async_deliver_json())
+        asyncio.run(self._async_deliver_json())
 
     async def _async_deliver_json(self):
         d = ResultDeliverer()
@@ -235,7 +226,7 @@ class TestDeliverer:
         assert '"query": "Test"' in resp.content
 
     def test_deliver_unverified_warning(self):
-        asyncio.get_event_loop().run_until_complete(self._async_deliver_unverified())
+        asyncio.run(self._async_deliver_unverified())
 
     async def _async_deliver_unverified(self):
         d = ResultDeliverer()
@@ -260,7 +251,7 @@ class TestDeliverer:
 
 class TestUserInteractionPlugin:
     def test_load_and_start(self):
-        asyncio.get_event_loop().run_until_complete(self._async_load_start())
+        asyncio.run(self._async_load_start())
 
     async def _async_load_start(self):
         from core.runtime.plugin_base import PluginManifest, PluginPermissions
@@ -280,7 +271,7 @@ class TestUserInteractionPlugin:
         assert plugin.state.value == "running"
 
     def test_health(self):
-        asyncio.get_event_loop().run_until_complete(self._async_health())
+        asyncio.run(self._async_health())
 
     async def _async_health(self):
         from core.runtime.plugin_base import PluginManifest, PluginPermissions
@@ -301,7 +292,7 @@ class TestUserInteractionPlugin:
         assert health["clarifier_ready"]
 
     def test_process_query(self):
-        asyncio.get_event_loop().run_until_complete(self._async_process())
+        asyncio.run(self._async_process())
 
     async def _async_process(self):
         from core.runtime.plugin_base import PluginManifest, PluginPermissions
@@ -327,7 +318,7 @@ class TestUserInteractionPlugin:
         assert "delivery" in result
 
     def test_stop_and_unload(self):
-        asyncio.get_event_loop().run_until_complete(self._async_stop_unload())
+        asyncio.run(self._async_stop_unload())
 
     async def _async_stop_unload(self):
         from core.runtime.plugin_base import PluginManifest, PluginPermissions

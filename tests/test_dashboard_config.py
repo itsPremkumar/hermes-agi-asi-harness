@@ -1,5 +1,6 @@
 """Tests for ConfigEditor."""
 import pytest
+
 from core.dashboard.config import ConfigEditor, ConfigScope, ConfigValidationError
 
 

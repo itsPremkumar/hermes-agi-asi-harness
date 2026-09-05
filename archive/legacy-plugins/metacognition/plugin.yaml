@@ -1,0 +1,22 @@
+name: metacognition
+version: 1.0.0
+description: "Metacognitive self-monitoring and confidence estimation"
+license: MIT
+source: internal
+capabilities:
+  - self_monitoring
+  - error_detection
+  - confidence_estimation
+  - uncertainty_quantification
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

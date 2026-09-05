@@ -1,6 +1,5 @@
 """Tests for Deep Research Engine — Phase 4: Frontend + Integration."""
-import pytest
-from src.deep_research.engine import DeepResearchEngine, ResearchSession, ResearchPhase
+from src.deep_research.engine import DeepResearchEngine, ResearchPhase, ResearchSession
 from src.deep_research.frontend import DeepResearchFrontend, UIComponent
 
 

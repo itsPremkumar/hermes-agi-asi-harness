@@ -1,0 +1,21 @@
+name: causal
+version: 1.0.0
+description: "Causal reasoning and counterfactual simulation"
+license: MIT
+source: internal
+capabilities:
+  - causal_reasoning
+  - counterfactual_simulation
+  - confounder_detection
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

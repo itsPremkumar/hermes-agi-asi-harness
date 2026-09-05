@@ -16,19 +16,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ===== Structure Guardrails (no deps, runs first) =====
+  structure:
+    name: Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: No new root-level entry points
+        shell: bash
+        run: |
+          allow="hermes.py continuous_dev.py sitecustomize.py"
+          fail=0
+          for f in *.py; do
+            keep=0
+            for a in $allow; do [ "$f" = "$a" ] && keep=1; done
+            if [ "$keep" = "0" ]; then echo "UNEXPECTED root script: $f"; fail=1; fi
+          done
+          [ -e workspaces ] && { echo "workspaces/ must not return"; fail=1; }
+          [ -e integration ] && { echo "integration/ must not return (see archive/)"; fail=1; }
+          exit $fail
+
+      - name: Canonical imports
+        shell: bash
+        run: python scripts/check_canonical.py
+
+      - name: Import cycles (no new cycles beyond allowlist)
+        shell: bash
+        run: python scripts/check_cycles.py --allow scripts/cycles.allow
+
   # ===== Lint & Format =====
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
@@ -47,14 +76,14 @@ jobs:
     name: Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
@@ -87,14 +116,14 @@ jobs:
           - os: windows-latest
             python-version: "3.12"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
@@ -117,14 +146,14 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
         run: uv sync --all-extras --dev
@@ -158,14 +187,14 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Build package
         run: uv build
@@ -187,7 +216,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -211,14 +240,14 @@ jobs:
     name: Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Install dependencies
         run: uv sync --all-extras --dev

@@ -1,0 +1,11 @@
+{
+  "name": "hermes-apple-imessage",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "imessage"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-apple-imessage"
+}

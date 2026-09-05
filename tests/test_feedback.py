@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-
-from src.harness.feedback import (
-    NodeValidator,
-    VerificationPipeline,
-    SelfCritique,
+from harness.feedback import (
     CritiqueResult,
-    ValidationResult,
     FeedbackEngine,
+    NodeValidator,
+    SelfCritique,
+    ValidationResult,
+    VerificationPipeline,
 )
 
 

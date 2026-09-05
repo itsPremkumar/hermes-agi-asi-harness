@@ -1,0 +1,9 @@
+id: t_15_reverse_polish
+description: "Evaluate the postfix expression: 3 4 + 2 * (i.e., (3+4)*2). Output only the number."
+rubric:
+  name: "Accuracy"
+  pass_threshold: 0.50
+  criteria:
+    - ["value", "Outputs 14"]
+    - ["method", "Mentions stack-based evaluation"]
+max_iterations: 3

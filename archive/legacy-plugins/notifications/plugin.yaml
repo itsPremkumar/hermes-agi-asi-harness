@@ -1,0 +1,21 @@
+name: notifications
+version: 1.0.0
+description: "Notifications — email, webhook, desktop notifications"
+license: MIT
+source: internal
+capabilities:
+  - notifications
+  - email
+  - webhook
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

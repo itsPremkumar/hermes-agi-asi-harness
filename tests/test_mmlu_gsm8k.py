@@ -7,8 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.benchmark.mmlu_benchmark import MMLUBenchmark, MMLUCategory, MMLUQuestion
-from src.benchmark.gsm8k_benchmark import GSM8KBenchmark, GSM8KQuestion
+from benchmarks.gsm8k_benchmark import GSM8KBenchmark, GSM8KQuestion
+from benchmarks.mmlu_benchmark import MMLUBenchmark, MMLUCategory, MMLUQuestion
 
 
 class TestMMLUBenchmark(unittest.TestCase):

@@ -1,0 +1,92 @@
+{
+  "areas": [
+    {
+      "topic": "Multi-Agent Coordination",
+      "current_state": "The project has three separate coordination mechanisms that don't actually communicate: (1) core/collaboration/protocol.py provides an in-memory AgentCollaborationProtocol with simulated execution — _execute_coordinated() just returns hardcoded success dicts without running real agent code; (2) plugins/multi_agent_orchestrator/__init__.py implements a task queue with priority and dependency tracking, but agents are Python function calls in the same process, not independent agents; (3) integration/hermes_bridge/bot_swarm.py defines 26 bot profiles but spawn() only returns a configuration dict and sets status to 'spawned' without actually launching subagents. There is no real inter-agent messaging, no shared blackboard, no consensus protocol, no debate mechanism, and no way for agents to dynamically discover or negotiate with each other. The event_bus plugin exists but is a simple pub/sub with no persistence, no delivery guarantees, and no schema enforcement.",
+      "improvements": [
+        "Implement real agent spawning via delegate_task or subprocess — the bot_swarm.spawn() method must actually launch isolated agent processes with their own model contexts, not just return config dicts",
+        "Build a shared blackboard / world model that agents can read/write — the collaboration protocol's world_state parameter is passed but never used by agents",
+        "Add a message-passing layer with delivery guarantees — the event_bus needs persistent storage (e.g., SQLite WAL or Redis), at-least-once delivery, and dead-letter queues for failed handlers",
+        "Implement a consensus/debate protocol — the debate plugin exists but is not wired into the orchestrator; agents should be able to challenge each other's outputs and vote on high-risk decisions",
+        "Add agent capability negotiation — currently _assign_agents() does static string matching; agents should advertise capabilities at runtime and bid on tasks",
+        "Implement the missing delegate_task integration — bot profiles reference tools like 'session_search' and 'memory' but there's no code that actually invokes Hermes subagent spawning"
+      ],
+      "priority": "CRITICAL"
+    },
+    {
+      "topic": "Memory System",
+      "current_state": "The memory_system plugin uses SQLite with FTS5 for keyword search and defines 9 memory types (working, episodic, semantic, procedural, project, failure, preference, world_state, identity). However: (1) the vector and graph backends are declared in _init_backends() but never implemented — they're just path strings; (2) the AVO memory uses a single JSON file (memory.json) that grows unbounded with no compaction; (3) consolidation() is a stub that does nothing (just 'pass'); (4) there's no cross-session persistence — each MemorySystem instance is a singleton per process; (5) the formal_verifier's invariant 'Retrieval must be <100ms' cannot be met because FTS5 queries have no pagination, no caching, and no connection pooling; (6) the knowledge_graph plugin exists but has no implementation; (7) no provenance tracking despite invariant 19 requiring it.",
+      "improvements": [
+        "Implement the vector backend using sqlite-vec or chromadb — currently declared but not wired, making semantic search impossible",
+        "Add a real graph backend using networkx or kuzu for causal reasoning — invariant 16 requires causal reasoning support",
+        "Implement memory consolidation — the current stub should merge similar memories using embedding similarity, not just pass",
+        "Add provenance tracking to every memory record — invariant 19 requires all retrieved content to have provenance",
+        "Implement connection pooling and query caching to meet the <100ms retrieval invariant",
+        "Add memory compaction and archival — the JSON store grows unbounded; implement tiered storage (hot/warm/cold)",
+        "Wire the memory_system into the event bus so memories are created from agent actions automatically, not manually"
+      ],
+      "priority": "CRITICAL"
+    },
+    {
+      "topic": "Learning and Improvement",
+      "current_state": "The evolution_engine plugin implements a genetic algorithm with tournament selection, crossover, and mutation, but: (1) mutation for strings is random character replacement (a-z + space), which destroys any structured code or prompts; (2) there's no actual fitness function wired in — evolve() requires a caller-provided fitness_func but no real evaluation pipeline exists; (3) transfer_learning.py just records transfers in a list with no pattern extraction or application; (4) population_evolution.py maintains an archive but evolve() creates children with only parent IDs, no actual strategy inheritance; (5) meta_rsi.py is a stub that records metrics but never modifies the evolution process; (6) the self_improvement_boundary plugin defines rules but no code actually checks can_change() before modifications; (7) no skill acquisition, no strategy learning from failures, no prompt optimization based on outcomes.",
+      "improvements": [
+        "Replace random character mutation with LLM-guided mutation — use the model to suggest meaningful variations of prompts/strategies, not random ASCII changes",
+        "Build a real fitness evaluation pipeline — connect evolution_engine to the benchmark system so fitness is measured against actual task performance",
+        "Implement experience replay — invariant 17 requires diverse trajectory sampling; store successful/failed episodes and sample from them during training",
+        "Wire meta_rsi to actually modify evolution parameters — adjust mutation_rate, crossover_rate based on fitness_history trends",
+        "Implement skill_forge integration — when evolution finds a good strategy, persist it as a reusable skill in the skill library",
+        "Add transfer learning application — when a pattern succeeds in one context, automatically suggest it in similar contexts",
+        "Enforce self_improvement_boundary.can_change() at every mutation point — currently the boundary rules exist but are never checked"
+      ],
+      "priority": "HIGH"
+    },
+    {
+      "topic": "Safety and Invariants",
+      "current_state": "The SafetyGovernor class lists 22 invariants as strings in INVARIANTS, but they are never actually checked — there's no verify_invariants() method, no runtime enforcement, and no integration with the execution pipeline. The safety_gates plugin implements R0-R6 gates, but: (1) R3 (Safety) only checks regex patterns for dangerous shell commands — it doesn't check the 22 invariants; (2) R6 requires human_approved flag but there's no UI or mechanism to set it; (3) the safety_envelope plugin tracks action counts but doesn't actually block actions; (4) the formal_verifier only does simple string matching on comparison operators — it cannot verify most of the 22 invariants; (5) the anomaly_detector uses z-score on execution times but has no integration with the safety governor; (6) prompt injection detection (invariant 6) is not implemented anywhere; (7) self-replication prevention (invariant 7) has no enforcement mechanism.",
+      "improvements": [
+        "Implement invariant checking as executable predicates — convert each of the 22 invariants from strings to callable functions that take system state and return pass/fail",
+        "Add a verify_invariants() method to SafetyGovernor that runs all 22 checks and returns a detailed report — currently status() just returns the count",
+        "Wire safety gates into the execution pipeline — every plugin.execute() should run run_all_gates() before proceeding",
+        "Implement prompt injection detection — add input scanning that checks for instruction override patterns and logs/blocks them (invariant 6)",
+        "Add self-replication prevention — intercept any spawn/replicate actions and require multi-party review (invariant 7)",
+        "Implement corrigibility monitoring — track whether any change reduces the system's ability to be shut down or corrected (invariant 8)",
+        "Add a human approval UI/webhook for R6 actions — currently R6 just checks a flag that nothing sets"
+      ],
+      "priority": "CRITICAL"
+    },
+    {
+      "topic": "Scalability",
+      "current_state": "The system is entirely single-process: (1) the compute_scaling plugin tracks budgets but doesn't actually scale — max_agents=8 is just a number, not a real limit enforced by infrastructure; (2) the event_bus stores 5000 events in-memory with no persistence; (3) SQLite is used for state but with no WAL mode, no connection pooling, and no replication; (4) the multi_agent_orchestrator runs tasks as asyncio coroutines in the same process — true parallelism is limited by the GIL; (5) there's no task distribution across machines; (6) the bot_swarm's 26 profiles cannot actually run concurrently because spawn() doesn't launch real processes; (7) no caching layer exists despite invariant 21 requiring >80% cache hit rate.",
+      "improvements": [
+        "Implement real multi-process agent execution — use multiprocessing or subprocess to run agents in isolation, not asyncio coroutines",
+        "Add Redis or similar for distributed event bus — the current in-memory bus cannot scale beyond one process",
+        "Enable SQLite WAL mode and connection pooling — required for concurrent access (invariant 14)",
+        "Implement actual compute scaling — when budget allows, spawn additional worker processes or remote executors",
+        "Add a caching layer (Redis or LRU) for retrieval operations to meet the 80% cache hit invariant",
+        "Implement checkpointing with the 30-second interval required by invariant 10 — currently checkpoint files exist but are not created on schedule",
+        "Add backpressure to the event bus — currently slow handlers are just logged, they should apply backpressure to publishers"
+      ],
+      "priority": "HIGH"
+    },
+    {
+      "topic": "Observability",
+      "current_state": "The observability plugin is a stub (26 lines, no implementation). The dashboard modules (health, events, missions) are all in-memory with no persistence, no export, and no alerting. The monitoring/ directory contains only a prometheus.yml config file with no actual Prometheus integration. There is no distributed tracing, no structured logging (just print statements and basic logging), no metrics collection, and no alerting. The event_log plugin stores events in a list that grows unbounded. The health_monitor tracks component status but has no integration with actual component health checks. No invariant compliance dashboard exists.",
+      "improvements": [
+        "Implement the observability plugin with OpenTelemetry — add tracing spans for every agent action, tool call, and plugin execution",
+        "Add Prometheus metrics export — counters for task success/failure rates, histograms for latency, gauges for active agents",
+        "Implement structured logging with JSON format — replace print statements with structured logs that include trace_id, agent_id, task_id",
+        "Add invariant compliance monitoring — a dashboard that shows which of the 22 invariants are currently passing/failing",
+        "Implement event log persistence — store events in SQLite with rotation, not in-memory lists",
+        "Add alerting — when invariants are violated or anomaly_detector fires, send notifications (email, webhook, etc.)",
+        "Build a real-time dashboard — the dashboard plugins exist but are not served; implement a web UI that shows mission progress, agent status, and safety compliance"
+      ],
+      "priority": "MEDIUM"
+    }
+  ],
+  "top_3_critical_improvements": [
+    "Wire the 22 safety invariants into executable checks integrated with the execution pipeline — currently they are dead strings that provide zero protection",
+    "Implement real multi-agent spawning and communication — bot_swarm.spawn() must launch actual isolated agents, not return config dicts, and agents need a shared message bus with persistence",
+    "Build the vector and graph memory backends — the memory system declares them but they don't exist, making semantic search and causal reasoning impossible and violating invariants 15 and 16"
+  ]
+}

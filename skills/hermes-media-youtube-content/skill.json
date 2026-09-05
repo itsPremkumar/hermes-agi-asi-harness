@@ -1,0 +1,11 @@
+{
+  "name": "hermes-media-youtube-content",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "youtube content"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-media-youtube-content"
+}

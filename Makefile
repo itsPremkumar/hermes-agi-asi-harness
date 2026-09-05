@@ -16,7 +16,7 @@ install: ## Install production dependencies
 	uv pip install -e .
 
 install-dev: ## Install development dependencies
-	uv pip install -e ".[dev,docs,security]"
+	uv pip install -e ".[all]"
 	pre-commit install
 
 # ===== Testing =====
@@ -25,7 +25,7 @@ test: ## Run tests
 	uv run python -m pytest tests/ -x -q
 
 test-cov: ## Run tests with coverage
-	uv run python -m pytest tests/ --cov=src/harness --cov-report=term-missing --cov-report=html
+	uv run python -m pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
 
 test-all: ## Run all tests (including slow)
 	uv run python -m pytest tests/ -v

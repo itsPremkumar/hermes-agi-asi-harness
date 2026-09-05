@@ -31,7 +31,7 @@ async def main():
     # ── Test 1: Trajectory Store ───────────────────────────────────────────
     print("\n[1/10] Trajectory Store...")
     try:
-        from core.learning.trajectory_store import TrajectoryStore, TrajectoryStatus
+        from core.learning.trajectory_store import TrajectoryStatus, TrajectoryStore
 
         store = TrajectoryStore()
         traj = store.create_trajectory("mission-001", "Deploy service-a", {"env": "prod"})
@@ -52,15 +52,16 @@ async def main():
         results.append(("Trajectory Store", True, f"trajectories={state['total_trajectories']}"))
         print(f"  ✓ Trajectory Store: {state['total_trajectories']} trajectories, {state['completed']} completed")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Trajectory Store", False, str(e)[:100]))
         print(f"  ✗ Trajectory Store failed: {e}")
 
     # ── Test 2: Trajectory Replay ─────────────────────────────────────────
     print("\n[2/10] Trajectory Replay...")
     try:
-        from core.learning.trajectory_store import TrajectoryStore
         from core.learning.trajectory_replay import TrajectoryReplay
+        from core.learning.trajectory_store import TrajectoryStore
 
         store = TrajectoryStore()
         replay = TrajectoryReplay()
@@ -86,14 +87,15 @@ async def main():
         results.append(("Trajectory Replay", True, f"replays={state['replays']}"))
         print(f"  ✓ Trajectory Replay: {state['replays']} replays, {state['counterfactuals']} counterfactuals")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Trajectory Replay", False, str(e)[:100]))
         print(f"  ✗ Trajectory Replay failed: {e}")
 
     # ── Test 3: Policy Learning ───────────────────────────────────────────
     print("\n[3/10] Policy Learning...")
     try:
-        from core.learning.policy_learning import PolicyLearner, PolicySource
+        from core.learning.policy_learning import PolicyLearner
 
         learner = PolicyLearner()
         
@@ -120,7 +122,8 @@ async def main():
         results.append(("Policy Learning", True, f"policies={state['policies']}"))
         print(f"  ✓ Policy Learning: {state['policies']} policies, {state['outcomes']} outcomes")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Policy Learning", False, str(e)[:100]))
         print(f"  ✗ Policy Learning failed: {e}")
 
@@ -149,14 +152,15 @@ async def main():
         results.append(("Counterfactual Eval", True, f"evals={state['evaluations']}"))
         print(f"  ✓ Counterfactual Eval: {state['evaluations']} evaluations, {state['actions_tracked']} actions tracked")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Counterfactual Eval", False, str(e)[:100]))
         print(f"  ✗ Counterfactual Eval failed: {e}")
 
     # ── Test 5: UI State Graph ─────────────────────────────────────────────
     print("\n[5/10] UI State Graph...")
     try:
-        from core.computer_use_v2.ui_state_graph import UIStateGraph, UIElement, UIElementType
+        from core.computer_use_v2.ui_state_graph import UIElement, UIElementType, UIStateGraph
 
         graph = UIStateGraph("Google Calendar")
         
@@ -190,7 +194,8 @@ async def main():
         results.append(("UI State Graph", True, f"states={state['states']}"))
         print(f"  ✓ UI State Graph: {state['states']} states, {state['transitions']} transitions")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("UI State Graph", False, str(e)[:100]))
         print(f"  ✗ UI State Graph failed: {e}")
 
@@ -230,7 +235,8 @@ async def main():
         results.append(("UI State Memory", True, f"elements={state['elements']}"))
         print(f"  ✓ UI State Memory: {state['elements']} elements, {state['patterns']} patterns")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("UI State Memory", False, str(e)[:100]))
         print(f"  ✗ UI State Memory failed: {e}")
 
@@ -261,7 +267,7 @@ async def main():
         
         # Simulate action
         result = twin.simulate_action("merge", "Pull Request")
-        assert result["success"] == True
+        assert result["success"]
         
         # Get workflow
         wf = twin.get_workflow("Create PR")
@@ -272,7 +278,8 @@ async def main():
         results.append(("Digital Twin", True, f"entities={state['entities']}"))
         print(f"  ✓ Digital Twin: {state['entities']} entities, {state['workflows']} workflows")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Digital Twin", False, str(e)[:100]))
         print(f"  ✗ Digital Twin failed: {e}")
 
@@ -280,7 +287,10 @@ async def main():
     print("\n[8/10] Environment Discovery...")
     try:
         from core.computer_use_v2.discovery import (
-            EnvironmentDiscovery, DiscoveredInterface, DiscoveredCapability, DiscoveredRisk
+            DiscoveredCapability,
+            DiscoveredInterface,
+            DiscoveredRisk,
+            EnvironmentDiscovery,
         )
 
         discovery = EnvironmentDiscovery()
@@ -326,7 +336,8 @@ async def main():
         results.append(("Environment Discovery", True, f"completed={state['completed']}"))
         print(f"  ✓ Environment Discovery: {state['completed']}/{state['total_discoveries']} completed")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Environment Discovery", False, str(e)[:100]))
         print(f"  ✗ Environment Discovery failed: {e}")
 
@@ -365,29 +376,30 @@ async def main():
         results.append(("Skill Transfer", True, f"skills={state['abstract_skills']}"))
         print(f"  ✓ Skill Transfer: {state['abstract_skills']} abstract skills, {state['total_transfers']} transfers")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Skill Transfer", False, str(e)[:100]))
         print(f"  ✗ Skill Transfer failed: {e}")
 
     # ── Test 10: Full Integration (End-to-End) ─────────────────────────────
     print("\n[10/10] Full Integration...")
     try:
-        from core.environment.model import EnvironmentModel, EntityType
-        from core.environment.affordances import AffordanceModel, Reversibility, BlastRadius
-        from core.environment.state_estimation import StateEstimator, ObservationSource
-        from core.environment.consequence import ConsequenceSimulator
-        from core.protocols.uap import UniversalActionProtocol, ActionType
-        from core.protocols.uop import PerceptionFusion
-        from core.protocols.event_algebra import EventBus, EventType
-        from core.action.transaction import TransactionModel, RollbackType
         from core.action.safety_envelope import SafetyEnvelopeManager
-        from core.orchestrator.master_loop import MasterOrchestrator
-        from core.learning.trajectory_store import TrajectoryStore
-        from core.learning.trajectory_replay import TrajectoryReplay
-        from core.learning.policy_learning import PolicyLearner
-        from core.learning.counterfactual import CounterfactualEvaluator
-        from core.computer_use_v2.ui_state_graph import UIStateGraph
+        from core.action.transaction import RollbackType, TransactionModel
         from core.computer_use_v2.discovery import EnvironmentDiscovery
+        from core.computer_use_v2.ui_state_graph import UIStateGraph
+        from core.environment.affordances import AffordanceModel
+        from core.environment.consequence import ConsequenceSimulator
+        from core.environment.model import EntityType, EnvironmentModel
+        from core.environment.state_estimation import StateEstimator
+        from core.learning.counterfactual import CounterfactualEvaluator
+        from core.learning.policy_learning import PolicyLearner
+        from core.learning.trajectory_replay import TrajectoryReplay
+        from core.learning.trajectory_store import TrajectoryStore
+        from core.orchestrator.master_loop import MasterOrchestrator
+        from core.protocols.event_algebra import EventBus
+        from core.protocols.uap import ActionType, UniversalActionProtocol
+        from core.protocols.uop import PerceptionFusion
 
         # Initialize all components
         env_model = EnvironmentModel()
@@ -456,9 +468,10 @@ async def main():
         assert result["success"]
 
         results.append(("Full Integration", True, "all components wired"))
-        print(f"  ✓ Full Integration: All 10+ components wired and working together")
+        print("  ✓ Full Integration: All 10+ components wired and working together")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:100]))
         print(f"  ✗ Full Integration failed: {e}")
 

@@ -1,0 +1,22 @@
+name: ecosystem_intelligence
+version: 1.0.0
+description: "Ecosystem intelligence — GitHub/ArXiv/HF mining, capability extraction"
+license: MIT
+source: internal
+capabilities:
+  - ecosystem_mining
+  - github_monitor
+  - arxiv_monitor
+  - capability_extraction
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: workspace
+    write: workspace
+  network:
+    allowed: ["github.com", "arxiv.org", "huggingface.co"]
+  shell:
+    allowed: []
+  secrets:
+    access: none

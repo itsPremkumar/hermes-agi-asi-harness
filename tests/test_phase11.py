@@ -78,7 +78,7 @@ async def main():
 
         # Check can spawn
         can_spawn = await plugin.can_spawn_agent("task-001")
-        assert can_spawn == True
+        assert can_spawn
 
         # Record usage
         plugin.controller.record_agent_spawn("task-001")

@@ -30,7 +30,7 @@ def check(name, condition, detail=""):
 
 async def main():
     from core.runtime.event_bus import EventBus
-    from core.runtime.react_loop import ReActLoop, ReliabilityVerifier, RedTeamCritic
+    from core.runtime.react_loop import ReActLoop, RedTeamCritic, ReliabilityVerifier
 
     # ─── 1. Event Bus ─────────────────────────────────────────────────
     print("\n  Testing Event Bus...")
@@ -114,7 +114,7 @@ async def main():
     print("  Testing ReAct Loop...")
 
     # Build a mini kernel for the loop
-    from core.runtime.agent_kernel import build_kernel, WORKING_PLUGINS
+    from core.runtime.agent_kernel import WORKING_PLUGINS, build_kernel
     kernel = await build_kernel("plugins", include=WORKING_PLUGINS)
 
     loop = ReActLoop(event_bus=bus, max_steps=10)

@@ -235,14 +235,14 @@ async def main():
 
         # Static check
         check = await plugin.static_check("print('hello')")
-        assert check["safe"] == True
+        assert check["safe"]
 
         check_bad = await plugin.static_check("import os; os.system('rm -rf /')")
-        assert check_bad["safe"] == False
+        assert not check_bad["safe"]
 
         # Execute code
         result = await plugin.execute("print('hello world')")
-        assert result.success == True
+        assert result.success
         assert "hello" in result.stdout.lower() or "world" in result.stdout.lower() or len(result.stdout) > 0
 
         stats = {"healthy": True}

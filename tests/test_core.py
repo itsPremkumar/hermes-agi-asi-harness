@@ -9,14 +9,20 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from harness.core.dynamic_config import DynamicConfig
-from harness.core.high_availability import (
-    CircuitBreaker, CircuitBreakerConfig, CircuitState,
-    FailoverManager, GracefulDegradation,
-)
 from harness.core.hermes_integration import (
-    HermesAgentIntegration, ProfileConfig, KanbanCard, CronJob, MCPEndpoint,
+    CronJob,
+    HermesAgentIntegration,
+    KanbanCard,
+    MCPEndpoint,
+    ProfileConfig,
 )
-
+from harness.core.high_availability import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitState,
+    FailoverManager,
+    GracefulDegradation,
+)
 
 # ============== Dynamic Config Tests ==============
 
@@ -59,7 +65,10 @@ class TestDynamicConfig:
 
     def test_remove_listener(self):
         config = DynamicConfig()
-        listener = lambda e: None
+
+        def listener(e):
+            return None
+
         config.add_listener(listener)
         assert config.remove_listener(listener) is True
 

@@ -1,7 +1,7 @@
 # Hermes AGI/ASI Harness — Dockerfile
 # Multi-stage build for production deployment
 
-FROM python:3.11-slim AS base
+FROM python:3.14-slim AS base
 
 # Set environment
 ENV PYTHONUNBUFFERED=1 \

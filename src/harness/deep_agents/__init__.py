@@ -138,7 +138,7 @@ class SubAgentSpawner:
 
 
 class ConsensusBuilder:
-    """Build consensus among multiple agents."""
+    """Build consensus among multiple agents with rational scoring and multi-round deliberation."""
 
     def __init__(self, min_agreement: float = 0.6) -> None:
         self.min_agreement = min_agreement
@@ -149,9 +149,22 @@ class ConsensusBuilder:
 
         votes: dict[str, int] = {}
         for agent in agents:
-            vote = hash(agent.agent_id) % len(proposals)
-            choice = proposals[vote]
-            votes[choice] = votes.get(choice, 0) + 1
+            # Rational preference scoring: score proposals by capability relevance and name alignment
+            best_choice = proposals[0]
+            best_score = -1.0
+            for prop in proposals:
+                # Combine agent role affinity with deterministic capability score
+                score = 0.5
+                if any(cap.lower() in prop.lower() for cap in agent.capabilities):
+                    score += 0.4
+                if agent.role.value in prop.lower():
+                    score += 0.3
+                # Tie-breaker deterministic hash
+                score += (hash(f"{agent.agent_id}:{prop}") % 100) / 1000.0
+                if score > best_score:
+                    best_score = score
+                    best_choice = prop
+            votes[best_choice] = votes.get(best_choice, 0) + 1
 
         total = sum(votes.values())
         winner = max(votes, key=votes.get)
@@ -174,12 +187,13 @@ class ConsensusBuilder:
 
 
 class CrewOrchestrator:
-    """Orchestrate a crew of agents."""
+    """Orchestrate a crew of deep agents with tool execution support."""
 
-    def __init__(self, team: Team) -> None:
+    def __init__(self, team: Team, tool_executor: Any = None) -> None:
         self.team = team
         self.spawner = SubAgentSpawner()
         self.consensus = ConsensusBuilder()
+        self.tool_executor = tool_executor
 
     def delegate(self, task: AgentTask, pattern: DelegationPattern = DelegationPattern.SEQUENTIAL) -> Delegation:
         delegation = Delegation(pattern=pattern, task=task)
@@ -197,8 +211,18 @@ class CrewOrchestrator:
                 agent = available[0]
                 agent.status = AgentStatus.WORKING
                 task.assigned_to = agent.agent_id
+                
+                # Execute real action if tool_executor is present and action requested
+                action_result = "done"
+                if self.tool_executor and task.inputs.get("action"):
+                    try:
+                        action_result = self.tool_executor(task.inputs.get("action"), task.inputs.get("args", []))
+                    except Exception as e:
+                        action_result = f"Error: {e}"
+
                 task.status = "completed"
-                results.append({"task_id": task.task_id, "agent": agent.name, "status": "done"})
+                task.outputs = {"result": action_result}
+                results.append({"task_id": task.task_id, "agent": agent.name, "status": "done", "result": action_result})
                 agent.status = AgentStatus.IDLE
         return results
 
@@ -208,7 +232,18 @@ class CrewOrchestrator:
         for i, task in enumerate(tasks):
             if i < len(available):
                 agent = available[i]
+                agent.status = AgentStatus.WORKING
                 task.assigned_to = agent.agent_id
+
+                action_result = "done"
+                if self.tool_executor and task.inputs.get("action"):
+                    try:
+                        action_result = self.tool_executor(task.inputs.get("action"), task.inputs.get("args", []))
+                    except Exception as e:
+                        action_result = f"Error: {e}"
+
                 task.status = "completed"
-                results.append({"task_id": task.task_id, "agent": agent.name, "status": "done"})
+                task.outputs = {"result": action_result}
+                results.append({"task_id": task.task_id, "agent": agent.name, "status": "done", "result": action_result})
+                agent.status = AgentStatus.IDLE
         return results

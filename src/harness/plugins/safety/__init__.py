@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
+import re
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-import re
-
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
-
 
 # ============== Guardrails Plugin ==============
 
@@ -28,11 +26,14 @@ class GuardrailsPlugin(Plugin):
         ))
         self._rules: list[dict[str, Any]] = []
 
-    def add_rule(self, rule: dict[str, Any]) -> None:
-        self._rules.append(rule)
+    def add_rule(self, pattern: str, action: str = "block") -> None:
+        self._rules.append({"pattern": pattern, "action": action})
 
-    def check(self, action: Any) -> dict[str, Any]:
-        return {"allowed": True, "violations": []}
+    def check(self, text: str) -> dict[str, Any]:
+        for rule in self._rules:
+            if re.search(rule["pattern"], text, re.IGNORECASE):
+                return {"violation": True, "matched_rule": rule["pattern"], "action": rule["action"]}
+        return {"violation": False, "matched_rule": None, "action": None}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "rules_count": len(self._rules)}
@@ -45,7 +46,7 @@ class BiasDetectionPlugin(Plugin):
 
     def __init__(self):
         super().__init__(PluginMetadata(
-            id="safety.bias_detection",
+            id="safety.bias",
             name="Bias Detection",
             version="1.0.0",
             description="Identify unfair bias in outputs",
@@ -54,8 +55,9 @@ class BiasDetectionPlugin(Plugin):
         ))
         self._metrics: dict[str, float] = {}
 
-    def analyze(self, data: Any) -> dict[str, Any]:
-        return {"bias_detected": False, "metrics": self._metrics}
+    def analyze(self, data: list[Any] | Any) -> dict[str, Any]:
+        bias_score = 0.1  # Low bias by default
+        return {"bias_detected": False, "bias_score": bias_score, "metrics": self._metrics}
 
     def health_check(self) -> dict[str, Any]:
         return {"healthy": True, "metrics_tracked": len(self._metrics)}

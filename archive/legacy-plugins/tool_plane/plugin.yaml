@@ -1,0 +1,23 @@
+name: tool_plane
+version: 1.0.0
+description: "Tool Use & Composition Plane — discover, select, compose, create, and verify tools"
+license: MIT
+source: internal
+capabilities:
+  - tool_discovery
+  - tool_selection
+  - tool_composition
+  - tool_creation
+  - tool_verification
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: full
+    write: workspace
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

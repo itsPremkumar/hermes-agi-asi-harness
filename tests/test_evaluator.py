@@ -2,15 +2,17 @@
 import sys
 from pathlib import Path
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.benchmarks.evaluator import (
-    CodeExecutor, HumanEvalEvaluator, MBPPEvaluator,
-    SWEBenchEvaluator, TerminalBenchEvaluator, BenchmarkEvaluator,
+from benchmarks.core_suites.evaluator import (
+    BenchmarkEvaluator,
+    CodeExecutor,
     EvaluationResult,
+    HumanEvalEvaluator,
+    MBPPEvaluator,
+    SWEBenchEvaluator,
+    TerminalBenchEvaluator,
 )
-
 
 # ---------------------------------------------------------------------------
 # CodeExecutor tests

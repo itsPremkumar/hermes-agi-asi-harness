@@ -10,10 +10,11 @@ Tests:
 """
 
 import os
+
 os.environ.setdefault("HERMES_HOME", "/tmp/hermes_phase7_test")
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -23,12 +24,14 @@ def header(text):
     print(f"\n{'='*70}\n  {text}\n{'='*70}")
 
 
-def test_pass(name):
+def _pass(name):
     print(f"  ✓ {name}")
 
 
-def test_fail(name, err):
+def _fail(name, err):
     print(f"  ✗ {name}: {err}")
+
+
 
 
 async def test_1_computer_use():
@@ -41,36 +44,36 @@ async def test_1_computer_use():
 
     # Detect OS
     os = plugin.engine.get_os()
-    test_pass(f"Detected OS: {os}")
+    _pass(f"Detected OS: {os}")
 
     # Register apps
     plugin.engine.register_app("browser", "C:/Program Files/Browser")
     plugin.engine.register_app("editor", "C:/Program Files/Editor")
-    test_pass("Registered 2 apps")
+    _pass("Registered 2 apps")
 
     # Click
     action = plugin.engine.click(100, 200)
     assert action.success
-    test_pass(f"Click at (100,200): {action.result}")
+    _pass(f"Click at (100,200): {action.result}")
 
     # Type
     action = plugin.engine.type_text("Hello, World!")
     assert action.success
-    test_pass(f"Type: {action.result}")
+    _pass(f"Type: {action.result}")
 
     # Open app
     action = plugin.engine.open_application("browser")
     assert action.success
-    test_pass(f"Open browser: {action.result}")
+    _pass(f"Open browser: {action.result}")
 
     # Try to open non-existent app
     action = plugin.engine.open_application("nonexistent")
     assert not action.success
-    test_pass(f"Open nonexistent app correctly failed: {action.result}")
+    _pass(f"Open nonexistent app correctly failed: {action.result}")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: success_rate={stats['success_rate']:.2f}, apps={stats['registered_apps']}")
+    _pass(f"Stats: success_rate={stats['success_rate']:.2f}, apps={stats['registered_apps']}")
 
     return True
 
@@ -80,7 +83,11 @@ async def test_2_engineering_factory():
     header("Test 2: Engineering Factory")
 
     from plugins.engineering_factory import (
-        create as ef_create, ProjectType, Stage,
+        ProjectType,
+        Stage,
+    )
+    from plugins.engineering_factory import (
+        create as ef_create,
     )
     plugin = await ef_create()
     await plugin.load()
@@ -89,31 +96,31 @@ async def test_2_engineering_factory():
     p1 = plugin.engine.create_project("my_web_app", ProjectType.WEB.value)
     p2 = plugin.engine.create_project("my_cli", ProjectType.CLI.value)
     p3 = plugin.engine.create_project("my_api", ProjectType.API.value)
-    test_pass(f"Created 3 projects: {p1.project_id}, {p2.project_id}, {p3.project_id}")
+    _pass(f"Created 3 projects: {p1.project_id}, {p2.project_id}, {p3.project_id}")
 
     # Scaffold
     assert plugin.engine.scaffold_project(p1.project_id)
-    test_pass(f"Scaffolded {p1.name}: {len(plugin.engine._projects[p1.project_id].files_created)} files")
+    _pass(f"Scaffolded {p1.name}: {len(plugin.engine._projects[p1.project_id].files_created)} files")
 
     # Add tests
     plugin.engine.add_tests(p1.project_id, count=5)
     project = plugin.engine.get_project(p1.project_id)
     assert project.tests_run == 5
-    test_pass("Added 5 tests (4 passed, 1 failed)")
+    _pass("Added 5 tests (4 passed, 1 failed)")
 
     # Add documentation
     plugin.engine.add_documentation(p1.project_id)
-    test_pass("Added documentation")
+    _pass("Added documentation")
 
     # Verify stages
     assert Stage.SCAFFOLD.value in project.stages_completed
     assert Stage.TEST.value in project.stages_completed
     assert Stage.DOCUMENT.value in project.stages_completed
-    test_pass(f"All 3 stages completed: {project.stages_completed}")
+    _pass(f"All 3 stages completed: {project.stages_completed}")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: {stats}")
+    _pass(f"Stats: {stats}")
 
     return True
 
@@ -122,43 +129,44 @@ async def test_3_operating_modes():
     """Test 3: Operating Modes."""
     header("Test 3: Operating Modes")
 
-    from plugins.operating_modes import create as om_create, OperatingMode
+    from plugins.operating_modes import OperatingMode
+    from plugins.operating_modes import create as om_create
     plugin = await om_create()
     await plugin.load()
 
     # List modes
     modes = plugin.engine.list_modes()
     assert len(modes) >= 7
-    test_pass(f"Available modes: {modes}")
+    _pass(f"Available modes: {modes}")
 
     # Default mode
     current = plugin.engine.get_current_mode()
     assert current is not None
-    test_pass(f"Default mode: {current.name} (tone={current.tone})")
+    _pass(f"Default mode: {current.name} (tone={current.tone})")
 
     # Switch mode
     assert plugin.engine.set_mode(OperatingMode.RESEARCH.value)
     current = plugin.engine.get_current_mode()
     assert current.name == "research"
-    test_pass("Switched to research mode")
+    _pass("Switched to research mode")
 
     # Tool allowance
     assert plugin.engine.is_tool_allowed("http_get")
-    test_pass("Research mode allows http_get")
+    _pass("Research mode allows http_get")
 
     # Approval check
     assert not plugin.engine.requires_approval(0.1)  # low risk OK
     assert plugin.engine.requires_approval(0.5)  # high risk needs approval
-    test_pass("Research mode: low risk OK, high risk needs approval")
+    _pass("Research mode: low risk OK, high risk needs approval")
 
     # Safety critical mode — everything needs approval
     plugin.engine.set_mode(OperatingMode.SAFETY_CRITICAL.value)
     assert plugin.engine.requires_approval(0.0)  # even zero risk needs approval
-    test_pass("Safety critical mode: even zero risk requires approval")
+    _pass("Safety critical mode: even zero risk requires approval")
 
     # Stats
     stats = plugin.engine.get_stats()
-    test_pass(f"Stats: current={stats['current_mode']}, switches={stats['mode_switches']}")
+    _pass(f"Stats: current={stats['current_mode']}, switches={stats['mode_switches']}")
 
     return True
 
@@ -168,8 +176,10 @@ async def test_4_combined_workflow():
     header("Test 4: Combined Workflow")
 
     from plugins.computer_use import create as cu_create
-    from plugins.engineering_factory import create as ef_create, ProjectType
-    from plugins.operating_modes import create as om_create, OperatingMode
+    from plugins.engineering_factory import ProjectType
+    from plugins.engineering_factory import create as ef_create
+    from plugins.operating_modes import OperatingMode
+    from plugins.operating_modes import create as om_create
 
     cu = await cu_create()
     ef = await ef_create()
@@ -180,22 +190,22 @@ async def test_4_combined_workflow():
 
     # Set coding mode
     om.engine.set_mode(OperatingMode.CODING.value)
-    test_pass("Set coding mode")
+    _pass("Set coding mode")
 
     # Create engineering project
     project = ef.engine.create_project("combined_test", ProjectType.CLI.value)
     ef.engine.scaffold_project(project.project_id)
-    test_pass(f"Created and scaffolded project: {project.project_id}")
+    _pass(f"Created and scaffolded project: {project.project_id}")
 
     # Use computer use to simulate opening an editor
     cu.engine.register_app("vscode", "C:/Program Files/VSCode")
     cu.engine.open_application("vscode")
-    test_pass("Opened VSCode via computer use")
+    _pass("Opened VSCode via computer use")
 
     # Verify mode constraints
     assert om.engine.is_tool_allowed("python_exec")
     assert not om.engine.is_tool_allowed("delete_everything")
-    test_pass("Mode correctly filters tools")
+    _pass("Mode correctly filters tools")
 
     return True
 
@@ -211,26 +221,26 @@ async def test_5_e2e():
 
     for name in ["computer_use", "engineering_factory", "operating_modes"]:
         assert name in kernel._plugins, f"{name} not loaded"
-    test_pass("All 3 Phase 7 plugins loaded in kernel")
+    _pass("All 3 Phase 7 plugins loaded in kernel")
 
     # Use computer_use
     cu = kernel._plugins["computer_use"]
     cu.engine.register_app("e2e_app", "/test/path")
     cu.engine.open_application("e2e_app")
-    test_pass("Computer use: opened app")
+    _pass("Computer use: opened app")
 
     # Use engineering_factory
     ef = kernel._plugins["engineering_factory"]
     from plugins.engineering_factory import ProjectType
     proj = ef.engine.create_project("e2e_proj", ProjectType.LIBRARY.value)
     ef.engine.scaffold_project(proj.project_id)
-    test_pass(f"Engineering factory: created and scaffolded {proj.name}")
+    _pass(f"Engineering factory: created and scaffolded {proj.name}")
 
     # Use operating_modes
     om = kernel._plugins["operating_modes"]
     from plugins.operating_modes import OperatingMode
     om.engine.set_mode(OperatingMode.RESEARCH.value)
-    test_pass(f"Operating modes: switched to {om.engine.get_current_mode().name}")
+    _pass(f"Operating modes: switched to {om.engine.get_current_mode().name}")
 
     # All healthy
     for name in ["computer_use", "engineering_factory", "operating_modes"]:
@@ -239,7 +249,7 @@ async def test_5_e2e():
             health = await plugin.health()
             assert health.get("status") == "healthy", f"{name} unhealthy: {health}"
 
-    test_pass("All Phase 7 plugins report healthy")
+    _pass("All Phase 7 plugins report healthy")
 
     await kernel.shutdown()
     return True
@@ -267,7 +277,7 @@ async def main():
         except Exception as e:
             import traceback
             traceback.print_exc()
-            test_fail(name, str(e))
+            _fail(name, str(e))
             failed += 1
 
     print("\n" + "=" * 70)

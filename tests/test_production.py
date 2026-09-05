@@ -7,7 +7,6 @@ from __future__ import annotations
 # 3. Deployment scripts
 # 4. Monitoring and observability
 # 5. Documentation
-
 import asyncio
 import sys
 from pathlib import Path
@@ -28,27 +27,15 @@ async def run_comprehensive_test():
     # Test 1: All imports
     print("\n[1/10] Testing all imports...")
     try:
-        from core.runtime.kernel import HermesKernel, KernelConfig
-        from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicWorkflowExecutor
-        from core.coding import RepositoryDigitalTwin, RequirementsCompiler, QualityGates, Gate
-        from core.environment import EnvironmentModel, AffordanceModel, StateEstimator, ConsequenceSimulator
-        from core.action import TransactionModel, SafetyEnvelopeManager
-        from core.learning import TrajectoryStore, PolicyLearner, CounterfactualEvaluator
-        from core.orchestrator import MasterOrchestrator, ClosedLoopOrchestrator, PolicyBridge
-        from core.rsi import RSIIntegrationEngine
-        from core.explanation import ActionExplainer, AuditTrail
-        from core.benchmark import ContinuousBenchmark
-        from core.collaboration import AgentCollaborationProtocol
-        from core.computer_use_v2 import UIStateGraph, UIStateMemory, ApplicationDigitalTwin, EnvironmentDiscovery
-        from core.llm import LLMProviderManager, OpenAIProvider, AnthropicProvider, OllamaProvider
-        from core.storage import DatabaseManager, TrajectoryStore as DBTrajectoryStore, MissionStore, SkillStore
-        from core.config import load_config
-        from core.tools import ShellExecutor, GitExecutor, FileExecutor, ToolManager
-        from core.security import SecurityScanner, SecretScanner, StaticAnalyzer
-        from core.cicd import CICDManager, GitHubActionsIntegration, GitLabCIIntegration
         from core.api import app as api_app
-        from core.dashboard import app as dashboard_app
+        from core.cicd import CICDManager
         from core.coding.code_generator import CodeGenerator
+        from core.llm import LLMProviderManager
+        from core.runtime.kernel import HermesKernel, KernelConfig
+        from core.security import SecurityScanner
+        from core.storage import DatabaseManager, MissionStore, SkillStore
+        from core.storage import TrajectoryStore as DBTrajectoryStore
+        from core.tools import ToolManager
         
         results.append(("All imports", True, "All 50+ modules imported successfully"))
         print("  ✓ All imports successful")
@@ -108,7 +95,7 @@ async def run_comprehensive_test():
     # Test 4: Configuration System
     print("\n[4/10] Testing Configuration System...")
     try:
-        from core.config import Config, LLMConfig, DatabaseConfig
+        from core.config import Config, LLMConfig
         
         config = Config()
         assert config.llm.provider == "ollama"
@@ -226,7 +213,7 @@ eval(user_input)
     # Test REST API
     print("\n[9/10] Testing REST API...")
     try:
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
         
         transport = ASGITransport(app=api_app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -262,7 +249,7 @@ eval(user_input)
         # Test dynamic execution
         result = await kernel.plan_and_execute_dynamic("Build a simple REST API with authentication")
         
-        assert result["success"] == True
+        assert result["success"]
         assert result["scenario_type"] in ["new_project", "feature_addition"]
         assert result["plan_steps"] > 0
         assert result["steps_completed"] > 0

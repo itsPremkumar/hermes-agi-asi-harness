@@ -1,0 +1,9 @@
+id: t_14_regex_email
+description: "Write a regex pattern that matches standard email addresses (e.g., user@example.com)."
+rubric:
+  name: "Correctness"
+  pass_threshold: 0.50
+  criteria:
+    - ["pattern", "Pattern uses [A-Za-z0-9._%+-]+ for local part and [A-Za-z0-9.-]+ for domain"]
+    - ["tld", "Requires at least a 2-character TLD"]
+max_iterations: 3

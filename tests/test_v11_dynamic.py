@@ -16,7 +16,11 @@ async def main():
     # Test 1: Scenario Analysis
     print("\n[1/6] Dynamic Scenario Analyzer...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, ScenarioType, ComplexityLevel, PriorityLevel
+        from core.dynamic import (
+            ComplexityLevel,
+            DynamicScenarioAnalyzer,
+            ScenarioType,
+        )
         
         analyzer = DynamicScenarioAnalyzer()
         
@@ -31,35 +35,36 @@ async def main():
         
         for scenario in scenarios:
             profile = analyzer.analyze(scenario)
-            assert profile.scenario_type != None
-            assert profile.complexity != None
+            assert profile.scenario_type is not None
+            assert profile.complexity is not None
             assert len(profile.required_modules) > 0
             assert profile.recommended_workflow != ""
         
         # Verify specific classifications
         bug_profile = analyzer.analyze("Fix the login bug where users cannot authenticate")
         assert bug_profile.scenario_type == ScenarioType.BUG_FIX
-        assert bug_profile.requires_debugging == True
+        assert bug_profile.requires_debugging
         
         feature_profile = analyzer.analyze("Create a brand new web application from scratch with authentication and database")
         assert feature_profile.scenario_type == ScenarioType.NEW_PROJECT
-        assert feature_profile.requires_architecture_synthesis == True
+        assert feature_profile.requires_architecture_synthesis
         
         research_profile = analyzer.analyze("Research machine learning libraries for Python")
         assert research_profile.scenario_type == ScenarioType.RESEARCH
-        assert research_profile.requires_research == True
+        assert research_profile.requires_research
         
-        results.append(("Scenario Analyzer", True, f"5 scenarios classified"))
-        print(f"  ✓ 5 scenarios classified correctly")
+        results.append(("Scenario Analyzer", True, "5 scenarios classified"))
+        print("  ✓ 5 scenarios classified correctly")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Scenario Analyzer", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
     # Test 2: Complexity Assessment
     print("\n[2/6] Complexity Assessment...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, ComplexityLevel
+        from core.dynamic import ComplexityLevel, DynamicScenarioAnalyzer
         
         analyzer = DynamicScenarioAnalyzer()
         
@@ -76,7 +81,8 @@ async def main():
         results.append(("Complexity Assessment", True, f"simple={simple.complexity}, extreme={extreme.complexity}"))
         print(f"  ✓ Complexities: simple={simple.complexity}, moderate={moderate.complexity}, high={high.complexity}, extreme={extreme.complexity}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Complexity Assessment", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
@@ -96,7 +102,8 @@ async def main():
         results.append(("Tech Detection", True, f"langs={len(profile.detected_languages)}, fw={len(profile.detected_frameworks)}"))
         print(f"  ✓ Languages: {profile.detected_languages}, Frameworks: {profile.detected_frameworks}, DBs: {profile.detected_databases}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Tech Detection", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
@@ -124,7 +131,8 @@ async def main():
         results.append(("Plan Generation", True, f"steps={len(plan.steps)}, topology={plan.topology}"))
         print(f"  ✓ Plan: {len(plan.steps)} steps, topology={plan.topology}, est={plan.estimated_total_min}min")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Plan Generation", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
@@ -146,14 +154,19 @@ async def main():
         results.append(("Decision Engine", True, f"decisions={len(decisions)}"))
         print(f"  ✓ Decisions made: {len(decisions)}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Decision Engine", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
     # Test 6: Full Dynamic Workflow
     print("\n[6/6] Full Dynamic Workflow...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicDecisionEngine
+        from core.dynamic import (
+            AdvancedPlanningEngine,
+            DynamicDecisionEngine,
+            DynamicScenarioAnalyzer,
+        )
         
         # Complete workflow
         analyzer = DynamicScenarioAnalyzer()
@@ -172,7 +185,7 @@ async def main():
             profile = analyzer.analyze(goal)
             plan = engine.generate_plan(profile)
             
-            assert profile.scenario_type != None
+            assert profile.scenario_type is not None
             assert len(plan.steps) > 0
             assert plan.topology != ""
             
@@ -184,7 +197,8 @@ async def main():
         results.append(("Full Workflow", True, f"{len(test_cases)} scenarios processed"))
         print(f"  ✓ Full workflow: {len(test_cases)} scenarios analyzed, planned, and decided")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Full Workflow", False, str(e)[:80]))
         print(f"  ✗ {e}")
 

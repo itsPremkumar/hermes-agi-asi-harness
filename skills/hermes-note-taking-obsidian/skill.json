@@ -1,0 +1,11 @@
+{
+  "name": "hermes-note-taking-obsidian",
+  "version": "0.1.0",
+  "description": "---",
+  "triggers": [
+    "obsidian"
+  ],
+  "success_rate": 0.5,
+  "invocations": 0,
+  "path": "skills\\hermes-note-taking-obsidian"
+}

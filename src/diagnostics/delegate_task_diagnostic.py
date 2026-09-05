@@ -178,7 +178,7 @@ class DelegateTaskDiagnostic:
                     cap_type=CapType.PER_TURN_TRUNCATOR,
                     detected=True,
                     message=f"Per-turn truncator detected: {last_excess} calls truncated, max is {last_max}.",
-                    suggestion=f"Send all tasks in a single delegate_task call instead of multiple calls per turn.",
+                    suggestion="Send all tasks in a single delegate_task call instead of multiple calls per turn.",
                     details={"truncated_calls": int(last_excess), "max_allowed": int(last_max)},
                 )
         except Exception:
@@ -317,7 +317,7 @@ def main():
             "recommendations": report.recommendations,
         }, indent=2))
     else:
-        print(f"Delegate Task Concurrency Diagnostic Report")
+        print("Delegate Task Concurrency Diagnostic Report")
         print(f"{'='*50}")
         print(f"Profile: {report.profile}")
         print(f"Config: {report.config_path}")

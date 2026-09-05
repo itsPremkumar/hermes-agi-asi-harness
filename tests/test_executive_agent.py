@@ -8,9 +8,11 @@ import os
 import sys
 import tempfile
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from agent.executive_agent import (
+from agents.executive_agent import (
     BenchmarkOrchestrator,
     BenchmarkResult,
     BenchmarkTask,

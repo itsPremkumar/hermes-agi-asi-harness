@@ -1,0 +1,21 @@
+name: collaborative
+version: 1.0.0
+description: "Multi-agent collaborative reasoning"
+license: MIT
+source: internal
+capabilities:
+  - problem_decomposition
+  - task_assignment
+  - result_merging
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: none
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none
