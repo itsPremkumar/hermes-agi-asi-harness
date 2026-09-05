@@ -1,0 +1,48 @@
+{
+  "exported_at": "2026-09-05T10:58:49.285560+00:00",
+  "alerts": [
+    {
+      "alert_id": "a743bead-da77-4694-8980-3a956928566e",
+      "severity": "critical",
+      "category": "safety:injection",
+      "message": "Suspicious payload",
+      "agent_id": "alpha",
+      "trace_id": "19374a5ee0be48b0f62b11367a1d2b8a",
+      "timestamp": "2026-09-05T10:58:49.285560+00:00",
+      "metadata": {},
+      "acknowledged": false
+    },
+    {
+      "alert_id": "e2951833-9d7c-4cbf-a4d2-f3b037a2b057",
+      "severity": "warning",
+      "category": "test:latency",
+      "message": "slow",
+      "agent_id": "alpha",
+      "trace_id": null,
+      "timestamp": "2026-09-05T10:58:49.285560+00:00",
+      "metadata": {},
+      "acknowledged": false
+    },
+    {
+      "alert_id": "743242cb-40fd-4f04-a02a-94685c9ffa82",
+      "severity": "warning",
+      "category": "test:latency",
+      "message": "slow again",
+      "agent_id": "alpha",
+      "trace_id": null,
+      "timestamp": "2026-09-05T10:58:49.285560+00:00",
+      "metadata": {},
+      "acknowledged": false
+    }
+  ],
+  "summary": {
+    "total_alerts": 3,
+    "by_severity": {
+      "emergency": 0,
+      "warning": 2,
+      "critical": 1,
+      "info": 0
+    },
+    "unacknowledged": 3
+  }
+}
