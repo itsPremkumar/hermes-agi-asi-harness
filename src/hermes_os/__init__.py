@@ -183,6 +183,10 @@ from .model_router import ModelEntry, ModelPortfolio
 from .hermes_llm import HermesFirstLLMClient, hermes_local_available, resolve_tier
 from .docker_sandbox import DockerSandbox, engine_available
 from .eagle_adapter import EagleAdapter, EagleClaim
+from .cron_expr import CronExpression, CronJob, CronTab
+from .process_guard import ProcessHandle, ProcessStatus, Watchdog as ProcessWatchdog, WatchdogConfig
+from .plane_metrics import MetricsCollector, PlaneMetric
+from .plane_cache import AdaptivePlaneSelector, MemoizationCache, OptimizationResult, ResultCache
 from .experiments import Experiment, ExperimentEngine
 from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
 from .watchdog import Watchdog, find_cycle
@@ -293,6 +297,19 @@ __all__ = [
     "engine_available",
     "EagleAdapter",
     "EagleClaim",
+    "CronExpression",
+    "CronJob",
+    "CronTab",
+    "ProcessHandle",
+    "ProcessStatus",
+    "ProcessWatchdog",
+    "WatchdogConfig",
+    "MetricsCollector",
+    "PlaneMetric",
+    "AdaptivePlaneSelector",
+    "MemoizationCache",
+    "OptimizationResult",
+    "ResultCache",
     "ExperimentEngine",
     "Experiment",
     "ArchSearchEngine",

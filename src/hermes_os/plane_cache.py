@@ -29,15 +29,17 @@ class OptimizationResult:
 class ResultCache:
     """SQLite-backed cache for plane results."""
 
-    def __init__(self, max_entries: int = 10_000, ttl_seconds: float = 300.0):
+    def __init__(self, max_entries: int = 10_000, ttl_seconds: float = 300.0,
+                 db_path: Optional[Path] = None, workspace_root: str = "."):
         self.max_entries = max_entries
         self.ttl_seconds = ttl_seconds
         self._lock = threading.RLock()
-        self._db_path = self._get_db_path()
+        self._db_path = db_path or self._get_db_path(workspace_root)
         self._init_db()
 
-    def _get_db_path(self) -> Path:
-        cache_dir = Path(tempfile.gettempdir()) / "hermes_optimizer_cache"
+    @staticmethod
+    def _get_db_path(workspace_root: str = ".") -> Path:
+        cache_dir = Path(workspace_root) / ".hermes" / "optimizer_cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
         return cache_dir / "cache.db"
 

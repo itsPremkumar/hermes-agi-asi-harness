@@ -67,7 +67,28 @@ class ToolEnvironmentOS:
         self.workspace_root = workspace_root
         self.safety_kernel = safety_kernel or SafetyKernel()
         self._tools: dict[str, ToolDescriptor] = {}
+        self._metrics = None
         self._init_standard_tools()
+
+    def _metrics_collector(self) -> Any:
+        if self._metrics is None:
+            try:
+                from .plane_metrics import MetricsCollector
+                self._metrics = MetricsCollector.for_workspace(self.workspace_root)
+            except Exception:
+                self._metrics = False
+        return self._metrics or None
+
+    def _record_metric(self, tool_name: str, ok: bool, duration: float, tokens: int = 100) -> None:
+        try:
+            mc = self._metrics_collector()
+            if mc is None:
+                return
+            mc.record_plane(query_id=f"tool-{tool_name}", plane_name=tool_name,
+                            tokens_used=tokens, cost=tokens * 0.003 / 1000,
+                            latency_ms=duration * 1000.0, error=not ok)
+        except Exception:
+            pass
 
     def _init_standard_tools(self):
         # 1. REPL & Read
@@ -217,14 +238,16 @@ class ToolEnvironmentOS:
                         loop.run_in_executor(pool, lambda: tool.handler(**args)),
                         timeout=tool.timeout_seconds,
                     )
+            duration = time.time() - t0
             out: dict[str, Any] = {
                 "success": True,
                 "tool": tool_name,
                 "output": result,
                 "result": result,
-                "duration": time.time() - t0,
+                "duration": duration,
                 "verdict": "escalated" if escalated else "allow",
             }
+            self._record_metric(tool_name, True, duration, getattr(tool, "estimated_cost_tokens", 100))
             try:
                 from .tool_scoring import ToolScorecard
                 ToolScorecard(workspace_root=self.workspace_root).record(
@@ -247,16 +270,18 @@ class ToolEnvironmentOS:
                     "result": None, "duration": time.time() - t0}
         except Exception as e:
             logger.error("Tool '%s' execution failed: %s", tool_name, e)
+            duration = time.time() - t0
             try:
                 from .tool_scoring import ToolScorecard
                 ToolScorecard(workspace_root=self.workspace_root).record(
-                    tool_name, False, latency_s=time.time() - t0,
+                    tool_name, False, latency_s=duration,
                     tokens=getattr(tool, "estimated_cost_tokens", 100),
                     risk=getattr(tool, "risk_level", "low"), verdict="error")
             except Exception:
                 pass
+            self._record_metric(tool_name, False, duration, getattr(tool, "estimated_cost_tokens", 100))
             return {"success": False, "tool": tool_name, "error": str(e), "output": None,
-                    "result": None, "duration": time.time() - t0}
+                    "result": None, "duration": duration}
 
     def output_law_report(self) -> dict[str, Any]:
         """AGX-style OUTPUT LAW: every mutation must yield an observable diff or artifact."""

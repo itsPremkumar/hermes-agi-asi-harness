@@ -23,9 +23,10 @@ logger = logging.getLogger("hermes.os.scheduler")
 @dataclass
 class ScheduledJob:
     name: str
-    kind: str  # interval | daily
+    kind: str  # interval | daily | cron
     interval_seconds: float = 3600.0
     daily_hh_mm: str = "02:00"
+    cron_expr: str = ""
     handler: Callable[[], Awaitable[Any]] | None = None
     last_run: float = 0.0
     run_count: int = 0
@@ -39,6 +40,13 @@ class ScheduledJob:
                 target = datetime.now().replace(hour=int(hh), minute=int(mm), second=0, microsecond=0).timestamp()
                 # Run once per 24h window after target passes
                 return now >= target and (now - self.last_run) >= 23 * 3600
+            except Exception:
+                return False
+        if self.kind == "cron":
+            try:
+                from .cron_expr import CronExpression
+                # Fire at most once per minute while the expression matches now
+                return CronExpression(self.cron_expr).matches(datetime.now()) and (now - self.last_run) >= 60.0
             except Exception:
                 return False
         return False
@@ -63,6 +71,13 @@ class ContinuousScheduler:
     def register_daily(self, name: str, hh_mm: str, handler: Callable[[], Awaitable[Any]]) -> None:
         self._jobs[name] = ScheduledJob(name=name, kind="daily", daily_hh_mm=hh_mm, handler=handler,
                                         last_run=self._jobs.get(name, ScheduledJob(name, "daily")).last_run)
+
+    def register_cron(self, name: str, expr: str, handler: Callable[[], Awaitable[Any]]) -> None:
+        """Cron-syntax schedule (e.g. '0 2 * * *'). Validated eagerly; ValueError on bad syntax."""
+        from .cron_expr import CronExpression
+        CronExpression(expr)  # validate now, fail fast
+        self._jobs[name] = ScheduledJob(name=name, kind="cron", cron_expr=expr, handler=handler,
+                                        last_run=self._jobs.get(name, ScheduledJob(name, "cron")).last_run)
 
     def _load_state(self) -> None:
         try:

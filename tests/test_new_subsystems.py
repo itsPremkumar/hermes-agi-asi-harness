@@ -605,6 +605,100 @@ def test_eagle_health_and_specs(tmp_path):
     assert "eagle_stats.json" in p
 
 
+# ---------------- salvaged: cron / guard / plane metrics ----------------
+
+def test_cron_expr():
+    from hermes_os.cron_expr import CronExpression
+    assert CronExpression("0 2 * * *").matches(
+        __import__("datetime").datetime.now().replace(hour=2, minute=0, second=0, microsecond=0))
+    assert not CronExpression("0 2 * * *").matches(
+        __import__("datetime").datetime.now().replace(hour=3, minute=0, second=0, microsecond=0))
+    try:
+        CronExpression("bogus")
+        assert False, "bad syntax must raise"
+    except ValueError:
+        pass
+
+
+async def test_scheduler_cron(tmp_path):
+    from hermes_os.scheduler import ContinuousScheduler
+    s = ContinuousScheduler(workspace_root=str(tmp_path))
+    hits = []
+    s.register_cron("every-minute", "* * * * *", lambda: hits.append(1))
+    ran = await s.tick()
+    assert "every-minute" in ran and hits == [1]
+    try:
+        s.register_cron("bad", "bogus", lambda: None)
+        assert False
+    except ValueError:
+        pass
+
+
+async def test_process_guard_restart():
+    from hermes_os.process_guard import Watchdog, WatchdogConfig
+    calls = []
+
+    async def flaky():
+        calls.append(1)
+        if len(calls) < 3:
+            raise RuntimeError("boom")
+
+    guard = Watchdog(config=WatchdogConfig(max_restarts=5, restart_delay=0.05, check_interval=0.05))
+    guard.register("svc", flaky, restart=True)
+    await guard.start()
+    import asyncio as _aio
+    for _ in range(100):
+        h = guard.get("svc")
+        if h is not None and len(calls) >= 3:
+            break
+        await _aio.sleep(0.05)
+    await guard.stop()
+    h = guard.get("svc")
+    assert len(calls) >= 3 and h.restart_count >= 2
+
+
+async def test_controller_run_guarded(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.hermes_controller import HermesController
+    c = HermesController(workspace_root=str(tmp_path))
+    ok = await c.run_guarded("echo", [sys.executable, "-c", "print(42)"], max_restarts=1)
+    assert ok["status"] == "completed" and ok["exit"] == 0 and "42" in ok["stdout"]
+    bad = await c.run_guarded("fail", [sys.executable, "-c", "import sys; sys.exit(3)"], max_restarts=1)
+    assert bad["status"] == "failed" and bad["exit"] == 3 and bad["restarts"] >= 1
+
+
+async def test_plane_metrics_and_cache(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.plane_metrics import MetricsCollector
+    from hermes_os.plane_cache import AdaptivePlaneSelector, MemoizationCache, ResultCache
+    mc = MetricsCollector.for_workspace(str(tmp_path))
+    mc.record_plane("q1", "write_file", tokens_used=500, cost=0.0015, latency_ms=12.0)
+    assert mc.get_plane_invocations().get("write_file") == 1
+    assert mc.get_all_metrics()["plane_invocations"].get("write_file") == 1
+    skip, _ = AdaptivePlaneSelector.should_skip_plane("p", 0.0001, 0.01, 0.9)
+    assert skip
+    run, _ = AdaptivePlaneSelector.should_skip_plane("p", 10.0, 0.0001, 0.9)
+    assert not run
+    rc = ResultCache(workspace_root=str(tmp_path))
+    rc.put("p", {"a": 1}, {"r": 2}, tokens=10, cost=0.001)
+    assert rc.get("p", {"a": 1}) == {"r": 2}
+    mm = MemoizationCache()
+    mm.put("p", {"k": 1}, "v")
+    assert mm.get("p", {"k": 1}) == "v"
+
+
+async def test_tool_metrics_hook(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.plane_metrics import MetricsCollector
+    from hermes_os.tool_env import ToolEnvironmentOS
+    t = ToolEnvironmentOS(workspace_root=str(tmp_path))
+    await t.execute_tool("list_dir", {"path": "."})
+    assert MetricsCollector.for_workspace(str(tmp_path)).get_plane_invocations().get("list_dir") == 1
+
+
 # ---------------- goal graph mutations ----------------
 
 def test_goal_graph_mutations():

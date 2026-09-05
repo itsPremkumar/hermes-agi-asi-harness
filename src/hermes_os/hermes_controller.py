@@ -236,6 +236,59 @@ class HermesController:
         self._heartbeat(inst, "killed")
         return True
 
+    async def run_guarded(self, name: str, command: List[str], max_restarts: int = 3,
+                          timeout: float = 120.0) -> Dict[str, Any]:
+        """Run a command supervised by the process guard: nonzero exits restart
+        with backoff until the budget is exhausted, then escalate as FAILED.
+        Decided on exit_code (race-free): 0 stops the guard immediately even
+        though the guard would otherwise restart clean exits too."""
+        import asyncio as _aio
+        import time as _t
+        from .process_guard import Watchdog, WatchdogConfig
+        state: Dict[str, Any] = {"stdout": "", "stderr": ""}
+        cwd = str(__import__("pathlib").Path(self.workspace_root).resolve())
+
+        def _run_once() -> Dict[str, Any]:
+            import subprocess as _sp
+            proc = _sp.run(command, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+            return {"exit": proc.returncode, "stdout": proc.stdout or "", "stderr": proc.stderr or ""}
+
+        async def _target() -> None:
+            res = await _aio.to_thread(_run_once)
+            state.update({k: (v[-2000:] if isinstance(v, str) else v) for k, v in res.items()})
+            state["last_exit"] = res["exit"]
+            if res["exit"] != 0:
+                raise RuntimeError(f"exit {res['exit']}: {str(res['stderr'])[:200]}")
+
+        guard = Watchdog(config=WatchdogConfig(max_restarts=max_restarts))
+        guard.register(f"guarded-{name}-{id(command) % 10000}", _target, restart=True)
+        gname = f"guarded-{name}-{id(command) % 10000}"
+        await guard.start()
+        deadline = _t.time() + timeout * (max_restarts + 1) + 30.0
+        try:
+            while True:
+                await _aio.sleep(0.2)
+                handle = guard.get(gname)
+                if handle is None:
+                    break
+                if handle.exit_code == 0:
+                    break  # success: stop before the guard restarts a clean exit
+                if handle.status.value == "failed":
+                    break  # budget exhausted: escalated
+                if _t.time() > deadline:
+                    break
+        finally:
+            await guard.stop()
+        handle = guard.get(gname)
+        real_exit = state.get("last_exit", handle.exit_code if handle else None)
+        ok = real_exit == 0
+        return {"name": name, "status": "completed" if ok else "failed",
+                "exit": real_exit,
+                "restarts": handle.restart_count if handle else 0,
+                "history": [{"ts": r.timestamp, "exit": r.exit_code, "reason": r.reason}
+                            for r in (handle.restart_history if handle else [])],
+                "stdout": state.get("stdout", ""), "stderr": state.get("stderr", "")}
+
     def update(self, hermes_path: Optional[str] = None) -> Dict[str, Any]:
         """Safe pull→test→promote for sibling hermes-agent checkout (never force)."""
         target = Path(hermes_path) if hermes_path else (Path(self.workspace_root).resolve().parent / "hermes-agent")

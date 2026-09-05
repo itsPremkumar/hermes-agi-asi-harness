@@ -71,10 +71,19 @@ class PlaneMetric:
 class MetricsCollector:
     """Collects and queries performance metrics."""
 
-    def __init__(self, db_path: Optional[Path] = None):
-        self._db_path = db_path or Path(tempfile.gettempdir()) / "hermes_metrics.db"
+    def __init__(self, db_path: Optional[Path] = None, workspace_root: str = "."):
+        if db_path is not None:
+            self._db_path = db_path
+        else:
+            store = Path(workspace_root) / ".hermes"
+            store.mkdir(parents=True, exist_ok=True)
+            self._db_path = store / "plane_metrics.sqlite"
         self._lock = threading.RLock()
         self._init_db()
+
+    @classmethod
+    def for_workspace(cls, workspace_root: str = ".") -> "MetricsCollector":
+        return cls(workspace_root=workspace_root)
 
     def _init_db(self) -> None:
         import sqlite3

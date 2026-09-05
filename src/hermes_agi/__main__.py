@@ -103,6 +103,7 @@ def main():
     cx_parser = subparsers.add_parser("compact", help="Compact an oversized context file")
     cx_parser.add_argument("file", help="Text file to compact")
     cx_parser.add_argument("--max-chars", type=int, default=12000, help="Compaction threshold")
+    subparsers.add_parser("metrics", help="Show per-tool plane metrics summary")
     sk_parser = subparsers.add_parser("skills", help="Skill registry operations")
     sk_parser.add_argument("action", nargs="?", default="list", help="list|search|sync")
     sk_parser.add_argument("query", nargs="?", default="", help="Search text or sync source dir")
@@ -267,6 +268,9 @@ async def run_command(args):
     elif args.command == "sandbox":
         from hermes_os.docker_sandbox import DockerSandbox
         print(DockerSandbox().run(args.code))
+    elif args.command == "metrics":
+        from hermes_os.plane_metrics import MetricsCollector
+        print(MetricsCollector.for_workspace().get_all_metrics())
     elif args.command == "compact":
         from hermes_os.context_compaction import ContextCompactor
         from pathlib import Path
