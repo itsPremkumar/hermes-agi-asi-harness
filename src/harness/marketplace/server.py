@@ -111,23 +111,23 @@ class MarketplaceServer:
     def get_by_author(self, author: str) -> list[PluginListing]:
         """Get all listings by a specific author."""
         with self._lock:
-            return [l for l in self._listings.values() if l.author == author]
+            return [listing for listing in self._listings.values() if listing.author == author]
 
     def get_by_tag(self, tag: str) -> list[PluginListing]:
         """Get all listings with a specific tag."""
         with self._lock:
-            return [l for l in self._listings.values() if tag in l.tags]
+            return [listing for listing in self._listings.values() if tag in listing.tags]
 
     def get_top_rated(self, limit: int = 10) -> list[PluginListing]:
         """Get top-rated plugins."""
         with self._lock:
-            sorted_listings = sorted(self._listings.values(), key=lambda l: l.rating, reverse=True)
+            sorted_listings = sorted(self._listings.values(), key=lambda listing: listing.rating, reverse=True)
             return sorted_listings[:limit]
 
     def get_most_downloaded(self, limit: int = 10) -> list[PluginListing]:
         """Get most downloaded plugins."""
         with self._lock:
-            sorted_listings = sorted(self._listings.values(), key=lambda l: l.downloads, reverse=True)
+            sorted_listings = sorted(self._listings.values(), key=lambda listing: listing.downloads, reverse=True)
             return sorted_listings[:limit]
 
     def search(self, query: SearchQuery) -> SearchResult:
@@ -139,36 +139,36 @@ class MarketplaceServer:
             if query.keyword:
                 keyword_lower = query.keyword.lower()
                 results = [
-                    l for l in results
-                    if keyword_lower in l.name.lower()
-                    or keyword_lower in l.description.lower()
-                    or keyword_lower in l.id.lower()
-                    or any(keyword_lower in tag.lower() for tag in l.tags)
+                    listing for listing in results
+                    if keyword_lower in listing.name.lower()
+                    or keyword_lower in listing.description.lower()
+                    or keyword_lower in listing.id.lower()
+                    or any(keyword_lower in tag.lower() for tag in listing.tags)
                 ]
 
             # Category filter
             if query.category:
-                results = [l for l in results if l.category == query.category]
+                results = [listing for listing in results if listing.category == query.category]
 
             # Tags filter
             if query.tags:
-                results = [l for l in results if any(tag in l.tags for tag in query.tags)]
+                results = [listing for listing in results if any(tag in listing.tags for tag in query.tags)]
 
             # Author filter
             if query.author:
-                results = [l for l in results if l.author == query.author]
+                results = [listing for listing in results if listing.author == query.author]
 
             # Rating filter
             if query.min_rating > 0:
-                results = [l for l in results if l.rating >= query.min_rating]
+                results = [listing for listing in results if listing.rating >= query.min_rating]
 
             # Sort
             if query.sort_by == "downloads":
-                results.sort(key=lambda l: l.downloads, reverse=True)
+                results.sort(key=lambda listing: listing.downloads, reverse=True)
             elif query.sort_by == "rating":
-                results.sort(key=lambda l: l.rating, reverse=True)
+                results.sort(key=lambda listing: listing.rating, reverse=True)
             elif query.sort_by == "newest":
-                results.sort(key=lambda l: l.updated_at, reverse=True)
+                results.sort(key=lambda listing: listing.updated_at, reverse=True)
             # relevance is default order after filtering
 
             total = len(results)

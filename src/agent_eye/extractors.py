@@ -93,7 +93,7 @@ def score_readability(text: str) -> float:
         return 0.0
     
     lines = text.split("\n")
-    non_empty = [l for l in lines if l.strip()]
+    non_empty = [line for line in lines if line.strip()]
     
     if not non_empty:
         return 0.0

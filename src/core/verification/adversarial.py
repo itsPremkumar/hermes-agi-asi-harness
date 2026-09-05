@@ -148,6 +148,8 @@ class AdversarialVerifier:
             f"Adversarial verification {'PASSED' if verified else 'FLAGGED'}: "
             f"Consensus={consensus_score:.2f}, {len(critiques)} critique points raised."
         )
+        if ctx:
+            summary += f" Caller context keys: {sorted(ctx)}."
 
         return VerificationVerdict(
             verified=verified,

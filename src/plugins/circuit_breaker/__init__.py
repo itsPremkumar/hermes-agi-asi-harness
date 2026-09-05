@@ -323,6 +323,8 @@ class CircuitBreakerPlugin(PluginBase):
             except Exception as e:
                 logger.error(f"Plane {plane_name}: Fallback also failed: {e}")
 
+        if last_error:
+            logger.error(f"Plane {plane_name}: All retries exhausted. Last error: {last_error}")
         return None, False
 
     def get_plane_health(self, plane_name: str) -> dict[str, Any]:

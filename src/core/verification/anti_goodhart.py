@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import ast
 import logging
-import random
 import subprocess
 import sys
 import time
@@ -90,8 +89,7 @@ class AntiGoodhartVerifier:
         return findings
 
     def generate_holdouts(self, target_module: str) -> list[HoldoutTest]:
-        """Generate randomized boundary tests for the module."""
-        rand_int = random.randint(100, 999)
+        """Generate boundary holdout tests for the module (deterministic battery)."""
         mod_name = target_module[:-3] if target_module.endswith(".py") else target_module
 
         tests = [

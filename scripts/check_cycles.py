@@ -25,7 +25,7 @@ def main() -> int:
     src = Path(args.root) / "src"
     allowed = set()
     if args.allow and Path(args.allow).exists():
-        allowed = {l.strip() for l in Path(args.allow).read_text().splitlines() if "->" in l}
+        allowed = {line.strip() for line in Path(args.allow).read_text().splitlines() if "->" in line}
 
     edges: dict[str, set[str]] = {}
     for path in sorted(src.rglob("*.py")):

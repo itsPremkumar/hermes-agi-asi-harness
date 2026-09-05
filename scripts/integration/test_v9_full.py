@@ -404,20 +404,20 @@ async def main():
         # Initialize all components
         env_model = EnvironmentModel()
         aff_model = AffordanceModel()
-        state_est = StateEstimator()
+        StateEstimator()
         sim = ConsequenceSimulator()
         sim.load_default_rules()
         uap = UniversalActionProtocol()
-        uop = PerceptionFusion()
-        event_bus = EventBus()
+        PerceptionFusion()
+        EventBus()
         tx_model = TransactionModel()
         safety = SafetyEnvelopeManager()
         orch = MasterOrchestrator()
         traj_store = TrajectoryStore()
         replay = TrajectoryReplay()
         policy_learner = PolicyLearner()
-        cf_eval = CounterfactualEvaluator()
-        ui_graph = UIStateGraph("TestApp")
+        CounterfactualEvaluator()
+        UIStateGraph("TestApp")
         discovery = EnvironmentDiscovery()
 
         # 1. Discover environment
@@ -430,7 +430,7 @@ async def main():
         discovery.build_model(disc.id)
 
         # 2. Create environment entity
-        svc = env_model.add_entity("TestService", EntityType.SERVICE, {"status": "idle"})
+        env_model.add_entity("TestService", EntityType.SERVICE, {"status": "idle"})
         res = env_model.add_resource("deployment", {"status": "idle"}, ["deploy", "rollback"])
 
         # 3. Generate affordances

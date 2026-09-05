@@ -23,7 +23,6 @@ from benchmarks.core_suites import (
     MBPPAdapter,
     MultiBenchmarkEngine,
 )
-from benchmarks.core_suites.evaluator import BenchmarkEvaluator
 from benchmarks.core_suites.llm_client import LLMClient, LLMConfig
 
 
@@ -175,8 +174,6 @@ def run_benchmarks():
     engine.register_adapter(MBPPAdapter(data_dir))
     engine.register_adapter(GAIAAdapter(data_dir))
     engine.register_adapter(GPQAAdapter(data_dir))
-
-    evaluator = BenchmarkEvaluator()
 
     results = {}
 

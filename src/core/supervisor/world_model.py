@@ -192,7 +192,7 @@ class WorldModel:
 
     def get_causal_links(self, entity_id: str) -> List[CausalLink]:
         """Get all causal links for an entity."""
-        return [l for l in self._causal_links if l.cause_id == entity_id or l.effect_id == entity_id]
+        return [link for link in self._causal_links if link.cause_id == entity_id or link.effect_id == entity_id]
 
     # --- Forecasts ---
 

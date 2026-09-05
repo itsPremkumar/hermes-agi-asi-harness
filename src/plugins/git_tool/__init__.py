@@ -281,7 +281,7 @@ class GitTool:
         
         result = self._run_git(args, check=False)
         if result.success:
-            commits = [l.strip() for l in result.stdout.strip().split("\n") if l.strip()]
+            commits = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
             return {"success": True, "commits": commits, "count": len(commits)}
         return self._to_dict(result)
     

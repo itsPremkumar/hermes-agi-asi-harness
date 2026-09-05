@@ -160,9 +160,7 @@ class WorkflowEngine:
         
         try:
             # Build dependency graph
-            task_map = {t.task_id: t for t in tasks}
             completed = set()
-            running = set()
                 
             async def run_task(task: Task) -> TaskResult:
                 """Run a single task with retry and circuit breaker."""

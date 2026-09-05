@@ -31,7 +31,6 @@ def main():
     h = root / ".hermes"
 
     queue = read_json(h / "daemon_queue.json", [])
-    sched = read_json(h / "scheduler.json", {})
     radar = read_json(h / "radar.json", {})
     eagle = read_json(h / "eagle_stats.json", {})
     eagle_health = read_json(h / "eagle_health.json", {})
