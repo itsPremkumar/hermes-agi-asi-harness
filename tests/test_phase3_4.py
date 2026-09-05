@@ -66,7 +66,6 @@ async def test_1_watchdog():
     _pass(f"Health report: {health.get('status')}")
 
     await plugin.stop()
-    return True
 
 
 async def test_2_economic_ledger():
@@ -113,7 +112,6 @@ async def test_2_economic_ledger():
     assert "token_budget_90_percent" in status["alerts"], f"Expected alert: {status}"
     _pass(f"Budget alert fired: {status['alerts']}")
 
-    return True
 
 
 async def test_3_independent_critic():
@@ -158,7 +156,6 @@ async def test_3_independent_critic():
     assert len(history) >= 1, f"Expected at least 1 decision in history, got {len(history)}"
     _pass(f"History: {len(history)} decisions")
 
-    return True
 
 
 async def test_4_debate_protocol():
@@ -193,7 +190,6 @@ async def test_4_debate_protocol():
     assert stats["total_debates"] == 1
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_5_e2e():
@@ -254,7 +250,6 @@ async def test_5_e2e():
     _pass("All plugins report healthy status")
 
     await kernel.shutdown()
-    return True
 
 
 async def main():

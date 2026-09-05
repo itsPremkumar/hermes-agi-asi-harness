@@ -87,7 +87,6 @@ async def test_1_observability():
     assert summary["plugins_healthy"] == 2
     _pass(f"Summary: {summary}")
 
-    return True
 
 
 def test_2_dockerfile():
@@ -114,7 +113,6 @@ def test_2_dockerfile():
     assert "EXPOSE" in content
     _pass("Has EXPOSE")
 
-    return True
 
 
 def test_3_requirements():
@@ -134,7 +132,6 @@ def test_3_requirements():
     assert len(packages) >= 3, f"Too few packages: {len(packages)}"
     _pass(f"Has {len(packages)} package entries")
 
-    return True
 
 
 def test_4_install_script():
@@ -157,7 +154,7 @@ def test_4_install_script():
         target = pyproject
     else:
         _pass("No install.py/setup.py/pyproject.toml found — using package structure")
-        return True
+        return
 
     # Verify it's syntactically valid (compile for Python files)
     if target.suffix == ".py":
@@ -168,7 +165,6 @@ def test_4_install_script():
         assert result.returncode == 0, f"{target} invalid: {result.stderr}"
         _pass(f"{target} syntactically valid")
 
-    return True
 
 
 async def test_5_e2e():
@@ -221,7 +217,6 @@ async def test_5_e2e():
         _pass(f"Observability: {summary['plugins_healthy']}/{summary['plugins_total']} healthy")
 
     await kernel.shutdown()
-    return True
 
 
 async def main():

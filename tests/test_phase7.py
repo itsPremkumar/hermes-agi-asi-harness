@@ -75,7 +75,6 @@ async def test_1_computer_use():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: success_rate={stats['success_rate']:.2f}, apps={stats['registered_apps']}")
 
-    return True
 
 
 async def test_2_engineering_factory():
@@ -122,7 +121,6 @@ async def test_2_engineering_factory():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_3_operating_modes():
@@ -168,7 +166,6 @@ async def test_3_operating_modes():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: current={stats['current_mode']}, switches={stats['mode_switches']}")
 
-    return True
 
 
 async def test_4_combined_workflow():
@@ -207,7 +204,6 @@ async def test_4_combined_workflow():
     assert not om.engine.is_tool_allowed("delete_everything")
     _pass("Mode correctly filters tools")
 
-    return True
 
 
 async def test_5_e2e():
@@ -252,7 +248,6 @@ async def test_5_e2e():
     _pass("All Phase 7 plugins report healthy")
 
     await kernel.shutdown()
-    return True
 
 
 async def main():

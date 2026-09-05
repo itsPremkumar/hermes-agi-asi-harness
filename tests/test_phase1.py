@@ -49,7 +49,6 @@ async def test_goal_contract():
 
     await k.shutdown()
     print("  ✓ Goal Contract: compilation, risk levels, approval gates, kernel integration")
-    return True
 
 
 async def test_context_os():
@@ -75,7 +74,6 @@ async def test_context_os():
 
     await k.shutdown()
     print("  ✓ Context OS: full context construction from all subsystems")
-    return True
 
 
 async def test_safety_gates():
@@ -93,10 +91,10 @@ async def test_safety_gates():
         if alt is not None:
             await k.shutdown()
             print("  ✓ Safety Gates R0-R6: (refactored into permission_system/safety_core — passed)")
-            return True
+            return
         await k.shutdown()
         print("  ~ Safety Gates: (refactored — skipped)")
-        return True
+        return
 
     # Test all 7 gates
     results = sg.run_all_gates("read config.yaml", "read_file")
@@ -117,7 +115,6 @@ async def test_safety_gates():
 
     await k.shutdown()
     print("  ✓ Safety Gates R0-R6: all gates, risk classification, human approval")
-    return True
 
 
 async def test_completion_proof():
@@ -153,7 +150,6 @@ async def test_completion_proof():
 
     await k.shutdown()
     print("  ✓ Completion Proof: start, evidence, verify, completion rate")
-    return True
 
 
 async def test_phase1_e2e():
@@ -217,7 +213,6 @@ async def test_phase1_e2e():
 
     await k.shutdown()
     print("  ✓ Phase 1 E2E: contract → context → safety gates → completion proof → execution")
-    return True
 
 
 async def main():
@@ -238,9 +233,8 @@ async def main():
 
     for name, test_fn in tests:
         try:
-            result = await test_fn()
-            if result:
-                passed += 1
+            await test_fn()
+            passed += 1
         except Exception as e:
             print(f"  ✗ {name}: FAILED — {e}")
             import traceback

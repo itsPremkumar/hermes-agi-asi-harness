@@ -49,7 +49,7 @@ def test_world_model():
         assert summary["causal_link_count"] >= 1
 
         print("  ✓ World Model: entity tracking, causal links, predictions")
-        return True
+        return
     finally:
         wm.close()
 
@@ -77,7 +77,6 @@ def test_jit_harness():
     assert profile.domain == "general"
 
     print("  ✓ JIT Harness: domain detection, task profiling, tool recommendation")
-    return True
 
 
 def test_self_healing():
@@ -108,7 +107,6 @@ def test_self_healing():
     assert pattern.failure_class == FailureClass.CONFIG
 
     print("  ✓ Self-Healing: failure classification, fix suggestions, pattern learning")
-    return True
 
 
 def test_knowledge_graph():
@@ -142,7 +140,7 @@ def test_knowledge_graph():
         assert summary["relation_count"] >= 1
 
         print("  ✓ Knowledge Graph: entities, relations, search, summary")
-        return True
+        return
     finally:
         kg.close()
 
@@ -171,7 +169,6 @@ def test_benchmarks():
     assert summary["passed_tasks"] + summary["failed_tasks"] == summary["total_tasks"]
 
     print("  ✓ Benchmarks: canonical runner, pass/fail/error, summary")
-    return True
 
 
 async def test_multi_agent():
@@ -211,7 +208,6 @@ async def test_multi_agent():
     orch.clear_agents()
 
     print("  ✓ Multi-Agent: spawn, sequential, parallel, hierarchical, debate")
-    return True
 
 
 async def test_evolution_v2():
@@ -252,7 +248,6 @@ async def test_evolution_v2():
     assert stats["avg_reward"] == 0.9
 
     print("  ✓ Evolution V2: GEPA optimization, Pareto front, trajectory RL export, promotion gates")
-    return True
 
 
 async def test_supervisor():
@@ -290,7 +285,6 @@ async def test_supervisor():
     assert supervisor.state.value == "stopped"
 
     print("  ✓ Supervisor: heartbeat, budget enforcement, failure tracking, start/stop")
-    return True
 
 
 def test_goal_engine():
@@ -325,7 +319,6 @@ def test_goal_engine():
     assert progress["total"] == 4
 
     print("  ✓ Goal Engine: DAG decomposition, dependency tracking, progress, completion")
-    return True
 
 
 async def test_ecosystem_intelligence():
@@ -355,7 +348,6 @@ async def test_ecosystem_intelligence():
 
     print("  ✓ Ecosystem Intelligence: discovery, secret scanning, provenance tracking")
     await engine.close()
-    return True
 
 
 async def test_kernel_integration_advanced():
@@ -391,7 +383,6 @@ async def test_kernel_integration_advanced():
     await k.shutdown()
 
     print("  ✓ Kernel Advanced Integration: 39 plugins, 10+ tools, all healthy")
-    return True
 
 
 async def test_end_to_end_advanced():
@@ -428,7 +419,6 @@ async def test_end_to_end_advanced():
     await k.shutdown()
 
     print("  ✓ End-to-End Advanced: JIT profile → task → file write → state → audit")
-    return True
 
 
 async def run_all():
@@ -454,13 +444,10 @@ async def run_all():
     for name, test_fn, is_async in tests:
         try:
             if is_async:
-                result = await test_fn()
+                await test_fn()
             else:
-                result = test_fn()
-            if result:
-                passed += 1
-            else:
-                failed += 1
+                test_fn()
+            passed += 1
         except Exception as e:
             print(f"  ❌ {name}: {e}")
             failed += 1

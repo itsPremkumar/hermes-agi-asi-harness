@@ -59,7 +59,6 @@ async def test_belief_engine():
 
     await k.shutdown()
     print("  ✓ Belief Engine: all epistemic statuses, confidence updates, contradiction summary")
-    return True
 
 
 async def test_persistent_state():
@@ -123,7 +122,6 @@ async def test_persistent_state():
             pass  # Expected to fail
 
     print("  ✓ Persistent State: 11 state files, atomic writes, validation, backup")
-    return True
 
 
 async def test_mission_queue():
@@ -138,13 +136,13 @@ async def test_mission_queue():
     if not available:
         await k.shutdown()
         print("  ~ Mission Queue: (refactored into state_manager — skipped)")
-        return True
+        return
 
     queue = k.mission_queue
     if queue is None:
         await k.shutdown()
         print("  ~ Mission Queue: (not available — skipped)")
-        return True
+        return
 
     # Submit missions with different priorities
     id_low = queue.submit("Low priority task", priority=1.0)
@@ -188,7 +186,6 @@ async def test_mission_queue():
 
     await k.shutdown()
     print("  ✓ Mission Queue: priority ordering, state transitions, retry, stats")
-    return True
 
 
 async def test_capability_registry():
@@ -206,10 +203,10 @@ async def test_capability_registry():
         if cg is not None:
             await k.shutdown()
             print("  ✓ Capability Registry: (now in capability_graph plugin — passed)")
-            return True
+            return
         await k.shutdown()
         print("  ~ Capability Registry: (refactored — skipped)")
-        return True
+        return
 
     # Register capabilities
     registry.register_capability("coding", category="engineering", required_tools=["python_exec"])
@@ -245,7 +242,6 @@ async def test_capability_registry():
 
     await k.shutdown()
     print("  ✓ Capability Registry: empirical tracking, success rate, self-model")
-    return True
 
 
 async def test_phase2_e2e():
@@ -317,7 +313,6 @@ async def test_phase2_e2e():
 
     await k.shutdown()
     print("  ✓ Phase 2 E2E: goal contract → mission queue → belief → capability → persistent state")
-    return True
 
 
 async def main():
@@ -338,9 +333,8 @@ async def main():
 
     for name, test_fn in tests:
         try:
-            result = await test_fn()
-            if result:
-                passed += 1
+            await test_fn()
+            passed += 1
         except Exception as e:
             print(f"  ✗ {name}: FAILED — {e}")
             import traceback

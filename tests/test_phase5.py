@@ -43,7 +43,7 @@ async def test_1_self_evaluation():
     except (ImportError, ModuleNotFoundError):
         # self_evaluation plugin may have been refactored
         _pass("Self-Evaluation: (plugin refactored — skipped)")
-        return True
+        return
 
     plugin = await se_create()
     await plugin.load()
@@ -76,7 +76,6 @@ async def test_1_self_evaluation():
     assert len(signals) > 0
     _pass(f"Generated {len(signals)} improvement signals: {signals}")
 
-    return True
 
 
 async def test_2_skill_forge():
@@ -122,7 +121,6 @@ async def test_2_skill_forge():
     assert stats["deployed"] >= 1
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_3_curriculum_engine():
@@ -170,7 +168,6 @@ async def test_3_curriculum_engine():
     stats = plugin.engine.get_curriculum_stats()
     _pass(f"Curriculum stats: {stats}")
 
-    return True
 
 
 async def test_4_sleep_cycle():
@@ -208,7 +205,6 @@ async def test_4_sleep_cycle():
     assert progress["cycle_count"] == 1
     _pass(f"Progress: {progress['progress']} steps in {progress['cycle_count']} cycles")
 
-    return True
 
 
 async def test_5_e2e():
@@ -264,7 +260,6 @@ async def test_5_e2e():
     _pass("All loaded Phase 5 plugins report healthy")
 
     await kernel.shutdown()
-    return True
 
 
 async def main():

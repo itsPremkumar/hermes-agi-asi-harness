@@ -90,7 +90,6 @@ async def test_1_evolution_safety_loop():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_2_benchmark_db():
@@ -130,7 +129,6 @@ async def test_2_benchmark_db():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_3_self_improvement_boundary():
@@ -172,7 +170,6 @@ async def test_3_self_improvement_boundary():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_4_world_sync():
@@ -234,7 +231,6 @@ async def test_4_world_sync():
     stats = plugin.engine.get_stats()
     _pass(f"Stats: {stats}")
 
-    return True
 
 
 async def test_5_e2e():
@@ -293,7 +289,6 @@ async def test_5_e2e():
     _pass("All loaded Phase 6 plugins report healthy")
 
     await kernel.shutdown()
-    return True
 
 
 async def main():
