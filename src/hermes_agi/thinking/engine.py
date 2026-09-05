@@ -62,6 +62,7 @@ class ThinkingResult:
     selected_strategy: str = ""
     confidence: float = 0.90
     reasoning_trace: list[str] = field(default_factory=list)
+    context_used: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
     def to_dict(self) -> dict[str, Any]:
@@ -73,6 +74,7 @@ class ThinkingResult:
             "hypotheses_count": len(self.hypotheses),
             "invariants_count": len(self.invariants),
             "reasoning_trace": self.reasoning_trace,
+            "context_used": self.context_used,
             "hypotheses": [
                 {
                     "id": h.id,
@@ -204,6 +206,21 @@ class DeepThinkingEngine:
         selected = h2
         trace.append(f"Selected strategy '{selected.name}' with feasibility {selected.feasibility:.2f}")
 
+        # 5. Fold caller context (e.g. live Hermes environment) into the record
+        # so the dossier shows what the reasoning was grounded in.
+        context_used = dict(context) if isinstance(context, dict) else {}
+        hermes_ctx = context_used.get("hermes") if isinstance(context_used.get("hermes"), dict) else {}
+        if hermes_ctx:
+            trace.append(
+                "Grounded in live Hermes home '%s': %s profile(s), %s skill(s), %s board(s), %s cron job(s)" % (
+                    hermes_ctx.get("home", "?"),
+                    hermes_ctx.get("profiles", 0),
+                    hermes_ctx.get("skills", 0),
+                    hermes_ctx.get("boards", 0),
+                    hermes_ctx.get("cron_jobs", 0),
+                )
+            )
+
         return ThinkingResult(
             thought_id=thought_id,
             goal=goal,
@@ -214,4 +231,5 @@ class DeepThinkingEngine:
             selected_strategy=selected.name,
             confidence=0.94,
             reasoning_trace=trace,
+            context_used=context_used,
         )

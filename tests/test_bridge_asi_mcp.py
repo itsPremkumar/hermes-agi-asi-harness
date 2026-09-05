@@ -12,6 +12,34 @@ def _run(coro):
     return asyncio.run(coro)
 
 
+def test_deliberation_grounds_in_hermes_context():
+    from hermes_agi.thinking import DeepThinkingEngine
+
+    hermes = {"home": "H", "profiles": 2, "skills": 3, "boards": 1, "cron_jobs": 4}
+
+    async def go():
+        engine = DeepThinkingEngine()
+        result = await engine.deliberate("grounding probe", context={"hermes": hermes})
+        d = result.to_dict()
+        assert d["context_used"] == {"hermes": hermes}, d
+        assert any("Grounded in live Hermes home" in line for line in d["reasoning_trace"]), d
+
+    _run(go())
+
+
+def test_deliberation_without_context_unchanged():
+    from hermes_agi.thinking import DeepThinkingEngine
+
+    async def go():
+        engine = DeepThinkingEngine()
+        result = await engine.deliberate("bare probe")
+        d = result.to_dict()
+        assert d["context_used"] == {}, d
+        assert not any("Grounded in live Hermes home" in line for line in d["reasoning_trace"]), d
+
+    _run(go())
+
+
 def test_bridge_run_is_real():
     from hermes_agi.bridge import HermesBridge
 
@@ -76,6 +104,12 @@ def test_asi_dossier_structure():
             assert dossier["status"] in ("completed", "failed"), dossier
             assert "duration_s" in dossier and dossier["duration_s"] >= 0, dossier
             assert "proof" in dossier, dossier
+            # Live Hermes grounding: read-only mirror attached, deliberation used it.
+            ctx = dossier.get("hermes_context", {})
+            assert {"home", "profiles", "skills", "boards", "cron_jobs"} <= set(ctx), ctx
+            deliberation = dossier["stages"]["deliberation"]
+            if isinstance(deliberation, dict) and "context_used" in deliberation:
+                assert deliberation["context_used"].get("hermes") == ctx, deliberation
         finally:
             await harness.shutdown()
 

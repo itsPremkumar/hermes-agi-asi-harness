@@ -415,9 +415,10 @@ class Harness:
     async def asi(self, task: str, **kwargs) -> dict:
         """ASI-level handling for ANY task: deliberate, execute, verify, report.
 
-        Pipeline: think (Graph-of-Thought deliberation) -> run in
-        dual_substrate mode (22-phase compile + isolated-sandbox execution
-        with proof hash) -> health check -> single consolidated dossier.
+        Pipeline: mirror live Hermes home -> think (Graph-of-Thought
+        deliberation, grounded in that mirror) -> run in dual_substrate mode
+        (22-phase compile + isolated-sandbox execution with proof hash) ->
+        health check -> single consolidated dossier.
         Every stage executes for real; failures are reported, never masked.
         """
         import time
@@ -425,8 +426,25 @@ class Harness:
         started = time.time()
         dossier: dict = {"task": task, "stages": {}}
 
+        # Stage 0 (not a pipeline stage): read-only mirror of the live Hermes
+        # installation. Never raises; absent home yields an empty context.
         try:
-            thinking = await self.think(task)
+            from harness.core.hermes_integration import HermesAgentIntegration
+
+            _mirror = HermesAgentIntegration()
+            hermes_context = _mirror.mirror_hermes_home()
+            hermes_context["skills_list"] = _mirror.list_mirrored_skills()
+            hermes_context["boards_list"] = _mirror.list_mirrored_boards()
+        except Exception as exc:  # noqa: BLE001 - recorded in dossier
+            hermes_context = {
+                "home": "", "profiles": 0, "cron_jobs": 0,
+                "skills": 0, "boards": 0, "skills_list": [],
+                "boards_list": [], "error": str(exc),
+            }
+        dossier["hermes_context"] = hermes_context
+
+        try:
+            thinking = await self.think(task, context={"hermes": hermes_context})
         except Exception as exc:  # noqa: BLE001 - recorded in dossier
             thinking = {"status": "failed", "error": str(exc)}
         dossier["stages"]["deliberation"] = thinking
