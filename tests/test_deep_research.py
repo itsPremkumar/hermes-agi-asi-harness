@@ -1,6 +1,6 @@
 """Tests for Deep Research Engine — Phase 4: Frontend + Integration."""
-from src.deep_research.engine import DeepResearchEngine, ResearchPhase, ResearchSession
-from src.deep_research.frontend import DeepResearchFrontend, UIComponent
+from deep_research.engine import DeepResearchEngine, ResearchPhase, ResearchSession
+from deep_research.frontend import DeepResearchFrontend, UIComponent
 
 
 class TestDeepResearchEngine:

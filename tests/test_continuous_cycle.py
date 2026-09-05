@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.daily_improvement.continuous_cycle import (
+from daily_improvement.continuous_cycle import (
     BenchmarkScore,
     ContinuousCycle,
     CycleStage,

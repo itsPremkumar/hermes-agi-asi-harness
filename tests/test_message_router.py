@@ -1,5 +1,5 @@
 """Tests for MessageRouter."""
-from src.mesh.message_router import MessagePriority, MessageRouter, MessageType
+from mesh.message_router import MessagePriority, MessageRouter, MessageType
 
 
 class TestMessageRouter:

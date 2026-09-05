@@ -1,5 +1,5 @@
 """Tests for NodeManager."""
-from src.mesh import NodeManager, NodeStatus
+from mesh import NodeManager, NodeStatus
 
 
 class TestNodeManager:

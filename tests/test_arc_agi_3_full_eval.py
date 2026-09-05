@@ -9,7 +9,7 @@ try:
         LevelInfo,
     )
 except ImportError:
-    from src.benchmark.arc_agi_3_full_eval import (
+    from benchmark.arc_agi_3_full_eval import (
         LEVELS_PER_ENVIRONMENT,
         NUM_ENVIRONMENTS,
         NUM_LEVELS,

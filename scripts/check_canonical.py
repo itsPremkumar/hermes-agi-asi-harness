@@ -30,6 +30,33 @@ LEGACY = [
 ALLOW_FILES = {"__init__.py"}
 
 
+def _check_dual_root(root: Path, violations: list) -> None:
+    """Fail on `src.`-prefixed imports in tests.
+
+    conftest.py puts both repo root and src/ on sys.path, so `src.X` and
+    bare `X` import as two distinct module objects. Mixing them silently
+    breaks pytest.raises / isinstance (real outage: harness.errors twin).
+    Bare package roots always resolve; the prefix is never needed.
+    """
+    tests = root / "tests"
+    if not tests.is_dir():
+        return
+    for path in sorted(tests.rglob("*.py")):
+        if "__pycache__" in path.parts or path.name in ALLOW_FILES:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for m in IMPORT_RE.finditer(text):
+            mod = ((m.group(1) or m.group(2)).split(",")[0].strip())
+            mod = re.split(r"\s+as\s+", mod)[0].strip()
+            if mod == "src" or mod.startswith("src."):
+                violations.append(
+                    f"{path.as_posix()}: dual-root import {mod} (use bare package root)"
+                )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
@@ -55,6 +82,7 @@ def main() -> int:
                 for leg in LEGACY:
                     if mod == leg or mod.startswith(leg + "."):
                         violations.append(f"{path.as_posix()}: imports legacy {mod}")
+    _check_dual_root(root, violations)
     if violations:
         print("CANONICAL VIOLATIONS:")
         for v in violations:

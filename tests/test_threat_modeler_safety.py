@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.safety.threat_modeler import (
+from safety.threat_modeler import (
     ThreatCategory,
     ThreatModeler,
 )

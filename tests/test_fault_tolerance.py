@@ -1,5 +1,5 @@
 """Tests for FaultTolerance."""
-from src.mesh.fault_tolerance import FailureType, FaultTolerance, RecoveryAction
+from mesh.fault_tolerance import FailureType, FaultTolerance, RecoveryAction
 
 
 class TestFaultTolerance:

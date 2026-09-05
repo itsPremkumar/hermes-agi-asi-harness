@@ -1,5 +1,5 @@
 """Tests for MeshVisualizer."""
-from src.mesh.mesh_visualizer import MeshVisualizer
+from mesh.mesh_visualizer import MeshVisualizer
 
 
 class TestMeshVisualizer:

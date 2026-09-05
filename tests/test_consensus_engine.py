@@ -1,5 +1,5 @@
 """Tests for ConsensusEngine."""
-from src.mesh.consensus_engine import ConsensusEngine, ProposalStatus
+from mesh.consensus_engine import ConsensusEngine, ProposalStatus
 
 
 class TestConsensusEngine:
