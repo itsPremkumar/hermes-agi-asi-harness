@@ -177,6 +177,28 @@ class MemoryOS:
         except Exception:
             return False
 
+    def ingest_claims(self, claims: Any, source: str = "eagle") -> dict[str, int]:
+        """Persist verified research claims into semantic + vector tiers."""
+        stored = indexed = 0
+        try:
+            items = list(claims) if not isinstance(claims, dict) else [claims]
+            for c in items:
+                stmt = getattr(c, "statement", None) or (c.get("statement") if isinstance(c, dict) else str(c))
+                conf = float(getattr(c, "confidence", 0.7) or 0.7)
+                prov = getattr(c, "provenance", None) or (c.get("provenance") if isinstance(c, dict) else [])
+                if isinstance(prov, str):
+                    prov = [prov]
+                entry = self.semantic.store(str(stmt)[:800], category="research",
+                                            tags=["verified_claim", source], confidence=conf,
+                                            source=";".join(prov)[:300])
+                stored += 1
+                if self.index_vector(entry.entry_id, str(stmt)[:800], ["verified_claim", source]):
+                    indexed += 1
+        except Exception as e:
+            import logging as _l
+            _l.getLogger("hermes.memory").debug("ingest_claims failed: %s", e)
+        return {"stored": stored, "indexed": indexed}
+
     def record_usage(self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0) -> dict[str, Any]:
         try:
             from .ledger import EconomicLedger

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -103,6 +104,27 @@ class SelfResearchEngine:
             pass
         for item in found:
             self.radar.upsert(item)
+        return found
+
+    def mine_eagle(self, topics: Optional[List[str]] = None) -> List[RadarItem]:
+        """Live web mining via the governed Eagle adapter (degrades silently)."""
+        if os.getenv("HERMES_RADAR_EAGLE", "1").strip().lower() not in ("1", "true", "yes", "on"):
+            return []
+        found: List[RadarItem] = []
+        try:
+            from .eagle_adapter import EagleAdapter
+            adapter = EagleAdapter()
+            for topic in topics or ["AI agent framework", "agent harness",
+                                    "LLM evaluation benchmark"]:
+                for claim in adapter.web_search(topic, limit=4):
+                    name = (claim.title[:60] or claim.url[:60]).strip() or claim.url[:60]
+                    item = RadarItem(name=f"web:{name}", status="EXPERIMENTAL",
+                                     source=claim.url or claim.backend,
+                                     evidence=claim.snippet[:300], score=0.55)
+                    self.radar.upsert(item)
+                    found.append(item)
+        except Exception as e:
+            logger.debug("eagle radar mining failed: %s", e)
         return found
 
     def propose(self, name: str, summary: str) -> str:

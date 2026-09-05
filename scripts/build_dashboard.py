@@ -33,6 +33,8 @@ def main():
     queue = read_json(h / "daemon_queue.json", [])
     sched = read_json(h / "scheduler.json", {})
     radar = read_json(h / "radar.json", {})
+    eagle = read_json(h / "eagle_stats.json", {})
+    eagle_health = read_json(h / "eagle_health.json", {})
     scores = read_json(h / "tool_scores.json", {})
     portfolio = read_json(h / "model_portfolio.json", {})
     events = tail_jsonl(h / "events" / "audit.jsonl", 30)
@@ -52,6 +54,7 @@ def main():
 checkpoints: <b>{len(checkpoints)}</b> | ledger: <b>{tokens} tokens / ${cost:.4f}</b> |
 forensics: <b>{len(forensics)}</b></p>
 <h2>Queue</h2><table>{''.join(row(q.get('mission_id'), q.get('request', '')[:100]) for q in queue) or '<tr><td>empty</td></tr>'}</table>
+<h2>Eagle research</h2><table>{row('queries', eagle.get('queries', 0)) + row('elapsed_total', eagle.get('elapsed_total', 0)) + ''.join(row('backend ' + n, d.get('status', '?') + f" h={d.get('hits', 0)} f={d.get('fails', 0)}") for n, d in (eagle_health.get('backends', {}) or {}).items()) or '<tr><td>no data</td></tr>'}</table>
 <h2>Model portfolio</h2><table>{''.join(row(m, f"{d.get('role')} sr={d.get('success_rate')} n={d.get('invocations')}") for m, d in portfolio.items()) or '<tr><td>—</td></tr>'}</table>
 <h2>Tool scores</h2><table>{''.join(row(t, f"sr={d.get('success_rate')} n={d.get('n')}") for t, d in list(scores.items())[:20]) or '<tr><td>—</td></tr>'}</table>
 <h2>Tech radar</h2><table>{''.join(row(n, f"{d.get('status')} ({d.get('score')})") for n, d in list(radar.items())[:30]) or '<tr><td>—</td></tr>'}</table>

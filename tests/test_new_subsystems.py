@@ -496,6 +496,115 @@ def test_mcp_durable_tasks():
     assert d.cancel(t4.task_id) and d.poll(t4.task_id)["status"] == "cancelled"
 
 
+# ---------------- eagle adapter ----------------
+
+def test_eagle_normalize():
+    from hermes_os.eagle_adapter import _normalize
+    assert _normalize(None, "b", 5) == []
+    assert _normalize({"success": False}, "b", 5) == []
+    out = _normalize({"success": True, "data": {"web": [
+        {"title": "T", "url": "http://x", "snippet": "S"}]}}, "b", 5)
+    assert len(out) == 1 and out[0].url == "http://x" and out[0].backend == "b"
+    out2 = _normalize(["plain"], "b2", 5)
+    assert out2[0].title == "plain"
+
+
+def test_eagle_degrades_offline(monkeypatch):
+    from hermes_os import eagle_adapter as EA
+    monkeypatch.setenv("EAGLE_ENABLED", "0")
+    a = EA.EagleAdapter()
+    assert not a.enabled
+    assert a.web_search("q") == [] and a.academic_search("q") == []
+    assert a.fetch_extract("http://x") is None
+    monkeypatch.setenv("EAGLE_ENABLED", "1")
+    assert a.enabled
+
+
+def test_eagle_fanout_mocked(monkeypatch):
+    from hermes_os import eagle_adapter as EA
+    monkeypatch.setenv("EAGLE_ENABLED", "1")
+    monkeypatch.setitem(EA.__dict__, "_backend_table",
+                        staticmethod(lambda: {
+                            "fast": lambda q, limit=5: {"success": True, "data": {"web": [
+                                {"title": "T", "url": "http://x", "snippet": "S"}]}},
+                            "slow": lambda q, limit=5: (_ for _ in ()).throw(RuntimeError("down")),
+                        }))
+    a = EA.EagleAdapter()
+    out = a.web_search("q", limit=4)
+    assert len(out) == 1 and out[0].backend == "fast"
+    assert a.stats()["queries"] == 1 and a.stats()["fails"].get("slow") == 1
+
+
+def test_eagle_registrations(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.capabilities import CapabilityRegistry
+    from hermes_os.eagle_adapter import EagleAdapter
+    from hermes_os.tool_env import ToolEnvironmentOS
+    a = EagleAdapter()
+    reg = CapabilityRegistry(workspace_root=str(tmp_path))
+    ids = a.register_capabilities(reg)
+    assert "eagle.web_search" in ids and reg.get("eagle.academic_search") is not None
+    t = ToolEnvironmentOS(workspace_root=str(tmp_path))
+    names = a.as_tools(t)
+    assert "eagle_web_search" in names and t.get_tool("eagle_fetch") is not None
+
+
+# ---------------- eagle phase 2/3 ----------------
+
+async def test_research_lane_offline(monkeypatch, tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.research import CognitiveResearchEngine
+    monkeypatch.setenv("HERMES_RESEARCH_PROVIDER", "heuristic")
+    eng = CognitiveResearchEngine(workspace_root=str(tmp_path))
+    claims = await eng.conduct_research("test query")
+    assert len(claims) > 0 and claims[0].provenance == ["heuristic://offline"]
+
+
+async def test_research_lane_eagle_mock(monkeypatch, tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os import eagle_adapter as EA
+    from hermes_os.research import CognitiveResearchEngine
+    monkeypatch.setenv("HERMES_RESEARCH_PROVIDER", "eagle")
+
+    class FakeAdapter:
+        def academic_search(self, q, limit=6):
+            return [EA.EagleClaim(title="T", url="http://x", snippet="S", backend="wikipedia")]
+        def web_search(self, q, limit=6):
+            return []
+
+    monkeypatch.setattr(EA, "EagleAdapter", FakeAdapter)
+    eng = CognitiveResearchEngine(workspace_root=str(tmp_path))
+    claims = await eng.conduct_research("test query")
+    assert claims[0].provenance == ["wikipedia://http://x"]
+
+
+def test_memory_ingest_claims(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from memory.manager import MemoryOS
+    from hermes_os.eagle_adapter import EagleClaim
+    m = MemoryOS(workspace_root=str(tmp_path))
+    rep = m.ingest_claims([EagleClaim(title="T", url="http://x", snippet="S Estates", backend="w")])
+    assert rep == {"stored": 1, "indexed": 1}
+    assert m.rank_relevant("estates")["count"] > 0
+
+
+def test_eagle_health_and_specs(tmp_path):
+    import sys
+    sys.path.insert(0, "src")
+    from hermes_os.eagle_adapter import EagleAdapter
+    a = EagleAdapter()
+    h = a.health()
+    assert "backends" in h and isinstance(h["backends"], dict)
+    specs = a.mcp_specs()
+    assert {s["name"] for s in specs} == {"eagle_web_search", "eagle_academic_search", "eagle_fetch"}
+    p = a.persist_stats(str(tmp_path))
+    assert "eagle_stats.json" in p
+
+
 # ---------------- goal graph mutations ----------------
 
 def test_goal_graph_mutations():

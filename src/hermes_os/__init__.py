@@ -182,6 +182,7 @@ from .skills import SkillForge, SkillRegistry, SkillVersion
 from .model_router import ModelEntry, ModelPortfolio
 from .hermes_llm import HermesFirstLLMClient, hermes_local_available, resolve_tier
 from .docker_sandbox import DockerSandbox, engine_available
+from .eagle_adapter import EagleAdapter, EagleClaim
 from .experiments import Experiment, ExperimentEngine
 from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
 from .watchdog import Watchdog, find_cycle
@@ -290,6 +291,8 @@ __all__ = [
     "resolve_tier",
     "DockerSandbox",
     "engine_available",
+    "EagleAdapter",
+    "EagleClaim",
     "ExperimentEngine",
     "Experiment",
     "ArchSearchEngine",

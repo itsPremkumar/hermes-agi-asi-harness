@@ -103,10 +103,16 @@ class HermesIntelligenceOS:
         self.cognitive = MetaCognitionEngine()
         self.meta_planner = MetaPlanner()
 
-        # Planes 12 - 13: Agent Fabric & Tools / Computer
+        # Planes 12 - 13: Agent Fabric & Tools / Computer (+ Eagle research)
         self.agents = RecursiveAgentFabric()
         self.tools = ToolEnvironmentOS(workspace_root=workspace_root)
         self.computer = ComputerOS()
+        try:
+            from .eagle_adapter import EagleAdapter
+            self.eagle = EagleAdapter()
+            self.eagle.as_tools(self.tools)
+        except Exception:
+            self.eagle = None  # type: ignore[assignment]
 
         # Planes 14 - 15: Verification & Recovery
         self.verifier = RealityVerificationEngine()
@@ -187,6 +193,11 @@ class HermesIntelligenceOS:
         # v9 Cognitive Planning OS Subsystems
         self.cognitive_compiler = CognitiveCompiler(workspace_root=workspace_root)
         self.capabilities = self.cognitive_compiler.capabilities
+        try:
+            if getattr(self, "eagle", None) is not None:
+                self.eagle.register_capabilities(self.capabilities)
+        except Exception:
+            pass
         self.recon = self.cognitive_compiler.recon
         self.goal_memory = self.cognitive_compiler.goal_memory
         self.langgraph_adapter = LangGraphDynamicAdapter()
@@ -540,8 +551,33 @@ class HermesIntelligenceOS:
                 except Exception:
                     pass
 
+            async def _eagle_health() -> None:
+                try:
+                    from .eagle_adapter import EagleAdapter
+                    import json as _j
+                    from pathlib import Path as _P
+                    adapter = EagleAdapter()
+                    health = adapter.health()
+                    adapter.persist_stats(self.workspace_root)
+                    p = _P(self.workspace_root) / ".hermes" / "eagle_health.json"
+                    p.write_text(_j.dumps(health, indent=2), encoding="utf-8")
+                    # Feed radar: persistently broken backends get flagged.
+                    try:
+                        from .tech_radar import RadarItem
+                        for name, row in health.get("backends", {}).items():
+                            if row.get("status") == "broken" and getattr(self, "self_research", None):
+                                self.self_research.radar.upsert(RadarItem(
+                                    name=f"eagle-backend:{name}", status="BROKEN",
+                                    source="eagle-health-job",
+                                    evidence=f"hits={row['hits']} fails={row['fails']}", score=0.2))
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+
             sched.register_interval("memory_flush_15m", 900, _flush)
             sched.register_interval("hermes_health_5m", 300, _health)
+            sched.register_interval("eagle_health_1h", 3600, _eagle_health)
             sched.register_daily("daily_cycle_2am", "02:00", _daily)
         except Exception:
             pass
