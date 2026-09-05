@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.arc_agi_3 import (
+from benchmarks.arc_game import (
     Action, ALL_ACTIONS, ActionType, ARCAGI3Agent, ARCAGI3Engine, ARCAGI3Scorer,
     EnvironmentResult, GRID_SIZE, Hypothesis, LevelResult,
     MAX_ACTIONS_PER_LEVEL, NUM_COLORS, Observation,

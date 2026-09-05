@@ -1,4 +1,4 @@
-from arc_agi_3.engine import (
+from benchmarks.arc_engine.engine import (
     Engine, Grid, Rule, Strategy, Solution, Task, Diagnostics,
     RuleHypothesizer, StrategySelector, SolutionGenerator, SolutionVerifier,
     Stage, Status,

@@ -11,7 +11,7 @@ import pytest
 
 from harnix.state import create_initial_state, AgentPhase
 from harnix.nodes import rlm_node, _execute_step
-from arc_agi_3.engine import Task, Grid, RLMTransformationSynthesizer
+from benchmarks.arc_engine.engine import Task, Grid, RLMTransformationSynthesizer
 from hermes_agi.research import DeepResearchAgent, ResearchDossier
 
 

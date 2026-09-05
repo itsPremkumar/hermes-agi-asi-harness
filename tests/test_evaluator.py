@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.benchmarks.evaluator import (
+from benchmarks.core_suites.evaluator import (
     CodeExecutor, HumanEvalEvaluator, MBPPEvaluator,
     SWEBenchEvaluator, TerminalBenchEvaluator, BenchmarkEvaluator,
     EvaluationResult,

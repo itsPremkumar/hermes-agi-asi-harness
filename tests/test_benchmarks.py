@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.benchmarks import (
+from benchmarks.core_suites import (
     BenchmarkType, BenchmarkTask, TaskResult, BenchmarkResult,
     SWEBenchAdapter, GAIAAdapter, TerminalBenchAdapter,
     GPQAAdapter, HumanEvalAdapter, MBPPAdapter,

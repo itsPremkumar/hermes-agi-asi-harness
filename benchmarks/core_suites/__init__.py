@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.benchmarks.llm_client import LLMClient, LLMConfig, PromptBuilder
+from benchmarks.core_suites.llm_client import LLMClient, LLMConfig, PromptBuilder
 
 
 # ---------------------------------------------------------------------------

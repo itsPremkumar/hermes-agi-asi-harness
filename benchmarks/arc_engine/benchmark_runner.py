@@ -7,7 +7,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from arc_agi_3.engine import (
+from benchmarks.arc_engine.engine import (
     Engine, Grid, Task, Solution, Status,
     RuleHypothesizer, StrategySelector, SolutionGenerator, SolutionVerifier,
 )

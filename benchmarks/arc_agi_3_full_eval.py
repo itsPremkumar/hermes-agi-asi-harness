@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from core.arc_agi_3 import (
+from benchmarks.arc_game import (
     ARCAGI3Engine,
     ARCAGI3Agent,
     ARCAGI3Scorer,

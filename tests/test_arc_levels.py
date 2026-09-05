@@ -1,5 +1,5 @@
 """Tests for ARC-AGI-3 Level Tracker."""
-from core.arc_agi_3.level_tracker import (
+from benchmarks.arc_game.level_tracker import (
     LevelTracker, LevelStatus, Difficulty
 )
 
