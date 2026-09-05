@@ -57,6 +57,15 @@ class TestDeploymentManager(unittest.TestCase):
         healthy = asyncio.run(self.deployer.health_check("nonexistent"))
         self.assertFalse(healthy)
 
+    def test_stop_local_deploy_reaps_child(self):
+        config = DeployConfig(target=DeployTarget.LOCAL, image_name="test")
+        result = asyncio.run(self.deployer.deploy(config))
+        self.assertIn(result.deploy_id, self.deployer._local_processes)
+        self.assertTrue(self.deployer.stop(result.deploy_id))
+        self.assertNotIn(result.deploy_id, self.deployer._local_processes)
+        self.assertFalse(self.deployer.stop(result.deploy_id))
+        self.assertFalse(self.deployer.stop("nonexistent"))
+
 
 class TestDailyImprovement(unittest.TestCase):
     def setUp(self):

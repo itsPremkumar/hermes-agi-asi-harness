@@ -58,6 +58,10 @@ class ShellExecutor:
             )
         except asyncio.TimeoutError:
             proc.kill()
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5)
+            except asyncio.TimeoutError:
+                pass
             return ToolResult(False, "", "Command timed out", -1)
         except Exception as e:
             return ToolResult(False, "", str(e), -1)

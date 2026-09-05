@@ -290,6 +290,8 @@ class TestHookRegistry:
 
 
 class TestFrameworkPlugin(FrameworkPlugin):
+    __test__ = False  # helper stub, not a test case
+
     def __init__(self, config):
         super().__init__(config)
         self.setup_called = False
@@ -309,6 +311,8 @@ class TestFrameworkPlugin(FrameworkPlugin):
 
 
 class TestSolverPlugin(SolverPlugin):
+    __test__ = False  # helper stub, not a test case
+
     def __init__(self, config):
         super().__init__(config)
         self.solved = []
@@ -328,6 +332,8 @@ class TestSolverPlugin(SolverPlugin):
 
 
 class TestGuardPlugin(GuardPlugin):
+    __test__ = False  # helper stub, not a test case
+
     def __init__(self, config):
         super().__init__(config)
         self.checks = []

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import subprocess
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -56,6 +57,7 @@ class DeploymentManager:
         self.project_root = Path(project_root)
         self._deploys: dict[str, DeployResult] = {}
         self._deploy_counter = 0
+        self._local_processes: dict[str, subprocess.Popen] = {}
 
     async def deploy(self, config: DeployConfig) -> DeployResult:
         """Execute a deployment."""
@@ -126,15 +128,37 @@ class DeploymentManager:
         result.details.append(stdout.decode() if stdout else "")
 
     async def _deploy_local(self, config: DeployConfig, result: DeployResult) -> None:
-        """Deploy locally (foreground process)."""
+        """Deploy locally (supervised background process, stoppable via stop())."""
         result.details.append("Deploying locally")
-        proc = await asyncio.create_subprocess_exec(
-            "python", "master.py",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        # Sync Popen (not asyncio): the handle outlives any single event loop
+        # (deploy and stop may run under different asyncio.run() calls), and
+        # DEVNULL avoids unread pipe transports dying on closed-loop GC.
+        proc = subprocess.Popen(
+            ["python", "master.py"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             cwd=str(self.project_root),
         )
-        result.details.append("Local deployment started")
+        self._local_processes[result.deploy_id] = proc
+        result.details.append(f"Local deployment started (pid={proc.pid})")
+
+    def stop(self, deploy_id: str, timeout: float = 5) -> bool:
+        """Terminate a supervised local deployment and reap the child process."""
+        proc = self._local_processes.pop(deploy_id, None)
+        if proc is None:
+            return False
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+        deploy = self._deploys.get(deploy_id)
+        if deploy is not None:
+            deploy.status = DeployStatus.FAILED
+            deploy.details.append("Stopped by operator")
+        return True
 
     def _generate_dockerfile(self, config: DeployConfig) -> None:
         """Generate a Dockerfile for the project."""
