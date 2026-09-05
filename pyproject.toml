@@ -28,20 +28,37 @@ dependencies = [
     "langgraph>=1.0.0",
     "langchain-core>=0.3.0",
     "pyyaml>=6.0.3",
+    "psutil>=5.9.0",
+    "aiofiles>=23.2.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "trafilatura>=2.2.0",
+    "ddgs>=9.0.0",
 ]
 
 [project.optional-dependencies]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+]
+mcp = [
+    "mcp>=2.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
     "black",
     "ruff>=0.16.5",
     "mypy>=2.3.1",
     "mcp",
 ]
 all = [
-    "hermes-agi-asi-harness[dev]",
+    "hermes-agi-asi-harness[dev,api]",
 ]
+
+[project.scripts]
+hermes-agi = "hermes_agi.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -58,10 +75,21 @@ line-length = 100
 
 [tool.ruff]
 line-length = 100
+# archive/ holds read-only legacy snapshots (see archive/*/README.md);
+# it is intentionally not lint-gated.
+exclude = ["archive/*", ".venv/*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Package __init__ files are re-export facades: imported names form the
+# public API even when unused inside the file itself.
+"src/**/__init__.py" = ["F401"]
+"benchmarks/**/__init__.py" = ["F401"]
+"profiles/**/__init__.py" = ["F401"]
+"tests/**/__init__.py" = ["F401"]
 
 [tool.mypy]
 python_version = "3.11"

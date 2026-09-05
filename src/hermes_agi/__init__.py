@@ -7,27 +7,55 @@ Includes LLM-powered planning, real plugin execution, and Hermes integration.
 
 from __future__ import annotations
 
-__version__ = "3.0.0"
+__version__ = "2.0.0"
+
+import logging
 
 from .config import Config, load_config
-from .exceptions import HarnessError, KernelError, PluginError, SafetyError, BenchmarkError
-from .planning import Planner, plan, get_all_features, get_all_capabilities, search_features, find_by_capability
-from .llm_planning import LLMClient, KnowledgeBase, EvaluationUtility, RealPlanner
-from .plugins.manager import PluginManager, PluginBase, PluginState, PluginPriority, PluginMetadata
-from .plugins.core_plugins import ALL_PLUGINS, register_all_plugins
+from .exceptions import BenchmarkError, HarnessError, KernelError, PluginError, SafetyError
+from .llm_planning import EvaluationUtility, KnowledgeBase, LLMClient, RealPlanner
+from .planning import (
+    Planner,
+    find_by_capability,
+    get_all_capabilities,
+    get_all_features,
+    plan,
+    search_features,
+)
 from .plugins.core_plugins import (
-    PlanningPlugin, ResearchPlugin, CodingPlugin, TestingPlugin,
-    BenchmarkPlugin, SafetyPlugin, MemoryPlugin, DiscoveryPlugin,
-    WorkflowPlugin, SelfImprovementPlugin,
+    ALL_PLUGINS,
+    BenchmarkPlugin,
+    CodingPlugin,
+    DiscoveryPlugin,
+    MemoryPlugin,
+    PlanningPlugin,
+    ResearchPlugin,
+    SafetyPlugin,
+    SelfImprovementPlugin,
+    TestingPlugin,
+    WorkflowPlugin,
+    register_all_plugins,
 )
-from .plugins.real_plugins import ALL_REAL_PLUGINS, register_all_real_plugins
+from .plugins.hermes_integration import AutoInstaller, HermesDetector, HermesIntegrator
+from .plugins.manager import PluginBase, PluginManager, PluginMetadata, PluginPriority, PluginState
 from .plugins.real_plugins import (
-    RealPlanningPlugin, RealResearchPlugin, RealCodingPlugin,
-    RealTestingPlugin, RealBenchmarkPlugin, RealDiscoveryPlugin,
+    ALL_REAL_PLUGINS,
+    RealBenchmarkPlugin,
+    RealCodingPlugin,
+    RealDiscoveryPlugin,
+    RealPlanningPlugin,
+    RealResearchPlugin,
+    RealTestingPlugin,
+    register_all_real_plugins,
 )
-from .recovery import SelfRecoverySystem, DegradationManager, with_fallback, with_retry, with_circuit_breaker
-from .workflow import WorkflowEngine, WorkflowBuilder, WorkflowLibrary, Task
-from .plugins.hermes_integration import HermesDetector, HermesIntegrator, AutoInstaller
+from .recovery import (
+    DegradationManager,
+    SelfRecoverySystem,
+    with_circuit_breaker,
+    with_fallback,
+    with_retry,
+)
+from .workflow import Task, WorkflowBuilder, WorkflowEngine, WorkflowLibrary
 
 __all__ = [
     "Config",
@@ -91,10 +119,11 @@ __all__ = [
     "HermesIntelligenceOS",
 ]
 
+from hermes_os.kernel import HermesIntelligenceOS
+
+from .allocation import HermesMissionPacket, HermesWatchdogMonitor
 from .research import DeepResearchAgent
 from .thinking import DeepThinkingEngine
-from .allocation import HermesMissionPacket, HermesWatchdogMonitor
-from hermes_os.kernel import HermesIntelligenceOS
 
 
 class Harness:
@@ -137,10 +166,13 @@ class Harness:
         load_results = await self.plugin_manager.load_all()
         loaded = sum(1 for v in load_results.values() if v)
         total = len(load_results)
-        
+
         # Start all plugins
         start_results = await self.plugin_manager.start_all()
         started = sum(1 for v in start_results.values() if v)
+        logging.getLogger(__name__).info(
+            "harness initialized: plugins loaded %d/%d, started %d", loaded, total, started
+        )
         
         # Start recovery monitoring
         await self.recovery.start_monitoring()
@@ -379,3 +411,42 @@ class Harness:
         await self.plugin_manager.stop_all()
         await self.recovery.stop_monitoring()
         self._initialized = False
+
+    async def asi(self, task: str, **kwargs) -> dict:
+        """ASI-level handling for ANY task: deliberate, execute, verify, report.
+
+        Pipeline: think (Graph-of-Thought deliberation) -> run in
+        dual_substrate mode (22-phase compile + isolated-sandbox execution
+        with proof hash) -> health check -> single consolidated dossier.
+        Every stage executes for real; failures are reported, never masked.
+        """
+        import time
+
+        started = time.time()
+        dossier: dict = {"task": task, "stages": {}}
+
+        try:
+            thinking = await self.think(task)
+        except Exception as exc:  # noqa: BLE001 - recorded in dossier
+            thinking = {"status": "failed", "error": str(exc)}
+        dossier["stages"]["deliberation"] = thinking
+
+        try:
+            execution = await self.run(task, mode="dual_substrate", **kwargs)
+        except Exception as exc:  # noqa: BLE001 - recorded in dossier
+            execution = {"status": "failed", "task": task, "error": str(exc)}
+        dossier["stages"]["execution"] = execution
+
+        try:
+            verification = await self.health()
+        except Exception as exc:  # noqa: BLE001 - recorded in dossier
+            verification = {"status": "unknown", "error": str(exc)}
+        dossier["stages"]["verification"] = verification
+
+        exec_ok = execution.get("status") == "completed"
+        verify_ok = verification.get("status") == "healthy"
+        multi = execution.get("multi_step", {}) if isinstance(execution, dict) else {}
+        dossier["status"] = "completed" if (exec_ok and verify_ok) else "failed"
+        dossier["proof"] = multi.get("proof", {})
+        dossier["duration_s"] = round(time.time() - started, 2)
+        return dossier

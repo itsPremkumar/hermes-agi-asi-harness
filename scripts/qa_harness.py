@@ -27,11 +27,14 @@ PY = sys.executable
 RUFF_SCOPE = [
     "src/hermes_agi/self_test.py",
     "src/hermes_agi/__main__.py",
+    "src/hermes_agi/__init__.py",
     "src/hermes_agi/plugins/core_plugins.py",
     "src/hermes_agi/plugins/real_plugins.py",
+    "src/hermes_agi/bridge/hermes_bridge.py",
     "src/harness/graph.py",
     "src/safety/__init__.py",
     "src/safety/risk_assessor.py",
+    "src/core/mcp/stdio_server.py",
     "src/core/benchmark/harness.py",
     "src/core/benchmark/__init__.py",
     "src/core/dashboard/__init__.py",
@@ -43,6 +46,7 @@ FAST_TESTS = [
     "tests/test_config.py",
     "tests/test_benchmark_harness.py",
     "tests/test_operations.py",
+    "tests/test_bridge_asi_mcp.py",
 ]
 
 results: list[tuple[str, bool, str]] = []

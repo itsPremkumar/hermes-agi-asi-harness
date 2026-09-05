@@ -143,6 +143,13 @@ def main():
     sk_parser.add_argument("--limit", type=int, default=60, help="Max imports on sync")
     # Self-test command (offline, no Harness boot needed)
     subparsers.add_parser("self-test", help="Run offline self-test with REAL asserts")
+    # ASI-level autonomous task handling: deliberate -> execute -> verify -> report
+    asi_parser = subparsers.add_parser(
+        "asi", help="Handle ANY task at ASI level (deliberate, execute, verify, report)"
+    )
+    asi_parser.add_argument("task", help="Task description")
+    # MCP stdio server (spec-compliant; for Hermes Agent native MCP client)
+    subparsers.add_parser("mcp-serve", help="Serve harness tools over MCP stdio")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
 
@@ -158,6 +165,13 @@ def main():
 
         sys.exit(self_test_main())
 
+    if args.command == "mcp-serve":
+        # MCP stdio owns stdin/stdout: boot only inside the server module.
+        from core.mcp.stdio_server import serve_stdio
+
+        asyncio.run(serve_stdio())
+        return
+
     asyncio.run(run_command(args))
 
 
@@ -170,6 +184,18 @@ async def run_command(args):
     if args.command == "run":
         result = await harness.run(args.task)
         print(result)
+    elif args.command == "asi":
+        dossier = await harness.asi(args.task)
+        print(
+            {
+                "status": dossier["status"],
+                "task": dossier["task"],
+                "stages": sorted(dossier["stages"].keys()),
+                "proof": dossier.get("proof", {}),
+                "duration_s": dossier.get("duration_s"),
+            }
+        )
+        print(dossier)
     elif args.command == "research":
         result = await harness.research(args.topic, depth=args.depth)
         print(result)
