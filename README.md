@@ -179,6 +179,20 @@ cd hermes-agi-asi-harness
 
 # Install dependencies and package in editable mode
 pip install -e .
+
+# Optional extras: local Status API server, MCP tools, full dev suite
+pip install -e ".[api]"
+pip install -e ".[all]"
+```
+
+### Verify Your Installation
+
+```bash
+# Offline self-test with REAL asserts (no mocks, no network)
+python -m hermes_agi self-test
+
+# Full QA harness: CLI, imports, canonical map, lint scope, dep sync
+python scripts/qa_harness.py .
 ```
 
 ### Python SDK Usage
