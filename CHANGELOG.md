@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Added (structure + quality rounds)
+- Root restructure: vendored `workspaces/` removed, shim packages removed,
+  dead entry points / integration / eval code archived with mapping READMEs,
+  docs consolidated under `docs/`, CI structure/canonical/cycle guardrails
+- Benchmark annex consolidated under `benchmarks/` (`arc_engine`,
+  `arc_game`, `core_suites`, `solvers/arc_agi_3`); `test_*`-named source
+  modules renamed; dead eval singletons archived
+- Eagle Eye research integrated behind governance (`eagle_adapter`,
+  P6 lane, radar mining, memory ingest, health job, dashboard panel)
+- Hermes-first LLM chain with persistent circuit breaker; 22 executable
+  safety invariants; Hermes lifecycle controller with leases
+- `planning.py` split (`planning_registry.py`), `docs/CANONICAL.md`,
+  import-cycle allowlist, per-tool plane metrics, 30+ new subsystem tests
+- `interactive` mission loop in CLI; `metrics`, `compact`, `sandbox`,
+  `skills`, `llm`, `api` commands; Task Scheduler + backup scripts
+
+### Added (earlier)
 - 24/7 daemon loop with disk-backed queue, crash resume, PID lock, scheduler
   (interval + daily), watchdog ticks
 - HermesController: profile-isolated lifecycle, role-capped delegation,

@@ -100,6 +100,7 @@ def main():
     repl_parser.add_argument(
         "code", nargs="?", default="", help="Python code to evaluate with 'agent' bridge"
     )
+    subparsers.add_parser("interactive", help="Interactive task loop (type 'exit' to quit)")
 
     # Daemon command (24/7 continuous operation)
     daemon_parser = subparsers.add_parser("daemon", help="Run 24/7 continuous daemon loop")
@@ -253,6 +254,26 @@ async def run_command(args):
             print(res.stderr, end="", file=sys.stderr)
         if res.returned_value is not None:
             print(res.returned_value)
+    elif args.command == "interactive":
+        print("=" * 60)
+        print("  HERMES interactive mission loop (type 'exit' to quit)")
+        print("=" * 60)
+        while True:
+            try:
+                task = input("\nhermes> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+            if not task or task.lower() in ("exit", "quit", "q"):
+                break
+            try:
+                result = await harness.run(task)
+                status = result.get("status", "?") if isinstance(result, dict) else result
+                print(f"\nResult: {status}")
+                if isinstance(result, dict) and result.get("proof"):
+                    print(f"Proof: {result['proof'].get('proof_hash', '')[:16]}")
+            except Exception as e:
+                print(f"Error: {e}")
+        print("\nShutdown complete.")
     elif args.command == "daemon":
         from hermes_os.kernel import HermesIntelligenceOS
 
