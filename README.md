@@ -354,6 +354,10 @@ python -m hermes_agi hermes context
 
 # Serve the local Status API (needs the api extra: pip install -e ".[api]")
 python -m hermes_agi api --port 8471
+
+# Serve harness tools to Hermes Agent over MCP stdio
+# (needs the mcp extra: pip install -e ".[mcp]")
+python -m hermes_agi mcp-serve
 ```
 
 ---

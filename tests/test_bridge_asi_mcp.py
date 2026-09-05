@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 
 def _run(coro):
     return asyncio.run(coro)
@@ -129,6 +131,45 @@ def test_mcp_server_exposes_ten_tools():
          "spawn_bot", "discover", "allocate", "status", "health"]
     )
     assert names == expected, names
+
+
+def test_mcp_stdio_end_to_end():
+    """True stdio smoke: spawn `hermes_agi mcp-serve`, speak JSON-RPC over
+    pipes (initialize -> tools/list), assert the 10 tools come back."""
+    import json
+    import subprocess
+    import sys
+
+    pytest.importorskip("mcp")  # optional [mcp] extra
+    requests = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+            "protocolVersion": "2024-11-05", "capabilities": {},
+            "clientInfo": {"name": "smoke", "version": "0"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+    ]
+    proc = subprocess.run(
+        [sys.executable, "-m", "hermes_agi", "mcp-serve"],
+        input="\n".join(json.dumps(r) for r in requests) + "\n",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert not proc.stderr.strip(), proc.stderr[-500:]
+    tools = None
+    for line in proc.stdout.splitlines():
+        try:
+            msg = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(msg, dict) and msg.get("id") == 2:
+            tools = msg.get("result", {}).get("tools", [])
+    assert tools is not None, proc.stdout[-500:]
+    names = sorted(t["name"] for t in tools)
+    assert names == sorted(
+        ["asi", "run_task", "think", "research", "benchmark",
+         "spawn_bot", "discover", "allocate", "status", "health"]
+    ), names
 
 
 def test_spawn_cli_prints_result():
