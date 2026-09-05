@@ -25,7 +25,7 @@ def main():
     # Spawn command
     spawn_parser = subparsers.add_parser("spawn", help="Spawn a bot")
     spawn_parser.add_argument("bot", help="Bot name")
-    spawn_parser.add_argument("command", help="Command for the bot")
+    spawn_parser.add_argument("bot_command", metavar="command", help="Command for the bot")
 
     # Status command
     subparsers.add_parser("status", help="Show system status")
@@ -209,7 +209,7 @@ async def run_command(args):
         result = await harness.benchmark(args.name)
         print(result)
     elif args.command == "spawn":
-        result = await harness.spawn(args.bot, args.command)
+        result = await harness.spawn(args.bot, args.bot_command)
         print(result)
     elif args.command == "status":
         result = await harness.status()

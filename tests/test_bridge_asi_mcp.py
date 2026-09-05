@@ -95,3 +95,19 @@ def test_mcp_server_exposes_ten_tools():
          "spawn_bot", "discover", "allocate", "status", "health"]
     )
     assert names == expected, names
+
+
+def test_spawn_cli_prints_result():
+    """Regression: the spawn positional once shadowed the subcommand dest,
+    so `hermes_agi spawn <bot> <cmd>` printed nothing and exited 0."""
+    import subprocess
+    import sys
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "hermes_agi", "spawn", "harness-coder", "cli smoke"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert proc.returncode == 0, proc.stderr[-500:]
+    assert "spawned" in proc.stdout, proc.stdout[-500:]
