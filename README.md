@@ -329,6 +329,17 @@ python -m hermes_agi evolve --cycles 3 --margin 0.015
 # Check health and status across all planes
 python -m hermes_agi status
 python -m hermes_agi health
+
+# Handle ANY task at ASI level (deliberate -> execute -> verify -> dossier,
+# deliberation grounded in your live Hermes installation)
+python -m hermes_agi asi "audit the auth module for injection risks"
+
+# Show the read-only mirror of the live Hermes installation
+# (profiles, skills, kanban boards, cron jobs — never writes)
+python -m hermes_agi hermes context
+
+# Serve the local Status API (needs the api extra: pip install -e ".[api]")
+python -m hermes_agi api --port 8471
 ```
 
 ---
