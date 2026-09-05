@@ -23,13 +23,54 @@ The unified 18-Plane Intelligence Operating System:
 """
 
 from .agent_fabric import AgentMessage, AgentRole, RecursiveAgentFabric, SubagentHandle
+from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
 from .authority import AuthorityContext, AuthorityGate
+from .capabilities import (
+    CapabilityGraph,
+    CapabilityKind,
+    CapabilityManifest,
+    CapabilityRegistry,
+    CapabilitySelector,
+    ExecutionCapabilityPlan,
+)
 from .cognitive import MetaCognitionEngine, MetaReasoningAssessment, ReasoningMode
+from .cognitive_compiler import (
+    CognitiveCompiler,
+    ExecutionPlanIR,
+    ExecutionWave,
+    PlanningPhase,
+    PlanningRecord,
+    PlanValidityMonitor,
+)
 from .computer_os import ComputerOS, UIElement, UIElementType, UISnapshot
+from .cron_expr import CronExpression, CronJob, CronTab
 from .curriculum import CurriculumEngine, CurriculumTask, DifficultyTier
 from .daemon import CheckpointSnapshot, MissionPriority, PersistentDaemonRuntime, QueuedMission
+from .docker_sandbox import DockerSandbox, engine_available
+from .drift import (
+    DriftReport,
+    DriftSeverity,
+    EnvironmentDriftDetector,
+    EnvironmentFingerprint,
+    GoalDriftAlert,
+    GoalDriftDetector,
+)
+from .dynamic_runtime import (
+    DeepAgentsAdapter,
+    DynamicStateGraph,
+    GraphNode,
+    IsolatedSubagentWorkspace,
+    LangGraphDynamicAdapter,
+)
+from .eagle_adapter import EagleAdapter, EagleClaim
 from .events import EventSource, HermesEvent, UniversalEventBus
-from .evolution_lab import AntiRewardHackingVerifier, HermesVariant, PopulationEvolutionLab
+from .evolution_lab import (
+    AntiRewardHackingVerifier,
+    ApprovalGate,
+    BaselineTracker,
+    HermesVariant,
+    PopulationEvolutionLab,
+)
 from .executive import (
     AgentController,
     ContextController,
@@ -47,33 +88,7 @@ from .executive import (
     ToolController,
     VerificationController,
 )
-from .kernel import HermesIntelligenceOS
-from .loops import LoopEngine
-from .meta_planner import ExecutionArchitecture, MetaPlanner
-from .recovery import (
-    AVOStagnationDetector,
-    FailureCategory,
-    FailureDiagnosis,
-    RecoveryEngine,
-    StagnationLevel,
-    StagnationTelemetry,
-)
-from .research import CognitiveResearchEngine, VerifiedClaim
-from .safety_kernel import SafetyKernel, SafetyVerdict, TaintMarker
-from .supervisor import (
-    ExternalSupervisor,
-    SupervisoryAction,
-    SupervisoryIntervention,
-    SupervisorTelemetry,
-)
-from .tool_env import ToolDescriptor, ToolEnvironmentOS
-from .hooks import (
-    HookAction,
-    HookEventType,
-    HookManager,
-    HookResult,
-    LifecycleHook,
-)
+from .experiments import Experiment, ExperimentEngine
 from .gateway import (
     AttentionPollResult,
     DeviceNode,
@@ -86,6 +101,99 @@ from .gateway import (
     NodeType,
     OpenClawGateway,
 )
+from .hermes_controller import (
+    HermesController,
+    HermesInstance,
+    ensure_hermes_on_path,
+    get_hermes_home,
+)
+from .hermes_llm import HermesFirstLLMClient, hermes_local_available, resolve_tier
+from .hooks import (
+    HookAction,
+    HookEventType,
+    HookManager,
+    HookResult,
+    LifecycleHook,
+)
+from .invariants import INVARIANTS, verify_invariants
+from .kernel import HermesIntelligenceOS
+from .langsmith_exporter import (
+    LangSmithConfig,
+    LangSmithTelemetryExporter,
+    LocalTraceSpan,
+)
+from .loops import LoopEngine
+from .meta_planner import ExecutionArchitecture, MetaPlanner
+from .mission_ir import (
+    GoalGraph,
+    GoalInvariant,
+    GoalLifecycle,
+    GoalMemory,
+    GoalNode,
+    MissionIR,
+)
+from .model_router import ModelEntry, ModelPortfolio
+from .perception_store import (
+    LosslessPerceptionStore,
+    PerceptionModality,
+    PerceptionRecord,
+)
+from .plane_cache import AdaptivePlaneSelector, MemoizationCache, OptimizationResult, ResultCache
+from .plane_metrics import MetricsCollector, PlaneMetric
+from .plugin_manifest import (
+    PermissionRing,
+    PluginManifest,
+    check_free_gate,
+    load_manifest,
+    ring_allows,
+)
+from .process_guard import ProcessHandle, ProcessStatus, WatchdogConfig
+from .process_guard import Watchdog as ProcessWatchdog
+from .provenance import ProvenanceRecorder
+from .recon import (
+    EnvironmentReconEngine,
+    EnvironmentState,
+    HardwareProfile,
+    WorkspaceReconProfile,
+)
+from .recovery import (
+    AVOStagnationDetector,
+    FailureCategory,
+    FailureDiagnosis,
+    RecoveryEngine,
+    StagnationLevel,
+    StagnationTelemetry,
+)
+from .research import CognitiveResearchEngine, VerifiedClaim
+from .runtime_adapters import (
+    CompositeDualSubstrateAdapter,
+    DeepAgentsRuntimeAdapter,
+    LangGraphRuntimeAdapter,
+    OpenClawRuntimeAdapter,
+    PrimeRuntimeAdapter,
+)
+from .runtime_router import RuntimeRouter
+from .runtime_spi import (
+    ExecutionResult,
+    ExecutionStatus,
+    RuntimeAdapter,
+)
+from .safety_kernel import SafetyKernel, SafetyVerdict, TaintMarker
+from .scheduler import ContinuousScheduler, ScheduledJob
+from .skills import SkillForge, SkillRegistry, SkillVersion
+from .strategy_search import (
+    PlanCritic,
+    PlanReviewReport,
+    SecondOpinionJudge,
+    StrategyCandidate,
+    StrategySearchEngine,
+)
+from .supervisor import (
+    ExternalSupervisor,
+    SupervisorTelemetry,
+    SupervisoryAction,
+    SupervisoryIntervention,
+)
 from .swarm_scaling import (
     AggregatedEvidencePacket,
     EvidenceCompressor,
@@ -95,41 +203,9 @@ from .swarm_scaling import (
     SwarmWorkerResult,
     SwarmWorkerRole,
 )
-from .drift import (
-    DriftReport,
-    DriftSeverity,
-    EnvironmentDriftDetector,
-    EnvironmentFingerprint,
-    GoalDriftAlert,
-    GoalDriftDetector,
-)
-from .perception_store import (
-    LosslessPerceptionStore,
-    PerceptionModality,
-    PerceptionRecord,
-)
-from .mission_ir import (
-    GoalGraph,
-    GoalInvariant,
-    GoalLifecycle,
-    GoalMemory,
-    GoalNode,
-    MissionIR,
-)
-from .recon import (
-    EnvironmentReconEngine,
-    EnvironmentState,
-    HardwareProfile,
-    WorkspaceReconProfile,
-)
-from .capabilities import (
-    CapabilityGraph,
-    CapabilityKind,
-    CapabilityManifest,
-    CapabilityRegistry,
-    CapabilitySelector,
-    ExecutionCapabilityPlan,
-)
+from .tech_radar import RadarItem, SelfResearchEngine, TechRadar
+from .tool_env import ToolDescriptor, ToolEnvironmentOS
+from .tool_scoring import ToolScorecard
 from .uncertainty import (
     EpistemicItem,
     EpistemicStatus,
@@ -138,66 +214,7 @@ from .uncertainty import (
     ResearchQuery,
     UncertaintyAnalyzer,
 )
-from .strategy_search import (
-    PlanCritic,
-    PlanReviewReport,
-    SecondOpinionJudge,
-    StrategyCandidate,
-    StrategySearchEngine,
-)
-from .cognitive_compiler import (
-    CognitiveCompiler,
-    ExecutionPlanIR,
-    ExecutionWave,
-    PlanningPhase,
-    PlanningRecord,
-    PlanValidityMonitor,
-)
-from .dynamic_runtime import (
-    DeepAgentsAdapter,
-    DynamicStateGraph,
-    GraphNode,
-    IsolatedSubagentWorkspace,
-    LangGraphDynamicAdapter,
-)
-from .runtime_spi import (
-    ExecutionResult,
-    ExecutionStatus,
-    RuntimeAdapter,
-)
-from .runtime_adapters import (
-    CompositeDualSubstrateAdapter,
-    DeepAgentsRuntimeAdapter,
-    LangGraphRuntimeAdapter,
-    OpenClawRuntimeAdapter,
-    PrimeRuntimeAdapter,
-)
-from .runtime_router import RuntimeRouter
-from .scheduler import ContinuousScheduler, ScheduledJob
-from .hermes_controller import HermesController, HermesInstance, ensure_hermes_on_path, get_hermes_home
-from .invariants import INVARIANTS, verify_invariants
-from .plugin_manifest import PermissionRing, PluginManifest, check_free_gate, load_manifest, ring_allows
-from .evolution_lab import ApprovalGate, BaselineTracker
-from .skills import SkillForge, SkillRegistry, SkillVersion
-from .model_router import ModelEntry, ModelPortfolio
-from .hermes_llm import HermesFirstLLMClient, hermes_local_available, resolve_tier
-from .docker_sandbox import DockerSandbox, engine_available
-from .eagle_adapter import EagleAdapter, EagleClaim
-from .cron_expr import CronExpression, CronJob, CronTab
-from .process_guard import ProcessHandle, ProcessStatus, Watchdog as ProcessWatchdog, WatchdogConfig
-from .plane_metrics import MetricsCollector, PlaneMetric
-from .plane_cache import AdaptivePlaneSelector, MemoizationCache, OptimizationResult, ResultCache
-from .experiments import Experiment, ExperimentEngine
-from .arch_search import ArchCandidate, ArchSearchEngine, SearchSpace, pareto_front
 from .watchdog import Watchdog, find_cycle
-from .tech_radar import RadarItem, SelfResearchEngine, TechRadar
-from .provenance import ProvenanceRecorder
-from .tool_scoring import ToolScorecard
-from .langsmith_exporter import (
-    LangSmithConfig,
-    LangSmithTelemetryExporter,
-    LocalTraceSpan,
-)
 
 __all__ = [
     # Master OS & Loops
@@ -225,6 +242,7 @@ __all__ = [
     "AgentController",
     "ToolController",
     "ResourceController",
+    "SafetyController",
     "VerificationController",
     "LearningController",
     "EvolutionController",

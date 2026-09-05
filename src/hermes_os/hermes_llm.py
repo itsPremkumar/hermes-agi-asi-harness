@@ -34,6 +34,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("hermes.os.hermes_llm")
@@ -56,8 +57,10 @@ def _breaker_path() -> "Path":
     global _breaker_file
     if _breaker_file is None:
         from pathlib import Path as _P
+
         _breaker_file = str(_P(".hermes") / "llm_circuit.json")
     from pathlib import Path as _P2
+
     return _P2(_breaker_file)
 
 
@@ -138,13 +141,20 @@ def _order() -> List[str]:
     return [t for t in wanted if t in ("H1", "H2", "L", "C")] or ["H1", "H2", "L", "C"]
 
 
-def _http_json(url: str, timeout: float, api_key: str = "",
-               payload: Optional[Dict[str, Any]] = None) -> Tuple[int, Any]:
+def _http_json(
+    url: str, timeout: float, api_key: str = "", payload: Optional[Dict[str, Any]] = None
+) -> Tuple[int, Any]:
     try:
         data = json.dumps(payload).encode() if payload is not None else None
-        req = urllib.request.Request(url, data=data, method="POST" if data else "GET",
-                                     headers={"Content-Type": "application/json", **(
-                                         {"Authorization": f"Bearer {api_key}"} if api_key else {})})
+        req = urllib.request.Request(
+            url,
+            data=data,
+            method="POST" if data else "GET",
+            headers={
+                "Content-Type": "application/json",
+                **({"Authorization": f"Bearer {api_key}"} if api_key else {}),
+            },
+        )
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
             return r.status, (json.loads(raw) if raw else None)
@@ -170,10 +180,12 @@ def _first_model(base_url: str, api_key: str, timeout: float) -> Optional[str]:
 # Tier probes (each returns (base_url, api_key, model) or None; never raises)
 # ----------------------------------------------------------------------
 
+
 def _probe_h1() -> Optional[Tuple[str, str, str]]:
     """Hermes managed router via hermes-agent's own endpoint resolution."""
     try:
         from hermes_cli.local_runtime import endpoint as _ep  # type: ignore
+
         managed = _ep.managed_root()
         if not managed:
             return None
@@ -192,7 +204,10 @@ def _probe_h2() -> Optional[Tuple[str, str, str]]:
     """Hermes-fingerprinted llama-server (hermes-agent detect.py)."""
     try:
         from hermes_cli.local_runtime import detect as _det  # type: ignore
-        ports: List[int] = list(getattr(_det, "DEFAULT_PROBE_PORTS", LLAMACPP_PORTS)) or list(LLAMACPP_PORTS)
+
+        ports: List[int] = list(getattr(_det, "DEFAULT_PROBE_PORTS", LLAMACPP_PORTS)) or list(
+            LLAMACPP_PORTS
+        )
         for port in ports:
             try:
                 found = _det.probe_port(int(port))
@@ -250,6 +265,7 @@ def _probe_cloud() -> Optional[Tuple[str, str, str]]:
     """Cloud tier availability = existing LLMClient has key (no network call)."""
     try:
         from hermes_agi.llm_planning import LLMClient  # type: ignore
+
         probe = LLMClient()
         if getattr(probe, "api_key", ""):
             return ("cloud", "", getattr(probe, "model", ""))
@@ -271,7 +287,11 @@ def resolve_tier(force_refresh: bool = False) -> Dict[str, Any]:
     """
     global _last_probe
     now = time.time()
-    if not force_refresh and _last_probe.get("tier") and (now - _last_probe.get("ts", 0)) < _probe_ttl():
+    if (
+        not force_refresh
+        and _last_probe.get("tier")
+        and (now - _last_probe.get("ts", 0)) < _probe_ttl()
+    ):
         return dict(_last_probe)
     order = _order()
     results: Dict[str, Any] = {}
@@ -304,8 +324,13 @@ def resolve_tier(force_refresh: bool = False) -> Dict[str, Any]:
                 hit = None
         if hit:
             base_url, api_key, model = hit
-            _last_probe = {"tier": tier, "base_url": base_url, "api_key": api_key,
-                           "model": model, "ts": now}
+            _last_probe = {
+                "tier": tier,
+                "base_url": base_url,
+                "api_key": api_key,
+                "model": model,
+                "ts": now,
+            }
             logger.info("Hermes-first LLM resolved tier %s model=%s", tier, model)
             return dict(_last_probe)
     _last_probe = {"tier": None, "ts": now}
@@ -314,20 +339,37 @@ def resolve_tier(force_refresh: bool = False) -> Dict[str, Any]:
 
 def hermes_local_available() -> bool:
     """Cached, network-free check for portfolio routing (uses last probe only)."""
-    return _last_probe.get("tier") in ("H1", "H2", "L") and \
-        (time.time() - _last_probe.get("ts", 0)) < _probe_ttl()
+    return (
+        _last_probe.get("tier") in ("H1", "H2", "L")
+        and (time.time() - _last_probe.get("ts", 0)) < _probe_ttl()
+    )
 
 
 # ----------------------------------------------------------------------
 # Chain client (drop-in for CognitiveCompiler llm_client)
 # ----------------------------------------------------------------------
 
-def _chat_openai_compat(base_url: str, api_key: str, model: str,
-                        messages: List[Dict[str, str]], timeout: float,
-                        temperature: float = 0.7, max_tokens: int = 2048) -> Optional[str]:
-    status, body = _http_json(f"{base_url}/chat/completions", timeout, api_key,
-                              {"model": model, "messages": messages,
-                               "temperature": temperature, "max_tokens": max_tokens})
+
+def _chat_openai_compat(
+    base_url: str,
+    api_key: str,
+    model: str,
+    messages: List[Dict[str, str]],
+    timeout: float,
+    temperature: float = 0.7,
+    max_tokens: int = 2048,
+) -> Optional[str]:
+    status, body = _http_json(
+        f"{base_url}/chat/completions",
+        timeout,
+        api_key,
+        {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        },
+    )
     try:
         if status == 200 and isinstance(body, dict):
             return str(body["choices"][0]["message"]["content"])
@@ -340,12 +382,14 @@ def _chat_openai_compat(base_url: str, api_key: str, model: str,
 @dataclass
 class HermesFirstLLMClient:
     """Tries Hermes tiers first, then cloud, then returns None (= deterministic)."""
+
     timeout: float = field(default_factory=lambda: float(os.getenv("HERMES_LLM_TIMEOUT", "120")))
     active_tier: Optional[str] = None
     active_model: Optional[str] = None
 
-    def _attempt(self, messages: List[Dict[str, str]],
-                 temperature: float, max_tokens: int) -> Optional[str]:
+    def _attempt(
+        self, messages: List[Dict[str, str]], temperature: float, max_tokens: int
+    ) -> Optional[str]:
         # Walk the chain top-down; re-resolve after each failure so a dead
         # tier falls through to the next one.
         tried: List[str] = []
@@ -364,15 +408,18 @@ class HermesFirstLLMClient:
                     logger.debug("Cloud tier skipped: circuit open")
                     continue
                 try:
-                    from hermes_agi.llm_planning import LLMClient  # type: ignore
                     import asyncio as _aio
                     import concurrent.futures as _cf
+
+                    from hermes_agi.llm_planning import LLMClient  # type: ignore
+
                     client = LLMClient()
 
                     async def _one_shot() -> Optional[str]:
                         try:
-                            return await client.chat(messages, temperature=temperature,
-                                                     max_tokens=max_tokens)
+                            return await client.chat(
+                                messages, temperature=temperature, max_tokens=max_tokens
+                            )
                         finally:
                             # Close the httpx client inside its own loop; otherwise
                             # "Task exception was never retrieved / Event loop is
@@ -400,8 +447,15 @@ class HermesFirstLLMClient:
                     _cb_record(False)
                     logger.debug("Cloud tier chat failed: %s", e)
                 continue
-            out = _chat_openai_compat(hit["base_url"], hit.get("api_key", ""), hit["model"],
-                                      messages, self.timeout, temperature, max_tokens)
+            out = _chat_openai_compat(
+                hit["base_url"],
+                hit.get("api_key", ""),
+                hit["model"],
+                messages,
+                self.timeout,
+                temperature,
+                max_tokens,
+            )
             if out:
                 self.active_tier, self.active_model = tier, hit["model"]
                 global _last_probe
@@ -412,8 +466,9 @@ class HermesFirstLLMClient:
         logger.debug("All LLM tiers exhausted (tried=%s); deterministic fallback", tried)
         return None
 
-    def chat(self, messages: List[Dict[str, str]], temperature: float = 0.7,
-             max_tokens: int = 2048) -> Optional[str]:
+    def chat(
+        self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 2048
+    ) -> Optional[str]:
         try:
             return self._attempt(messages, temperature, max_tokens)
         except Exception as e:
@@ -426,10 +481,14 @@ class HermesFirstLLMClient:
 
     def status(self) -> Dict[str, Any]:
         cur = resolve_tier()
-        return {"order": _order(), "active_tier": self.active_tier,
-                "active_model": self.active_model, "resolved": cur,
-                "probe_ttl_s": _probe_ttl(),
-                "cloud_circuit": {"fails": _cloud_breaker.get("fails", 0),
-                                  "open": not _cb_allows()},
-                "tiers": {t: ("up" if cur.get("tier") == t else "unknown")
-                          for t in ("H1", "H2", "L", "C")}}
+        return {
+            "order": _order(),
+            "active_tier": self.active_tier,
+            "active_model": self.active_model,
+            "resolved": cur,
+            "probe_ttl_s": _probe_ttl(),
+            "cloud_circuit": {"fails": _cloud_breaker.get("fails", 0), "open": not _cb_allows()},
+            "tiers": {
+                t: ("up" if cur.get("tier") == t else "unknown") for t in ("H1", "H2", "L", "C")
+            },
+        }

@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, List
 
@@ -37,7 +37,11 @@ class ScheduledJob:
         if self.kind == "daily":
             try:
                 hh, mm = self.daily_hh_mm.split(":")
-                target = datetime.now().replace(hour=int(hh), minute=int(mm), second=0, microsecond=0).timestamp()
+                target = (
+                    datetime.now()
+                    .replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+                    .timestamp()
+                )
                 # Run once per 24h window after target passes
                 return now >= target and (now - self.last_run) >= 23 * 3600
             except Exception:
@@ -45,8 +49,12 @@ class ScheduledJob:
         if self.kind == "cron":
             try:
                 from .cron_expr import CronExpression
+
                 # Fire at most once per minute while the expression matches now
-                return CronExpression(self.cron_expr).matches(datetime.now()) and (now - self.last_run) >= 60.0
+                return (
+                    CronExpression(self.cron_expr).matches(datetime.now())
+                    and (now - self.last_run) >= 60.0
+                )
             except Exception:
                 return False
         return False
@@ -56,35 +64,56 @@ class ContinuousScheduler:
     """Minimal durable scheduler. Persist last_run to .hermes/scheduler.json."""
 
     def __init__(self, workspace_root: str = "."):
-        from pathlib import Path
         import json
+        from pathlib import Path
+
         self.workspace_root = workspace_root
         self._state_file = Path(workspace_root) / ".hermes" / "scheduler.json"
         self._jobs: Dict[str, ScheduledJob] = {}
         self._json = json
         self._load_state()
 
-    def register_interval(self, name: str, seconds: float, handler: Callable[[], Awaitable[Any]]) -> None:
-        self._jobs[name] = ScheduledJob(name=name, kind="interval", interval_seconds=seconds, handler=handler,
-                                        last_run=self._jobs.get(name, ScheduledJob(name, "interval")).last_run)
+    def register_interval(
+        self, name: str, seconds: float, handler: Callable[[], Awaitable[Any]]
+    ) -> None:
+        self._jobs[name] = ScheduledJob(
+            name=name,
+            kind="interval",
+            interval_seconds=seconds,
+            handler=handler,
+            last_run=self._jobs.get(name, ScheduledJob(name, "interval")).last_run,
+        )
 
     def register_daily(self, name: str, hh_mm: str, handler: Callable[[], Awaitable[Any]]) -> None:
-        self._jobs[name] = ScheduledJob(name=name, kind="daily", daily_hh_mm=hh_mm, handler=handler,
-                                        last_run=self._jobs.get(name, ScheduledJob(name, "daily")).last_run)
+        self._jobs[name] = ScheduledJob(
+            name=name,
+            kind="daily",
+            daily_hh_mm=hh_mm,
+            handler=handler,
+            last_run=self._jobs.get(name, ScheduledJob(name, "daily")).last_run,
+        )
 
     def register_cron(self, name: str, expr: str, handler: Callable[[], Awaitable[Any]]) -> None:
         """Cron-syntax schedule (e.g. '0 2 * * *'). Validated eagerly; ValueError on bad syntax."""
         from .cron_expr import CronExpression
+
         CronExpression(expr)  # validate now, fail fast
-        self._jobs[name] = ScheduledJob(name=name, kind="cron", cron_expr=expr, handler=handler,
-                                        last_run=self._jobs.get(name, ScheduledJob(name, "cron")).last_run)
+        self._jobs[name] = ScheduledJob(
+            name=name,
+            kind="cron",
+            cron_expr=expr,
+            handler=handler,
+            last_run=self._jobs.get(name, ScheduledJob(name, "cron")).last_run,
+        )
 
     def _load_state(self) -> None:
         try:
             if self._state_file.exists():
                 data = self._json.loads(self._state_file.read_text(encoding="utf-8"))
                 for name, last in data.get("last_run", {}).items():
-                    self._jobs[name] = ScheduledJob(name=name, kind="interval", last_run=float(last))
+                    self._jobs[name] = ScheduledJob(
+                        name=name, kind="interval", last_run=float(last)
+                    )
         except Exception as e:
             logger.debug("Scheduler state load failed: %s", e)
 
@@ -119,4 +148,7 @@ class ContinuousScheduler:
         return ran
 
     def stats(self) -> Dict[str, Any]:
-        return {n: {"kind": j.kind, "runs": j.run_count, "last_run": j.last_run} for n, j in self._jobs.items()}
+        return {
+            n: {"kind": j.kind, "runs": j.run_count, "last_run": j.last_run}
+            for n, j in self._jobs.items()
+        }

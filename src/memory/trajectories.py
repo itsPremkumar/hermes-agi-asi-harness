@@ -13,10 +13,9 @@ import json
 import logging
 import re
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("hermes.memory.trajectories")
 

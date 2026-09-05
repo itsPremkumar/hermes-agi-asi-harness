@@ -13,8 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger("hermes.os.docker_sandbox")
 
@@ -30,6 +29,7 @@ def engine_available(refresh: bool = False) -> bool:
     ok = False
     try:
         import docker  # type: ignore
+
         client = docker.from_env(timeout=5)
         client.ping()
         ok = True
@@ -43,25 +43,47 @@ def run_local_fallback(code: str, timeout: int = 30) -> Dict[str, Any]:
     """Isolated temp-dir execution used when no engine exists."""
     with tempfile.TemporaryDirectory(prefix="hermes-sbx-") as box:
         try:
-            proc = subprocess.run([sys.executable, "-c", code], cwd=box,
-                                  capture_output=True, text=True, timeout=timeout)
-            return {"engine": "local-fallback", "exit": proc.returncode,
-                    "stdout": proc.stdout[-4000:], "stderr": proc.stderr[-1000:]}
+            proc = subprocess.run(
+                [sys.executable, "-c", code],
+                cwd=box,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            return {
+                "engine": "local-fallback",
+                "exit": proc.returncode,
+                "stdout": proc.stdout[-4000:],
+                "stderr": proc.stderr[-1000:],
+            }
         except Exception as e:
             return {"engine": "local-fallback", "exit": -1, "stdout": "", "stderr": str(e)[:1000]}
 
 
-def run_container(code: str, image: str = _DEFAULT_IMAGE, timeout: int = 60,
-                  mem_limit: str = "512m", network_disabled: bool = True) -> Dict[str, Any]:
+def run_container(
+    code: str,
+    image: str = _DEFAULT_IMAGE,
+    timeout: int = 60,
+    mem_limit: str = "512m",
+    network_disabled: bool = True,
+) -> Dict[str, Any]:
     """Run code in a one-shot locked-down container. Raises if engine missing."""
     import docker  # type: ignore
+
     client = docker.from_env(timeout=10)
     out = client.containers.run(
-        image, ["python", "-c", code], mem_limit=mem_limit,
-        network_disabled=network_disabled, remove=True,
-        stdout=True, stderr=True, detach=False,
+        image,
+        ["python", "-c", code],
+        mem_limit=mem_limit,
+        network_disabled=network_disabled,
+        remove=True,
+        stdout=True,
+        stderr=True,
+        detach=False,
     )
-    text = out.decode("utf-8", errors="replace") if isinstance(out, (bytes, bytearray)) else str(out)
+    text = (
+        out.decode("utf-8", errors="replace") if isinstance(out, (bytes, bytearray)) else str(out)
+    )
     return {"engine": "docker", "image": image, "exit": 0, "stdout": text[-4000:], "stderr": ""}
 
 
@@ -83,5 +105,8 @@ class DockerSandbox:
         return result
 
     def status(self) -> Dict[str, Any]:
-        return {"engine_available": engine_available(), "image": self.image,
-                "fallback": "local-tempdir"}
+        return {
+            "engine_available": engine_available(),
+            "image": self.image,
+            "fallback": "local-tempdir",
+        }

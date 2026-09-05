@@ -6,11 +6,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import statistics
-import tempfile
 import threading
 import time
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -19,6 +16,7 @@ from typing import Any, Optional
 @dataclass
 class OptimizationResult:
     """Result of an optimization step."""
+
     plane_name: str
     should_execute: bool
     reason: str
@@ -29,8 +27,13 @@ class OptimizationResult:
 class ResultCache:
     """SQLite-backed cache for plane results."""
 
-    def __init__(self, max_entries: int = 10_000, ttl_seconds: float = 300.0,
-                 db_path: Optional[Path] = None, workspace_root: str = "."):
+    def __init__(
+        self,
+        max_entries: int = 10_000,
+        ttl_seconds: float = 300.0,
+        db_path: Optional[Path] = None,
+        workspace_root: str = ".",
+    ):
         self.max_entries = max_entries
         self.ttl_seconds = ttl_seconds
         self._lock = threading.RLock()
@@ -45,6 +48,7 @@ class ResultCache:
 
     def _init_db(self) -> None:
         import sqlite3
+
         with sqlite3.connect(self._db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS result_cache (
@@ -67,14 +71,13 @@ class ResultCache:
 
     @staticmethod
     def make_key(plane_name: str, input_data: Any) -> str:
-        input_hash = hashlib.sha256(
-            json.dumps(input_data, sort_keys=True).encode()
-        ).hexdigest()
+        input_hash = hashlib.sha256(json.dumps(input_data, sort_keys=True).encode()).hexdigest()
         return hashlib.sha256(f"{plane_name}:{input_hash}".encode()).hexdigest()
 
     def get(self, plane_name: str, input_data: Any) -> Optional[dict]:
         """Retrieve cached result."""
         import sqlite3
+
         key = self.make_key(plane_name, input_data)
 
         with self._lock:
@@ -107,6 +110,7 @@ class ResultCache:
     def put(self, plane_name: str, input_data: Any, result: Any, tokens: int, cost: float) -> None:
         """Store result in cache."""
         import sqlite3
+
         key = self.make_key(plane_name, input_data)
 
         with self._lock:
@@ -125,6 +129,7 @@ class ResultCache:
     def cleanup(self) -> int:
         """Remove expired entries."""
         import sqlite3
+
         cutoff = time.time() - self.ttl_seconds
         with self._lock:
             try:
@@ -140,6 +145,7 @@ class ResultCache:
     @property
     def size(self) -> int:
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -160,9 +166,7 @@ class MemoizationCache:
 
     @staticmethod
     def make_key(plane_name: str, input_data: Any) -> str:
-        input_hash = hashlib.sha256(
-            json.dumps(input_data, sort_keys=True).encode()
-        ).hexdigest()
+        input_hash = hashlib.sha256(json.dumps(input_data, sort_keys=True).encode()).hexdigest()
         return f"{plane_name}:{input_hash}"
 
     def get(self, plane_name: str, input_data: Any) -> Optional[Any]:
@@ -235,10 +239,7 @@ class ParallelScheduler:
         dependencies: dict[str, list[str]],
     ) -> list[str]:
         """Get planes with no dependencies (can run in parallel)."""
-        return [
-            p for p in plane_names
-            if not dependencies.get(p, [])
-        ]
+        return [p for p in plane_names if not dependencies.get(p, [])]
 
 
 class AdaptivePlaneSelector:
@@ -260,7 +261,10 @@ class AdaptivePlaneSelector:
             return True, "Plane value too low (< 0.1)"
 
         if plane_cache_hit_rate > 0.9:
-            return True, f"Cache hit rate high ({plane_cache_hit_rate:.0%}), result unlikely to change"
+            return (
+                True,
+                f"Cache hit rate high ({plane_cache_hit_rate:.0%}), result unlikely to change",
+            )
 
         return False, "Plane should execute"
 
@@ -281,16 +285,21 @@ class AdaptivePlaneSelector:
             cost_dollars = cost * 0.003 / 1000
 
             should_skip, reason = AdaptivePlaneSelector.should_skip_plane(
-                plane, budget_remaining, cost_dollars, value,
+                plane,
+                budget_remaining,
+                cost_dollars,
+                value,
             )
 
-            results.append(OptimizationResult(
-                plane_name=plane,
-                should_execute=not should_skip,
-                reason=reason,
-                estimated_cost=cost_dollars,
-                confidence=value,
-            ))
+            results.append(
+                OptimizationResult(
+                    plane_name=plane,
+                    should_execute=not should_skip,
+                    reason=reason,
+                    estimated_cost=cost_dollars,
+                    confidence=value,
+                )
+            )
 
         # Sort by value/cost ratio
         executable = [r for r in results if r.should_execute]
@@ -357,7 +366,11 @@ class PerformanceOptimizer:
     ) -> list[OptimizationResult]:
         """Select planes to execute."""
         return self.plane_selector.select_top_planes(
-            plane_names, plane_costs, plane_values, max_planes, budget_remaining,
+            plane_names,
+            plane_costs,
+            plane_values,
+            max_planes,
+            budget_remaining,
         )
 
     def get_parallel_groups(

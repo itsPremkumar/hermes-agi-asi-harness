@@ -10,13 +10,12 @@ Prime-Agent inspired recursive subagent fabric:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("hermes.os.agent_fabric")
 

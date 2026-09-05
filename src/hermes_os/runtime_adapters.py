@@ -16,12 +16,16 @@ import asyncio
 import hashlib
 import logging
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .cognitive_compiler import ExecutionPlanIR, ExecutionWave
-from .dynamic_runtime import DeepAgentsAdapter, DynamicStateGraph, IsolatedSubagentWorkspace, LangGraphDynamicAdapter
+from .cognitive_compiler import ExecutionPlanIR
+from .dynamic_runtime import (
+    DeepAgentsAdapter,
+    DynamicStateGraph,
+    IsolatedSubagentWorkspace,
+    LangGraphDynamicAdapter,
+)
 from .gateway import OpenClawGateway
 from .runtime_spi import ExecutionResult, ExecutionStatus, RuntimeAdapter
 
@@ -359,7 +363,6 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
     async def execute_plan(self, plan: ExecutionPlanIR) -> ExecutionResult:
         start_t = time.perf_counter()
         substrate = await self.compile_execution_substrate(plan)
-        state_graph = substrate["state_graph"]
         workspaces = substrate["workspaces"]
 
         completed_tasks: List[str] = []

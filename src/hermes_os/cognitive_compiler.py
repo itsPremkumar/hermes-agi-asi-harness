@@ -25,15 +25,17 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
-from .capabilities import CapabilityKind, CapabilityRegistry, CapabilitySelector, ExecutionCapabilityPlan
-from .drift import EnvironmentDriftDetector, GoalDriftDetector
-from .events import EventSource, HermesEvent, UniversalEventBus
-from .mission_ir import GoalGraph, GoalInvariant, GoalLifecycle, GoalMemory, GoalNode, MissionIR
-from .recon import EnvironmentReconEngine, EnvironmentState
-from .strategy_search import PlanCritic, PlanReviewReport, StrategyCandidate, StrategySearchEngine
-from .uncertainty import EpistemicItem, EpistemicStatus, ResearchPlan, UncertaintyAnalyzer
+from .capabilities import (
+    CapabilityRegistry,
+    CapabilitySelector,
+    ExecutionCapabilityPlan,
+)
+from .mission_ir import GoalGraph, GoalInvariant, GoalLifecycle, GoalMemory, GoalNode
+from .recon import EnvironmentReconEngine
+from .strategy_search import PlanCritic, StrategyCandidate, StrategySearchEngine
+from .uncertainty import EpistemicStatus, UncertaintyAnalyzer
 
 logger = logging.getLogger("hermes.os.compiler")
 

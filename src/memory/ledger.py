@@ -34,10 +34,17 @@ class EconomicLedger:
         except Exception:
             pass
 
-    def record(self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0) -> Dict[str, Any]:
-        entry = {"ts": time.time(), "mission_id": mission_id, "tokens": int(tokens),
-                 "cost_usd": round(int(tokens) / 1000 * self.price_per_1k, 6),
-                 "runtime": runtime, "workers": workers}
+    def record(
+        self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0
+    ) -> Dict[str, Any]:
+        entry = {
+            "ts": time.time(),
+            "mission_id": mission_id,
+            "tokens": int(tokens),
+            "cost_usd": round(int(tokens) / 1000 * self.price_per_1k, 6),
+            "runtime": runtime,
+            "workers": workers,
+        }
         self._entries.append(entry)
         try:
             with open(self._file, "a", encoding="utf-8") as f:
@@ -48,5 +55,8 @@ class EconomicLedger:
 
     def totals(self, last_n: int = 100) -> Dict[str, Any]:
         window = self._entries[-last_n:]
-        return {"missions": len(window), "tokens": sum(e.get("tokens", 0) for e in window),
-                "cost_usd": round(sum(e.get("cost_usd", 0.0) for e in window), 6)}
+        return {
+            "missions": len(window),
+            "tokens": sum(e.get("tokens", 0) for e in window),
+            "cost_usd": round(sum(e.get("cost_usd", 0.0) for e in window), 6),
+        }

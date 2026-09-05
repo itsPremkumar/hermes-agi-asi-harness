@@ -14,7 +14,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict
 
 logger = logging.getLogger("hermes.os.experiments")
 
@@ -33,10 +33,17 @@ class Experiment:
     created_at: float = field(default_factory=time.time)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"exp_id": self.exp_id, "hypothesis": self.hypothesis, "design": self.design,
-                "status": self.status, "observation": self.observation[:2000],
-                "measurement": self.measurement, "baseline": self.baseline,
-                "verdict": self.verdict, "elapsed_s": round(self.elapsed_s, 2)}
+        return {
+            "exp_id": self.exp_id,
+            "hypothesis": self.hypothesis,
+            "design": self.design,
+            "status": self.status,
+            "observation": self.observation[:2000],
+            "measurement": self.measurement,
+            "baseline": self.baseline,
+            "verdict": self.verdict,
+            "elapsed_s": round(self.elapsed_s, 2),
+        }
 
 
 class ExperimentEngine:
@@ -46,8 +53,12 @@ class ExperimentEngine:
         self.exp_dir.mkdir(parents=True, exist_ok=True)
 
     def design(self, hypothesis: str, design: str = "", baseline: float = 0.0) -> Experiment:
-        return Experiment(exp_id=f"exp-{uuid.uuid4().hex[:8]}", hypothesis=hypothesis,
-                          design=design or f"Test: {hypothesis}", baseline=baseline)
+        return Experiment(
+            exp_id=f"exp-{uuid.uuid4().hex[:8]}",
+            hypothesis=hypothesis,
+            design=design or f"Test: {hypothesis}",
+            baseline=baseline,
+        )
 
     def run_code(self, exp: Experiment, code: str, timeout: int = 30) -> Experiment:
         """Execute hypothesis code in isolated sandbox, capture measurement from stdout float."""
@@ -56,8 +67,13 @@ class ExperimentEngine:
         box = self.exp_dir / exp.exp_id
         box.mkdir(parents=True, exist_ok=True)
         try:
-            proc = subprocess.run([sys.executable, "-c", code], cwd=str(box),
-                                  capture_output=True, text=True, timeout=timeout)
+            proc = subprocess.run(
+                [sys.executable, "-c", code],
+                cwd=str(box),
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
             exp.elapsed_s = time.perf_counter() - t0
             exp.observation = (proc.stdout[-1500:] + proc.stderr[-500:]).strip()
             try:
@@ -65,20 +81,28 @@ class ExperimentEngine:
             except Exception:
                 exp.measurement = 1.0 if proc.returncode == 0 else 0.0
             exp.status = "passed" if proc.returncode == 0 else "failed"
-            exp.verdict = ("HOLD" if exp.measurement > exp.baseline else "REJECT"
-                           if exp.status == "passed" else f"ERROR rc={proc.returncode}")
+            exp.verdict = (
+                "HOLD"
+                if exp.measurement > exp.baseline
+                else "REJECT"
+                if exp.status == "passed"
+                else f"ERROR rc={proc.returncode}"
+            )
         except Exception as e:
             exp.elapsed_s = time.perf_counter() - t0
             exp.status = "failed"
             exp.observation = str(e)[:1000]
             exp.verdict = f"ERROR {e}"
-        (box / "result.json").write_text(__import__("json").dumps(exp.to_dict(), indent=2), encoding="utf-8")
+        (box / "result.json").write_text(
+            __import__("json").dumps(exp.to_dict(), indent=2), encoding="utf-8"
+        )
         return exp
 
     def run_sandboxed(self, exp: Experiment, code: str, timeout: int = 60) -> Experiment:
         """Prefer the Docker sandbox; explicit local fallback. Same verdict semantics."""
         try:
             from .docker_sandbox import DockerSandbox
+
             res = DockerSandbox(timeout=timeout).run(code)
             exp.observation = (res.get("stdout", "") + res.get("stderr", ""))[-2000:]
             exp.elapsed_s = 0.0

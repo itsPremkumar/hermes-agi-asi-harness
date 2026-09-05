@@ -15,7 +15,6 @@ import collections
 import enum
 import logging
 import time
-import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
@@ -214,7 +213,8 @@ class GoalGraph:
                        depends_on: Optional[List[str]] = None,
                        evidence: str = "", owner_agent: Optional[str] = None) -> GoalNode:
         """Discover-new-requirement → create subgoal → insert → execute."""
-        import uuid as _uuid, time as _t
+        import time as _t
+        import uuid as _uuid
         gid = f"g-{_uuid.uuid4().hex[:8]}"
         node = GoalNode(goal_id=gid, title=title, description=description or title,
                         parent_id=parent_id, depends_on=list(depends_on or []),

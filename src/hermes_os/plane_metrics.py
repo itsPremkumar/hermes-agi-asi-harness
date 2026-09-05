@@ -4,11 +4,7 @@ Performance Metrics Collector for the 20-plane cognitive architecture.
 
 from __future__ import annotations
 
-import statistics
-import tempfile
 import threading
-import time
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +14,7 @@ from typing import Any, Optional
 @dataclass
 class PlaneMetric:
     """Metrics for a single plane."""
+
     plane_name: str
     total_invocations: int = 0
     total_tokens: int = 0
@@ -87,6 +84,7 @@ class MetricsCollector:
 
     def _init_db(self) -> None:
         import sqlite3
+
         with sqlite3.connect(self._db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS plane_metrics (
@@ -132,6 +130,7 @@ class MetricsCollector:
     ) -> None:
         """Record a plane execution."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -157,6 +156,7 @@ class MetricsCollector:
     ) -> None:
         """Record query completion."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -165,8 +165,15 @@ class MetricsCollector:
                            (query_id, total_tokens, total_cost, total_latency_ms,
                             planes_executed, planes_skipped, status)
                            VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        (query_id, total_tokens, total_cost, total_latency_ms,
-                         planes_executed, planes_skipped, status),
+                        (
+                            query_id,
+                            total_tokens,
+                            total_cost,
+                            total_latency_ms,
+                            planes_executed,
+                            planes_skipped,
+                            status,
+                        ),
                     )
                     conn.commit()
             except Exception:
@@ -175,6 +182,7 @@ class MetricsCollector:
     def get_plane_latency(self, plane_name: str) -> dict[str, float]:
         """Get latency percentiles for a plane."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -200,6 +208,7 @@ class MetricsCollector:
     def get_plane_tokens(self, plane_name: str) -> dict[str, Any]:
         """Get token usage stats for a plane."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -219,6 +228,7 @@ class MetricsCollector:
     def get_query_costs(self) -> dict[str, float]:
         """Get cost statistics across all queries."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -237,6 +247,7 @@ class MetricsCollector:
     def get_cache_hit_rate(self) -> float:
         """Get overall cache hit rate."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
@@ -253,6 +264,7 @@ class MetricsCollector:
     def get_plane_invocations(self) -> dict[str, int]:
         """Get invocation frequency per plane."""
         import sqlite3
+
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:

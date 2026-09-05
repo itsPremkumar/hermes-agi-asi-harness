@@ -26,51 +26,42 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-from context_os import ContextCompiler, GoalContract
+from context_os import ContextCompiler
 from memory import MemoryOS
-from verification.vnext import RealityVerificationEngine, VerificationTier
-from world_model import AbstractionMode, WorldModel
+from verification.vnext import RealityVerificationEngine
+from world_model import WorldModel
 
 from .agent_fabric import RecursiveAgentFabric
 from .authority import AuthorityGate
 from .cognitive import MetaCognitionEngine
+from .cognitive_compiler import (
+    CognitiveCompiler,
+    ExecutionPlanIR,
+)
 from .computer_os import ComputerOS
 from .curriculum import CurriculumEngine
 from .daemon import CheckpointSnapshot, PersistentDaemonRuntime
+from .drift import EnvironmentDriftDetector, GoalDriftDetector
+from .dynamic_runtime import DeepAgentsAdapter, LangGraphDynamicAdapter
 from .events import EventSource, HermesEvent, UniversalEventBus
 from .evolution_lab import PopulationEvolutionLab
 from .executive import ExecutiveKernel
-from .drift import EnvironmentDriftDetector, GoalDriftDetector
 from .gateway import OpenClawGateway
 from .hooks import HookEventType, HookManager
+from .langsmith_exporter import LangSmithTelemetryExporter
 from .loops import LoopEngine
-from .meta_planner import ExecutionArchitecture, MetaPlanner
+from .meta_planner import MetaPlanner
 from .perception_store import LosslessPerceptionStore, PerceptionModality
 from .recovery import RecoveryEngine
 from .research import CognitiveResearchEngine
+from .runtime_router import RuntimeRouter
+from .runtime_spi import ExecutionResult
 from .safety_kernel import SafetyKernel, SafetyVerdict
-from .supervisor import ExternalSupervisor, SupervisorTelemetry
+from .supervisor import ExternalSupervisor
 from .swarm_scaling import KimiSwarmScaler
 from .tool_env import ToolEnvironmentOS
-from .cognitive_compiler import CognitiveCompiler, ExecutionPlanIR, ExecutionWave, PlanningPhase, PlanningRecord, PlanValidityMonitor
-from .capabilities import CapabilityKind, CapabilityManifest, CapabilityRegistry, CapabilitySelector, ExecutionCapabilityPlan
-from .dynamic_runtime import DeepAgentsAdapter, DynamicStateGraph, LangGraphDynamicAdapter
-from .mission_ir import GoalGraph, GoalInvariant, GoalLifecycle, GoalMemory, GoalNode, MissionIR
-from .recon import EnvironmentReconEngine, EnvironmentState
-from .strategy_search import PlanCritic, PlanReviewReport, StrategyCandidate, StrategySearchEngine
-from .uncertainty import EpistemicItem, EpistemicStatus, ResearchPlan, UncertaintyAnalyzer
-from .runtime_spi import ExecutionResult, ExecutionStatus, RuntimeAdapter
-from .runtime_adapters import (
-    CompositeDualSubstrateAdapter,
-    DeepAgentsRuntimeAdapter,
-    LangGraphRuntimeAdapter,
-    OpenClawRuntimeAdapter,
-    PrimeRuntimeAdapter,
-)
-from .runtime_router import RuntimeRouter
-from .langsmith_exporter import LangSmithConfig, LangSmithTelemetryExporter
 
 logger = logging.getLogger("hermes.os")
 
@@ -138,7 +129,7 @@ class HermesIntelligenceOS:
             self.scheduler = None  # type: ignore[assignment]
         # ASI-reference subsystems (lazy, offline-safe; never break boot)
         try:
-            from .skills import SkillRegistry, SkillForge
+            from .skills import SkillForge, SkillRegistry
             self.skill_registry = SkillRegistry(workspace_root=workspace_root)
             self.skill_forge = SkillForge(self.skill_registry)
         except Exception:
@@ -325,7 +316,7 @@ class HermesIntelligenceOS:
         except Exception:
             retrieved = ["System verified and operational v8"]
         self.context_compiler.budget = arch.context_budget
-        context_packet = self.context_compiler.compile(
+        self.context_compiler.compile(  # compiled for budget/side effects; packet unused
             goal_contract=contract,
             world_state_summary=f"Abstraction mode: {abstraction_decision.mode.value}",
             retrieved_knowledge=retrieved,
@@ -553,9 +544,10 @@ class HermesIntelligenceOS:
 
             async def _eagle_health() -> None:
                 try:
-                    from .eagle_adapter import EagleAdapter
                     import json as _j
                     from pathlib import Path as _P
+
+                    from .eagle_adapter import EagleAdapter
                     adapter = EagleAdapter()
                     health = adapter.health()
                     adapter.persist_stats(self.workspace_root)

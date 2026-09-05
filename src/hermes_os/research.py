@@ -9,13 +9,12 @@ Claim verification -> World model & semantic memory update.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("hermes.os.research")
 

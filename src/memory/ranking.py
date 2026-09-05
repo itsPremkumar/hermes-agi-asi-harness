@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 _EMBED_FN: Optional[Callable[[str], List[float]]] = None
 
@@ -41,8 +41,9 @@ def _cosine(a: List[float], b: List[float]) -> float:
     return dot / (na * nb)
 
 
-def rank_lessons(items: List[Any], query: str, limit: int = 8,
-                 text_fn: Callable[[Any], str] | None = None) -> List[Tuple[Any, float]]:
+def rank_lessons(
+    items: List[Any], query: str, limit: int = 8, text_fn: Callable[[Any], str] | None = None
+) -> List[Tuple[Any, float]]:
     """Rank arbitrary lesson objects by relevance to query. Returns (item, score)."""
     tf = text_fn or (lambda x: str(getattr(x, "fact", getattr(x, "description", str(x)))))
     scored: List[Tuple[Any, float]] = []

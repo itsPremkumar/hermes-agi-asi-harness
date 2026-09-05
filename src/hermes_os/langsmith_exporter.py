@@ -23,7 +23,6 @@ logger = logging.getLogger("hermes.os.langsmith")
 
 # Optional import of official langsmith library
 try:
-    import langsmith
     from langsmith import Client as LangSmithClient
     from langsmith.run_trees import RunTree
     _LANGSMITH_AVAILABLE = True

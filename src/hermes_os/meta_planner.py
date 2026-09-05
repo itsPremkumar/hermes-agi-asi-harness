@@ -8,9 +8,8 @@ MODEL + AGENT TOPOLOGY + TOOLS + PLANNING MODE + REASONING MODE + VERIFICATION L
 from __future__ import annotations
 
 import logging
-import re
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 from context_os.budgets import ContextBudget
 from verification.vnext import VerificationTier
@@ -56,7 +55,6 @@ class MetaPlanner:
 
         # 1. Complexity & Domain classification
         is_deep = any(k in desc_lower for k in ("prove", "theorem", "refactor", "optimize", "architecture", "distributed", "consensus"))
-        is_code = any(k in desc_lower for k in ("code", "implement", "build", "kernel", "fix", "debug", "test"))
         is_security = any(k in desc_lower for k in ("auth", "security", "permission", "crypto", "sandbox"))
 
         # 2. Model & Compute

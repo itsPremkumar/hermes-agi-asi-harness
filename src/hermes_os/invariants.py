@@ -19,7 +19,12 @@ def _ok() -> Tuple[bool, str]:
 
 
 def inv_no_destructive_without_approval(s: Dict[str, Any]) -> Tuple[bool, str]:
-    if str(s.get("action_type", "")) in ("delete_file", "drop_database", "truncate_table", "format_disk"):
+    if str(s.get("action_type", "")) in (
+        "delete_file",
+        "drop_database",
+        "truncate_table",
+        "format_disk",
+    ):
         if not s.get("human_approved"):
             return False, "Destructive action requires human approval"
     return _ok()
@@ -57,7 +62,13 @@ def inv_no_remote_code_exec(s: Dict[str, Any]) -> Tuple[bool, str]:
 
 def inv_prompt_injection_screen(s: Dict[str, Any]) -> Tuple[bool, str]:
     blob = str(s.get("action_args", ""))[:4000].lower()
-    for sig in ("ignore previous instructions", "ignore all instructions", "system prompt:", "jailbreak", "dan mode"):
+    for sig in (
+        "ignore previous instructions",
+        "ignore all instructions",
+        "system prompt:",
+        "jailbreak",
+        "dan mode",
+    ):
         if sig in blob:
             return False, f"Possible prompt injection: '{sig}'"
     return _ok()
@@ -65,7 +76,9 @@ def inv_prompt_injection_screen(s: Dict[str, Any]) -> Tuple[bool, str]:
 
 def inv_no_self_replication(s: Dict[str, Any]) -> Tuple[bool, str]:
     blob = (str(s.get("action_type", "")) + " " + str(s.get("action_args", "")))[:2000].lower()
-    if ("replicate" in blob or "self-copy" in blob or "spawn replica" in blob) and not s.get("human_approved"):
+    if ("replicate" in blob or "self-copy" in blob or "spawn replica" in blob) and not s.get(
+        "human_approved"
+    ):
         return False, "Self-replication requires multi-party review"
     return _ok()
 
@@ -79,7 +92,11 @@ def inv_corrigibility(s: Dict[str, Any]) -> Tuple[bool, str]:
 
 
 def inv_taint_no_shell(s: Dict[str, Any]) -> Tuple[bool, str]:
-    if s.get("taint_present") and str(s.get("action_type", "")) in ("execute_shell", "execute_python", "python_repl"):
+    if s.get("taint_present") and str(s.get("action_type", "")) in (
+        "execute_shell",
+        "execute_python",
+        "python_repl",
+    ):
         return False, "Tainted input into code execution"
     return _ok()
 
@@ -92,7 +109,12 @@ def inv_kill_switch(s: Dict[str, Any]) -> Tuple[bool, str]:
 
 def inv_human_approval_r6(s: Dict[str, Any]) -> Tuple[bool, str]:
     if str(s.get("risk_level", "medium")).lower() in ("critical",) and not s.get("human_approved"):
-        if str(s.get("action_type", "")) not in ("read_file", "list_dir", "grep_search", "find_by_name"):
+        if str(s.get("action_type", "")) not in (
+            "read_file",
+            "list_dir",
+            "grep_search",
+            "find_by_name",
+        ):
             return False, "Critical-risk action requires R6 human approval"
     return _ok()
 

@@ -23,7 +23,9 @@ def _norm(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9]+", str(text or "").lower()))
 
 
-def consolidate(memory_os: Any, max_semantic: int = 2000, episodic_keep: int = 500) -> Dict[str, Any]:
+def consolidate(
+    memory_os: Any, max_semantic: int = 2000, episodic_keep: int = 500
+) -> Dict[str, Any]:
     report: Dict[str, Any] = {"merged": 0, "archived": 0, "calibrated": 0, "ts": time.time()}
     try:
         sem = getattr(memory_os, "semantic", None)
@@ -35,7 +37,9 @@ def consolidate(memory_os: Any, max_semantic: int = 2000, episodic_keep: int = 5
                 if key in seen:
                     # merge confidence upward, drop duplicate
                     try:
-                        seen[key].confidence = min(1.0, max(seen[key].confidence, getattr(e, "confidence", 0.9)))
+                        seen[key].confidence = min(
+                            1.0, max(seen[key].confidence, getattr(e, "confidence", 0.9))
+                        )
                         del sem._entries[getattr(e, "entry_id", "")]
                         report["merged"] += 1
                     except Exception:
@@ -44,7 +48,10 @@ def consolidate(memory_os: Any, max_semantic: int = 2000, episodic_keep: int = 5
                     seen[key] = e
             # cap size: drop lowest-confidence oldest
             if len(sem._entries) > max_semantic:
-                ordered = sorted(sem._entries.values(), key=lambda x: (getattr(x, "confidence", 0), -getattr(x, "created_at", 0)))
+                ordered = sorted(
+                    sem._entries.values(),
+                    key=lambda x: (getattr(x, "confidence", 0), -getattr(x, "created_at", 0)),
+                )
                 for drop in ordered[: len(sem._entries) - max_semantic]:
                     try:
                         del sem._entries[drop.entry_id]

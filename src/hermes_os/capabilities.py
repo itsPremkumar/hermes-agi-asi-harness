@@ -16,7 +16,7 @@ import enum
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes.os.capabilities")
 
@@ -448,9 +448,6 @@ class CapabilitySelector:
         try:
             from .tool_scoring import ToolScorecard
             sc = ToolScorecard(workspace_root=self.registry.workspace_root)
-            cands = [{"name": t.replace("tool.", ""), "risk": "medium", "est_tokens": 500}
-                     for t in plan.selected_tools]
-            # Map short names back to tool.* ids for ranking
             ranked = sc.rank([{"name": t, "risk": "medium", "est_tokens": 500} for t in plan.selected_tools])
             plan.selected_tools = [r["name"] for r in ranked] or plan.selected_tools
             plan.required_capabilities = plan.selected_tools + plan.selected_skills + plan.selected_plugins

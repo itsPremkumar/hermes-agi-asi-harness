@@ -15,11 +15,11 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from context_os import ContextCompiler, GoalContract
+from context_os import GoalContract
 from memory import MemoryOS, Trajectory, TrajectoryStep
-from verification.vnext import EarnedCompletionProof, RealityVerificationEngine, VerificationTier
+from verification.vnext import RealityVerificationEngine, VerificationTier
 from world_model import WorldModel
 
 logger = logging.getLogger("hermes.os.loops")
@@ -97,7 +97,6 @@ class LoopEngine:
         """Execute multi-step mission DAG with verification and earned completion proof."""
         mission_id = f"m-{uuid.uuid4().hex[:6]}"
         traj_steps = []
-        all_passed = True
         deliverable_content = ""
 
         for s in steps:
@@ -116,8 +115,6 @@ class LoopEngine:
                 outcome="success" if action_res["success"] else "failure",
             )
             traj_steps.append(step_record)
-            if not action_res["success"]:
-                all_passed = False
             deliverable_content += str(action_res["output"]) + "\n"
 
         # Multi-dimensional reality verification

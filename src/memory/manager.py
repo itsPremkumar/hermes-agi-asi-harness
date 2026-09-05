@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .subsystems import (
     CapabilityMemory,
@@ -23,7 +23,7 @@ from .subsystems import (
     WorkingMemory,
     WorldStateMemory,
 )
-from .trajectories import Trajectory, TrajectoryArchive, TrajectoryStep
+from .trajectories import TrajectoryArchive
 
 logger = logging.getLogger("hermes.memory")
 
@@ -133,6 +133,7 @@ class MemoryOS:
         """P22 sleep/dream consolidation: dedupe + archive + calibrate + flush."""
         try:
             from .consolidation import consolidate
+
             return consolidate(self)
         except Exception as e:
             return {"merged": 0, "archived": 0, "calibrated": 0, "error": str(e)}
@@ -140,6 +141,7 @@ class MemoryOS:
     def index_vector(self, doc_id: str, text: str, tags: Any = None) -> bool:
         try:
             from .vector_graph import VectorStore
+
             VectorStore(workspace_root=self.workspace_root).add(doc_id, text, list(tags or []))
             return True
         except Exception:
@@ -148,6 +150,7 @@ class MemoryOS:
     def semantic_search(self, query: str, limit: int = 8) -> list[dict[str, Any]]:
         try:
             from .vector_graph import VectorStore
+
             hits = VectorStore(workspace_root=self.workspace_root).search(query, limit=limit)
             sem = getattr(self, "semantic", None)
             out: list[dict[str, Any]] = []
@@ -164,9 +167,12 @@ class MemoryOS:
         except Exception:
             return []
 
-    def kg_link(self, src: str, rel: str, dst: str, src_type: str = "entity", dst_type: str = "entity") -> bool:
+    def kg_link(
+        self, src: str, rel: str, dst: str, src_type: str = "entity", dst_type: str = "entity"
+    ) -> bool:
         try:
             from .vector_graph import KnowledgeGraph
+
             kg = KnowledgeGraph(workspace_root=self.workspace_root)
             if src not in getattr(kg, "_nodes", {}):
                 kg.add_node(src, src_type)
@@ -183,26 +189,40 @@ class MemoryOS:
         try:
             items = list(claims) if not isinstance(claims, dict) else [claims]
             for c in items:
-                stmt = getattr(c, "statement", None) or (c.get("statement") if isinstance(c, dict) else str(c))
+                stmt = getattr(c, "statement", None) or (
+                    c.get("statement") if isinstance(c, dict) else str(c)
+                )
                 conf = float(getattr(c, "confidence", 0.7) or 0.7)
-                prov = getattr(c, "provenance", None) or (c.get("provenance") if isinstance(c, dict) else [])
+                prov = getattr(c, "provenance", None) or (
+                    c.get("provenance") if isinstance(c, dict) else []
+                )
                 if isinstance(prov, str):
                     prov = [prov]
-                entry = self.semantic.store(str(stmt)[:800], category="research",
-                                            tags=["verified_claim", source], confidence=conf,
-                                            source=";".join(prov)[:300])
+                entry = self.semantic.store(
+                    str(stmt)[:800],
+                    category="research",
+                    tags=["verified_claim", source],
+                    confidence=conf,
+                    source=";".join(prov)[:300],
+                )
                 stored += 1
                 if self.index_vector(entry.entry_id, str(stmt)[:800], ["verified_claim", source]):
                     indexed += 1
         except Exception as e:
             import logging as _l
+
             _l.getLogger("hermes.memory").debug("ingest_claims failed: %s", e)
         return {"stored": stored, "indexed": indexed}
 
-    def record_usage(self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0) -> dict[str, Any]:
+    def record_usage(
+        self, mission_id: str, tokens: int, runtime: str = "", workers: int = 0
+    ) -> dict[str, Any]:
         try:
             from .ledger import EconomicLedger
-            return EconomicLedger(workspace_root=self.workspace_root).record(mission_id, tokens, runtime, workers)
+
+            return EconomicLedger(workspace_root=self.workspace_root).record(
+                mission_id, tokens, runtime, workers
+            )
         except Exception as e:
             return {"mission_id": mission_id, "tokens": tokens, "error": str(e)}
 
@@ -218,4 +238,3 @@ class MemoryOS:
             "archived_trajectories": self.trajectories.count(),
             "persistent_storage_dir": str(self.storage_dir),
         }
-

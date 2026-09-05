@@ -3,6 +3,7 @@ HERMES INTELLIGENCE OS — MEMORY SUBSYSTEM EXPORTS
 =================================================
 """
 
+from .manager import MemoryOS
 from .subsystems import (
     CapabilityMemory,
     CapabilityProfile,
@@ -21,7 +22,6 @@ from .subsystems import (
     WorldStateMemory,
 )
 from .trajectories import Trajectory, TrajectoryArchive, TrajectoryStep
-from .manager import MemoryOS
 
 __all__ = [
     "CapabilityMemory",

@@ -36,7 +36,10 @@ class PluginManifest:
         errors: List[str] = []
         if not self.name:
             errors.append("name required")
-        if self.needs_network and self.ring in (PermissionRing.R0_CORE_KERNEL, PermissionRing.R1_SANDBOX_LOCAL):
+        if self.needs_network and self.ring in (
+            PermissionRing.R0_CORE_KERNEL,
+            PermissionRing.R1_SANDBOX_LOCAL,
+        ):
             errors.append(f"network needs R2+, got {self.ring.value}")
         if self.needs_shell and self.ring == PermissionRing.R0_CORE_KERNEL:
             errors.append("R0 must not need shell")
@@ -45,9 +48,15 @@ class PluginManifest:
         return errors
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "version": self.version, "ring": self.ring.value,
-                "cost": self.cost, "tools": self.tools,
-                "needs_network": self.needs_network, "needs_shell": self.needs_shell}
+        return {
+            "name": self.name,
+            "version": self.version,
+            "ring": self.ring.value,
+            "cost": self.cost,
+            "tools": self.tools,
+            "needs_network": self.needs_network,
+            "needs_shell": self.needs_shell,
+        }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PluginManifest":
@@ -56,10 +65,15 @@ class PluginManifest:
             ring_e = PermissionRing(ring)
         except Exception:
             ring_e = PermissionRing.R1_SANDBOX_LOCAL
-        return cls(name=data.get("name", ""), version=data.get("version", "0.1.0"), ring=ring_e,
-                   cost=data.get("cost", "free"), tools=list(data.get("tools", [])),
-                   needs_network=bool(data.get("needs_network", False)),
-                   needs_shell=bool(data.get("needs_shell", False)))
+        return cls(
+            name=data.get("name", ""),
+            version=data.get("version", "0.1.0"),
+            ring=ring_e,
+            cost=data.get("cost", "free"),
+            tools=list(data.get("tools", [])),
+            needs_network=bool(data.get("needs_network", False)),
+            needs_shell=bool(data.get("needs_shell", False)),
+        )
 
 
 def load_manifest(plugin_dir: str) -> Optional[PluginManifest]:

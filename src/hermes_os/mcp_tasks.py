@@ -14,7 +14,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes.os.mcp_tasks")
 
@@ -41,8 +41,14 @@ class MCPTask:
                 res = blob[:_MAX_ARTIFACT] + f"...[truncated {len(blob)} chars]"
         except Exception:
             pass
-        return {"task_id": self.task_id, "server": self.server, "tool": self.tool,
-                "status": self.status, "result": res, "error": self.error[:500]}
+        return {
+            "task_id": self.task_id,
+            "server": self.server,
+            "tool": self.tool,
+            "status": self.status,
+            "result": res,
+            "error": self.error[:500],
+        }
 
 
 class DurableMCPTasks:
@@ -55,14 +61,24 @@ class DurableMCPTasks:
         self._tasks: Dict[str, MCPTask] = {}
         self._lock = threading.Lock()
 
-    def submit(self, server: str, tool: str, args: Optional[Dict[str, Any]] = None,
-               lease_seconds: Optional[float] = None) -> MCPTask:
+    def submit(
+        self,
+        server: str,
+        tool: str,
+        args: Optional[Dict[str, Any]] = None,
+        lease_seconds: Optional[float] = None,
+    ) -> MCPTask:
         with self._lock:
             if len(self._tasks) >= self.max_tasks:
                 raise RuntimeError(f"MCP task table full ({self.max_tasks})")
-            t = MCPTask(task_id=f"mcp-{uuid.uuid4().hex[:8]}", server=server, tool=tool,
-                        args=dict(args or {}), status="running",
-                        lease_until=time.time() + (lease_seconds or self.lease_seconds))
+            t = MCPTask(
+                task_id=f"mcp-{uuid.uuid4().hex[:8]}",
+                server=server,
+                tool=tool,
+                args=dict(args or {}),
+                status="running",
+                lease_until=time.time() + (lease_seconds or self.lease_seconds),
+            )
             self._tasks[t.task_id] = t
         th = threading.Thread(target=self._run, args=(t.task_id,), daemon=True)
         th.start()

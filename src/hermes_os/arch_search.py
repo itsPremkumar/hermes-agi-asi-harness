@@ -11,10 +11,9 @@ from __future__ import annotations
 import itertools
 import logging
 import random
-import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Tuple
 
 logger = logging.getLogger("hermes.os.arch_search")
 
@@ -29,8 +28,14 @@ class ArchCandidate:
     status: str = "pending"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"cand_id": self.cand_id, "config": self.config, "score": self.score,
-                "cost": self.cost, "latency": self.latency, "status": self.status}
+        return {
+            "cand_id": self.cand_id,
+            "config": self.config,
+            "score": self.score,
+            "cost": self.cost,
+            "latency": self.latency,
+            "status": self.status,
+        }
 
 
 class SearchSpace:
@@ -45,7 +50,10 @@ class SearchSpace:
         if not keys:
             return [{}]
         if mode == "grid":
-            out = [dict(zip(keys, combo)) for combo in itertools.product(*[self._params[k] for k in keys])]
+            out = [
+                dict(zip(keys, combo))
+                for combo in itertools.product(*[self._params[k] for k in keys])
+            ]
             return out[:limit]
         rng = random.Random(seed)
         out = []
@@ -57,18 +65,30 @@ class SearchSpace:
 def pareto_front(cands: List[ArchCandidate]) -> List[ArchCandidate]:
     front = []
     for c in cands:
-        dominated = any(o.score >= c.score and o.cost <= c.cost and o.latency <= c.latency and
-                        (o.score > c.score or o.cost < c.cost or o.latency < c.latency) for o in cands)
+        dominated = any(
+            o.score >= c.score
+            and o.cost <= c.cost
+            and o.latency <= c.latency
+            and (o.score > c.score or o.cost < c.cost or o.latency < c.latency)
+            for o in cands
+        )
         if not dominated:
             front.append(c)
     return front
 
 
 class ArchSearchEngine:
-    def run_search(self, space: SearchSpace, benchmark_fn: Callable[[Dict[str, Any]], Tuple[float, float, float]],
-                   mode: str = "grid", limit: int = 12) -> Dict[str, Any]:
-        cands = [ArchCandidate(cand_id=f"arch-{uuid.uuid4().hex[:6]}", config=cfg)
-                 for cfg in space.configs(mode, limit)]
+    def run_search(
+        self,
+        space: SearchSpace,
+        benchmark_fn: Callable[[Dict[str, Any]], Tuple[float, float, float]],
+        mode: str = "grid",
+        limit: int = 12,
+    ) -> Dict[str, Any]:
+        cands = [
+            ArchCandidate(cand_id=f"arch-{uuid.uuid4().hex[:6]}", config=cfg)
+            for cfg in space.configs(mode, limit)
+        ]
         for c in cands:
             try:
                 s, co, la = benchmark_fn(c.config)
@@ -78,17 +98,23 @@ class ArchSearchEngine:
         scored = [c for c in cands if c.status == "scored"]
         front = pareto_front(scored)
         best = max(scored, key=lambda c: c.score) if scored else None
-        return {"candidates": [c.to_dict() for c in cands],
-                "pareto": [c.to_dict() for c in front],
-                "best": best.to_dict() if best else None}
+        return {
+            "candidates": [c.to_dict() for c in cands],
+            "pareto": [c.to_dict() for c in front],
+            "best": best.to_dict() if best else None,
+        }
 
-    def ab_compare(self, a: Dict[str, Any], b: Dict[str, Any],
-                   benchmark_fn: Callable[[Dict[str, Any]], Tuple[float, float, float]],
-                   baseline_tracker: Any = None) -> Dict[str, Any]:
+    def ab_compare(
+        self,
+        a: Dict[str, Any],
+        b: Dict[str, Any],
+        benchmark_fn: Callable[[Dict[str, Any]], Tuple[float, float, float]],
+        baseline_tracker: Any = None,
+    ) -> Dict[str, Any]:
         ra = self.run_search(_FixedSpace(a), benchmark_fn, limit=1)
         rb = self.run_search(_FixedSpace(b), benchmark_fn, limit=1)
-        sa = (ra["candidates"][0]["score"] if ra["candidates"] else 0.0)
-        sb = (rb["candidates"][0]["score"] if rb["candidates"] else 0.0)
+        sa = ra["candidates"][0]["score"] if ra["candidates"] else 0.0
+        sb = rb["candidates"][0]["score"] if rb["candidates"] else 0.0
         winner = "A" if sa >= sb else "B"
         reg = None
         if baseline_tracker is not None:

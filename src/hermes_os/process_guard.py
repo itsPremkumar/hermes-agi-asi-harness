@@ -13,12 +13,12 @@ Usage::
     await wd.start()   # begins monitoring loop
     await wd.stop()    # stops monitoring
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
@@ -267,7 +267,7 @@ class Watchdog:
         except asyncio.CancelledError:
             exit_code = -1
             raise
-        except Exception as exc:
+        except Exception:
             log.exception("process %s crashed", name)
             exit_code = 1
         finally:
@@ -292,9 +292,7 @@ class Watchdog:
         # Check restart budget
         now = time.time()
         window = self._config.restart_window_seconds
-        recent = [
-            r for r in handle.restart_history if now - r.timestamp < window
-        ]
+        recent = [r for r in handle.restart_history if now - r.timestamp < window]
         if len(recent) >= self._config.max_restarts:
             handle.status = ProcessStatus.FAILED
             log.error(

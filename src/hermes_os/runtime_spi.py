@@ -13,12 +13,10 @@ from __future__ import annotations
 import abc
 import enum
 import logging
-import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .cognitive_compiler import ExecutionPlanIR
-from .events import EventSource, HermesEvent
 
 logger = logging.getLogger("hermes.os.runtime_spi")
 

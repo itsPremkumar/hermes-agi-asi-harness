@@ -15,7 +15,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes.os.watchdog")
 
@@ -32,7 +32,7 @@ def find_cycle(waits: Dict[str, List[str]]) -> List[str]:
             if v not in color:
                 color[v] = WHITE
             if color[v] == GRAY:
-                return stack[stack.index(v):] + [v]
+                return stack[stack.index(v) :] + [v]
             if color[v] == WHITE:
                 hit = dfs(v)
                 if hit:
@@ -50,9 +50,14 @@ def find_cycle(waits: Dict[str, List[str]]) -> List[str]:
 
 
 class Watchdog:
-    def __init__(self, workspace_root: str = ".", max_tool_calls: int = 200,
-                 max_tokens: int = 1_000_000, max_hermes_mb: int = 2000,
-                 max_queue: int = 500):
+    def __init__(
+        self,
+        workspace_root: str = ".",
+        max_tool_calls: int = 200,
+        max_tokens: int = 1_000_000,
+        max_hermes_mb: int = 2000,
+        max_queue: int = 500,
+    ):
         self.workspace_root = workspace_root
         self.max_tool_calls = max_tool_calls
         self.max_tokens = max_tokens
@@ -71,8 +76,12 @@ class Watchdog:
     def check_deadlock(self) -> Dict[str, Any]:
         cycle = find_cycle(self._waits)
         if cycle:
-            incident = {"type": "deadlock", "cycle": cycle, "ts": time.time(),
-                        "action": f"break at {cycle[0]} (requeue victim)"}
+            incident = {
+                "type": "deadlock",
+                "cycle": cycle,
+                "ts": time.time(),
+                "action": f"break at {cycle[0]} (requeue victim)",
+            }
             self._incidents.append(incident)
             self.release(cycle[0])
             logger.error("Watchdog deadlock %s", cycle)
@@ -94,7 +103,9 @@ class Watchdog:
             pass
         return round(total / 1e6, 2)
 
-    def check_resources(self, tool_calls: int = 0, tokens: int = 0, queue_depth: int = 0) -> Dict[str, Any]:
+    def check_resources(
+        self, tool_calls: int = 0, tokens: int = 0, queue_depth: int = 0
+    ) -> Dict[str, Any]:
         problems: List[str] = []
         if tool_calls > self.max_tool_calls:
             problems.append(f"tool_calls {tool_calls} > {self.max_tool_calls}")
@@ -106,8 +117,12 @@ class Watchdog:
         if mb > self.max_hermes_mb:
             problems.append(f".hermes {mb}MB > {self.max_hermes_mb}MB")
         if problems:
-            incident = {"type": "resource", "problems": problems, "ts": time.time(),
-                        "action": "freeze new spawns, flush memory, request stop if critical"}
+            incident = {
+                "type": "resource",
+                "problems": problems,
+                "ts": time.time(),
+                "action": "freeze new spawns, flush memory, request stop if critical",
+            }
             self._incidents.append(incident)
             logger.error("Watchdog resources %s", problems)
             return {"ok": False, **incident, "hermes_mb": mb}

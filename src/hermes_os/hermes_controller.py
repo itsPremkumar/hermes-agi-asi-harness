@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import subprocess
 import sys
 import time
@@ -42,9 +41,13 @@ def ensure_hermes_on_path(extra_roots: Optional[List[str]] = None) -> List[str]:
     here = Path(__file__).resolve()
     for parent in [here.parent.parent.parent, here.parent.parent.parent.parent]:
         for name in ("hermes-agent", "../hermes-agent", "hermes_agent"):
-            p = (parent / name).resolve() if not str(name).startswith("..") else (parent / "hermes-agent").resolve()
+            p = (
+                (parent / name).resolve()
+                if not str(name).startswith("..")
+                else (parent / "hermes-agent").resolve()
+            )
             candidates.append(p)
-    for raw in (extra_roots or []):
+    for raw in extra_roots or []:
         candidates.append(Path(raw).resolve())
     # Also check workspace sibling: <clone>/../hermes-agent
     try:
@@ -92,7 +95,9 @@ class HermesInstance:
 class HermesController:
     """Lifecycle owner for Hermes worker processes."""
 
-    def __init__(self, workspace_root: str = ".", max_concurrent_children: int = 3, max_depth: int = 2):
+    def __init__(
+        self, workspace_root: str = ".", max_concurrent_children: int = 3, max_depth: int = 2
+    ):
         self.workspace_root = workspace_root
         self.max_concurrent_children = max_concurrent_children
         self.max_depth = max_depth
@@ -115,20 +120,38 @@ class HermesController:
         self._expire_leases()
         live = [i for i in self._instances.values() if i.status in ("spawned", "running")]
         if len(live) >= self.max_concurrent_children:
-            raise RuntimeError(f"Capacity reached ({self.max_concurrent_children} live children); refusing spawn")
+            raise RuntimeError(
+                f"Capacity reached ({self.max_concurrent_children} live children); refusing spawn"
+            )
         if role in _ORCH_ROLES and depth >= self.max_depth:
-            raise RuntimeError(f"Max delegation depth {self.max_depth} reached; '{role}' must run as leaf")
+            raise RuntimeError(
+                f"Max delegation depth {self.max_depth} reached; '{role}' must run as leaf"
+            )
         home = get_hermes_home(self.workspace_root, profile)
         iid = f"hx-{uuid.uuid4().hex[:8]}"
         hb = home / f"heartbeat-{iid}.json"
-        hb.write_text(json.dumps({"instance_id": iid, "status": "spawned", "ts": time.time()}), encoding="utf-8")
-        inst = HermesInstance(instance_id=iid, profile=profile, task=task, role=role,
-                              heartbeat_file=str(hb), status="running", background=background,
-                              lease_until=(time.time() + lease_seconds) if background else None)
+        hb.write_text(
+            json.dumps({"instance_id": iid, "status": "spawned", "ts": time.time()}),
+            encoding="utf-8",
+        )
+        inst = HermesInstance(
+            instance_id=iid,
+            profile=profile,
+            task=task,
+            role=role,
+            heartbeat_file=str(hb),
+            status="running",
+            background=background,
+            lease_until=(time.time() + lease_seconds) if background else None,
+        )
         if command:
             try:
-                proc = subprocess.Popen(command, cwd=str(Path(self.workspace_root).resolve()),
-                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                proc = subprocess.Popen(
+                    command,
+                    cwd=str(Path(self.workspace_root).resolve()),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
                 inst.pid = proc.pid
                 self._procs[iid] = proc
             except Exception as e:
@@ -152,17 +175,36 @@ class HermesController:
         """Single goal or parallel batch fan-out with caps (hermes-agent delegate pattern)."""
         jobs = tasks or [goal]
         if len(jobs) > self.max_concurrent_children:
-            return {"success": False, "error": f"Batch of {len(jobs)} exceeds cap {self.max_concurrent_children}"}
-        spawned = [self.spawn(t, profile=profile, role=role, background=background,
-                              depth=depth, lease_seconds=lease_seconds) for t in jobs]
+            return {
+                "success": False,
+                "error": f"Batch of {len(jobs)} exceeds cap {self.max_concurrent_children}",
+            }
+        spawned = [
+            self.spawn(
+                t,
+                profile=profile,
+                role=role,
+                background=background,
+                depth=depth,
+                lease_seconds=lease_seconds,
+            )
+            for t in jobs
+        ]
         if background:
-            return {"success": True, "mode": "background", "instances": [s.to_dict() for s in spawned],
-                    "poll": "controller.poll_completions()", "lease_seconds": lease_seconds}
+            return {
+                "success": True,
+                "mode": "background",
+                "instances": [s.to_dict() for s in spawned],
+                "poll": "controller.poll_completions()",
+                "lease_seconds": lease_seconds,
+            }
         # Foreground: mark completed immediately (real actuation happens in runtime adapters)
         for s in spawned:
             s.status = "completed"
             self._heartbeat(s, "completed")
-            self._completion_queue.append({"instance_id": s.instance_id, "status": "completed", "task": s.task})
+            self._completion_queue.append(
+                {"instance_id": s.instance_id, "status": "completed", "task": s.task}
+            )
         return {"success": True, "mode": "foreground", "instances": [s.to_dict() for s in spawned]}
 
     def _expire_leases(self) -> List[Dict[str, Any]]:
@@ -174,14 +216,16 @@ class HermesController:
             if inst.status == "running" and inst.lease_until and now > inst.lease_until:
                 inst.status = "expired"
                 self._heartbeat(inst, "expired")
-                expired.append({"instance_id": inst.instance_id, "status": "expired",
-                                "task": inst.task})
+                expired.append(
+                    {"instance_id": inst.instance_id, "status": "expired", "task": inst.task}
+                )
         if expired:
             self._completion_queue.extend(expired)
         return expired
 
-    def complete(self, instance_id: str, status: str = "completed",
-                 result: Optional[Dict[str, Any]] = None) -> bool:
+    def complete(
+        self, instance_id: str, status: str = "completed", result: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Explicitly finish a (background) instance and free its slot."""
         inst = self._instances.get(instance_id)
         if not inst or inst.status not in ("spawned", "running"):
@@ -189,8 +233,9 @@ class HermesController:
         inst.status = status
         inst.result = dict(result or {})
         self._heartbeat(inst, status)
-        self._completion_queue.append({"instance_id": instance_id, "status": status,
-                                       "task": inst.task})
+        self._completion_queue.append(
+            {"instance_id": instance_id, "status": status, "task": inst.task}
+        )
         return True
 
     def poll_completions(self) -> List[Dict[str, Any]]:
@@ -214,13 +259,21 @@ class HermesController:
         now = time.time()
         for inst in live:
             try:
-                data = json.loads(Path(inst.heartbeat_file).read_text(encoding="utf-8")) if inst.heartbeat_file else {}
+                data = (
+                    json.loads(Path(inst.heartbeat_file).read_text(encoding="utf-8"))
+                    if inst.heartbeat_file
+                    else {}
+                )
                 if now - float(data.get("ts", now)) > 300:
                     stale.append(inst.instance_id)
             except Exception:
                 stale.append(inst.instance_id)
-        return {"live": len(live), "total": len(self._instances),
-                "stale": stale, "completions_pending": len(self._completion_queue)}
+        return {
+            "live": len(live),
+            "total": len(self._instances),
+            "stale": stale,
+            "completions_pending": len(self._completion_queue),
+        }
 
     def kill(self, instance_id: str) -> bool:
         inst = self._instances.get(instance_id)
@@ -236,22 +289,30 @@ class HermesController:
         self._heartbeat(inst, "killed")
         return True
 
-    async def run_guarded(self, name: str, command: List[str], max_restarts: int = 3,
-                          timeout: float = 120.0) -> Dict[str, Any]:
+    async def run_guarded(
+        self, name: str, command: List[str], max_restarts: int = 3, timeout: float = 120.0
+    ) -> Dict[str, Any]:
         """Run a command supervised by the process guard: nonzero exits restart
         with backoff until the budget is exhausted, then escalate as FAILED.
         Decided on exit_code (race-free): 0 stops the guard immediately even
         though the guard would otherwise restart clean exits too."""
         import asyncio as _aio
         import time as _t
+
         from .process_guard import Watchdog, WatchdogConfig
+
         state: Dict[str, Any] = {"stdout": "", "stderr": ""}
         cwd = str(__import__("pathlib").Path(self.workspace_root).resolve())
 
         def _run_once() -> Dict[str, Any]:
             import subprocess as _sp
+
             proc = _sp.run(command, cwd=cwd, capture_output=True, text=True, timeout=timeout)
-            return {"exit": proc.returncode, "stdout": proc.stdout or "", "stderr": proc.stderr or ""}
+            return {
+                "exit": proc.returncode,
+                "stdout": proc.stdout or "",
+                "stderr": proc.stderr or "",
+            }
 
         async def _target() -> None:
             res = await _aio.to_thread(_run_once)
@@ -282,31 +343,58 @@ class HermesController:
         handle = guard.get(gname)
         real_exit = state.get("last_exit", handle.exit_code if handle else None)
         ok = real_exit == 0
-        return {"name": name, "status": "completed" if ok else "failed",
-                "exit": real_exit,
-                "restarts": handle.restart_count if handle else 0,
-                "history": [{"ts": r.timestamp, "exit": r.exit_code, "reason": r.reason}
-                            for r in (handle.restart_history if handle else [])],
-                "stdout": state.get("stdout", ""), "stderr": state.get("stderr", "")}
+        return {
+            "name": name,
+            "status": "completed" if ok else "failed",
+            "exit": real_exit,
+            "restarts": handle.restart_count if handle else 0,
+            "history": [
+                {"ts": r.timestamp, "exit": r.exit_code, "reason": r.reason}
+                for r in (handle.restart_history if handle else [])
+            ],
+            "stdout": state.get("stdout", ""),
+            "stderr": state.get("stderr", ""),
+        }
 
     def update(self, hermes_path: Optional[str] = None) -> Dict[str, Any]:
         """Safe pull→test→promote for sibling hermes-agent checkout (never force)."""
-        target = Path(hermes_path) if hermes_path else (Path(self.workspace_root).resolve().parent / "hermes-agent")
+        target = (
+            Path(hermes_path)
+            if hermes_path
+            else (Path(self.workspace_root).resolve().parent / "hermes-agent")
+        )
         if not (target / ".git").exists():
             return {"success": False, "reason": f"No git checkout at {target}"}
         try:
-            pull = subprocess.run(["git", "pull", "--ff-only"], cwd=str(target), capture_output=True, text=True, timeout=120)
+            pull = subprocess.run(
+                ["git", "pull", "--ff-only"],
+                cwd=str(target),
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
             if pull.returncode != 0:
-                return {"success": False, "reason": f"pull refused (kept safe): {pull.stderr[:300]}"}
+                return {
+                    "success": False,
+                    "reason": f"pull refused (kept safe): {pull.stderr[:300]}",
+                }
             return {"success": True, "output": (pull.stdout[:500])}
         except Exception as e:
             return {"success": False, "reason": str(e)}
 
     def _heartbeat(self, inst: HermesInstance, status: str) -> None:
         try:
-            Path(inst.heartbeat_file).write_text(json.dumps(
-                {"instance_id": inst.instance_id, "status": status, "ts": time.time(), "task": inst.task[:200]}),
-                encoding="utf-8")
+            Path(inst.heartbeat_file).write_text(
+                json.dumps(
+                    {
+                        "instance_id": inst.instance_id,
+                        "status": status,
+                        "ts": time.time(),
+                        "task": inst.task[:200],
+                    }
+                ),
+                encoding="utf-8",
+            )
         except Exception:
             pass
 

@@ -15,12 +15,11 @@ Usage::
     cron_tab.add(job)
     await cron_tab.start()
 """
+
 from __future__ import annotations
 
 import asyncio
-import calendar
 import logging
-import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -197,6 +196,7 @@ class CronExpression:
     def _add_minutes(dt: datetime, minutes: int) -> datetime:
         """Add minutes to a datetime, handling month/year rollover."""
         from datetime import timedelta
+
         return dt + timedelta(minutes=minutes)
 
 
@@ -456,8 +456,6 @@ class CronTab:
             if len(job.history) > self._max_history:
                 job.history = job.history[-self._max_history :]
             # Schedule next run
-            job._compute_next_run(
-                datetime.fromtimestamp(scheduled_at, tz=timezone.utc)
-            )
+            job._compute_next_run(datetime.fromtimestamp(scheduled_at, tz=timezone.utc))
             if job.status != CronJobStatus.ERROR:
                 job.status = CronJobStatus.IDLE

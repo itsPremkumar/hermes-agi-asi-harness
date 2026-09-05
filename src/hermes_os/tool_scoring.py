@@ -12,7 +12,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger("hermes.os.tool_scoring")
 
@@ -40,8 +40,15 @@ class ToolScorecard:
         except Exception:
             pass
 
-    def record(self, tool: str, success: bool, latency_s: float = 0.0,
-               tokens: int = 0, risk: str = "low", verdict: str = "allow") -> Dict[str, Any]:
+    def record(
+        self,
+        tool: str,
+        success: bool,
+        latency_s: float = 0.0,
+        tokens: int = 0,
+        risk: str = "low",
+        verdict: str = "allow",
+    ) -> Dict[str, Any]:
         s = self._scores.get(tool, {"n": 0, "success": 0, "latency": 0.0, "tokens": 0})
         n = s["n"] + 1
         s["n"] = n
@@ -70,7 +77,9 @@ class ToolScorecard:
         out = []
         for c in candidates:
             name = c.get("name", "")
-            out.append({**c, "utility": self.utility(name, c.get("risk", "low"), c.get("est_tokens", 100))})
+            out.append(
+                {**c, "utility": self.utility(name, c.get("risk", "low"), c.get("est_tokens", 100))}
+            )
         out.sort(key=lambda x: x["utility"], reverse=True)
         return out
 

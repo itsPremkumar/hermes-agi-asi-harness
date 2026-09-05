@@ -11,13 +11,12 @@ Dynamic execution substrate compilation:
 from __future__ import annotations
 
 import logging
-import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from .cognitive_compiler import ExecutionPlanIR, ExecutionWave
+from .cognitive_compiler import ExecutionPlanIR
 
 logger = logging.getLogger("hermes.os.dynamic_runtime")
 

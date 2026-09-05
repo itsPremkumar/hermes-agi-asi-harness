@@ -14,7 +14,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -32,8 +32,13 @@ class RadarItem:
     score: float = 0.5
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "status": self.status, "source": self.source,
-                "evidence": self.evidence[:500], "score": self.score}
+        return {
+            "name": self.name,
+            "status": self.status,
+            "source": self.source,
+            "evidence": self.evidence[:500],
+            "score": self.score,
+        }
 
 
 class TechRadar:
@@ -54,7 +59,10 @@ class TechRadar:
     def _save(self) -> None:
         try:
             self._file.parent.mkdir(parents=True, exist_ok=True)
-            self._file.write_text(json.dumps({k: v.to_dict() for k, v in self._items.items()}, indent=2), encoding="utf-8")
+            self._file.write_text(
+                json.dumps({k: v.to_dict() for k, v in self._items.items()}, indent=2),
+                encoding="utf-8",
+            )
         except Exception:
             pass
 
@@ -81,12 +89,24 @@ class SelfResearchEngine:
         """Scan local ecosystem signals: sibling dirs, skills, docs, plugins."""
         found: List[RadarItem] = []
         root = Path(self.workspace_root).resolve()
-        for sib in [root.parent / "hermes-agent", root / "skills", root / "src" / "plugins", root / "docs"]:
+        for sib in [
+            root.parent / "hermes-agent",
+            root / "skills",
+            root / "src" / "plugins",
+            root / "docs",
+        ]:
             try:
                 if sib.exists():
                     n = len(list(sib.iterdir()))
-                    found.append(RadarItem(name=sib.name, status="AVAILABLE", source=str(sib),
-                                           evidence=f"{n} entries present", score=min(0.9, 0.4 + n / 100)))
+                    found.append(
+                        RadarItem(
+                            name=sib.name,
+                            status="AVAILABLE",
+                            source=str(sib),
+                            evidence=f"{n} entries present",
+                            score=min(0.9, 0.4 + n / 100),
+                        )
+                    )
             except Exception:
                 pass
         # Flag risky patterns as UNSAFE candidates
@@ -97,8 +117,15 @@ class SelfResearchEngine:
                 except Exception:
                     continue
                 if "assert true" in txt and "test" in txt:
-                    found.append(RadarItem(name=f"reward-hack:{f.name}", status="UNSAFE",
-                                           source=str(f), evidence="trivial assertion pattern", score=0.2))
+                    found.append(
+                        RadarItem(
+                            name=f"reward-hack:{f.name}",
+                            status="UNSAFE",
+                            source=str(f),
+                            evidence="trivial assertion pattern",
+                            score=0.2,
+                        )
+                    )
                     break
         except Exception:
             pass
@@ -113,14 +140,22 @@ class SelfResearchEngine:
         found: List[RadarItem] = []
         try:
             from .eagle_adapter import EagleAdapter
+
             adapter = EagleAdapter()
-            for topic in topics or ["AI agent framework", "agent harness",
-                                    "LLM evaluation benchmark"]:
+            for topic in topics or [
+                "AI agent framework",
+                "agent harness",
+                "LLM evaluation benchmark",
+            ]:
                 for claim in adapter.web_search(topic, limit=4):
                     name = (claim.title[:60] or claim.url[:60]).strip() or claim.url[:60]
-                    item = RadarItem(name=f"web:{name}", status="EXPERIMENTAL",
-                                     source=claim.url or claim.backend,
-                                     evidence=claim.snippet[:300], score=0.55)
+                    item = RadarItem(
+                        name=f"web:{name}",
+                        status="EXPERIMENTAL",
+                        source=claim.url or claim.backend,
+                        evidence=claim.snippet[:300],
+                        score=0.55,
+                    )
                     self.radar.upsert(item)
                     found.append(item)
         except Exception as e:
@@ -129,19 +164,37 @@ class SelfResearchEngine:
 
     def propose(self, name: str, summary: str) -> str:
         p = self._prop_dir / f"{name}-{int(time.time())}.json"
-        p.write_text(json.dumps({"name": name, "summary": summary, "ts": time.time(),
-                                 "status": "proposed (needs sandbox eval + approval)"}, indent=2), encoding="utf-8")
+        p.write_text(
+            json.dumps(
+                {
+                    "name": name,
+                    "summary": summary,
+                    "ts": time.time(),
+                    "status": "proposed (needs sandbox eval + approval)",
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
         return str(p)
 
     def sandbox_eval(self, name: str, code: str) -> Dict[str, Any]:
         try:
             from .experiments import ExperimentEngine
+
             eng = ExperimentEngine(workspace_root=self.workspace_root)
             exp = eng.design(f"radar eval: {name}", baseline=0.5)
             exp = eng.run_code(exp, code)
             if exp.status == "passed" and exp.measurement > exp.baseline:
-                self.radar.upsert(RadarItem(name=name, status="PROMISING", source="sandbox",
-                                            evidence=exp.observation[:300], score=0.75))
+                self.radar.upsert(
+                    RadarItem(
+                        name=name,
+                        status="PROMISING",
+                        source="sandbox",
+                        evidence=exp.observation[:300],
+                        score=0.75,
+                    )
+                )
             return {"proposal": name, "experiment": exp.to_dict()}
         except Exception as e:
             return {"proposal": name, "error": str(e)}

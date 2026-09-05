@@ -11,12 +11,11 @@ Agent0-inspired co-evolving curriculum generator:
 from __future__ import annotations
 
 import logging
-import random
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from memory.subsystems import CapabilityMemory, CapabilityProfile
 

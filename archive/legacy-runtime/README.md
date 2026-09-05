@@ -10,3 +10,4 @@ Superseded subsystems with zero importers. Salvaged counterparts live in
 | `hermes_asi_master/runtime/scheduler.py` | _nothing — ours already covers it_ |
 | `hermes_asi_master/runtime/harness.py` | _nothing — thin dup of the kernel_ |
 | `training/pipeline.py` | _nothing — simulated fine-tuner + random-mutation GA (the exact anti-pattern); real evolution is `evolution_lab.py` + `arch_search.py` |
+| `test_pipeline.py` (moved from `tests/`) | tests the archived simulated pipeline; excluded from pytest collection by move |

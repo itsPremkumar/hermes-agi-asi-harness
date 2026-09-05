@@ -10,7 +10,6 @@ AlphaEvolve & Darwin Gödel Machine (DGM) inspired evolutionary laboratory:
 
 from __future__ import annotations
 
-import copy
 import logging
 import random
 import time
@@ -341,14 +340,16 @@ class ApprovalGate:
         self._dir.mkdir(parents=True, exist_ok=True)
 
     def request_approval(self, change_id: str, summary: str = "") -> str:
-        import json as _j, time as _t
+        import json as _j
+        import time as _t
         p = self._dir / f"{change_id}.json"
         p.write_text(_j.dumps({"change_id": change_id, "summary": summary,
                                "approved": False, "requested_at": _t.time()}), encoding="utf-8")
         return str(p)
 
     def approve(self, change_id: str, approver: str = "human") -> bool:
-        import json as _j, time as _t
+        import json as _j
+        import time as _t
         p = self._dir / f"{change_id}.json"
         try:
             data = _j.loads(p.read_text(encoding="utf-8")) if p.exists() else {"change_id": change_id}

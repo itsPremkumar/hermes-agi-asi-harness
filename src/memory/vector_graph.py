@@ -28,6 +28,7 @@ def set_embedding_backend(fn: Optional[Callable[[str], List[float]]]) -> None:
     _EMBED_FN = fn
     try:
         from .ranking import set_embedding_backend as _set2
+
         _set2(fn)
     except Exception:
         pass
@@ -91,14 +92,26 @@ class VectorStore:
         try:
             with open(self._file, "w", encoding="utf-8") as f:
                 for d in self._docs.values():
-                    f.write(json.dumps({"doc_id": d["doc_id"], "text": d["text"][:2000],
-                                        "tags": d.get("tags", [])}) + "\n")
+                    f.write(
+                        json.dumps(
+                            {
+                                "doc_id": d["doc_id"],
+                                "text": d["text"][:2000],
+                                "tags": d.get("tags", []),
+                            }
+                        )
+                        + "\n"
+                    )
         except Exception:
             pass
 
     def add(self, doc_id: str, text: str, tags: Optional[List[str]] = None) -> None:
-        self._docs[doc_id] = {"doc_id": doc_id, "text": text, "tags": list(tags or []),
-                              "_vec": self._vec(text)}
+        self._docs[doc_id] = {
+            "doc_id": doc_id,
+            "text": text,
+            "tags": list(tags or []),
+            "_vec": self._vec(text),
+        }
         self._save()
 
     def search(self, query: str, limit: int = 8) -> List[Tuple[str, float]]:
@@ -135,16 +148,26 @@ class KnowledgeGraph:
     def _save(self) -> None:
         try:
             self._file.parent.mkdir(parents=True, exist_ok=True)
-            self._file.write_text(json.dumps({"nodes": self._nodes, "edges": self._edges}, indent=2), encoding="utf-8")
+            self._file.write_text(
+                json.dumps({"nodes": self._nodes, "edges": self._edges}, indent=2), encoding="utf-8"
+            )
         except Exception:
             pass
 
-    def add_node(self, node_id: str, ntype: str, label: str = "", props: Optional[Dict[str, Any]] = None) -> None:
-        self._nodes[node_id] = {"id": node_id, "type": ntype, "label": label or node_id,
-                                "props": props or {}}
+    def add_node(
+        self, node_id: str, ntype: str, label: str = "", props: Optional[Dict[str, Any]] = None
+    ) -> None:
+        self._nodes[node_id] = {
+            "id": node_id,
+            "type": ntype,
+            "label": label or node_id,
+            "props": props or {},
+        }
         self._save()
 
-    def add_edge(self, src: str, rel: str, dst: str, props: Optional[Dict[str, Any]] = None) -> None:
+    def add_edge(
+        self, src: str, rel: str, dst: str, props: Optional[Dict[str, Any]] = None
+    ) -> None:
         if src not in self._nodes:
             self.add_node(src, "entity")
         if dst not in self._nodes:
@@ -152,15 +175,24 @@ class KnowledgeGraph:
         self._edges.append({"src": src, "rel": rel, "dst": dst, "props": props or {}})
         self._save()
 
-    def query(self, node_id: Optional[str] = None, rel: Optional[str] = None,
-              ntype: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def query(
+        self,
+        node_id: Optional[str] = None,
+        rel: Optional[str] = None,
+        ntype: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
         out = []
         for e in self._edges:
             if node_id and e["src"] != node_id and e["dst"] != node_id:
                 continue
             if rel and e["rel"] != rel:
                 continue
-            if ntype and self._nodes.get(e["src"], {}).get("type") != ntype and self._nodes.get(e["dst"], {}).get("type") != ntype:
+            if (
+                ntype
+                and self._nodes.get(e["src"], {}).get("type") != ntype
+                and self._nodes.get(e["dst"], {}).get("type") != ntype
+            ):
                 continue
             out.append(e)
             if len(out) >= limit:
