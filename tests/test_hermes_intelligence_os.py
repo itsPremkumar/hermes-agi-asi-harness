@@ -191,7 +191,7 @@ class TestMemoryOS:
 
     def test_procedural_memory_recipes(self):
         proc = ProceduralMemory()
-        p = proc.store_procedure(
+        proc.store_procedure(
             name="safe_file_mutation",
             steps=["check_git_status", "create_isolated_branch", "apply_patch", "run_pytest"],
             preconditions=["git_installed", "pytest_available"],

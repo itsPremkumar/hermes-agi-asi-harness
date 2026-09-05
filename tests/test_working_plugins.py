@@ -105,7 +105,7 @@ async def test_permission_system():
     assert not ok2, "Should require approval"
     assert "approval" in reason2.lower()
     # Elevation
-    req = p.request_elevation("deploy_production", "agent", "testing")
+    p.request_elevation("deploy_production", "agent", "testing")
     assert p.approve_elevation(-1)
     ok3, _ = p.check("deploy_production")
     assert ok3
@@ -136,7 +136,6 @@ async def test_filesystem_tool():
     p = Plugin()
     await p.load()
     await p.start()
-    test_dir = Path(_TMP) / "fstest"
     p.write("fstest/hello.txt", "line1\nline2\nline3\n")
     r = p.read("fstest/hello.txt")
     assert r["success"] and "line2" in r["content"]
@@ -302,8 +301,8 @@ async def test_multi_agent_orchestrator():
     p.register_agent("worker1")
     p.register_agent("worker2")
     t1 = p.submit_task("task1", worker, 1, priority=TaskPriority.HIGH)
-    t2 = p.submit_task("task2", worker, 2, priority=TaskPriority.LOW)
-    t3 = p.submit_task("task3", worker, 3, priority=TaskPriority.CRITICAL)
+    p.submit_task("task2", worker, 2, priority=TaskPriority.LOW)
+    p.submit_task("task3", worker, 3, priority=TaskPriority.CRITICAL)
     res = await p.run()
     assert res["completed"] == 3, res
     r1 = p.get_task_result(t1)
@@ -401,7 +400,7 @@ async def test_skill_learner():
     p.record_outcome(sid, success=True, duration=0.3)
     skills = p.list_skills()
     assert skills[0]["success_count"] == 2
-    stats = p.get_stats()
+    p.get_stats()
     await p.stop()
     return f"learned={sid[:8]}, matched={matched['name']}, success_rate={skills[0]['success_rate']:.1%}"
 
@@ -412,14 +411,14 @@ async def test_memory_curator():
     p = Plugin()
     await p.load()
     await p.start()
-    m1 = p.add_memory("Python is great for data science", "knowledge", 0.8, ["python", "data"])
-    m2 = p.add_memory("Docker simplifies deployment", "knowledge", 0.6, ["docker"])
-    m3 = p.add_memory("Neural networks power deep learning", "ai", 0.9, ["ml", "nn"])
+    p.add_memory("Python is great for data science", "knowledge", 0.8, ["python", "data"])
+    p.add_memory("Docker simplifies deployment", "knowledge", 0.6, ["docker"])
+    p.add_memory("Neural networks power deep learning", "ai", 0.9, ["ml", "nn"])
     results = p.search("deep learning neural networks")
     assert len(results) > 0
     assert "neural" in results[0]["content"].lower() or "deep" in results[0]["content"].lower()
     stats = p.get_stats()
-    cons = p.consolidate()
+    p.consolidate()
     await p.stop()
     return f"memories={stats['total_memories']}, top_match='{results[0]['content'][:30]}...'"
 

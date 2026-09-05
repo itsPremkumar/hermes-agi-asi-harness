@@ -27,9 +27,9 @@ class TestScopedHarnessState:
 
     def test_add_and_filter_entries(self, tmp_path):
         mgr = HarnessStateManager(workspace_root=str(tmp_path))
-        e1 = mgr.add_entry("prompt", "Safety Guide", "Never disable sandbox", scope="local")
-        e2 = mgr.add_entry("subagent", "Deep Critic", "Adversarial verification", scope="local")
-        e3 = mgr.add_entry("memory", "Host Topology", "Cluster node 1", scope="global")
+        mgr.add_entry("prompt", "Safety Guide", "Never disable sandbox", scope="local")
+        mgr.add_entry("subagent", "Deep Critic", "Adversarial verification", scope="local")
+        mgr.add_entry("memory", "Host Topology", "Cluster node 1", scope="global")
 
         assert len(mgr.get_entries()) == 3
         assert len(mgr.get_entries(kind="prompt")) == 1

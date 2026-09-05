@@ -710,7 +710,7 @@ class TestSafetyModuleIntegration:
         assert report.overall_status == "pass"
 
     def test_full_pipeline_escalate(self):
-        tm = ThreatModeler()
+        ThreatModeler()
         ra = RiskAssessor()
         enforcer = SafetyEnforcer()
         responder = IncidentResponder()

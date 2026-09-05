@@ -49,7 +49,7 @@ class TestNodeManager:
     def test_list_online(self):
         nm = NodeManager()
         n1 = nm.register("node1", "http://localhost:8001")
-        n2 = nm.register("node2", "http://localhost:8002")
+        nm.register("node2", "http://localhost:8002")
         nm.set_status(n1.id, NodeStatus.ONLINE)
         online = nm.list_online()
         assert len(online) == 1

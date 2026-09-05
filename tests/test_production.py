@@ -52,7 +52,7 @@ async def run_comprehensive_test():
         # Test Ollama provider (doesn't need API key)
         from core.llm import LLMConfig, LLMProvider
         config = LLMConfig(provider=LLMProvider.OLLAMA, model="llama3")
-        provider = manager.register_provider(config)
+        manager.register_provider(config)
         
         assert manager.available_providers == [LLMProvider.OLLAMA]
         
@@ -70,13 +70,13 @@ async def run_comprehensive_test():
         
         trajectory_store = DBTrajectoryStore(db)
         mission_store = MissionStore(db)
-        skill_store = SkillStore(db)
+        SkillStore(db)
         
         # Test trajectory creation
-        traj_id = await trajectory_store.create_trajectory("mission-1", "Test goal", "test", "simple")
+        await trajectory_store.create_trajectory("mission-1", "Test goal", "test", "simple")
         
         # Test mission creation
-        mission_id = await mission_store.create_mission("Test goal", "test", "simple")
+        await mission_store.create_mission("Test goal", "test", "simple")
         
         # Test stats
         stats = await trajectory_store.get_stats()
@@ -195,7 +195,7 @@ eval(user_input)
         # Should detect GitHub Actions since .github/workflows exists
         
         # Test webhook handling
-        webhook_result = await cicd.handle_webhook("github", {
+        await cicd.handle_webhook("github", {
             "action": "completed",
             "workflow_run": {
                 "conclusion": "success",

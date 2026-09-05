@@ -241,7 +241,7 @@ class TestResearchEngineIntegration:
         ])
         
         c1 = engine.graph.add_claim("AI safety is critical", confidence=0.8)
-        c2 = engine.graph.add_claim("Some disagree", confidence=0.4)
+        engine.graph.add_claim("Some disagree", confidence=0.4)
         
         for s in report.sources:
             engine.graph.support_claim(c1.id, s.id)
@@ -282,7 +282,7 @@ class TestResearchEngineIntegration:
         s = graph.add_source("https://example.com", "Source", authority="high")
         c1 = graph.add_claim("Supported claim")
         c2 = graph.add_claim("Contradicted claim")
-        c3 = graph.add_claim("Unrelated claim")
+        graph.add_claim("Unrelated claim")
         
         graph.support_claim(c1.id, s.id)
         graph.contradict_claim(c2.id, s.id)

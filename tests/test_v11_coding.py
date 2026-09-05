@@ -131,7 +131,7 @@ async def main():
         tg = TaskGraph()
         t1 = tg.add_task("Design", "Design the system", priority=10)
         t2 = tg.add_task("Implement", "Implement the system", dependencies=[t1.id], priority=5)
-        t3 = tg.add_task("Test", "Test the system", dependencies=[t2.id], priority=3)
+        tg.add_task("Test", "Test the system", dependencies=[t2.id], priority=3)
         ready = tg.get_ready_tasks()
         assert len(ready) == 1
         assert ready[0].id == t1.id
@@ -223,7 +223,7 @@ async def main():
         
         tg = TaskGraph()
         design_task = tg.add_task("Design", "Design architecture", priority=10)
-        impl_task = tg.add_task("Implement", "Write code", dependencies=[design_task.id])
+        tg.add_task("Implement", "Write code", dependencies=[design_task.id])
         
         graph = CodeGraph()
         idx = SemanticCodeIndex()

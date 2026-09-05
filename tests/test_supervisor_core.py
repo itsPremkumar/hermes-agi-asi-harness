@@ -11,7 +11,7 @@ from core.supervisor import (
 )
 from core.supervisor.evaluation import (
     EvaluationGate,
-    TestCase,
+    TestCase as SupervisorTestCase,
 )
 from core.supervisor.memory import (
     PersistentMemory,
@@ -80,7 +80,7 @@ class TestSupervisor:
 
     def test_save_and_load_state(self, tmp_path):
         s = Supervisor(data_dir=tmp_path)
-        goal = s.add_goal("Test", "Test goal")
+        s.add_goal("Test", "Test goal")
         s.save_state()
 
         s2 = Supervisor(data_dir=tmp_path)
@@ -171,8 +171,8 @@ class TestEvaluationGate:
     def test_evaluate_with_tests(self):
         gate = EvaluationGate()
         tests = [
-            TestCase(name="test1", expected="hello"),
-            TestCase(name="test2", expected="hello"),
+            SupervisorTestCase(name="test1", expected="hello"),
+            SupervisorTestCase(name="test2", expected="hello"),
         ]
         result = gate.evaluate_with_tests("task1", "hello", tests)
         assert result.score == 1.0

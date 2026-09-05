@@ -217,7 +217,7 @@ class TestDynamicWorkflowExecutor:
         assert executor is not None
 
     def test_execute_plan(self):
-        executor = DynamicWorkflowExecutor()
+        DynamicWorkflowExecutor()
         plan = Plan(title="Test")
         plan.steps = [PlanStep(title="Step1"), PlanStep(title="Step2")]
         # Note: execute_plan is async, so we test the sync parts

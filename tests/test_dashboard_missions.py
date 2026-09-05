@@ -52,7 +52,7 @@ class TestMissionController:
     def test_list_by_status(self):
         mc = MissionController()
         m1 = mc.create("a")
-        m2 = mc.create("b")
+        mc.create("b")
         mc.start(m1.id)
         running = mc.list_by_status(MissionStatus.RUNNING)
         assert len(running) == 1

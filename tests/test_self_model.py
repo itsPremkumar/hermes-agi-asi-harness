@@ -303,7 +303,7 @@ class TestSelfModelIntegration:
         profile = engine.get_profile()
         assert profile["total_samples"] == 25
         
-        bottlenecks = engine.detect_bottlenecks()
+        engine.detect_bottlenecks()
         rec = engine.get_recommendation("code_gen")
         assert rec["recommendation"] == "cot"
         assert rec["confidence"] > 0.0

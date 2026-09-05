@@ -166,7 +166,7 @@ async def main():
         plugin.engine.record_recovery(failure.id, "retry_with_backoff")
 
         # Get recurring
-        recurring = await plugin.get_recurring()
+        await plugin.get_recurring()
 
         stats = plugin.engine.get_failure_summary()
         assert stats["total"] >= 1

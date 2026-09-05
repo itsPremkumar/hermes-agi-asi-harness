@@ -147,7 +147,7 @@ async def main():
         await plugin.load()
 
         # Send messages
-        msg1 = await plugin.send(
+        await plugin.send(
             task_id="T001",
             sender="agent-a",
             receiver="agent-b",

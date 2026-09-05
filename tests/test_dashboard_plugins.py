@@ -71,7 +71,7 @@ class TestPluginManager:
     def test_active_count(self):
         pm = PluginManager()
         p1 = pm.register("a")
-        p2 = pm.register("b")
+        pm.register("b")
         pm.disable(p1.id)
         assert pm.active_count() == 1
 
