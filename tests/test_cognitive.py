@@ -139,7 +139,7 @@ async def main():
     def failing_tool(code: str):
         raise ValueError("SyntaxError: invalid")
     loop_fail.register_tool("python_exec", failing_tool)
-    result2 = loop_fail.run("compute something")
+    loop_fail.run("compute something")
     check("react-loop-catches-failures", len(loop_fail.critic.lessons) >= 1,
           f"(lessons={len(loop_fail.critic.lessons)})")
 

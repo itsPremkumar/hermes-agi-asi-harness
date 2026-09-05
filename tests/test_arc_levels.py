@@ -74,7 +74,7 @@ class TestLevelTracker:
     def test_get_progress(self):
         tracker = LevelTracker()
         l1 = tracker.register_level("A", "Desc", Difficulty.EASY)
-        l2 = tracker.register_level("B", "Desc", Difficulty.HARD)
+        tracker.register_level("B", "Desc", Difficulty.HARD)
         tracker.record_attempt(l1.id, True, 0.9)
         assert tracker.get_progress() == 0.5
 

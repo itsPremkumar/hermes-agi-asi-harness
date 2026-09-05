@@ -128,7 +128,7 @@ def test_3_requirements():
     _pass("Has YAML dependency")
 
     # Count packages
-    packages = [l.strip() for l in content.splitlines() if l.strip() and not l.startswith("#")]
+    packages = [line.strip() for line in content.splitlines() if line.strip() and not line.startswith("#")]
     assert len(packages) >= 3, f"Too few packages: {len(packages)}"
     _pass(f"Has {len(packages)} package entries")
 
@@ -192,7 +192,6 @@ async def test_5_e2e():
         "Phase 8 (Deployment)": ["observability_dashboard"],
     }
 
-    all_healthy = True
     for phase, plugins in phase_plugins.items():
         phase_loaded = [p for p in plugins if p in kernel._plugins]
         if phase_loaded:

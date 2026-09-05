@@ -514,7 +514,7 @@ class TestIntegration:
         agent = ARCAGI3Agent(memory=memory, supervisor=supervisor, max_actions_per_level=20)
         # Environment that never completes
         env = MockEnvironment(done_after=1000)
-        result = agent.run_level(env, "stuck_level")
+        agent.run_level(env, "stuck_level")
         # Supervisor should have intervened
         interventions = supervisor.get_interventions()
         assert len(interventions) > 0

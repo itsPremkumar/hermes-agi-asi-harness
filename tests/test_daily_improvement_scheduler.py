@@ -49,26 +49,26 @@ class TestDailyImprovementScheduler(unittest.TestCase):
         self.assertIsNone(self.scheduler.get_next())
 
     def test_complete_task(self):
-        task_id = self.scheduler.add_task("complete-task")
+        self.scheduler.add_task("complete-task")
         task = self.scheduler.get_next()
         self.scheduler.complete(task)
         self.assertEqual(task.status, TaskStatus.COMPLETED)
 
     def test_fail_task(self):
-        task_id = self.scheduler.add_task("fail-task")
+        self.scheduler.add_task("fail-task")
         task = self.scheduler.get_next()
         self.scheduler.fail(task, "Something went wrong")
         self.assertEqual(task.status, TaskStatus.FAILED)
         self.assertEqual(task.last_error, "Something went wrong")
 
     def test_demote_task(self):
-        task_id = self.scheduler.add_task("demote-task", priority=TaskPriority.CRITICAL)
+        self.scheduler.add_task("demote-task", priority=TaskPriority.CRITICAL)
         task = self.scheduler.get_next()
         self.scheduler.demote(task)
         self.assertEqual(task.priority, TaskPriority.HIGH)
 
     def test_promote_task(self):
-        task_id = self.scheduler.add_task("promote-task", priority=TaskPriority.LOW)
+        self.scheduler.add_task("promote-task", priority=TaskPriority.LOW)
         task = self.scheduler.get_next()
         self.scheduler.promote(task)
         self.assertEqual(task.priority, TaskPriority.MEDIUM)
@@ -115,21 +115,21 @@ class TestDailyImprovementScheduler(unittest.TestCase):
 
     def test_demote_from_critical(self):
         """Demoting from CRITICAL should go to HIGH."""
-        task_id = self.scheduler.add_task("demote-critical", priority=TaskPriority.CRITICAL)
+        self.scheduler.add_task("demote-critical", priority=TaskPriority.CRITICAL)
         task = self.scheduler.get_next()
         self.scheduler.demote(task)
         self.assertEqual(task.priority, TaskPriority.HIGH)
 
     def test_promote_from_low(self):
         """Promoting from LOW should go to MEDIUM."""
-        task_id = self.scheduler.add_task("promote-low", priority=TaskPriority.LOW)
+        self.scheduler.add_task("promote-low", priority=TaskPriority.LOW)
         task = self.scheduler.get_next()
         self.scheduler.promote(task)
         self.assertEqual(task.priority, TaskPriority.MEDIUM)
 
     def test_promote_from_critical_stays_critical(self):
         """Promoting from CRITICAL should stay CRITICAL."""
-        task_id = self.scheduler.add_task("promote-critical", priority=TaskPriority.CRITICAL)
+        self.scheduler.add_task("promote-critical", priority=TaskPriority.CRITICAL)
         task = self.scheduler.get_next()
         self.scheduler.promote(task)
         self.assertEqual(task.priority, TaskPriority.CRITICAL)
@@ -161,13 +161,13 @@ class TestDailyImprovementScheduler(unittest.TestCase):
         self.assertEqual(third.priority, TaskPriority.LOW)
 
     def test_task_run_count(self):
-        task_id = self.scheduler.add_task("count-task")
+        self.scheduler.add_task("count-task")
         task = self.scheduler.get_next()
         self.scheduler.complete(task)
         self.assertEqual(task.run_count, 1)
 
     def test_task_total_runtime(self):
-        task_id = self.scheduler.add_task("runtime-task")
+        self.scheduler.add_task("runtime-task")
         task = self.scheduler.get_next()
         time.sleep(0.01)
         self.scheduler.complete(task)

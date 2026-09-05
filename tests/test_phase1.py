@@ -191,7 +191,7 @@ async def test_phase1_e2e():
 
     # 5. Execute task
     task = Task(goal=contract.objective)
-    task_id = await k.submit_task(task)
+    await k.submit_task(task)
     await asyncio.sleep(3)
 
     # 6. Add evidence

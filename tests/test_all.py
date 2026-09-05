@@ -64,14 +64,14 @@ async def test_all():
     
     try:
         from core.genetic import GeneticEvolution
-        genetic = GeneticEvolution()
+        GeneticEvolution()
         results.append(("GeneticEvolution", True, "initialized"))
     except Exception as e:
         results.append(("GeneticEvolution", False, str(e)))
     
     try:
         from core.sandbox import SandboxedExecution
-        sandbox = SandboxedExecution()
+        SandboxedExecution()
         results.append(("SandboxedExecution", True, "ready"))
     except Exception as e:
         results.append(("SandboxedExecution", False, str(e)))
@@ -131,8 +131,7 @@ async def test_all():
     print("=" * 70 + "\n")
     
     passed = sum(1 for _, success, _ in results if success)
-    failed = len(results) - passed
-    
+
     for name, success, detail in results:
         status = "✅ PASS" if success else "❌ FAIL"
         print(f"  {status} {name}: {detail}")
