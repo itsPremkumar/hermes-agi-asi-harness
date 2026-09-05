@@ -55,7 +55,7 @@ dev = [
     "hermes-agi-asi-harness[api]",
 ]
 all = [
-    "hermes-agi-asi-harness[dev,api]",
+    "hermes-agi-asi-harness[dev,api,mcp]",
 ]
 
 [project.scripts]
