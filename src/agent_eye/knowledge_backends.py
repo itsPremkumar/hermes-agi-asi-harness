@@ -54,8 +54,7 @@ def osm_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         results = []
         for i, place in enumerate(data[:limit]):
             display_name = place.get("display_name", "")
-            address = place.get("address", {})
-            
+
             results.append({
                 "title": display_name.split(",")[0] if display_name else "",
                 "url": f"https://www.openstreetmap.org/?mlat={place.get('lat')}&mlon={place.get('lon')}",

@@ -293,8 +293,6 @@ class VerifierAgent(PluginBase):
     async def verify(self, artifact: str, acceptance_criteria: list[str]) -> dict[str, Any]:
         """Verify an artifact against acceptance criteria using Quality Gates and invariants."""
         try:
-            from hermes_agi.allocation.quality_gates import AutonomousQualityGatePolicy
-            policy = AutonomousQualityGatePolicy()
             passed = len(artifact.strip()) > 0
             results = [
                 {"criterion": c, "passed": True, "details": "Verified against acceptance contract"}
@@ -305,7 +303,7 @@ class VerifierAgent(PluginBase):
                 "criteria": acceptance_criteria,
                 "passed": passed,
                 "test_results": results,
-                "policy_enforced": True,
+                "policy_enforced": False,
             }
         except Exception:
             return {

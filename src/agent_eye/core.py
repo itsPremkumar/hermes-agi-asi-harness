@@ -1524,7 +1524,7 @@ def main():
     p_schedule.add_argument("-m", "--mode", default="general", help="Search mode")
     p_schedule.add_argument("-n", "--limit", type=int, default=5, help="Max results")
     
-    p_scheduled = sub.add_parser("scheduled", help="List scheduled searches")
+    sub.add_parser("scheduled", help="List scheduled searches")
     
     p_remove_schedule = sub.add_parser("unschedule", help="Remove scheduled search")
     p_remove_schedule.add_argument("id", help="Scheduled search ID")

@@ -159,6 +159,9 @@ class RealityVerificationEngine:
         except Exception:
             safety_evidence.append("safety_invariants_preserved")
 
+        for inv in invs:
+            safety_evidence.append(f"required_invariant:{inv}")
+
         safety = VerificationDimensionVerdict(
             dimension="safety",
             passed=safety_passed,

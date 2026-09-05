@@ -122,7 +122,7 @@ class MCTSSearchEngine:
             if current.depth < max_depth and not current.is_terminal:
                 candidate_actions = self._generate_candidate_actions(current, goal)
                 for action_name, action_desc in candidate_actions[:self.max_branching]:
-                    child = current.add_child(thought=action_desc, action=action_name)
+                    current.add_child(thought=action_desc, action=action_name)
                     total_nodes += 1
                 if current.children:
                     current = current.children[0]
@@ -165,7 +165,6 @@ class MCTSSearchEngine:
     def _generate_candidate_actions(self, node: MCTSNode, goal: str) -> list[tuple[str, str]]:
         """Synthesize candidate thought steps at the current node depth."""
         d = node.depth
-        g_lower = goal.lower()
 
         if d == 0:
             return [

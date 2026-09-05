@@ -177,8 +177,8 @@ def evolve_node(state: SupervisorState) -> SupervisorState:
     state.stall_count = 0
     state.current_step = 0
 
-    # Spawn sub-agent for research
-    subagent_id = agent.spawn_subagent(
+    # Spawn sub-agent for research (fire-and-forget: spawner tracks the task)
+    agent.spawn_subagent(
         f"Research alternative approaches for: {state.goal_description}",
         state.context,
     )

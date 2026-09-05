@@ -195,7 +195,7 @@ def main() -> None:
         r = engine.run_once()
         print(json.dumps(r.to_dict(), indent=2))
         return
-    rounds = engine.run()
+    engine.run()
     print(json.dumps(engine.summary(), indent=2))
 
 

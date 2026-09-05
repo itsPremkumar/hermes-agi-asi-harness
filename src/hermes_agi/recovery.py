@@ -115,7 +115,6 @@ class DeepHealingAgent:
 
     def diagnose(self, error: str, context: dict[str, Any] | None = None) -> Diagnosis:
         err_lower = error.lower()
-        ctx = context or {}
 
         # 1. Encoding / Subprocess errors
         if "unicodedecodeerror" in err_lower or "charmap" in err_lower:
@@ -153,10 +152,16 @@ class DeepHealingAgent:
                 suggested_strategy=RecoveryStrategy.FALLBACK,
             )
 
-        # Default: General execution exception
+        # Default: General execution exception (name the failing component when known)
+        if isinstance(context, str) and context.strip():
+            component = context.strip()
+        elif isinstance(context, dict):
+            component = context.get("component") or context.get("source") or error
+        else:
+            component = error
         return Diagnosis(
             category="general_fault",
-            root_cause=f"Runtime exception in component: {error[:120]}",
+            root_cause=f"Runtime exception in component: {component[:120]}",
             suggested_action="Roll back to previous verified checkpoint and retry with defensive assertions.",
             suggested_strategy=RecoveryStrategy.RETRY,
         )

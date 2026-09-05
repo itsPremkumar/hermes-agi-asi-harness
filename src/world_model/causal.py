@@ -76,8 +76,7 @@ class CausalGraph:
 
             for edge in self.get_effects_of(current):
                 effect_node = edge.effect
-                # Estimate propagated change
-                source_val = outcomes.get(current)
+                # Estimate propagated change (downstream confidence scales with edge, not upstream value)
                 predicted_effect = f"modified_by_{edge.mechanism}"
                 outcomes[effect_node] = {
                     "predicted_state": predicted_effect,

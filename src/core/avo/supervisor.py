@@ -61,7 +61,6 @@ class Supervisor:
         if not recent:
             return StagnationSignal(detected=False, reason="insufficient history")
 
-        best_recent = max(r["score"] for r in recent)
         best_ever = max(r["score"] for r in self._history)
         no_improve_count = sum(1 for r in recent if r["score"] < best_ever)
 

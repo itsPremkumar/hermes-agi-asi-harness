@@ -185,17 +185,9 @@ def youtube_get_video_info(video_id: str, instance: str = None) -> Optional[Dict
 def linkedin_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
     """Search LinkedIn public posts (limited, no API key)."""
     try:
-        # LinkedIn public search is limited without API key
+        # LinkedIn public search requires authentication; no unauthenticated
+        # request is attempted (a previous revision fired a dead httpx GET here).
         # This searches for public posts via Google-style search
-        resp = httpx.get(
-            "https://www.linkedin.com/pub/dir/+/+",
-            params={"trk": "people-guest_people-search-bar_search-submit"},
-            headers={"User-Agent": _UA},
-            timeout=15,
-        )
-        
-        # LinkedIn requires authentication for most searches
-        # Return empty result for now
         logger.debug("LinkedIn search requires authentication")
         return None
         

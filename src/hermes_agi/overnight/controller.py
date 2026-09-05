@@ -138,9 +138,6 @@ class OvernightLoopController:
             iteration += 1
             logger.info("--- Overnight Iteration %d/%d ---", iteration, self.config.max_iterations)
 
-            # Build iteration context prompt
-            prompt_context = self.notes.get_prompt_context()
-
             # Execute step through DeepCodingLoop or agent
             # For demonstration and testability, formulate incremental sub-goals
             step_desc = f"Iteration {iteration}: Progressing towards '{self.config.objective}'"
@@ -169,15 +166,24 @@ class OvernightLoopController:
                 # 3. Success: Atomic Git Commit + Notes Update
                 commit_msg = f"hermes: iteration {iteration} - {step_desc[:50]}"
                 committed = self.git.commit(commit_msg)
-                commits_made += 1
-                consecutive_failures = 0
-                self.notes.record_success(
-                    iteration=iteration,
-                    description=step_desc,
-                    commit_info=commit_msg,
-                    findings=[f"Verified with zero syntax errors ({result.duration_seconds:.2f}s)."],
-                )
-                logger.info("Iteration %d SUCCEEDED and committed.", iteration)
+                if committed:
+                    commits_made += 1
+                    consecutive_failures = 0
+                    self.notes.record_success(
+                        iteration=iteration,
+                        description=step_desc,
+                        commit_info=commit_msg,
+                        findings=[f"Verified with zero syntax errors ({result.duration_seconds:.2f}s)."],
+                    )
+                    logger.info("Iteration %d SUCCEEDED and committed.", iteration)
+                else:
+                    consecutive_failures += 1
+                    self.notes.record_failure(
+                        iteration=iteration,
+                        error_message="Step verified but git commit failed.",
+                        diagnosis="Commit rejected (identity/config or hook); changes left uncommitted in workspace.",
+                    )
+                    logger.warning("Iteration %d VERIFIED but commit FAILED. Consecutive: %d", iteration, consecutive_failures)
             else:
                 # 4. Failure: Git Hard Reset + Record Failure
                 self.git.hard_reset()

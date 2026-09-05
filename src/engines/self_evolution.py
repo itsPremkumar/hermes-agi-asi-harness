@@ -179,6 +179,8 @@ class SelfEvolutionLoop:
 
         # In testing environments, simulate branch isolation
         created = self.git.create_and_checkout_branch(branch_name)
+        if not created:
+            raise RuntimeError(f"Evolution isolation failed: could not create branch {branch_name}")
         try:
             # Re-evaluate benchmark in isolated environment
             candidate_score = self.run_baseline_benchmark()
@@ -192,7 +194,6 @@ class SelfEvolutionLoop:
         Execute the complete Closed-Loop Darwinian Evolution Cycle:
         Run Baseline -> Profile -> Mutate -> Test on Branch -> Gate (Merge or Discard).
         """
-        base_branch = self.git.get_current_branch()
         initial_score = self.run_baseline_benchmark()
         current_score = initial_score
 
