@@ -1,8 +1,9 @@
 """Tests for score_aggregator.py — Score Aggregator."""
-import pytest
 
 from benchmark.score_aggregator import (
-    BenchmarkScore, ScoreReport, ScoreAggregator,
+    BenchmarkScore,
+    ScoreAggregator,
+    ScoreReport,
 )
 
 

@@ -1,50 +1,50 @@
 """Plugins package — all plugin implementations."""
 
-from .manager import (
-    PluginManager,
-    PluginBase,
-    PluginState,
-    PluginPriority,
-    PluginMetadata,
-    PluginHealth,
-    PluginEvent,
-    PluginError,
-    PluginLoadError,
-    PluginStartError,
-    PluginDependencyError,
-    PluginTimeoutError,
-    PluginRecoveryError,
-)
 from .core_plugins import (
     ALL_PLUGINS,
-    register_all_plugins,
+    BenchmarkPlugin,
+    CodingPlugin,
+    DiscoveryPlugin,
+    MemoryPlugin,
     PlanningPlugin,
     ResearchPlugin,
-    CodingPlugin,
-    TestingPlugin,
-    BenchmarkPlugin,
     SafetyPlugin,
-    MemoryPlugin,
-    DiscoveryPlugin,
-    WorkflowPlugin,
     SelfImprovementPlugin,
+    TestingPlugin,
+    WorkflowPlugin,
+    register_all_plugins,
+)
+from .hermes_integration import (
+    AutoInstaller,
+    HermesConfig,
+    HermesDetector,
+    HermesIntegrator,
+    IntegrationStatus,
+)
+from .manager import (
+    PluginBase,
+    PluginDependencyError,
+    PluginError,
+    PluginEvent,
+    PluginHealth,
+    PluginLoadError,
+    PluginManager,
+    PluginMetadata,
+    PluginPriority,
+    PluginRecoveryError,
+    PluginStartError,
+    PluginState,
+    PluginTimeoutError,
 )
 from .real_plugins import (
     ALL_REAL_PLUGINS,
-    register_all_real_plugins,
+    RealBenchmarkPlugin,
+    RealCodingPlugin,
+    RealDiscoveryPlugin,
     RealPlanningPlugin,
     RealResearchPlugin,
-    RealCodingPlugin,
     RealTestingPlugin,
-    RealBenchmarkPlugin,
-    RealDiscoveryPlugin,
-)
-from .hermes_integration import (
-    HermesDetector,
-    HermesIntegrator,
-    AutoInstaller,
-    HermesConfig,
-    IntegrationStatus,
+    register_all_real_plugins,
 )
 
 __all__ = [

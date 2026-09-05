@@ -9,57 +9,45 @@ Validates:
 5. Hermes Intelligence OS Master Kernel & 6 Nested Control Loops
 """
 
-import asyncio
-import os
 import pytest
-from pathlib import Path
 
-from world_model import (
-    WorldModel,
-    EntityGraph,
-    EntityType,
-    BeliefSystem,
-    BeliefState,
-    CausalGraph,
-    ActionAffordanceModel,
-)
-from memory import (
-    MemoryOS,
-    SemanticMemory,
-    EpisodicMemory,
-    ProceduralMemory,
-    WorkingMemory,
-    FailureMemory,
-    DecisionMemory,
-    WorldStateMemory,
-    CapabilityMemory,
-    Trajectory,
-    TrajectoryStep,
-    TrajectoryArchive,
-)
 from context_os import (
     ContextBudget,
-    GoalInvariant,
-    GoalContract,
     ContextCompiler,
-)
-from verification.vnext import (
-    VerificationTier,
-    RealityVerificationEngine,
-    EarnedCompletionProof,
+    GoalContract,
+    GoalInvariant,
 )
 from hermes_os import (
-    HermesIntelligenceOS,
     ExecutiveKernel,
-    GoalController,
-    StateController,
-    ResourceController,
-    SafetyController,
+    HermesIntelligenceOS,
     MetaPlanner,
-    ExecutionArchitecture,
-    LoopEngine,
 )
-
+from memory import (
+    CapabilityMemory,
+    DecisionMemory,
+    EpisodicMemory,
+    FailureMemory,
+    MemoryOS,
+    ProceduralMemory,
+    SemanticMemory,
+    Trajectory,
+    TrajectoryArchive,
+    TrajectoryStep,
+    WorkingMemory,
+)
+from verification.vnext import (
+    RealityVerificationEngine,
+    VerificationTier,
+)
+from world_model import (
+    ActionAffordanceModel,
+    BeliefState,
+    BeliefSystem,
+    CausalGraph,
+    EntityGraph,
+    EntityType,
+    WorldModel,
+)
 
 # =============================================================================
 # 1. World Model Tests

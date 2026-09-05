@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
 
-from .main_agent import MainAgent, Candidate
-from .memory import AVOMemory
-from .lineage import Lineage
 from .correctness_gate import CorrectnessGate
+from .lineage import Lineage
+from .main_agent import Candidate, MainAgent
+from .memory import AVOMemory
 from .supervisor import Supervisor
 
 

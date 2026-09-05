@@ -16,27 +16,27 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+
 import pytest
 
 from hermes_os import (
-    HermesIntelligenceOS,
-    CognitiveCompiler,
+    CompositeDualSubstrateAdapter,
+    DeepAgentsRuntimeAdapter,
     ExecutionPlanIR,
+    ExecutionResult,
+    ExecutionStatus,
     ExecutionWave,
     GoalGraph,
     GoalNode,
-    # Runtime SPI & Adapters
-    RuntimeAdapter,
-    ExecutionResult,
-    ExecutionStatus,
+    HermesIntelligenceOS,
     LangGraphRuntimeAdapter,
-    DeepAgentsRuntimeAdapter,
-    CompositeDualSubstrateAdapter,
     OpenClawRuntimeAdapter,
     PrimeRuntimeAdapter,
+    # Runtime SPI & Adapters
+    RuntimeAdapter,
     RuntimeRouter,
 )
-from hermes_os.capabilities import CapabilityKind, CapabilityManifest, ExecutionCapabilityPlan
+from hermes_os.capabilities import ExecutionCapabilityPlan
 
 
 def _create_sample_plan(mission_id: str = "m-test-runtime-01") -> ExecutionPlanIR:

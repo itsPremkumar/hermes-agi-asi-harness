@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import logging
 import re
-import urllib.parse
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -143,7 +142,7 @@ def yahoo_finance_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]
     """Search Yahoo Finance for stock quotes."""
     try:
         resp = httpx.get(
-            f"https://query2.finance.yahoo.com/v1/finance/search",
+            "https://query2.finance.yahoo.com/v1/finance/search",
             params={"q": query, "quotesCount": limit, "newsCount": 0},
             headers={"User-Agent": ua_rotator.get()},
             timeout=15,
@@ -347,7 +346,7 @@ def crates_io_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         resp = httpx.get(
             f"{CRATES_IO}/crates",
             params={"q": query, "per_page": limit},
-            headers={"User-Agent": _UA},
+            headers={"User-Agent": ua_rotator.get()},
             timeout=15,
         )
         resp.raise_for_status()
@@ -383,7 +382,7 @@ def packagist_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         resp = httpx.get(
             f"{PACKAGIST}/search.json",
             params={"q": query, "per_page": limit},
-            headers={"User-Agent": _UA},
+            headers={"User-Agent": ua_rotator.get()},
             timeout=15,
         )
         resp.raise_for_status()
@@ -419,7 +418,7 @@ def go_pkg_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         resp = httpx.get(
             "https://pkg.go.dev/search",
             params={"q": query, "limit": limit},
-            headers={"User-Agent": _UA},
+            headers={"User-Agent": ua_rotator.get()},
             timeout=15,
         )
         resp.raise_for_status()
@@ -471,7 +470,7 @@ def hacker_news_latest(limit: int = 10) -> Optional[Dict[str, Any]]:
     try:
         resp = httpx.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json",
-            headers={"User-Agent": _UA},
+            headers={"User-Agent": ua_rotator.get()},
             timeout=15,
         )
         resp.raise_for_status()
@@ -482,7 +481,7 @@ def hacker_news_latest(limit: int = 10) -> Optional[Dict[str, Any]]:
             try:
                 story_resp = httpx.get(
                     f"https://hacker-news.firebaseio.com/v0/item/{story_id}.json",
-                    headers={"User-Agent": _UA},
+                    headers={"User-Agent": ua_rotator.get()},
                     timeout=10,
                 )
                 story_resp.raise_for_status()
@@ -514,7 +513,7 @@ def lobsters_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         resp = httpx.get(
             "https://lobste.rs/search",
             params={"q": query, "what": "stories", "order": "relevance"},
-            headers={"User-Agent": _UA},
+            headers={"User-Agent": ua_rotator.get()},
             timeout=15,
         )
         resp.raise_for_status()

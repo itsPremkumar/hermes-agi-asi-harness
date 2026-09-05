@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .controller import KernelController, KernelState, KernelPhase, KernelTask
+from .controller import KernelController, KernelPhase, KernelState, KernelTask
 
 __all__ = [
     "KernelController",

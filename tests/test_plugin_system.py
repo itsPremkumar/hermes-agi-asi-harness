@@ -7,7 +7,6 @@ import json
 import os
 import sys
 import tempfile
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
@@ -18,15 +17,11 @@ from harness.plugin_system import (
     HookEvent,
     HookPoint,
     HookRegistry,
-    MemoryPlugin,
-    Plugin,
     PluginConfig,
     PluginManager,
     PluginState,
     PluginType,
     SolverPlugin,
-    EvalPlugin,
-    ToolPlugin,
 )
 
 

@@ -1,4 +1,4 @@
 """graph_gate — re-export module."""
-from . import NodeType, GraphNode, GraphEdge, GraphGate
+from . import GraphEdge, GraphGate, GraphNode, NodeType
 
 __all__ = ["GraphEdge", "GraphGate", "GraphNode", "NodeType"]

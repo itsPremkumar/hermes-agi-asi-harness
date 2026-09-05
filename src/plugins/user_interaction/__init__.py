@@ -16,9 +16,9 @@ from typing import Any
 
 from core.runtime.plugin_base import PluginBase, PluginManifest, PluginState
 
-from .clarifier import Clarifier, ClarificationRequest, ClarificationResponse
+from .clarifier import ClarificationRequest, ClarificationResponse, Clarifier
 from .deliverer import Channel, DeliveryRequest, DeliveryResponse, ResultDeliverer
-from .explainer import ExplanationRequest, ExplanationResponse, Explainer
+from .explainer import Explainer, ExplanationRequest, ExplanationResponse
 
 
 class UserInteractionPlugin(PluginBase):

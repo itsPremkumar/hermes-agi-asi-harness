@@ -25,14 +25,19 @@ async def main():
         results.append(("Workflow Executor", True, f"modules={state['modules']}"))
         print(f"  ✓ {state['modules']} modules registered")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Workflow Executor", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
     # Test 2: Full Dynamic Execution
     print("\n[2/5] Full Dynamic Execution...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicWorkflowExecutor
+        from core.dynamic import (
+            AdvancedPlanningEngine,
+            DynamicScenarioAnalyzer,
+            DynamicWorkflowExecutor,
+        )
         
         analyzer = DynamicScenarioAnalyzer()
         engine = AdvancedPlanningEngine()
@@ -52,7 +57,8 @@ async def main():
         results.append(("Full Execution", True, f"steps={len(result.step_results)}, completed={completed}, failed={failed}"))
         print(f"  ✓ Execution: {len(result.step_results)} steps, {completed} completed, {failed} failed")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Full Execution", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
@@ -81,14 +87,19 @@ async def main():
         results.append(("Kernel Integration", True, f"dynamic_execution={result['success']}"))
         print(f"  ✓ Kernel dynamic execution: {result['scenario_type']}, {result['complexity']}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Kernel Integration", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
     # Test 4: Different Topologies
     print("\n[4/5] Different Topologies...")
     try:
-        from core.dynamic import DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicWorkflowExecutor
+        from core.dynamic import (
+            AdvancedPlanningEngine,
+            DynamicScenarioAnalyzer,
+            DynamicWorkflowExecutor,
+        )
         
         analyzer = DynamicScenarioAnalyzer()
         engine = AdvancedPlanningEngine()
@@ -109,7 +120,8 @@ async def main():
         results.append(("Topologies", True, f"tested={len(topologies)}"))
         print(f"  ✓ Tested {len(topologies)} topologies: {', '.join(topologies)}")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Topologies", False, str(e)[:80]))
         print(f"  ✗ {e}")
 
@@ -139,7 +151,8 @@ async def main():
         results.append(("End-to-End", True, f"scenarios={len(scenarios)}"))
         print(f"  ✓ {len(scenarios)} scenarios executed end-to-end")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("End-to-End", False, str(e)[:80]))
         print(f"  ✗ {e}")
 

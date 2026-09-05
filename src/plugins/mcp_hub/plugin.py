@@ -1,4 +1,4 @@
 """mcp_hub — re-export module."""
-from . import ServerStatus, MCPServer, MCPHub
+from . import MCPHub, MCPServer, ServerStatus
 
 __all__ = ["MCPHub", "MCPServer", "ServerStatus"]

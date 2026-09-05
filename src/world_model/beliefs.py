@@ -9,12 +9,11 @@ Evaluates supporting vs contradictory evidence with Bayesian updates and tempora
 from __future__ import annotations
 
 import logging
-import math
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("hermes.world_model.beliefs")
 

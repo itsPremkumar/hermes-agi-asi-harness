@@ -14,15 +14,14 @@ import logging
 import re
 from typing import Any, Dict, List, Set
 
+from agent_eye.diversity import deduplicate_similar, enforce_site_diversity
 from agent_eye.domain_authority import domain_authority_score
 from agent_eye.freshness import freshness_score, is_time_sensitive_query
 from agent_eye.snippet_intent import (
-    detect_query_intent,
     dominant_intent,
     intent_boost,
     snippet_quality_score,
 )
-from agent_eye.diversity import deduplicate_similar, enforce_site_diversity
 
 logger = logging.getLogger(__name__)
 

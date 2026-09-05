@@ -7,6 +7,19 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from .legacy import (
+    MemoryStore,
+    load_memory,
+    make_recorder,
+    rank_lessons,
+    recall,
+    record_lesson,
+    retrieve,
+    save_memory,
+    semantic_search,
+    set_embedding_backend,
+)
+
 
 @dataclass
 class MemoryEntry:
@@ -142,18 +155,3 @@ class MemorySystem:
     
     async def consolidate(self):
         """Consolidate memories (summarize old episodes)."""
-
-
-# Legacy long-term memory store (MemoryStore, semantic_search, retrieve)
-from .legacy import (
-    MemoryStore,
-    load_memory,
-    make_recorder,
-    rank_lessons,
-    recall,
-    record_lesson,
-    retrieve,
-    save_memory,
-    semantic_search,
-    set_embedding_backend,
-)

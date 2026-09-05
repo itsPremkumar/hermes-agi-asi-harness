@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import logging
 import random
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -97,7 +96,7 @@ class GSM8KBenchmark:
                 question_id=f"gsm8k-{i}",
                 question=question,
                 answer=float(answer),
-                steps=[f"Step 1: Parse the problem", f"Step 2: Calculate {answer}"],
+                steps=["Step 1: Parse the problem", f"Step 2: Calculate {answer}"],
             )
             questions.append(q)
             self.add_question(q)

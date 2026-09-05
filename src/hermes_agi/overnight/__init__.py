@@ -11,6 +11,7 @@ Inspired by gnhf ("Good Night, Have Fun"):
 - Exit Diff Summary & Review Commands
 """
 
+from .branch_summarizer import BranchSummary, SemanticBranchSummarizer
 from .controller import (
     OvernightConfig,
     OvernightLoopController,
@@ -18,7 +19,6 @@ from .controller import (
 )
 from .git_manager import GitManager
 from .notes_curator import NotesCurator
-from .branch_summarizer import SemanticBranchSummarizer, BranchSummary
 
 __all__ = [
     "OvernightConfig",

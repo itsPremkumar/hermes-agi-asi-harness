@@ -1,14 +1,14 @@
 """circuit_breaker — re-export module."""
 from . import (
-    CircuitBreakerPlugin,
     CircuitBreakerConfig,
-    PlaneHealth,
+    CircuitBreakerPlugin,
     CircuitState,
-    register_fallback,
+    PlaneHealth,
     get_fallbacks,
+    register_fallback,
 )
 from .health import HealthMonitor
-from .recovery import RecoveryEngine, RecoveryResult, Checkpoint
+from .recovery import Checkpoint, RecoveryEngine, RecoveryResult
 
 Plugin = CircuitBreakerPlugin
 

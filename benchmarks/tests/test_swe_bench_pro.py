@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from benchmark.swe_bench_pro_benchmark import SWEBenchPro, SWETask, SWEResult, TaskStatus
+from benchmark.swe_bench_pro_benchmark import SWEBenchPro, TaskStatus
 
 
 class TestSWEBenchPro:

@@ -13,6 +13,7 @@ Extracted from SKILL.md v9.0 ASI section 5:
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -220,5 +221,3 @@ class WorldModel:
                 self.temporal_state = data.get("temporal_state", self.temporal_state)
                 self.unknowns = data.get("unknowns", [])
                 self.known_unknowns = data.get("known_unknowns", [])
-
-import os

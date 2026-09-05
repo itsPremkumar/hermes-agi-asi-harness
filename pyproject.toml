@@ -90,6 +90,12 @@ ignore = ["E501"]
 "benchmarks/**/__init__.py" = ["F401"]
 "profiles/**/__init__.py" = ["F401"]
 "tests/**/__init__.py" = ["F401"]
+# E402 false positives: sys.path / environment bootstrapping that MUST run
+# before the following imports.
+"benchmarks/__init__.py" = ["E402"] # sys.path bootstrap + "benchmark" alias
+"scripts/run_benchmarks.py" = ["E402"] # project-root path bootstrap
+"tests/test_runtime.py" = ["E402"] # HERMES_HOME isolation must precede imports
+"profiles/**/tests/*.py" = ["E402"] # standalone harnesses bootstrap sys.path
 
 [tool.mypy]
 python_version = "3.11"

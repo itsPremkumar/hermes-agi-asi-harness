@@ -5,13 +5,11 @@ a structured mission contract with clear success criteria.
 """
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 
 class GoalType(str, Enum):

@@ -1,9 +1,10 @@
 """Tests for siqa_benchmark.py — SIQA Benchmark."""
 
-import asyncio
-import pytest
 from src.benchmark.siqa_benchmark import (
-    SIQABenchmark, SIQAQuestion, SIQAResult, SIQADataset,
+    SIQABenchmark,
+    SIQADataset,
+    SIQAQuestion,
+    SIQAResult,
 )
 
 

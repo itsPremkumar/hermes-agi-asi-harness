@@ -11,9 +11,9 @@ from typing import Any, Callable
 
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
 
 from . import (
@@ -84,7 +84,7 @@ class CircuitBreaker:
                 result = func(*args, **kwargs)
                 self.record_success()
                 return result
-            except Exception as e:
+            except Exception:
                 self.record_failure()
                 raise
         return wrapper

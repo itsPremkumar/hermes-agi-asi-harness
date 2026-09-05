@@ -1,8 +1,10 @@
 """Dispatcher — Routes sub-goals to appropriate agents."""
 from __future__ import annotations
+
 import uuid
-from typing import Any, Callable, Dict, List, Optional
-from core.supervisor import Task, TaskType
+from typing import Any, Dict, Optional
+
+from core.supervisor import Task
 
 
 class Dispatcher:

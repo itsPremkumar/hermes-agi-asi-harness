@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .governor import SafetyGovernor, RiskLevel, RiskProfile
+from .governor import RiskLevel, RiskProfile, SafetyGovernor
 
 __all__ = [
     "SafetyGovernor",

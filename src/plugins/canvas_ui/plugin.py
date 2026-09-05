@@ -1,4 +1,4 @@
 """canvas_ui — re-export module."""
-from . import ElementType, CanvasElement, CanvasUI
+from . import CanvasElement, CanvasUI, ElementType
 
 __all__ = ["CanvasElement", "CanvasUI", "ElementType"]

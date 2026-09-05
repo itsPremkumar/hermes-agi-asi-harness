@@ -3,26 +3,17 @@ import asyncio
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from plugins.user_interaction import (
     Channel,
-    Clarifier,
-    ClarificationRequest,
     ClarificationResponse,
-    DeliveryRequest,
-    DeliveryResponse,
-    ExplanationRequest,
-    ExplanationResponse,
+    Clarifier,
     Explainer,
+    ExplanationResponse,
     ResultDeliverer,
     UserInteractionPlugin,
 )
-from plugins.user_interaction.clarifier import Clarifier as ClarifierClass
-from plugins.user_interaction.explainer import Explainer as ExplainerClass
-from plugins.user_interaction.deliverer import ResultDeliverer as DelivererClass
 
 
 class TestClarifier:

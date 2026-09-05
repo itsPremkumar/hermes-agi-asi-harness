@@ -20,9 +20,7 @@ import time
 import traceback
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any, Callable, Coroutine
 
 logger = logging.getLogger(__name__)
@@ -533,7 +531,7 @@ def with_circuit_breaker(threshold: int = 5, timeout: float = 30.0):
                 failure_count = 0
                 state = "closed"
                 return result
-            except Exception as e:
+            except Exception:
                 failure_count += 1
                 last_failure = time.time()
                 if failure_count >= threshold:

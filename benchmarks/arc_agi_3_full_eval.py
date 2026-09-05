@@ -6,20 +6,15 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from benchmarks.arc_game import (
-    ARCAGI3Engine,
+    GRID_SIZE,
     ARCAGI3Agent,
+    ARCAGI3Engine,
     ARCAGI3Scorer,
+    LevelResult,
+    Observation,
     PersistentMemory,
     Supervisor,
-    Observation,
-    Action,
-    ActionType,
-    LevelResult,
-    EnvironmentResult,
-    GRID_SIZE,
-    MAX_ACTIONS_PER_LEVEL,
 )
-
 
 NUM_ENVIRONMENTS = 25
 NUM_LEVELS = 183

@@ -10,12 +10,12 @@ Reference: https://arxiv.org/abs/2603.24517
 """
 from __future__ import annotations
 
-from .main_agent import MainAgent, Observation, Plan, Candidate, EvaluationResult
-from .memory import AVOMemory, MemoryEntry
-from .lineage import Lineage, VersionRecord
-from .supervisor import Supervisor, StagnationSignal
 from .correctness_gate import CorrectnessGate, GateResult
-from .engine import AVOEngine, AVOConfig
+from .engine import AVOConfig, AVOEngine
+from .lineage import Lineage, VersionRecord
+from .main_agent import Candidate, EvaluationResult, MainAgent, Observation, Plan
+from .memory import AVOMemory, MemoryEntry
+from .supervisor import StagnationSignal, Supervisor
 
 __all__ = [
     "AVOConfig",

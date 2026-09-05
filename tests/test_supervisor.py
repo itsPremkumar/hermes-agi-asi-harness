@@ -2,32 +2,17 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.supervisor import (
-    SupervisorState, TaskType, Task, Goal,
+    Goal,
     Supervisor,
+    Task,
 )
-from core.supervisor.memory import (
-    PersistentMemory, MemoryEntry, MemoryType, Experience,
-)
-from core.supervisor.evaluation import (
-    EvaluationGate, CodeEvaluationGate, BenchmarkEvaluationGate,
-    EvaluationResult,
-)
-from core.supervisor.variation import (
-    VariationOperator, Candidate,
-)
-from core.supervisor.orchestrator import (
-    MultiAgentOrchestrator, Agent, AgentRole, Topology,
-)
-from core.supervisor.planner import Planner
 from core.supervisor.dispatcher import Dispatcher
 from core.supervisor.monitor import Monitor
+from core.supervisor.planner import Planner
 from core.supervisor.research import ResearchAgent
-
 
 # ---------------------------------------------------------------------------
 # Goal tests

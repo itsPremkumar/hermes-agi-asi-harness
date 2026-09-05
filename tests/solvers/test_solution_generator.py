@@ -1,27 +1,25 @@
 """Tests for SolutionGenerator."""
-import pytest
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.puzzle_parser import Grid, Puzzle, ExamplePair
-from harness.solvers.arc_agi_3.rule_hypothesizer import Hypothesis, HypothesisSet
-from harness.solvers.arc_agi_3.strategy_selector import StrategyResult, STRATEGY_RULE_BASED
-from harness.solvers.arc_agi_3.solution_generator import (
-    SolutionGenerator,
-    Solution,
-    Candidate,
+from benchmarks.solvers.arc_agi_3.puzzle_parser import ExamplePair, Grid, Puzzle
+from benchmarks.solvers.arc_agi_3.rule_hypothesizer import Hypothesis, HypothesisSet
+from benchmarks.solvers.arc_agi_3.solution_generator import (
     GENERATOR_MAP,
-    _gen_identity,
+    SolutionGenerator,
     _gen_color_shift,
-    _gen_rotation,
-    _gen_reflection,
-    _gen_scaling,
     _gen_crop_to_content,
-    _gen_padding,
     _gen_flood_fill,
+    _gen_identity,
+    _gen_padding,
+    _gen_reflection,
+    _gen_rotation,
+    _gen_scaling,
 )
+from benchmarks.solvers.arc_agi_3.strategy_selector import STRATEGY_RULE_BASED, StrategyResult
 
 
 def _pair(inp, out):

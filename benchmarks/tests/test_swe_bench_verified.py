@@ -1,12 +1,13 @@
 """Tests for swe_bench_verified_benchmark.py — SWE-bench Verified Benchmark."""
-import pytest
+import json
 import os
 import tempfile
-import json
 
 from benchmark.swe_bench_verified_benchmark import (
-    SWETask, SWEResult, SWEBenchmarkReport, SWESummary,
-    SWEBenchVerifiedLoader, SWEBenchVerifiedBenchmark,
+    SWEBenchVerifiedBenchmark,
+    SWEBenchVerifiedLoader,
+    SWEResult,
+    SWETask,
 )
 
 

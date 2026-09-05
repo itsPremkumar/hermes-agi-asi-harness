@@ -16,10 +16,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
-from .memory import AVOMemory, MemoryEntry
-from .lineage import Lineage, VersionRecord
 from .correctness_gate import CorrectnessGate
-from .supervisor import Supervisor, StagnationSignal
+from .lineage import Lineage, VersionRecord
+from .memory import AVOMemory, MemoryEntry
+from .supervisor import StagnationSignal, Supervisor
 
 
 @dataclass

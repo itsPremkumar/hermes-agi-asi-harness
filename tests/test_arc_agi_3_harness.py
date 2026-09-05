@@ -16,13 +16,24 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from benchmarks.arc_game import (
-    Action, ALL_ACTIONS, ActionType, ARCAGI3Agent, ARCAGI3Engine, ARCAGI3Scorer,
-    EnvironmentResult, GRID_SIZE, Hypothesis, LevelResult,
-    MAX_ACTIONS_PER_LEVEL, NUM_COLORS, Observation,
-    PersistentMemory, Supervisor, SupervisorStatus,
+    ALL_ACTIONS,
+    GRID_SIZE,
     LEVEL_SCORE_CAP,
+    MAX_ACTIONS_PER_LEVEL,
+    NUM_COLORS,
+    Action,
+    ActionType,
+    ARCAGI3Agent,
+    ARCAGI3Engine,
+    ARCAGI3Scorer,
+    EnvironmentResult,
+    Hypothesis,
+    LevelResult,
+    Observation,
+    PersistentMemory,
+    Supervisor,
+    SupervisorStatus,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test fixtures

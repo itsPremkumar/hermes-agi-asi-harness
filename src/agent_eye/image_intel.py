@@ -9,13 +9,10 @@ MIT License. See LICENSE for details.
 
 from __future__ import annotations
 
-import base64
 import io
-import json
 import logging
 import os
-import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import httpx
 
@@ -130,8 +127,9 @@ def analyze_image(url_or_path: str) -> Dict[str, Any]:
     }
     
     try:
-        from PIL import Image
         import collections
+
+        from PIL import Image
         
         # Download if URL
         if url_or_path.startswith(("http://", "https://")):

@@ -54,7 +54,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import httpx
-import yaml
 
 from agent_eye.academic import arxiv_search, wikipedia_search
 from agent_eye.academic_backends import (
@@ -63,23 +62,34 @@ from agent_eye.academic_backends import (
     pubmed_search,
     semantic_scholar_search,
 )
+from agent_eye.batch_collector import (
+    assert_allowed,
+    crawl_website,
+    discover_feeds,
+    guarded_get,
+    parse_feed,
+    wayback_cdx_search,
+)
 from agent_eye.bookmarks import (
     add_bookmark,
     add_to_collection,
     create_collection,
     get_collection,
-    load_bookmarks,
     load_collections,
     remove_bookmark,
     search_bookmarks,
 )
-from agent_eye.batch_collector import (
-    crawl_website,
-    discover_feeds,
-    parse_feed,
-    wayback_cdx_search,
-    wayback_latest_snapshot,
+from agent_eye.cache import get_cache
+from agent_eye.capability_detector import (
+    classify_website,
+    detect_capabilities,
+    discover_api_endpoints,
 )
+from agent_eye.change_detector import (
+    check_availability,
+    monitor_content,
+)
+from agent_eye.circuit_breaker import circuit_breaker
 from agent_eye.commerce_gov import (
     datagov_search,
     google_patents_search,
@@ -91,6 +101,10 @@ from agent_eye.commerce_gov import (
     weather_search,
     worldbank_search,
 )
+from agent_eye.common_crawl import (
+    fetch_from_common_crawl,
+    search_common_crawl,
+)
 from agent_eye.config import add_to_history, ensure_config, get_analytics, load_history
 from agent_eye.dev_backends import (
     bitbucket_search,
@@ -99,36 +113,17 @@ from agent_eye.dev_backends import (
     npm_search,
     pypi_search,
 )
-from agent_eye.cache import MultiLevelCache, get_cache, cache_key, cached
-from agent_eye.fts_search import SearchIndex, get_index, index_page, search_pages
-from agent_eye.intelligence import (
-    canonicalize_url,
-    content_hash,
-    rank_results,
-    get_domain_authority,
-    interpret_freshness,
-    CitationEngine,
-    EvidenceEngine,
-    init_database,
-    DB_SCHEMA,
+from agent_eye.document_intel import (
+    extract_document,
 )
-from agent_eye.capability_detector import (
-    classify_website,
-    detect_capabilities,
-    discover_api_endpoints,
+from agent_eye.exceptions import (
+    AgentSearchError,
+    BackendError,
+    InvalidModeError,
+    InvalidURLError,
+    RobotsDisallowedError,
 )
-from agent_eye.change_detector import (
-    ChangeMonitor,
-    check_availability,
-    monitor_content,
-    monitor_price,
-)
-from agent_eye.common_crawl import (
-    analyze_domain,
-    fetch_from_common_crawl,
-    search_common_crawl,
-    search_domain,
-)
+from agent_eye.export import export as export_results
 from agent_eye.extra_apis import (
     cocoapods_search,
     conceptnet_lookup,
@@ -138,7 +133,6 @@ from agent_eye.extra_apis import (
     maven_search,
     nasa_apod,
     nasa_mars_photos,
-    nasa_neo_feed,
     nuget_search,
     pubdev_search,
     rubygems_search,
@@ -146,51 +140,19 @@ from agent_eye.extra_apis import (
     usgs_volcanoes,
     wordnet_lookup,
 )
-from agent_eye.intelligence import (
-    canonicalize_url,
-    content_hash,
-    CitationEngine,
-    EvidenceEngine,
-    FailureHandler,
-    DomainIntelligence,
-    interpret_freshness,
-    rank_results,
-    get_domain_authority,
-    calculate_freshness_score,
-    init_database,
-    DB_SCHEMA,
-)
-from agent_eye.document_intel import (
-    extract_document,
-    extract_docx,
-    extract_pdf,
-    extract_pptx,
-    extract_xlsx,
-)
-from agent_eye.exceptions import (
-    AgentSearchError,
-    AllBackendsFailedError,
-    BackendError,
-    CacheError,
-    ConfigurationError,
-    InvalidModeError,
-    InvalidURLError,
-    NetworkError,
-    RateLimitError,
-    RobotsDisallowedError,
-    TimeoutError,
-)
-from agent_eye.export import export as export_results
-from agent_eye.extractors import smart_extract, score_readability
-from agent_eye.circuit_breaker import circuit_breaker
 from agent_eye.extra_backends import (
     cluster_results,
     devto_search,
     filter_by_freshness,
     get_suggestions,
     mdn_search,
-    sort_by_freshness,
-    wikipedia_search_multi,
+)
+from agent_eye.extractors import smart_extract
+from agent_eye.fts_search import get_index, search_pages
+from agent_eye.image_intel import (
+    analyze_image,
+    extract_image_metadata,
+    extract_text_from_image,
 )
 from agent_eye.knowledge_backends import (
     dbpedia_search,
@@ -208,24 +170,37 @@ from agent_eye.media_backends import (
     openlibrary_search,
     tmdb_search,
 )
+from agent_eye.more_backends import (
+    crates_io_search,
+    go_pkg_search,
+    lobsters_search,
+    mojeek_search,
+    packagist_search,
+    pexels_search,
+    pixabay_search,
+    qwant_search,
+    reddit_search,
+    unsplash_search,
+    yahoo_finance_search,
+)
 from agent_eye.ranking import (
     cross_verify,
     format_token_conscious,
     is_polluted,
-    quality_score,
     rank_results,
 )
-from agent_eye.image_intel import (
-    analyze_image,
-    extract_image_metadata,
-    extract_text_from_image,
-)
 from agent_eye.research_engine import (
-    expand_query,
     research,
     verify_source,
 )
 from agent_eye.retry import retry_sync
+from agent_eye.scheduler import (
+    add_scheduled_search,
+    load_scheduled,
+    load_webhooks,
+    register_webhook,
+    remove_scheduled_search,
+)
 from agent_eye.search_engines import (
     bing_search,
     brave_search,
@@ -236,81 +211,29 @@ from agent_eye.search_engines import (
 )
 from agent_eye.seo_extractor import (
     extract_all_structured_data,
-    extract_json_ld,
-    extract_meta_tags,
-    extract_open_graph,
-    extract_seo_data,
-    extract_twitter_card,
 )
 from agent_eye.sitemap_parser import (
     discover_sitemaps,
     discover_website_structure,
     get_all_urls_from_sitemap,
-    get_sitemaps_from_robots,
-    get_sitemap_stats,
     is_url_allowed,
     parse_robots_txt,
-    parse_sitemap,
-)
-from agent_eye.batch_collector import (
-    assert_allowed,
-    guarded_get,
-)
-from agent_eye.scheduler import (
-    add_scheduled_search,
-    get_due_scheduled,
-    load_scheduled,
-    load_webhooks,
-    register_webhook,
-    remove_scheduled_search,
-    trigger_webhook,
-    update_scheduled_run,
-)
-from agent_eye.video_intel import (
-    detect_video_platform,
-    extract_video_metadata,
-    extract_video_subtitles,
-    extract_video_thumbnail,
-    youtube_search,
 )
 from agent_eye.social import lemmy_search, stackoverflow_search
 from agent_eye.social_backends import (
     mastodon_search,
     telegram_search,
     twitter_search,
-    youtube_search,
 )
 from agent_eye.social_tiers import (
     bluesky_search,
-    bluesky_profile,
     instagram_public_search,
-    instagram_api_search,
     linkedin_public_search,
-    linkedin_api_search,
-    mastodon_search as mastodon_search_v2,
     tiktok_public_search,
     x_public_search,
-    get_source_tiers,
-)
-from agent_eye.more_backends import (
-    crates_io_search,
-    go_pkg_search,
-    hacker_news_latest,
-    lobsters_search,
-    mojeek_search,
-    packagist_search,
-    pexels_search,
-    pixabay_search,
-    qwant_search,
-    reddit_search,
-    reddit_subreddit_posts,
-    unsplash_search,
-    yahoo_finance_quote,
-    yahoo_finance_search,
 )
 from agent_eye.summarize import summarize_results
 from agent_eye.templates import (
-    TEMPLATES,
     apply_template,
     compare_results,
     get_template,
@@ -318,12 +241,13 @@ from agent_eye.templates import (
     search_content,
 )
 from agent_eye.throttle import (
-    RateLimiter,
-    ReliabilityScorer,
-    UserAgentRotator,
     rate_limiter,
     reliability_scorer,
     ua_rotator,
+)
+from agent_eye.video_intel import (
+    extract_video_metadata,
+    youtube_search,
 )
 
 logger = logging.getLogger(__name__)
@@ -766,7 +690,7 @@ class AgentSearchLite:
         self.all_backends = {
             "searxng": _searxng_search,
             "ddgs": _ddgs_search,
-            "jina-ddg": lambda q, l: _jina_ddg_search(q, l),
+            "jina-ddg": _jina_ddg_search,
             "github": _github_search,
             "hackernews": _hackernews_search,
             "arxiv": _arxiv_search_wrapper,
@@ -776,75 +700,75 @@ class AgentSearchLite:
             "lemmy": _lemmy_search_wrapper,
             "mdn": _mdn_search_wrapper,
             "devto": _devto_search_wrapper,
-            "youtube": lambda q, l: youtube_search(q, l),
-            "twitter": lambda q, l: twitter_search(q, l),
-            "mastodon": lambda q, l: mastodon_search(q, l),
-            "telegram": lambda q, l: telegram_search(q, l),
-            "bluesky": lambda q, l: bluesky_search(q, l),
-            "linkedin": lambda q, l: linkedin_public_search(q, l),
-            "instagram": lambda q, l: instagram_public_search(q, l),
-            "tiktok": lambda q, l: tiktok_public_search(q, l),
-            "x": lambda q, l: x_public_search(q, l),
-            "osm": lambda q, l: osm_search(q, l),
-            "wikidata": lambda q, l: wikidata_search(q, l),
-            "geonames": lambda q, l: geonames_search(q, l),
-            "dbpedia": lambda q, l: dbpedia_search(q, l),
-            "rss": lambda q, l: rss_search(q, l),
-            "wayback": lambda q, l: wayback_search(q, l),
-            "gitlab": lambda q, l: gitlab_search(q, l),
-            "bitbucket": lambda q, l: bitbucket_search(q, l),
-            "npm": lambda q, l: npm_search(q, l),
-            "pypi": lambda q, l: pypi_search(q, l),
-            "dockerhub": lambda q, l: dockerhub_search(q, l),
-            "pubmed": lambda q, l: pubmed_search(q, l),
-            "semantic_scholar": lambda q, l: semantic_scholar_search(q, l),
-            "crossref": lambda q, l: crossref_search(q, l),
-            "openalex": lambda q, l: openalex_search(q, l),
-            "datagov": lambda q, l: datagov_search(q, l),
-            "worldbank": lambda q, l: worldbank_search(q, l),
-            "undata": lambda q, l: undata_search(q, l),
-            "weather": lambda q, l: weather_search(q, l),
-            "nws": lambda q, l: nws_search(q, l),
-            "patents": lambda q, l: patents_search(q, l),
-            "google_patents": lambda q, l: google_patents_search(q, l),
-            "jobs": lambda q, l: jobs_search(q, l),
-            "opencorporates": lambda q, l: opencorporates_search(q, l),
-            "tmdb": lambda q, l: tmdb_search(q, l),
-            "lastfm": lambda q, l: lastfm_search(q, l),
-            "openlibrary": lambda q, l: openlibrary_search(q, l),
-            "anilist": lambda q, l: anilist_search(q, l),
-            "mal": lambda q, l: mal_search(q, l),
-            "boardgameatlas": lambda q, l: boardgameatlas_search(q, l),
-            "google": lambda q, l: google_search(q, l),
-            "bing": lambda q, l: bing_search(q, l),
-            "brave": lambda q, l: brave_search(q, l),
-            "duckduckgo": lambda q, l: duckduckgo_search(q, l),
-            "startpage": lambda q, l: startpage_search(q, l),
-            "reddit": lambda q, l: reddit_search(q, l),
-            "yahoo_finance": lambda q, l: yahoo_finance_search(q, l),
-            "unsplash": lambda q, l: unsplash_search(q, l),
-            "pexels": lambda q, l: pexels_search(q, l),
-            "pixabay": lambda q, l: pixabay_search(q, l),
-            "crates_io": lambda q, l: crates_io_search(q, l),
-            "packagist": lambda q, l: packagist_search(q, l),
-            "go_pkg": lambda q, l: go_pkg_search(q, l),
-            "lobsters": lambda q, l: lobsters_search(q, l),
-            "mojeek": lambda q, l: mojeek_search(q, l),
-            "qwant": lambda q, l: qwant_search(q, l),
-            "rubygems": lambda q, l: rubygems_search(q, l),
-            "nuget": lambda q, l: nuget_search(q, l),
-            "maven": lambda q, l: maven_search(q, l),
-            "cocoapods": lambda q, l: cocoapods_search(q, l),
-            "pubdev": lambda q, l: pubdev_search(q, l),
-            "nasa_apod": lambda q, l: nasa_apod(),
-            "nasa_mars": lambda q, l: nasa_mars_photos(),
-            "usgs_earthquakes": lambda q, l: usgs_earthquakes(limit=l),
-            "usgs_volcanoes": lambda q, l: usgs_volcanoes(limit=l),
-            "datamuse": lambda q, l: datamuse_words(q, l),
-            "datamuse_rhyme": lambda q, l: datamuse_rhymes(q, l),
-            "datamuse_synonym": lambda q, l: datamuse_synonyms(q, l),
-            "conceptnet": lambda q, l: conceptnet_lookup(q, limit=l),
-            "wordnet": lambda q, l: wordnet_lookup(q),
+            "youtube": youtube_search,
+            "twitter": twitter_search,
+            "mastodon": mastodon_search,
+            "telegram": telegram_search,
+            "bluesky": bluesky_search,
+            "linkedin": linkedin_public_search,
+            "instagram": instagram_public_search,
+            "tiktok": tiktok_public_search,
+            "x": x_public_search,
+            "osm": osm_search,
+            "wikidata": wikidata_search,
+            "geonames": geonames_search,
+            "dbpedia": dbpedia_search,
+            "rss": rss_search,
+            "wayback": wayback_search,
+            "gitlab": gitlab_search,
+            "bitbucket": bitbucket_search,
+            "npm": npm_search,
+            "pypi": pypi_search,
+            "dockerhub": dockerhub_search,
+            "pubmed": pubmed_search,
+            "semantic_scholar": semantic_scholar_search,
+            "crossref": crossref_search,
+            "openalex": openalex_search,
+            "datagov": datagov_search,
+            "worldbank": worldbank_search,
+            "undata": undata_search,
+            "weather": weather_search,
+            "nws": nws_search,
+            "patents": patents_search,
+            "google_patents": google_patents_search,
+            "jobs": jobs_search,
+            "opencorporates": opencorporates_search,
+            "tmdb": tmdb_search,
+            "lastfm": lastfm_search,
+            "openlibrary": openlibrary_search,
+            "anilist": anilist_search,
+            "mal": mal_search,
+            "boardgameatlas": boardgameatlas_search,
+            "google": google_search,
+            "bing": bing_search,
+            "brave": brave_search,
+            "duckduckgo": duckduckgo_search,
+            "startpage": startpage_search,
+            "reddit": reddit_search,
+            "yahoo_finance": yahoo_finance_search,
+            "unsplash": unsplash_search,
+            "pexels": pexels_search,
+            "pixabay": pixabay_search,
+            "crates_io": crates_io_search,
+            "packagist": packagist_search,
+            "go_pkg": go_pkg_search,
+            "lobsters": lobsters_search,
+            "mojeek": mojeek_search,
+            "qwant": qwant_search,
+            "rubygems": rubygems_search,
+            "nuget": nuget_search,
+            "maven": maven_search,
+            "cocoapods": cocoapods_search,
+            "pubdev": pubdev_search,
+            "nasa_apod": lambda q, limit: nasa_apod(),
+            "nasa_mars": lambda q, limit: nasa_mars_photos(),
+            "usgs_earthquakes": lambda q, limit: usgs_earthquakes(limit=limit),
+            "usgs_volcanoes": lambda q, limit: usgs_volcanoes(limit=limit),
+            "datamuse": datamuse_words,
+            "datamuse_rhyme": datamuse_rhymes,
+            "datamuse_synonym": datamuse_synonyms,
+            "conceptnet": lambda q, limit: conceptnet_lookup(q, limit=limit),
+            "wordnet": lambda q, limit: wordnet_lookup(q),
         }
 
     def _get_backends_for_mode(self, mode: str) -> List[tuple[str, callable]]:
@@ -1262,7 +1186,7 @@ class AgentSearchLite:
                     backends[name] = "off"
             elif name == "ddgs":
                 try:
-                    import ddgs
+                    import ddgs  # noqa: F401  # optional-dependency probe
                     backends[name] = "ok"
                 except ImportError:
                     backends[name] = "off"
@@ -1310,7 +1234,7 @@ class AgentSearchLite:
 
 def interactive_mode():
     """Run interactive search REPL."""
-    from agent_eye.summarize import print_welcome, format_interactive_prompt
+    from agent_eye.summarize import format_interactive_prompt, print_welcome
     search = AgentSearchLite()
     print_welcome()
     mode = "general"

@@ -10,15 +10,14 @@ from __future__ import annotations
 
 import pytest
 
+from agents import MetaAgentFactory
 from agents.implementations import (
     CoderAgent,
     ExecutorAgent,
     PlannerAgent,
-    ResearcherAgent,
     ReviewerAgent,
     VerifierAgent,
 )
-from agents import MetaAgentFactory
 from daily_improvement.continuous_cycle import ContinuousCycle, CycleStatus
 from mesh.advanced_orchestrator import MultiAgentOrchestrator
 

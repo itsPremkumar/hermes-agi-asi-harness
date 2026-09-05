@@ -1,6 +1,10 @@
 """Tests for ARC-AGI-3 Environment Connector."""
 from benchmarks.arc_game.environment import (
-    EnvironmentConnector, ConnectionStatus, ActionType, Action, Task
+    Action,
+    ActionType,
+    ConnectionStatus,
+    EnvironmentConnector,
+    Task,
 )
 
 

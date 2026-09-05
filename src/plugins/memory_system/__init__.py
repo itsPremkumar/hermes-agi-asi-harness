@@ -127,20 +127,6 @@ class MemorySystem:
         """)
         conn.commit()
 
-    async def start(self) -> bool:
-        self._get_conn()  # initialize
-        self._started = True
-        logger.info("MemorySystem started with %d backends", len(self._backends))
-        return True
-
-    async def stop(self) -> bool:
-        self._started = False
-        if self._conn:
-            self._conn.close()
-            self._conn = None
-        logger.info("MemorySystem stopped")
-        return True
-
     def store(self, memory_type: MemoryType, content: str,
               importance: float = 0.5, tags: list[str] | None = None,
               metadata: dict | None = None, related_to: list[str] | None = None) -> str:

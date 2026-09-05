@@ -1,8 +1,10 @@
 """Monitor — Tracks progress and detects stalls."""
 from __future__ import annotations
+
 import time
-from typing import Dict, List, Any, Optional
-from core.supervisor import Goal, Task
+from typing import Any, Dict
+
+from core.supervisor import Goal
 
 
 class Monitor:

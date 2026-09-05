@@ -1,12 +1,15 @@
 """Tests for wino_grande_benchmark.py."""
 
-import pytest
 import json
 import os
 import tempfile
+
 from benchmark.wino_grande_benchmark import (
-    WinogradProblem, ProblemResult, BenchmarkResult,
-    WinogradBenchmark, SAMPLE_PROBLEMS,
+    SAMPLE_PROBLEMS,
+    BenchmarkResult,
+    ProblemResult,
+    WinogradBenchmark,
+    WinogradProblem,
 )
 
 
@@ -91,7 +94,10 @@ class TestWinogradBenchmark:
         bench = WinogradBenchmark()
         bench.load_problems()
         problem = bench.problems[0]
-        solver = lambda s, p, o: 0
+
+        def solver(s, p, o):
+            return 0
+
         result = bench.run_problem(problem, solver)
         assert isinstance(result, ProblemResult)
         assert result.predicted_answer == 0

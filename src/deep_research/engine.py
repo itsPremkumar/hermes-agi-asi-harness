@@ -1,8 +1,8 @@
 """Deep Research Engine — Phase 4: Frontend + Integration."""
 from __future__ import annotations
 
-import uuid
 import time
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 

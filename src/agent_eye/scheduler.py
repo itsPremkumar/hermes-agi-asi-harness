@@ -10,10 +10,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import threading
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
 
 import httpx
 

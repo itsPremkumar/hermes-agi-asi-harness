@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import re
-from urllib.parse import urlparse
 
 from agent_eye.domain_authority import top_domain
-
 
 # ---------------------------------------------------------------------------
 # Site diversity enforcement

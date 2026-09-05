@@ -11,10 +11,18 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from benchmarks.core_suites import (
-    BenchmarkType, BenchmarkTask, TaskResult, BenchmarkResult,
-    SWEBenchAdapter, GAIAAdapter, TerminalBenchAdapter,
-    GPQAAdapter, HumanEvalAdapter, MBPPAdapter,
-    MultiBenchmarkEngine, create_default_engine,
+    BenchmarkResult,
+    BenchmarkTask,
+    BenchmarkType,
+    GAIAAdapter,
+    GPQAAdapter,
+    HumanEvalAdapter,
+    MBPPAdapter,
+    MultiBenchmarkEngine,
+    SWEBenchAdapter,
+    TaskResult,
+    TerminalBenchAdapter,
+    create_default_engine,
 )
 
 

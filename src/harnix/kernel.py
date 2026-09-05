@@ -10,29 +10,28 @@ START -> init -> research -> think -> plan -> dispatch -> monitor -> verify -> c
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from harnix.state import AgentState, AgentPhase
 from harnix.nodes import (
-    init_node,
-    research_node,
-    think_node,
-    plan_node,
-    dispatch_node,
-    rlm_node,
-    monitor_node,
-    verify_node,
     adjust_node,
-    evolve_node,
     complete_node,
-    route_after_dispatch,
-    route_after_monitor,
-    route_after_verify,
+    dispatch_node,
+    evolve_node,
+    init_node,
+    monitor_node,
+    plan_node,
+    research_node,
+    rlm_node,
     route_after_adjust,
     route_after_evolve,
+    route_after_monitor,
+    route_after_verify,
+    think_node,
+    verify_node,
 )
+from harnix.state import AgentState
 
 logger = logging.getLogger("hermes.runtime_kernel")
 

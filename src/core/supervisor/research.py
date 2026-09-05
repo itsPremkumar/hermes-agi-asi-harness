@@ -1,5 +1,6 @@
 """Research Agent — Deep web research using Hermes native search tools."""
 from __future__ import annotations
+
 from pathlib import Path
 from typing import Any, Dict, Optional
 

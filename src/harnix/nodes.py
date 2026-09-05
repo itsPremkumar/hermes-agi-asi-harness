@@ -21,15 +21,15 @@ import time
 import uuid
 from typing import Any
 
-from harnix.state import AgentState, AgentPhase
+from harnix.state import AgentPhase, AgentState
 
 # Cognitive and monitoring subsystems
 try:
-    from hermes_agi.research import DeepResearchAgent
-    from hermes_agi.thinking import DeepThinkingEngine
-    from hermes_agi.allocation import HermesMissionPacket, HermesWatchdogMonitor
     from core.verification.adversarial import AdversarialVerifier
     from core.verification.anti_goodhart import AntiGoodhartVerifier
+    from hermes_agi.allocation import HermesMissionPacket, HermesWatchdogMonitor
+    from hermes_agi.research import DeepResearchAgent
+    from hermes_agi.thinking import DeepThinkingEngine
 except ImportError:
     DeepResearchAgent = None
     DeepThinkingEngine = None

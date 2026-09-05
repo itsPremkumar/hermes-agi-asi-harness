@@ -5,9 +5,8 @@ All state is serializable (no callables, no objects without __dict__) for checkp
 """
 from __future__ import annotations
 
-from typing import Annotated, Any, TypedDict
-
 import operator
+from typing import Annotated, Any, TypedDict
 
 
 class AgentPhase:

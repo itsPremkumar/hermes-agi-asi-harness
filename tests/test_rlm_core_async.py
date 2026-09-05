@@ -8,8 +8,6 @@ Unit tests for Hermes Core Async RLM Engine (Prime Agent parity):
 
 from __future__ import annotations
 
-import pytest
-
 from hermes_agi.rlm import RLMREPLExecutor, RLMSpawnHandle
 
 

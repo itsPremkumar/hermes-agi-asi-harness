@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import pytest
-
 from reflexion_eval.evaluator import Rubric
 from reflexion_eval.loop import (
-    LoopResult,
     Task,
     _extract_answer,
     build_agent_prompt,

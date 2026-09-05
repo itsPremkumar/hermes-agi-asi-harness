@@ -68,7 +68,7 @@ class ContinuousEngine:
         self._load()
 
     def run_once(self) -> EvolutionRound:
-        from core.avo.engine import AVOEngine, AVOConfig
+        from core.avo.engine import AVOConfig, AVOEngine
         from core.benchmark.harness import BenchmarkRunner, ScoringFunction
 
         round_num = len(self._rounds) + 1

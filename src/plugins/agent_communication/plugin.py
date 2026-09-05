@@ -1,4 +1,4 @@
 """agent_communication — re-export module."""
-from . import logger, AgentMessage, AgentCommunicationBus, AgentCommunicationPlugin
+from . import AgentCommunicationBus, AgentCommunicationPlugin, AgentMessage, logger
 
 __all__ = ["AgentCommunicationBus", "AgentCommunicationPlugin", "AgentMessage", "logger"]

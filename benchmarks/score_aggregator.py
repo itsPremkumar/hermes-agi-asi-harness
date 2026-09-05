@@ -6,11 +6,8 @@ Weighted score aggregation across all benchmarks, 0-100 scale.
 
 from __future__ import annotations
 
-import json
-import os
-import tempfile
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 

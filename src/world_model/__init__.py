@@ -3,10 +3,10 @@ HERMES INTELLIGENCE OS — WORLD MODEL SUBSYSTEM
 ==============================================
 """
 
-from .entities import Entity, EntityGraph, EntityType, Relationship
+from .affordances import ActionAffordance, ActionAffordanceModel
 from .beliefs import Belief, BeliefState, BeliefSystem
 from .causal import CausalEdge, CausalGraph
-from .affordances import ActionAffordance, ActionAffordanceModel
+from .entities import Entity, EntityGraph, EntityType, Relationship
 from .subsystem import (
     AbstractionDecision,
     AbstractionMode,

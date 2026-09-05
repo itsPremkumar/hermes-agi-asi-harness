@@ -1,16 +1,15 @@
 """Tests for SolutionVerifier."""
-import pytest
-
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.puzzle_parser import Grid, Puzzle, ExamplePair
-from harness.solvers.arc_agi_3.solution_generator import Solution, Candidate
-from harness.solvers.arc_agi_3.solution_verifier import (
+from benchmarks.solvers.arc_agi_3.puzzle_parser import ExamplePair, Grid, Puzzle
+from benchmarks.solvers.arc_agi_3.solution_generator import Candidate, Solution
+from benchmarks.solvers.arc_agi_3.solution_verifier import (
     SolutionVerifier,
-    VerificationResult,
-    SolutionVerification,
 )
 
 

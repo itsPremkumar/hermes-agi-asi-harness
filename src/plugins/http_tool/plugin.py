@@ -1,4 +1,4 @@
 """http_tool — re-export module."""
-from . import logger, HTTPTool, Plugin
+from . import HTTPTool, Plugin, logger
 
 __all__ = ["HTTPTool", "Plugin", "logger"]

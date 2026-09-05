@@ -12,11 +12,12 @@ Example:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+
 import json
 import os
 import random
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 
 @dataclass

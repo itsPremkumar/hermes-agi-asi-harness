@@ -1,4 +1,4 @@
 """browser_advanced — re-export module."""
-from . import logger, BrowserAutomation
+from . import BrowserAutomation, logger
 
 __all__ = ["BrowserAutomation", "logger"]

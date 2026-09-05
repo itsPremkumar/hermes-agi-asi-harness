@@ -9,7 +9,6 @@ MIT License. See LICENSE for details.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 from typing import Any, Dict, List, Optional

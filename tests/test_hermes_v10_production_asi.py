@@ -10,26 +10,21 @@ Verifies the 5 production-grade ASI architecture enhancements:
 6. End-to-End Dual-Substrate Production Execution Pipeline
 """
 
-import os
 import sys
-import tempfile
-import pytest
-from pathlib import Path
 
-from hermes_os.cognitive_compiler import CognitiveCompiler, ExecutionPlanIR
+import pytest
+
+from hermes_os.capabilities import ExecutionCapabilityPlan
+from hermes_os.cognitive_compiler import CognitiveCompiler, ExecutionPlanIR, ExecutionWave
+from hermes_os.evolution_lab import PopulationEvolutionLab
+from hermes_os.mission_ir import GoalGraph, GoalNode
 from hermes_os.runtime_adapters import (
-    DeepAgentsRuntimeAdapter,
-    LangGraphRuntimeAdapter,
     CompositeDualSubstrateAdapter,
+    DeepAgentsRuntimeAdapter,
     ExecutionStatus,
 )
-from hermes_os.runtime_router import RuntimeRouter
 from hermes_os.safety_kernel import SafetyKernel, SafetyVerdict
-from hermes_os.evolution_lab import PopulationEvolutionLab
 from verification.vnext import RealityVerificationEngine, VerificationTier
-from hermes_os.mission_ir import GoalGraph, GoalNode
-from hermes_os.cognitive_compiler import ExecutionWave
-from hermes_os.capabilities import ExecutionCapabilityPlan
 
 
 class MockDeliberationLLM:

@@ -4,9 +4,7 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from reflexion_eval.bench import (
-    BenchmarkResult,
     _comb,
     load_suite,
     pass_at_k,

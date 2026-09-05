@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re as _re
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Protocol
+from typing import Optional, Protocol
 
 from .evaluator import Rubric, Score, build_eval_prompt, parse_score_response
 from .memory import MemoryStore, Reflection
@@ -206,8 +207,6 @@ def run_reflexion(
 # ---------------------------------------------------------------------------
 # utilities
 # ---------------------------------------------------------------------------
-import re as _re
-
 _ANSWER_RE = _re.compile(r"ANSWER:\s*(.*)", _re.DOTALL | _re.IGNORECASE)
 
 

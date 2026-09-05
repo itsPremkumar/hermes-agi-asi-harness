@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from benchmark.boolq_benchmark import BoolQBenchmark, BoolQProblem, BoolQResult, ProblemStatus
+from benchmark.boolq_benchmark import BoolQBenchmark, ProblemStatus
 
 
 class TestBoolQBenchmark:

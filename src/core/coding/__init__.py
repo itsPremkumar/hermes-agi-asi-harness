@@ -18,8 +18,10 @@ from .evaluation_pyramid import EvalLevel, EvaluationPyramid
 from .history_memory import BugPattern, HistoricalMemory, HistoryEntry, HistoryType
 from .merge_controller import MergeController
 from .meta_rsi import MetaRSI
+from .oracle_strategy import OracleManager, OracleType, TestOracle
 from .performance_loop import PerformanceLoop
 from .population_evolution import Candidate, PopulationEvolution
+from .pyramid_planner import TestLayer, TestPyramid, TestSuite
 from .quality_gates import Gate, QualityGates
 from .recon import ReconResult, ReconStage, RepositoryRecon
 from .repository_twin import (
@@ -51,8 +53,6 @@ from .skill_forge import Skill, SkillForge
 from .strategy_search import Strategy, StrategyEvaluation, StrategySearcher, StrategyType
 from .task_graph import Task, TaskGraph, TaskStatus
 from .tdd_planner import TestFirstPlanner
-from .oracle_strategy import OracleManager, OracleType, TestOracle
-from .pyramid_planner import TestLayer, TestPyramid, TestSuite
 from .transfer_learning import TransferLearning
 from .worker_contract import ContractManager, WorkerContract
 from .worktree_isolation import Worktree, WorktreeManager

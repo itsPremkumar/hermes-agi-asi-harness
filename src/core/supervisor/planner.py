@@ -1,6 +1,8 @@
 """Planner — Decomposes high-level goals into executable sub-goals."""
 from __future__ import annotations
+
 from typing import List
+
 from core.supervisor import Goal, Task, TaskType
 
 

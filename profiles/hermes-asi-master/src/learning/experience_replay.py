@@ -26,7 +26,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterator, Sequence
 
-
 # ---------------------------------------------------------------------------
 # Data
 # ---------------------------------------------------------------------------
@@ -356,7 +355,7 @@ class Replayer:
         max_per_mission: int | None = None,
     ) -> dict[str, Any]:
         """Replay all matching missions. Returns aggregate report."""
-        missions = self.buffer.filter_by(capability=capacity)
+        missions = self.buffer.filter_by(capability=capability)
         if not missions:
             return {"missions_replayed": 0, "avg_accuracy": 0.0}
         reports: list[dict[str, Any]] = []

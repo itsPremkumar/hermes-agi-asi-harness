@@ -3,7 +3,7 @@
 import pytest
 
 try:
-    from hermes_agi import Harness, Config
+    from hermes_agi import Config, Harness
     HAS_HARNESS = True
 except ImportError:
     HAS_HARNESS = False

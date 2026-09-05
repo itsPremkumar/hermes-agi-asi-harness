@@ -44,7 +44,8 @@ async def check(name, coro_or_fn):
 async def test_state_manager():
     from plugins.state_manager import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     # Use the real SQLite-backed API: sessions / tasks / checkpoints
     sid = p.create_session("test-session", {"goal": "demo"})
     assert sid
@@ -69,7 +70,8 @@ async def test_state_manager():
 async def test_config_manager():
     from plugins.config_manager import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     # Write a config file (real API uses config dir + filename)
     cfg_dir = Path(_TMP) / "cfgtest"
     cfg_dir.mkdir(exist_ok=True)
@@ -95,7 +97,8 @@ async def test_config_manager():
 async def test_permission_system():
     from plugins.permission_system import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     ok, reason = p.check("read_file")
     assert ok, reason
     ok2, reason2 = p.check("deploy_production")  # requires approval
@@ -115,7 +118,8 @@ async def test_permission_system():
 async def test_shell_tool():
     from plugins.shell_tool import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     r = p.run("echo hello_world_test")
     assert r["success"], r
     assert "hello_world_test" in r["stdout"], r["stdout"]
@@ -130,7 +134,8 @@ async def test_shell_tool():
 async def test_filesystem_tool():
     from plugins.filesystem_tool import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     test_dir = Path(_TMP) / "fstest"
     p.write("fstest/hello.txt", "line1\nline2\nline3\n")
     r = p.read("fstest/hello.txt")
@@ -154,7 +159,8 @@ async def test_filesystem_tool():
 async def test_http_tool():
     from plugins.http_tool import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     # Use a reliable local-ish endpoint: example.com (no network may fail in CI)
     try:
         r = await p.get("https://example.com")
@@ -171,7 +177,8 @@ async def test_http_tool():
 async def test_python_tool():
     from plugins.python_tool import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     r = p.run("x = 2 + 3\nprint('result is', x)\nresult = x * 10")
     assert r["success"], r
     assert r["result"] == 50, r["result"]
@@ -187,7 +194,8 @@ async def test_python_tool():
 async def test_git_tool():
     from plugins.git_tool import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     repo_dir = Path(_TMP) / "gittest"
     repo_dir.mkdir(exist_ok=True)
     p.tool.cwd = repo_dir
@@ -209,7 +217,8 @@ async def test_git_tool():
 async def test_rag_engine():
     from plugins.rag_engine import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     docs = [
         {"text": "Python is a high-level programming language known for readability.", "source": "doc1"},
         {"text": "Machine learning uses neural networks to learn patterns from data.", "source": "doc2"},
@@ -231,7 +240,8 @@ async def test_rag_engine():
 async def test_vision_engine():
     from plugins.vision_engine import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     health = await p.health()
     # Create a simple test image if PIL available
     if health.get("has_pil"):
@@ -257,7 +267,8 @@ async def test_vision_engine():
 async def test_document_intel():
     from plugins.document_intel import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     doc = """
     Python is a programming language. Python is widely used for automation and AI.
     Python scripts can process large datasets efficiently and reliably.
@@ -281,7 +292,8 @@ async def test_document_intel():
 async def test_multi_agent_orchestrator():
     from plugins.multi_agent_orchestrator import Plugin, TaskPriority
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
 
     def worker(n):
         time.sleep(0.05)
@@ -304,7 +316,8 @@ async def test_multi_agent_orchestrator():
 async def test_debate_engine():
     from plugins.debate_engine import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
 
     def pro_arg(topic, perspective):
         return f"In favor of {topic}: it brings clear benefits and scalability."
@@ -329,7 +342,8 @@ async def test_debate_engine():
 async def test_swarm_intelligence():
     from plugins.swarm_intelligence import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
 
     def sphere(x):
         return -sum(v * v for v in x)  # Maximize negative squared -> min at origin
@@ -350,7 +364,8 @@ async def test_swarm_intelligence():
 async def test_evolution_engine():
     from plugins.evolution_engine import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
 
     def fitness(genome):
         # Target: maximize a + b where genome is dict
@@ -371,7 +386,8 @@ async def test_evolution_engine():
 async def test_skill_learner():
     from plugins.skill_learner import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     sid = p.learn_skill(
         "File backup",
         "Backup a file to a timestamped copy",
@@ -394,7 +410,8 @@ async def test_skill_learner():
 async def test_memory_curator():
     from plugins.memory_curator import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     m1 = p.add_memory("Python is great for data science", "knowledge", 0.8, ["python", "data"])
     m2 = p.add_memory("Docker simplifies deployment", "knowledge", 0.6, ["docker"])
     m3 = p.add_memory("Neural networks power deep learning", "ai", 0.9, ["ml", "nn"])
@@ -411,7 +428,8 @@ async def test_memory_curator():
 async def test_permission_sandbox():
     from plugins.permission_sandbox import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     # Forbidden command
     ok, reason = p.check_command("rm -rf /")
     assert not ok, "Should be forbidden"
@@ -430,7 +448,8 @@ async def test_permission_sandbox():
 async def test_audit_logger():
     from plugins.audit_logger import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     p.log("tool_exec", "agent1", "shell.run", "cmd:echo", "success", {"cmd": "echo hi"})
     p.log("permission", "agent1", "check", "deploy", "denied", {"reason": "needs approval"})
     p.flush()
@@ -447,7 +466,8 @@ async def test_audit_logger():
 async def test_mcp_client():
     from plugins.mcp_client import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     assert p.add_server("test_server", "python mcp_server.py")
     conn = p.connect("test_server")
     assert conn["success"] and conn["connected"]
@@ -466,7 +486,8 @@ async def test_mcp_client():
 async def test_streaming_output():
     from plugins.streaming_output import Plugin
     p = Plugin()
-    await p.load(); await p.start()
+    await p.load()
+    await p.start()
     queue = p.subscribe()
     await p.emit("chunk1\n", "text")
     await p.emit("chunk2\n", "text")

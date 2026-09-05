@@ -2,13 +2,15 @@
 import sys
 from pathlib import Path
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from benchmarks.core_suites.llm_client import (
-    LLMClient, LLMConfig, LLMResponse, PromptBuilder,
-)
 from benchmarks.core_suites import BenchmarkTask, BenchmarkType
+from benchmarks.core_suites.llm_client import (
+    LLMClient,
+    LLMConfig,
+    LLMResponse,
+    PromptBuilder,
+)
 
 
 class TestLLMConfig:

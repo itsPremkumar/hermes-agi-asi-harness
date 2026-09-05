@@ -1,4 +1,4 @@
 """audit_logger — re-export module."""
-from . import logger, AuditRecord, AuditLogger, Plugin
+from . import AuditLogger, AuditRecord, Plugin, logger
 
 __all__ = ["AuditLogger", "AuditRecord", "Plugin", "logger"]

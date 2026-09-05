@@ -58,7 +58,7 @@ pip install -e .
 
 ### Step 3: Verify Installation
 ```bash
-python hermes_agi.py --health
+python -m hermes_agi health
 ```
 
 Expected output:
@@ -99,13 +99,13 @@ await kernel.shutdown()
 
 ```bash
 # Simple goal execution
-python hermes_agi.py --goal "Build a REST API with authentication"
+python -m hermes_agi run "Build a REST API with authentication"
 
 # Interactive mode
-python hermes_agi.py
+python -m hermes_agi interactive
 
 # 24/7 daemon mode
-python hermes_supervisor.py
+python -m hermes_agi daemon
 ```
 
 ### Method 3: Skill Integration
@@ -135,17 +135,17 @@ for step in plan.steps:
 
 ### 1. Run Health Check
 ```bash
-python hermes_agi.py --health
+python -m hermes_agi health
 ```
 
 ### 2. Execute Your First Goal
 ```bash
-python hermes_agi.py --goal "Create a Python function that calculates fibonacci numbers"
+python -m hermes_agi run "Create a Python function that calculates fibonacci numbers"
 ```
 
 ### 3. Interactive Mode
 ```bash
-python hermes_agi.py
+python -m hermes_agi interactive
 ```
 
 ### 4. Run Tests

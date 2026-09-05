@@ -11,10 +11,7 @@ from __future__ import annotations
 
 import ctypes
 import logging
-import os
-import signal
 import sys
-from typing import Optional
 
 logger = logging.getLogger("hermes.coding.winjob")
 

@@ -12,7 +12,7 @@ __version__ = "6.4.0"
 __author__ = "AgentEye Contributors"
 __license__ = "MIT"
 
-from agent_eye.core import AgentSearchLite, STRATEGY_MODES, interactive_mode
+from agent_eye.core import STRATEGY_MODES, AgentSearchLite, interactive_mode
 from agent_eye.exceptions import (
     AgentSearchError,
     AllBackendsFailedError,
@@ -25,13 +25,13 @@ from agent_eye.exceptions import (
     RateLimitError,
     TimeoutError,
 )
-from agent_eye.extractors import smart_extract, score_readability
+from agent_eye.extractors import score_readability, smart_extract
 from agent_eye.ranking import (
     cross_verify,
-    rank_results,
-    quality_score,
-    is_polluted,
     format_token_conscious,
+    is_polluted,
+    quality_score,
+    rank_results,
 )
 
 __all__ = [

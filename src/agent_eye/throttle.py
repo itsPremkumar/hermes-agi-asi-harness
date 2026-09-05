@@ -12,7 +12,8 @@ import logging
 import random
 import threading
 import time
-from typing import Any, Deque, Dict, Optional
+import urllib.parse
+from typing import Deque, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

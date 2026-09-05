@@ -1,9 +1,12 @@
 """Tests for arc_agi_3_full_eval.py — ARC-AGI-3 Full Evaluation."""
 
-import pytest
 from benchmark.arc_agi_3_full_eval import (
-    FullEvaluationSuite, FullEvalResult, LevelInfo, LevelResult,
-    NUM_ENVIRONMENTS, NUM_LEVELS,
+    NUM_ENVIRONMENTS,
+    NUM_LEVELS,
+    FullEvalResult,
+    FullEvaluationSuite,
+    LevelInfo,
+    LevelResult,
 )
 
 

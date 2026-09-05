@@ -22,6 +22,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger("hermes_circuit_breaker")
@@ -30,9 +31,6 @@ try:
     from core.runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions, PluginState
     HAS_CORE = True
 except ImportError:
-    from enum import Enum
-    from pathlib import Path
-
     class PluginState(str, Enum):
         REGISTERED = "registered"
         LOADED = "loaded"
@@ -489,8 +487,9 @@ register_fallback("memory", fallback_memory)
 # Module-level instance
 # ---------------------------------------------------------------------------
 
-from .health import HealthMonitor
-from .recovery import RecoveryEngine, RecoveryResult, Checkpoint
+# Deferred: .health / .recovery import names from this package (circular).
+from .health import HealthMonitor  # noqa: E402
+from .recovery import Checkpoint, RecoveryEngine, RecoveryResult  # noqa: E402
 
 Plugin = CircuitBreakerPlugin
 

@@ -11,11 +11,11 @@ from .engine import (
     RefinementReport,
 )
 from .harness_state import (
-    HarnessStateManager,
     HarnessEntry,
-    RefinementEvent,
     HarnessKind,
     HarnessScope,
+    HarnessStateManager,
+    RefinementEvent,
 )
 
 __all__ = [

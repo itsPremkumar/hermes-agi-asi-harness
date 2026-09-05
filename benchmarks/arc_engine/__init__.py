@@ -1,7 +1,17 @@
 from benchmarks.arc_engine.engine import (
-    Engine, Grid, Rule, Strategy, Solution, Task, Diagnostics,
-    RuleHypothesizer, StrategySelector, SolutionGenerator, SolutionVerifier,
-    Stage, Status,
+    Diagnostics,
+    Engine,
+    Grid,
+    Rule,
+    RuleHypothesizer,
+    Solution,
+    SolutionGenerator,
+    SolutionVerifier,
+    Stage,
+    Status,
+    Strategy,
+    StrategySelector,
+    Task,
 )
 
 __all__ = [

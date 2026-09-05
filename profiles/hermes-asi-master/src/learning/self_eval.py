@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import dataclasses
 import json
-import math
 import statistics
 import time
 from collections import defaultdict

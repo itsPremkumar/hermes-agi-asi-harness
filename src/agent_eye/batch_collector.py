@@ -10,7 +10,6 @@ MIT License. See LICENSE for details.
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 import urllib.parse
@@ -19,16 +18,15 @@ from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 
+from agent_eye.exceptions import RobotsDisallowedError
 from agent_eye.extractors import smart_extract
 from agent_eye.seo_extractor import extract_all_structured_data
 from agent_eye.sitemap_parser import (
-    discover_sitemaps,
     get_all_urls_from_sitemap,
     is_url_allowed,
     parse_robots_txt,
 )
 from agent_eye.throttle import ua_rotator
-from agent_eye.exceptions import RobotsDisallowedError
 
 logger = logging.getLogger(__name__)
 
@@ -542,7 +540,6 @@ def _process_single_url(
         resp.raise_for_status()
         body = resp.text[:_MAX_FETCH_BYTES]
 
-    from agent_eye.document_intel import extract_document
 
     page: Dict[str, Any] = {"url": url}
     try:

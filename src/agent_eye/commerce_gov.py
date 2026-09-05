@@ -189,7 +189,7 @@ def weather_search(city: str, limit: int = 1) -> Optional[Dict[str, Any]]:
             "data": {
                 "web": [{
                     "title": f"Weather in {loc.get('name', city)}, {loc.get('country', '')}",
-                    "url": f"https://open-meteo.com/en/docs",
+                    "url": "https://open-meteo.com/en/docs",
                     "description": (
                         f"Temperature: {current.get('temperature', 'N/A')}°C, "
                         f"Wind: {current.get('windspeed', 'N/A')} km/h, "
@@ -344,7 +344,7 @@ def jobs_search(query: str, country: str = "us", limit: int = 5) -> Optional[Dic
         # Note: Adzuna requires app_id and app_key
         # For now, use a simple scraping approach
         resp = httpx.get(
-            f"https://www.indeed.com/jobs",
+            "https://www.indeed.com/jobs",
             params={"q": query, "l": country},
             headers={"User-Agent": _UA},
             timeout=15,

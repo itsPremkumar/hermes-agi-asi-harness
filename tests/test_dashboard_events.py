@@ -1,5 +1,5 @@
 """Tests for EventLog."""
-from core.dashboard.events import EventLog, EventLevel
+from core.dashboard.events import EventLevel, EventLog
 
 
 class TestEventLog:

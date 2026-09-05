@@ -6,10 +6,10 @@ social situations, emotional states, and interpersonal dynamics.
 """
 
 from __future__ import annotations
+
 import asyncio
 import json
 import logging
-import os
 import random
 import time
 from dataclasses import dataclass, field
@@ -267,7 +267,7 @@ class SIQABenchmark:
                     correct=predicted == question.correct_answer,
                     duration=duration,
                 )
-            except Exception as e:
+            except Exception:
                 result = SIQAResult(
                     question_id=question.id,
                     predicted_answer=-1,

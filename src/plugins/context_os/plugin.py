@@ -1,4 +1,4 @@
 """context_os — re-export module."""
-from . import MissionContext, ContextBuilder, ContextOSPlugin
+from . import ContextBuilder, ContextOSPlugin, MissionContext
 
 __all__ = ["ContextBuilder", "ContextOSPlugin", "MissionContext"]

@@ -3,14 +3,14 @@
 ## 1. Install (30 seconds)
 
 ```bash
-cd ~/Downloads/HERMES-AGI-ASI-HARNESS-ULTIMATE-BUILD
+cd hermes-agi-asi-harness
 pip install -e .
 ```
 
 ## 2. Run Health Check
 
 ```bash
-python hermes_agi.py --health
+python -m hermes_agi health
 ```
 
 Expected output:
@@ -26,19 +26,19 @@ Expected output:
 ## 3. List Plugins
 
 ```bash
-python hermes_agi.py --list-plugins
+python -m hermes_agi status
 ```
 
 ## 4. Execute a Goal
 
 ```bash
-python hermes_agi.py --goal "Research the latest AI agent frameworks"
+python -m hermes_agi run "Research the latest AI agent frameworks"
 ```
 
 ## 5. Interactive Mode
 
 ```bash
-python hermes_agi.py
+python -m hermes_agi interactive
 ```
 
 Then type goals at the `🎯 Goal>` prompt.
@@ -136,7 +136,7 @@ model:
 ollama pull llama3.2:3b
 
 # Run Hermes
-HARNESS_MODEL_NAME=llama3.2:3b python hermes_agi.py
+HARNESS_MODEL_NAME=llama3.2:3b python -m hermes_agi interactive
 ```
 
 ## 10. Run Tests
@@ -150,7 +150,7 @@ pytest tests/
 
 ## 🎯 Next Steps
 
-1. **Read the architecture**: `docs/ARCHITECTURE.md`
+1. **Read the architecture**: `docs/architecture.md`
 2. **Explore plugins**: Each plugin has a `plugin.yaml` and `__init__.py`
 3. **Create your own plugin**: Follow the plugin contract
 4. **Join the community**: Share your plugins and improvements

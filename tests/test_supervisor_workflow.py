@@ -2,23 +2,27 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.supervisor.world_model import (
-    WorldModel, Entity, EntityType, Belief, CausalLink, Forecast, Counterfactual,
-)
 from core.supervisor.dynamic import (
-    DynamicScenarioAnalyzer, AdvancedPlanningEngine, DynamicWorkflowExecutor,
+    AdvancedPlanningEngine,
+    Complexity,
     DecisionEngine,
-    ScenarioProfile, ScenarioType, Complexity, Topology,
-    Plan, PlanStep, StepResult, ExecutionResult,
+    DynamicScenarioAnalyzer,
+    DynamicWorkflowExecutor,
+    Plan,
+    PlanStep,
+    ScenarioType,
+    StepResult,
 )
 from core.supervisor.workflow import (
-    MasterWorkflowLoop, WorkflowStage, Trajectory, Policy, Bottleneck, Experiment,
+    MasterWorkflowLoop,
+    Trajectory,
 )
-
+from core.supervisor.world_model import (
+    EntityType,
+    WorldModel,
+)
 
 # ---------------------------------------------------------------------------
 # World Model tests

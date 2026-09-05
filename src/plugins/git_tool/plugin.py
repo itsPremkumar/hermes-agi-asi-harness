@@ -1,4 +1,4 @@
 """git_tool — re-export module."""
-from . import logger, GitResult, GitTool, Plugin
+from . import GitResult, GitTool, Plugin, logger
 
 __all__ = ["GitResult", "GitTool", "Plugin", "logger"]

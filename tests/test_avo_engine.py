@@ -10,16 +10,14 @@ Unit tests for NVIDIA AVO (Agentic Variation Operators) Architecture:
 
 from __future__ import annotations
 
-import pytest
-
 from engines.avo import (
+    AgenticVariationOperator,
     AVOEvolutionEngine,
     AVOResult,
+    AVOSupervisor,
+    DomainKnowledgeBase,
     LineageDAG,
     LineageNode,
-    DomainKnowledgeBase,
-    AgenticVariationOperator,
-    AVOSupervisor,
     SupervisorIntervention,
 )
 

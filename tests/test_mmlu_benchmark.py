@@ -1,13 +1,12 @@
 """Tests for MMLUBenchmark."""
-import pytest
 from benchmarks.mmlu_benchmark import (
-    MMLUBenchmark,
-    MMLU_CATEGORIES,
     AGENT_API_VERSION,
+    MMLU_CATEGORIES,
     QUESTIONS_PER_CATEGORY,
-    QuestionStatus,
     CategoryResult,
+    MMLUBenchmark,
     Question,
+    QuestionStatus,
 )
 
 

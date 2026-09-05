@@ -18,9 +18,9 @@ import json
 import logging
 import re
 import time
-import uuid
 import urllib.parse
 import urllib.request
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional

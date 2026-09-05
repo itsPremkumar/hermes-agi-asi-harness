@@ -8,22 +8,17 @@ Unit tests for ported Prime Agent architectures:
 
 from __future__ import annotations
 
-import pytest
-
-from hermes_agi.refine import (
-    HarnessStateManager,
-    HarnessEntry,
-    RefinementEvent,
-)
 from hermes_agi.allocation import (
     AutonomousQualityGatePolicy,
     QualityGateVerdict,
-    QualityGateFailure,
 )
 from hermes_agi.coding import ProcessIsolationManager
 from hermes_agi.overnight import (
-    SemanticBranchSummarizer,
     BranchSummary,
+    SemanticBranchSummarizer,
+)
+from hermes_agi.refine import (
+    HarnessStateManager,
 )
 
 

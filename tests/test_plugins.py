@@ -6,25 +6,47 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from harness.plugins.perception import (
-    VisionPlugin, AudioPlugin, TextPlugin, SensorPlugin, MultimodalPlugin, AttentionPlugin,
-)
-from harness.plugins.reasoning import (
-    DeductivePlugin, InductivePlugin, AbductivePlugin, CausalPlugin,
-    AnalogicalPlugin, PlanningPlugin, DecisionPlugin,
-)
 from harness.plugins.action import (
-    ToolUsePlugin, CodeGenPlugin, WebPlugin, FileSystemPlugin, ShellPlugin, APIPlugin,
+    APIPlugin,
+    CodeGenPlugin,
+    FileSystemPlugin,
+    ShellPlugin,
+    ToolUsePlugin,
+    WebPlugin,
 )
 from harness.plugins.learning import (
-    RLPlugin, SupervisedPlugin, UnsupervisedPlugin, MetaLearningPlugin,
-    TransferLearningPlugin, CurriculumPlugin,
+    CurriculumPlugin,
+    MetaLearningPlugin,
+    RLPlugin,
+    SupervisedPlugin,
+    TransferLearningPlugin,
+    UnsupervisedPlugin,
+)
+from harness.plugins.perception import (
+    AttentionPlugin,
+    AudioPlugin,
+    MultimodalPlugin,
+    SensorPlugin,
+    TextPlugin,
+    VisionPlugin,
+)
+from harness.plugins.reasoning import (
+    AbductivePlugin,
+    AnalogicalPlugin,
+    CausalPlugin,
+    DecisionPlugin,
+    DeductivePlugin,
+    InductivePlugin,
+    PlanningPlugin,
 )
 from harness.plugins.safety import (
-    GuardrailsPlugin, BiasDetectionPlugin, AdversarialDefensePlugin,
-    PrivacyPlugin, ExplainabilityPlugin, AlignmentPlugin,
+    AdversarialDefensePlugin,
+    AlignmentPlugin,
+    BiasDetectionPlugin,
+    ExplainabilityPlugin,
+    GuardrailsPlugin,
+    PrivacyPlugin,
 )
-
 
 # ============== Perception Tests ==============
 

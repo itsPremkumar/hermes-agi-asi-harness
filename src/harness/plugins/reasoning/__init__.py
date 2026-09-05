@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
-
 # ============== Deductive Reasoning Plugin ==============
 
 class DeductivePlugin(Plugin):

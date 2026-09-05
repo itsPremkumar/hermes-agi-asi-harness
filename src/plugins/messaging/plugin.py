@@ -1,4 +1,4 @@
 """messaging — re-export module."""
-from . import logger, MessagingIntegration
+from . import MessagingIntegration, logger
 
 __all__ = ["MessagingIntegration", "logger"]

@@ -16,10 +16,10 @@ Tests:
 """
 
 import asyncio
+import logging
 import os
 import sys
 import tempfile
-import logging
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def test_jit_harness():
 
 def test_self_healing():
     """Test self-healing failure diagnosis and repair."""
-    from plugins.self_healing import SelfHealingEngine, FailureClass
+    from plugins.self_healing import FailureClass, SelfHealingEngine
 
     engine = SelfHealingEngine()
 
@@ -178,7 +178,7 @@ def test_benchmarks():
 
 async def test_multi_agent():
     """Test multi-agent orchestration with different topologies."""
-    from plugins.multi_agent import MultiAgentOrchestrator, AgentSpec
+    from plugins.multi_agent import AgentSpec, MultiAgentOrchestrator
 
     orch = MultiAgentOrchestrator()
 
@@ -246,7 +246,7 @@ async def test_evolution_v2():
     assert traj_id.startswith("traj_")
     exporter.record_step("thought", "action", {"input": "test"}, "observation", reward=0.5)
     traj = exporter.end_trajectory(final_reward=0.9, success=True)
-    assert traj["success"] == True
+    assert traj["success"]
     assert len(traj["steps"]) == 1
 
     stats = exporter.get_stats()
@@ -259,7 +259,7 @@ async def test_evolution_v2():
 
 async def test_supervisor():
     """Test 24/7 supervisor with heartbeat and auto-recovery."""
-    from plugins.supervisor import TaskSupervisor, ResourceBudget
+    from plugins.supervisor import ResourceBudget, TaskSupervisor
 
     supervisor = TaskSupervisor()
     budget = ResourceBudget(max_tasks_per_hour=100, heartbeat_interval_seconds=1)
@@ -395,8 +395,9 @@ async def test_kernel_integration_advanced():
 
 async def test_end_to_end_advanced():
     """Test full end-to-end execution with advanced components."""
-    from core.runtime.kernel import HermesKernel, KernelConfig, Task
     import os
+
+    from core.runtime.kernel import HermesKernel, KernelConfig, Task
 
     k = HermesKernel(config=KernelConfig(zero_cost=True, offline=True))
     await k.boot()

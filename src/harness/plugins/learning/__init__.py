@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
 
-
 # ============== Reinforcement Learning Plugin ==============
 
 class RLPlugin(Plugin):

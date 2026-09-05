@@ -1,7 +1,6 @@
 """Verify the new LLM-powered planning and real plugins."""
 
 import asyncio
-import sys
 
 print('=' * 70)
 print('VERIFYING LLM-POWERED PLANNING & REAL PLUGINS')
@@ -78,7 +77,7 @@ print()
 print('4. REAL PLANNER')
 print('-' * 50)
 try:
-    from hermes_agi.llm_planning import RealPlanner, LLMClient, KnowledgeBase
+    from hermes_agi.llm_planning import KnowledgeBase, LLMClient, RealPlanner
     
     planner = RealPlanner()
     result = asyncio.run(planner.think_and_plan("Create a Python web API"))
@@ -98,8 +97,6 @@ print('5. REAL PLUGINS')
 print('-' * 50)
 try:
     from hermes_agi.plugins.real_plugins import (
-        RealPlanningPlugin, RealResearchPlugin, RealCodingPlugin,
-        RealTestingPlugin, RealBenchmarkPlugin, RealDiscoveryPlugin,
         ALL_REAL_PLUGINS,
     )
     
@@ -165,7 +162,7 @@ print()
 print('8. WORKFLOW ENGINE')
 print('-' * 50)
 try:
-    from hermes_agi import WorkflowEngine, Task
+    from hermes_agi import Task, WorkflowEngine
     
     engine = WorkflowEngine()
     
@@ -221,7 +218,7 @@ print()
 print('10. FEATURE REGISTRY')
 print('-' * 50)
 try:
-    from hermes_agi import get_all_features, get_all_capabilities
+    from hermes_agi import get_all_capabilities, get_all_features
     
     features = get_all_features()
     print(f'   Features: {len(features)}')

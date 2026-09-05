@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import json
-import math
 import os
 import sys
 import tempfile
-import time
 
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from learning.self_eval import ConfidenceTracker, Review, SelfEvaluator
-
 
 # ---------- Review ----------
 

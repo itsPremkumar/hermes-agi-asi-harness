@@ -14,9 +14,7 @@ import logging
 import os
 import subprocess
 import tempfile
-from typing import Any, Dict, List, Optional
-
-import httpx
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

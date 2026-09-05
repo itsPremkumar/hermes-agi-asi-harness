@@ -1,16 +1,15 @@
 """Tests for PuzzleParser."""
-import pytest
-
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.puzzle_parser import (
+from benchmarks.solvers.arc_agi_3.puzzle_parser import (
     Grid,
-    Puzzle,
-    PuzzleParser,
     PuzzleParseError,
-    ExamplePair,
+    PuzzleParser,
 )
 
 

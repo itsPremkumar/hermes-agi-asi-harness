@@ -12,15 +12,12 @@ Six security plugins for evaluating AI agent safety:
 from __future__ import annotations
 
 import hashlib
-import hmac
-import json
 import re
 import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Shared enums + dataclasses

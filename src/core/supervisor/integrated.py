@@ -8,17 +8,15 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
+from core.supervisor.deepagent import DeepAgent, Plan, PlanStep
 from core.supervisor.langgraph_skeleton import (
-    LangGraphSkeleton, SupervisorState, NodeName, EdgeCondition,
+    SupervisorState,
     build_default_graph,
 )
-from core.supervisor.deepagent import DeepAgent, Plan, PlanStep
-from core.supervisor.world_model import WorldModel, EntityType
-
+from core.supervisor.world_model import EntityType, WorldModel
 
 # ---------------------------------------------------------------------------
 # Node handlers (each dispatches a DeepAgent)

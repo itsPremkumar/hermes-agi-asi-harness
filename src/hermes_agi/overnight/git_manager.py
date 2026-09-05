@@ -12,12 +12,9 @@ Provides robust, cross-platform Git operations for autonomous overnight loops:
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 import subprocess
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("hermes.overnight.git")
 

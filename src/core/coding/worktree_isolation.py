@@ -33,7 +33,7 @@ class WorktreeManager:
                          branch=branch, path=str(worktree_path))
             self.worktrees[wt.id] = wt
             return wt
-        except:
+        except Exception:
             return None
     
     def remove_worktree(self, worktree_id: str):
@@ -44,7 +44,7 @@ class WorktreeManager:
                     ["git", "worktree", "remove", wt.path],
                     cwd=self.repo_path, capture_output=True, timeout=30
                 )
-            except:
+            except Exception:
                 pass
             del self.worktrees[worktree_id]
     

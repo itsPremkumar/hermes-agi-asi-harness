@@ -8,7 +8,6 @@ when no rule-based generator matches.
 
 from __future__ import annotations
 
-import copy
 import logging
 from dataclasses import dataclass, field
 from typing import Callable, Optional

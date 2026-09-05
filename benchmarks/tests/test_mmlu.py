@@ -1,8 +1,9 @@
 """Tests for mmlu_benchmark.py — MMLU Benchmark."""
 
-import pytest
 from src.benchmark.mmlu_benchmark import (
-    MMLUBenchmark, Question, CategoryResult, QuestionStatus, MMLU_CATEGORIES,
+    MMLU_CATEGORIES,
+    MMLUBenchmark,
+    QuestionStatus,
 )
 
 

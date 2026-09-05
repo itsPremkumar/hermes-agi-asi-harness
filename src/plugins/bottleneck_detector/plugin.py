@@ -1,4 +1,4 @@
 """bottleneck_detector — re-export module."""
-from . import logger, BottleneckDetector, BottleneckPlugin
+from . import BottleneckDetector, BottleneckPlugin, logger
 
 __all__ = ["BottleneckDetector", "BottleneckPlugin", "logger"]

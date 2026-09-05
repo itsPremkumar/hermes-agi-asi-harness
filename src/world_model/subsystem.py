@@ -11,17 +11,16 @@ The unified interface to the external and internal reality model:
 
 from __future__ import annotations
 
-import json
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .affordances import ActionAffordance, ActionAffordanceModel
-from .beliefs import Belief, BeliefState, BeliefSystem
-from .causal import CausalEdge, CausalGraph
-from .entities import Entity, EntityGraph, EntityType, Relationship
+from .affordances import ActionAffordanceModel
+from .beliefs import BeliefSystem
+from .causal import CausalGraph
+from .entities import EntityGraph, EntityType
 
 logger = logging.getLogger("hermes.world_model")
 

@@ -1,4 +1,4 @@
 """deep_research_agent — re-export module."""
-from . import logger, Evidence, ResearchPhase, DeepResearchReport, FreeSearchBackend, DuckDuckGoHTML
+from . import DeepResearchReport, DuckDuckGoHTML, Evidence, FreeSearchBackend, ResearchPhase, logger
 
 __all__ = ["DeepResearchReport", "DuckDuckGoHTML", "Evidence", "FreeSearchBackend", "ResearchPhase", "logger"]

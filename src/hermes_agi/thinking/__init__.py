@@ -3,16 +3,16 @@ Hermes AGI/ASI Harness — Deep Thinking Package.
 """
 
 from .engine import (
-    DeepThinkingEngine,
-    ThinkingResult,
-    Hypothesis,
     Critique,
+    DeepThinkingEngine,
+    Hypothesis,
     Invariant,
+    ThinkingResult,
 )
 from .mcts import (
-    MCTSSearchEngine,
-    MCTSResult,
     MCTSNode,
+    MCTSResult,
+    MCTSSearchEngine,
 )
 
 __all__ = [

@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(HERE, "..", "..")
 sys.path.insert(0, SRC_DIR)
 
+from evolution.approval import (
+    ApprovalGate,
+    ApprovalRecord,
+    ApprovalRequest,
+    ApprovalStatus,
+    check_approval_gate,
+)
 from evolution.plugin import (
     IdentityPlugin,
     NoopPlugin,
@@ -17,13 +24,6 @@ from evolution.plugin import (
     PluginMetadata,
     PluginRegistry,
     plugin,
-)
-from evolution.approval import (
-    ApprovalGate,
-    ApprovalRecord,
-    ApprovalRequest,
-    ApprovalStatus,
-    check_approval_gate,
 )
 
 passed = 0

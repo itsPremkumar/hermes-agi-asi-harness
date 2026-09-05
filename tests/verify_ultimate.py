@@ -1,7 +1,6 @@
 """Comprehensive verification of all new features."""
 
 import asyncio
-import sys
 
 print('=' * 70)
 print('ULTIMATE HARNESS VERIFICATION — ALL FEATURES')
@@ -13,11 +12,8 @@ print('1. PLUGIN SYSTEM')
 print('-' * 50)
 try:
     from hermes_agi import (
-        PluginManager, PluginBase, PluginState, PluginPriority, PluginMetadata,
-        ALL_PLUGINS, register_all_plugins,
-        PlanningPlugin, ResearchPlugin, CodingPlugin, TestingPlugin,
-        BenchmarkPlugin, SafetyPlugin, MemoryPlugin, DiscoveryPlugin,
-        WorkflowPlugin, SelfImprovementPlugin,
+        PluginManager,
+        register_all_plugins,
     )
     
     manager = PluginManager()
@@ -66,7 +62,7 @@ print()
 print('2. WORKFLOW ENGINE')
 print('-' * 50)
 try:
-    from hermes_agi import WorkflowEngine, WorkflowBuilder, WorkflowLibrary, Task
+    from hermes_agi import Task, WorkflowBuilder, WorkflowEngine
     
     engine = WorkflowEngine(max_parallel=4)
     
@@ -113,7 +109,7 @@ print()
 print('3. SELF-RECOVERY SYSTEM')
 print('-' * 50)
 try:
-    from hermes_agi import SelfRecoverySystem, DegradationManager, with_retry, with_fallback
+    from hermes_agi import DegradationManager, SelfRecoverySystem, with_fallback, with_retry
     
     recovery = SelfRecoverySystem()
     
@@ -160,7 +156,7 @@ print()
 print('4. HERMES INTEGRATION')
 print('-' * 50)
 try:
-    from hermes_agi import HermesDetector, HermesIntegrator, AutoInstaller
+    from hermes_agi import HermesDetector
     
     # Detect Hermes
     config = HermesDetector.detect()
@@ -212,7 +208,7 @@ print()
 print('6. DECORATORS (retry, fallback, circuit_breaker)')
 print('-' * 50)
 try:
-    from hermes_agi import with_retry, with_fallback, with_circuit_breaker
+    from hermes_agi import with_fallback, with_retry
     
     # Test retry
     call_count = [0]
@@ -246,7 +242,12 @@ print()
 print('7. FEATURE REGISTRY')
 print('-' * 50)
 try:
-    from hermes_agi import get_all_features, get_all_capabilities, search_features, find_by_capability
+    from hermes_agi import (
+        find_by_capability,
+        get_all_capabilities,
+        get_all_features,
+        search_features,
+    )
     
     features = get_all_features()
     print(f'   Total features: {len(features)}')
@@ -271,7 +272,7 @@ print()
 print('8. SAFETY GOVERNOR')
 print('-' * 50)
 try:
-    from hermes_agi.safety import SafetyGovernor, RiskLevel
+    from hermes_agi.safety import SafetyGovernor
     
     governor = SafetyGovernor()
     profile = governor.assess('Test action', 0.8, 0.9)
@@ -292,7 +293,7 @@ print()
 print('9. BOT SWARM')
 print('-' * 50)
 try:
-    from hermes_agi.agents import BotSwarm, BOT_PROFILES
+    from hermes_agi.agents import BotSwarm
     
     swarm = BotSwarm()
     bots = swarm.list_bots()
@@ -315,7 +316,7 @@ print()
 print('10. BENCHMARK RUNNER')
 print('-' * 50)
 try:
-    from hermes_agi.benchmarks import BenchmarkRunner, BENCHMARK_REGISTRY
+    from hermes_agi.benchmarks import BENCHMARK_REGISTRY, BenchmarkRunner
     
     runner = BenchmarkRunner()
     print(f'   Benchmarks: {len(BENCHMARK_REGISTRY)}')
@@ -337,7 +338,7 @@ print()
 print('11. COGNITIVE ARCHITECTURE')
 print('-' * 50)
 try:
-    from hermes_agi.cognitive import WorldModel, SelfModel
+    from hermes_agi.cognitive import SelfModel, WorldModel
     
     world = WorldModel()
     world.update('entity1', {'name': 'test', 'value': 42})
@@ -379,7 +380,7 @@ print()
 print('13. KERNEL CONTROLLER')
 print('-' * 50)
 try:
-    from hermes_agi.kernel import KernelController, KernelState, KernelPhase
+    from hermes_agi.kernel import KernelController
     
     config = type('Config', (), {'project_path': '.', 'state_dir': '/tmp/test'})()
     kernel = KernelController(config)
@@ -424,7 +425,7 @@ print()
 print('15. CONFIGURATION')
 print('-' * 50)
 try:
-    from hermes_agi.config import Config, load_config
+    from hermes_agi.config import load_config
     
     config = load_config()
     print(f'   Project path: {config.project_path}')
@@ -444,7 +445,11 @@ print('16. EXCEPTIONS')
 print('-' * 50)
 try:
     from hermes_agi.exceptions import (
-        HarnessError, KernelError, PluginError, SafetyError, BenchmarkError
+        BenchmarkError,
+        HarnessError,
+        KernelError,
+        PluginError,
+        SafetyError,
     )
     
     assert issubclass(KernelError, HarnessError)
@@ -464,7 +469,7 @@ print()
 print('17. UTILITIES')
 print('-' * 50)
 try:
-    from hermes_agi.utils import setup_logging, get_logger
+    from hermes_agi.utils import get_logger, setup_logging
     
     setup_logging('INFO')
     logger = get_logger('test')

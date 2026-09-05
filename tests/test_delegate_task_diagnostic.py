@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from diagnostics.delegate_task_diagnostic import (
     CapType,
     DelegateTaskDiagnostic,
-    DiagnosticResult,
     DiagnosticReport,
+    DiagnosticResult,
 )
 
 
@@ -265,8 +265,9 @@ class TestMainCLI:
     """Test CLI entry point."""
 
     def test_cli_help(self, capsys):
-        from diagnostics.delegate_task_diagnostic import main
         import sys
+
+        from diagnostics.delegate_task_diagnostic import main
         old_argv = sys.argv
         sys.argv = ["delegate_task_diagnostic", "--help"]
         try:
@@ -284,8 +285,9 @@ class TestMainCLI:
         config_path = hermes_home / "profiles" / "default" / "config.yaml"
         config_path.write_text("delegation:\n  max_concurrent_children: 10\n")
 
-        from diagnostics.delegate_task_diagnostic import main
         import sys
+
+        from diagnostics.delegate_task_diagnostic import main
         old_argv = sys.argv
         sys.argv = ["delegate_task_diagnostic", "--hermes-home", str(hermes_home), "--json"]
         try:

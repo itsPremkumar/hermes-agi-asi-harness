@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
-from .rule_hypothesizer import Hypothesis, HypothesisSet
+from .rule_hypothesizer import HypothesisSet
 
 logger = logging.getLogger(__name__)
 

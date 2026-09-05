@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from benchmark.hellaswag_benchmark import HellaSwagBenchmark, HellaSwagProblem, HellaSwagResult, ProblemStatus
+from benchmark.hellaswag_benchmark import HellaSwagBenchmark, ProblemStatus
 
 
 class TestHellaSwagBenchmark:

@@ -47,7 +47,7 @@ async def main():
     # Test 3: Semantic Index
     print("\n[3/12] Semantic Index...")
     try:
-        from core.coding import SemanticCodeIndex, SearchQuery
+        from core.coding import SearchQuery, SemanticCodeIndex
         idx = SemanticCodeIndex()
         chunks = idx.index_file("test.py", "class Foo:\n    def bar(self):\n        pass\n")
         results_foo = idx.search(SearchQuery(text="Foo"))
@@ -62,7 +62,7 @@ async def main():
     # Test 4: Recon
     print("\n[4/12] Repository Recon...")
     try:
-        from core.coding import RepositoryRecon, ReconStage
+        from core.coding import ReconStage, RepositoryRecon
         recon = RepositoryRecon()
         result = recon.run(".")
         assert result.stage == ReconStage.COMPLETED
@@ -144,7 +144,7 @@ async def main():
     # Test 9: Quality Gates
     print("\n[9/12] Quality Gates...")
     try:
-        from core.coding import QualityGates, Gate
+        from core.coding import Gate, QualityGates
         qg = QualityGates()
         qg.pass_gate(Gate.REQUIREMENT)
         qg.pass_gate(Gate.ARCHITECTURE)
@@ -182,7 +182,7 @@ async def main():
     # Test 11: Evaluation Pyramid
     print("\n[11/12] Evaluation Pyramid...")
     try:
-        from core.coding import EvaluationPyramid, EvalLevel
+        from core.coding import EvalLevel, EvaluationPyramid
         ep = EvaluationPyramid()
         ep.evaluate_level(EvalLevel.UNIT, 0.9)
         ep.evaluate_level(EvalLevel.INTEGRATION, 0.8)
@@ -200,8 +200,14 @@ async def main():
     print("\n[12/12] Full v11 Integration...")
     try:
         from core.coding import (
-            RepositoryRecon, RequirementsCompiler, ArchitectureSynthesizer,
-            TaskGraph, QualityGates, Gate, CodeGraph, SemanticCodeIndex
+            ArchitectureSynthesizer,
+            CodeGraph,
+            Gate,
+            QualityGates,
+            RepositoryRecon,
+            RequirementsCompiler,
+            SemanticCodeIndex,
+            TaskGraph,
         )
         
         # Full workflow
@@ -232,7 +238,8 @@ async def main():
         results.append(("Full Integration", True, "all modules wired"))
         print("  ✓ Full v11 workflow completed successfully")
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         results.append(("Full Integration", False, str(e)[:80]))
         print(f"  ✗ {e}")
 

@@ -1,16 +1,21 @@
 """Tests for adapters.py — Benchmark Adapters."""
-import pytest
+import json
 import os
 import tempfile
-import json
 
 from benchmark.adapters import (
-    HumanEvalTask, HumanEvalAdapter,
-    MBPPTask, MBPPAdapter,
-    MMLUTask, MMLUAdapter,
-    GSM8KTask, GSM8KAdapter,
-    SWEBenchProTask, SWEBenchProAdapter,
-    BenchmarkManager, TaskResult,
+    BenchmarkManager,
+    GSM8KAdapter,
+    GSM8KTask,
+    HumanEvalAdapter,
+    HumanEvalTask,
+    MBPPAdapter,
+    MBPPTask,
+    MMLUAdapter,
+    MMLUTask,
+    SWEBenchProAdapter,
+    SWEBenchProTask,
+    TaskResult,
 )
 
 

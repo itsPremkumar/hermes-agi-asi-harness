@@ -94,6 +94,3 @@ def trend_converged(state: dict, window: int = 5, min_delta: float = 1e-9) -> bo
 def dump_state_safely(state: dict) -> str:
     """JSON string for lineage ledger; never includes secrets by construction."""
     return json.dumps(state, indent=2, sort_keys=True)
-
-
-import logging

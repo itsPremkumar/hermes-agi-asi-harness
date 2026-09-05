@@ -1,8 +1,7 @@
 """Pytest configuration and fixtures for benchmarks."""
 
-import pytest
-import sys
 import os
+import sys
 
 benchmarks_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 root_dir = os.path.abspath(os.path.join(benchmarks_dir, ".."))

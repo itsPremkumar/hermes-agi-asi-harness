@@ -462,7 +462,7 @@ class RepositoryDigitalTwin:
                     if '-> ' in content or ': ' in content:
                         has_type_hints = True
                         break
-                except:
+                except Exception:
                     pass
         
         if has_type_hints:
@@ -481,7 +481,7 @@ class RepositoryDigitalTwin:
                 if 'async def' in content or 'await ' in content:
                     has_async = True
                     break
-            except:
+            except Exception:
                 pass
         
         if has_async:

@@ -23,54 +23,45 @@ Comprehensive test suite covering all 18 planes:
 """
 
 import asyncio
-import pytest
-from pathlib import Path
 
+import pytest
+
+from context_os import ContextBudget, ContextCompiler
 from hermes_os import (
-    HermesIntelligenceOS,
-    HermesEvent,
-    EventSource,
-    UniversalEventBus,
+    AgentMessage,
+    AgentRole,
     AuthorityContext,
     AuthorityGate,
+    AVOStagnationDetector,
+    CheckpointSnapshot,
+    CognitiveResearchEngine,
+    ComputerOS,
+    CurriculumEngine,
+    ExecutiveKernel,
+    ExternalSupervisor,
+    FailureCategory,
+    HermesEvent,
+    HermesIntelligenceOS,
+    MetaCognitionEngine,
+    MissionPriority,
+    PersistentDaemonRuntime,
+    PopulationEvolutionLab,
+    ReasoningMode,
+    RecoveryEngine,
+    RecursiveAgentFabric,
     SafetyKernel,
     SafetyVerdict,
-    ExecutiveKernel,
-    MetaCognitionEngine,
-    MetaReasoningAssessment,
-    ReasoningMode,
-    CognitiveResearchEngine,
-    RecursiveAgentFabric,
-    AgentRole,
-    AgentMessage,
-    ToolEnvironmentOS,
-    ToolDescriptor,
-    ComputerOS,
-    UIElementType,
-    RecoveryEngine,
-    AVOStagnationDetector,
     StagnationLevel,
-    FailureCategory,
-    CurriculumEngine,
-    DifficultyTier,
-    PopulationEvolutionLab,
-    HermesVariant,
-    AntiRewardHackingVerifier,
-    ExternalSupervisor,
     SupervisorTelemetry,
     SupervisoryIntervention,
-    PersistentDaemonRuntime,
-    CheckpointSnapshot,
-    MissionPriority,
+    ToolEnvironmentOS,
+    UniversalEventBus,
 )
+from memory import MemoryOS, Trajectory, TrajectoryStep
 from world_model import (
-    WorldModel,
-    ActiveAbstractionGate,
     AbstractionMode,
+    ActiveAbstractionGate,
 )
-from memory import MemoryOS, TrajectoryMemory, Trajectory, TrajectoryStep
-from context_os import ContextBudget, ContextCompiler, GoalContract, GoalInvariant
-
 
 # =============================================================================
 # 1. Plane 01: Universal Event Bus

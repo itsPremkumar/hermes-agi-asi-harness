@@ -9,8 +9,6 @@ Tests all 5 architectural enhancements:
 5. Live Dynamic MCP Server Hub & Capability Registry (connect_mcp_client, ToolDescriptor registration, CapabilityManifest reflection).
 """
 
-import asyncio
-import os
 import shutil
 import sys
 import tempfile
@@ -18,20 +16,11 @@ from pathlib import Path
 
 import pytest
 
-from hermes_agi import Harness, HermesIntelligenceOS
+from hermes_agi import Harness
 from hermes_agi.benchmarks.runner import BenchmarkRunner
 from hermes_os.capabilities import CapabilityKind, CapabilityRegistry
 from hermes_os.tool_env import ToolEnvironmentOS
 from memory.manager import MemoryOS
-from memory.subsystems import (
-    SemanticMemory,
-    EpisodicMemory,
-    ProceduralMemory,
-    FailureMemory,
-    DecisionMemory,
-    WorldStateMemory,
-    CapabilityMemory,
-)
 from plugins.mcp_client import MCPClient
 
 

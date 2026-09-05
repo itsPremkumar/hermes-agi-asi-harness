@@ -14,15 +14,15 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from deep_research.engine import DeepResearchEngine, ResearchSession
+from deep_research.engine import DeepResearchEngine
 
 # AgentEye Live Search Integration
 try:
-    from agent_eye.academic import wikipedia_search, arxiv_search
-    from agent_eye.dev_backends import pypi_search, gitlab_search
+    from agent_eye.academic import wikipedia_search
     from agent_eye.core import _hackernews_search
+    from agent_eye.dev_backends import pypi_search
     _AGENT_EYE_AVAILABLE = True
 except Exception:
     _AGENT_EYE_AVAILABLE = False

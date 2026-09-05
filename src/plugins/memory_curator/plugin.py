@@ -1,4 +1,4 @@
 """memory_curator — re-export module."""
-from . import logger, Memory, SimpleEmbedder, MemoryCurator, Plugin
+from . import Memory, MemoryCurator, Plugin, SimpleEmbedder, logger
 
 __all__ = ["Memory", "MemoryCurator", "Plugin", "SimpleEmbedder", "logger"]

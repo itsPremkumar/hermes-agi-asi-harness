@@ -7,9 +7,9 @@ Inspired by DeepSeek Harness (dsh):
 """
 
 from .controller import (
-    RuntimeMode,
     ModeConfig,
     ModeController,
+    RuntimeMode,
 )
 
 __all__ = [

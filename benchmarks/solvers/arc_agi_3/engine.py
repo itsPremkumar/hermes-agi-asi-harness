@@ -17,13 +17,13 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from .puzzle_parser import Puzzle, PuzzleParser
 from .rule_hypothesizer import HypothesisSet, RuleHypothesizer
-from .strategy_selector import StrategyResult, StrategySelector
 from .solution_generator import Solution, SolutionGenerator
 from .solution_verifier import SolutionVerification, SolutionVerifier
+from .strategy_selector import StrategyResult, StrategySelector
 
 logger = logging.getLogger(__name__)
 

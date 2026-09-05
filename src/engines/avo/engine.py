@@ -13,13 +13,13 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 from .knowledge_base import DomainKnowledgeBase
 from .lineage import LineageDAG, LineageNode
 from .operator import AgenticVariationOperator
-from .supervisor import AVOSupervisor, SupervisorIntervention
+from .supervisor import AVOSupervisor
 
 logger = logging.getLogger("hermes.avo.engine")
 

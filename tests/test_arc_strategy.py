@@ -1,7 +1,5 @@
 """Tests for ARC-AGI-3 Strategy Optimizer."""
-from benchmarks.arc_game.strategy import (
-    StrategyOptimizer, StrategyType
-)
+from benchmarks.arc_game.strategy import StrategyOptimizer, StrategyType
 
 
 class TestStrategyOptimizer:

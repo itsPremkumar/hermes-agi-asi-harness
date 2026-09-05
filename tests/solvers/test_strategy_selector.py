@@ -1,24 +1,22 @@
 """Tests for StrategySelector."""
-import pytest
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.rule_hypothesizer import Hypothesis, HypothesisSet
-from harness.solvers.arc_agi_3.strategy_selector import (
-    StrategySelector,
-    StrategyResult,
-    Strategy,
-    STRATEGY_RULE_BASED,
-    STRATEGY_PATTERN_MATCH,
+from benchmarks.solvers.arc_agi_3.rule_hypothesizer import Hypothesis, HypothesisSet
+from benchmarks.solvers.arc_agi_3.strategy_selector import (
     STRATEGY_BRUTE_FORCE,
     STRATEGY_LLM_REASONING,
-    STRATEGY_FALLBACK,
-    _router_rule_based,
-    _router_pattern_match,
+    STRATEGY_PATTERN_MATCH,
+    STRATEGY_RULE_BASED,
+    StrategyResult,
+    StrategySelector,
     _router_brute_force,
     _router_llm_fallback,
+    _router_pattern_match,
+    _router_rule_based,
 )
 
 

@@ -3,22 +3,19 @@
 import os
 import sys
 import time
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from benchmark.full_evaluation_suite import (
-    FullEvaluationSuite, EvalResult, EvalReport, EvalCategory,
+    EvalCategory,
+    EvalReport,
+    EvalResult,
+    FullEvaluationSuite,
     build_default_full_evaluation_suite,
 )
+from benchmark.hellaswag_benchmark import HellaSwagBenchmark
 from benchmark.human_eval_benchmark import HumanEvalBenchmark
 from benchmark.mbpp_benchmark import MBPPBenchmark
-from benchmark.hellaswag_benchmark import HellaSwagBenchmark
-from benchmark.boolq_benchmark import BoolQBenchmark
-from benchmark.piqa_benchmark import PIQABenchmark
-from benchmark.openbookqa_benchmark import OpenBookQABenchmark
-from benchmark.siqa_benchmark import SIQABenchmark
-from benchmark.swe_bench_pro_benchmark import SWEBenchPro
 
 
 class TestEvalResult:

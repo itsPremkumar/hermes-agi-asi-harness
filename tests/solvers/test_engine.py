@@ -1,28 +1,27 @@
 """Tests for AVOPISAgingEngine."""
-import pytest
-from unittest.mock import MagicMock
-
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.engine import (
-    AVOPISAgingEngine,
+from benchmarks.solvers.arc_agi_3.engine import (
     AgentState,
+    AVOPISAgingEngine,
     Node,
-    _node_perceive,
-    _node_reason,
-    _node_plan,
     _node_act,
-    _node_evaluate,
     _node_diagnose,
+    _node_evaluate,
+    _node_perceive,
+    _node_plan,
+    _node_reason,
     _node_revise,
 )
-from harness.solvers.arc_agi_3.puzzle_parser import Puzzle, PuzzleParser
-from harness.solvers.arc_agi_3.rule_hypothesizer import HypothesisSet, RuleHypothesizer
-from harness.solvers.arc_agi_3.strategy_selector import StrategySelector
-from harness.solvers.arc_agi_3.solution_generator import SolutionGenerator
-from harness.solvers.arc_agi_3.solution_verifier import SolutionVerifier
+from benchmarks.solvers.arc_agi_3.puzzle_parser import Puzzle, PuzzleParser
+from benchmarks.solvers.arc_agi_3.rule_hypothesizer import HypothesisSet, RuleHypothesizer
+from benchmarks.solvers.arc_agi_3.solution_generator import SolutionGenerator
+from benchmarks.solvers.arc_agi_3.solution_verifier import SolutionVerifier
+from benchmarks.solvers.arc_agi_3.strategy_selector import StrategySelector
 
 
 class TestAgentState:

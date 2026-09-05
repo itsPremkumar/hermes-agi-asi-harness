@@ -2,23 +2,36 @@
 
 import os
 import sys
-import traceback
 import tempfile
+import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", ".."))
 
-from learning.self_eval import ConfidenceTracker, Review, SelfEvaluator
-from learning.skill_forge import (
-    ForgeLog, Skill, SkillForge, SkillParameter, SkillRegistry,
-)
 from learning.curriculum import (
-    CapabilityGap, Curriculum, CurriculumBuilder,
-    PracticeResult, PracticeTask, make_task_id, simple_task_pool,
+    CapabilityGap,
+    Curriculum,
+    CurriculumBuilder,
+    PracticeResult,
+    PracticeTask,
+    make_task_id,
+    simple_task_pool,
 )
 from learning.experience_replay import (
-    ExperienceBuffer, Mission, Replayer, Step,
-    generate_synthetic_missions, make_mission_id,
+    ExperienceBuffer,
+    Mission,
+    Replayer,
+    Step,
+    generate_synthetic_missions,
+    make_mission_id,
+)
+from learning.self_eval import ConfidenceTracker, Review, SelfEvaluator
+from learning.skill_forge import (
+    ForgeLog,
+    Skill,
+    SkillForge,
+    SkillParameter,
+    SkillRegistry,
 )
 
 passed = 0
@@ -205,7 +218,7 @@ def _():
     assert traj[-1] >= traj[0]
 
 # skill_forge
-print(f"\n--- skill_forge.py ---")
+print("\n--- skill_forge.py ---")
 
 @test("SkillParameter: create")
 def _():
@@ -378,7 +391,7 @@ def _():
         os.unlink(path)
 
 # curriculum
-print(f"\n--- curriculum.py ---")
+print("\n--- curriculum.py ---")
 
 @test("CapabilityGap: gap_size")
 def _():
@@ -506,7 +519,7 @@ def _():
     assert len(pool) >= 8
 
 # experience_replay
-print(f"\n--- experience_replay.py ---")
+print("\n--- experience_replay.py ---")
 
 @test("Step: create")
 def _():

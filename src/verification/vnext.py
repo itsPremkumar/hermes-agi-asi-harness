@@ -11,7 +11,6 @@ Rejects model hallucinations; generates empirical Earned Completion Proofs.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import subprocess
 import sys
@@ -19,7 +18,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 
 logger = logging.getLogger("hermes.verification.vnext")
 

@@ -7,11 +7,9 @@ Unit tests for Frontier Harness Architectures:
 
 from __future__ import annotations
 
-import pytest
-
-from hermes_agi.rlm import RLMREPLExecutor, REPLExecutionResult
-from hermes_agi.modes import ModeController, RuntimeMode, ModeConfig
+from hermes_agi.modes import ModeController, RuntimeMode
 from hermes_agi.refine import HarnessRefiner, RefinementReport
+from hermes_agi.rlm import RLMREPLExecutor
 
 
 class TestRLMREPL:

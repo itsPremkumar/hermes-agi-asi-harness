@@ -11,7 +11,7 @@ sys.path.insert(0, "src")
 # ---------------- daemon ----------------
 
 def test_daemon_queue_persists(tmp_path):
-    from hermes_os.daemon import PersistentDaemonRuntime, MissionPriority
+    from hermes_os.daemon import MissionPriority, PersistentDaemonRuntime
     d = PersistentDaemonRuntime(workspace_root=str(tmp_path))
     mid = d.enqueue_mission("persist me", priority=MissionPriority.HIGH)
     d2 = PersistentDaemonRuntime(workspace_root=str(tmp_path))
@@ -317,9 +317,15 @@ def test_baseline_and_approval(tmp_path):
 
 
 def test_plugin_manifest(tmp_path):
-    from hermes_os.plugin_manifest import (PermissionRing, PluginManifest, check_free_gate,
-                                           load_manifest, ring_allows)
     import json
+
+    from hermes_os.plugin_manifest import (
+        PermissionRing,
+        PluginManifest,
+        check_free_gate,
+        load_manifest,
+        ring_allows,
+    )
     bad = PluginManifest(name="p", ring=PermissionRing.R1_SANDBOX_LOCAL, needs_network=True)
     assert bad.validate() != []
     assert ring_allows(PermissionRing.R1_SANDBOX_LOCAL, "execute_shell",
@@ -359,8 +365,9 @@ def test_docker_sandbox_fallback(monkeypatch):
     out = DS.DockerSandbox().run("print(42)")
     assert out["engine"] == "local-fallback" and "42" in out["stdout"]
     assert DS.DockerSandbox().status()["fallback"] == "local-tempdir"
-    from hermes_os.experiments import ExperimentEngine
     import tempfile
+
+    from hermes_os.experiments import ExperimentEngine
     eng = ExperimentEngine(workspace_root=tempfile.mkdtemp())
     e = eng.run_sandboxed(eng.design("h", baseline=0.5), "print(0.9)")
     assert e.verdict == "HOLD" and "sandbox engine=" in e.observation
@@ -370,6 +377,7 @@ def test_docker_sandbox_fallback(monkeypatch):
 
 def test_status_api(tmp_path):
     from fastapi.testclient import TestClient
+
     from hermes_os.api import create_app
     from hermes_os.kernel import HermesIntelligenceOS
     client = TestClient(create_app(HermesIntelligenceOS(workspace_root=str(tmp_path))))
@@ -382,8 +390,8 @@ def test_status_api(tmp_path):
 
 
 def test_status_api_key(monkeypatch, tmp_path):
-    import os
     from fastapi.testclient import TestClient
+
     from hermes_os.api import create_app
     from hermes_os.kernel import HermesIntelligenceOS
     monkeypatch.setenv("HERMES_API_KEY", "secret123")
@@ -408,6 +416,7 @@ def test_dashboard_builds(tmp_path):
 
 def test_breaker_persists(monkeypatch, tmp_path):
     import json
+
     from hermes_os import hermes_llm as HL
     HL._cb_reset()
     monkeypatch.setenv("HERMES_LLM_CB_FAILS", "1")
@@ -464,6 +473,7 @@ async def test_compact_tool(tmp_path):
 
 def test_mcp_durable_tasks():
     import time
+
     from hermes_os.mcp_tasks import DurableMCPTasks
 
     class FakeClient:
@@ -584,8 +594,8 @@ async def test_research_lane_eagle_mock(monkeypatch, tmp_path):
 def test_memory_ingest_claims(tmp_path):
     import sys
     sys.path.insert(0, "src")
-    from memory.manager import MemoryOS
     from hermes_os.eagle_adapter import EagleClaim
+    from memory.manager import MemoryOS
     m = MemoryOS(workspace_root=str(tmp_path))
     rep = m.ingest_claims([EagleClaim(title="T", url="http://x", snippet="S Estates", backend="w")])
     assert rep == {"stored": 1, "indexed": 1}
@@ -671,8 +681,8 @@ async def test_controller_run_guarded(tmp_path):
 async def test_plane_metrics_and_cache(tmp_path):
     import sys
     sys.path.insert(0, "src")
-    from hermes_os.plane_metrics import MetricsCollector
     from hermes_os.plane_cache import AdaptivePlaneSelector, MemoizationCache, ResultCache
+    from hermes_os.plane_metrics import MetricsCollector
     mc = MetricsCollector.for_workspace(str(tmp_path))
     mc.record_plane("q1", "write_file", tokens_used=500, cost=0.0015, latency_ms=12.0)
     assert mc.get_plane_invocations().get("write_file") == 1

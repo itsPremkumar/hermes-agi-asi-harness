@@ -10,10 +10,11 @@ Tests:
 """
 
 import os
+
 os.environ.setdefault("HERMES_HOME", "/tmp/hermes_phase3_4_test")
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -35,11 +36,14 @@ def _fail(name, err):
     print(f"  ✗ {name}: {err}")
 
 
+
+
 async def test_1_watchdog():
     """Test 1: Watchdog anomaly detection."""
     header("Test 1: Watchdog Anomaly Detection")
 
-    from plugins.watchdog import AnomalyType, create as wd_create
+    from plugins.watchdog import AnomalyType
+    from plugins.watchdog import create as wd_create
     plugin = await wd_create()
     await plugin.load()
     await plugin.start()
@@ -69,7 +73,7 @@ async def test_2_economic_ledger():
     """Test 2: Economic Ledger budget management."""
     header("Test 2: Economic Ledger Budget Management")
 
-    from plugins.economic_ledger import EconomicLedgerPlugin, MissionBudget, EconomicLedger
+    from plugins.economic_ledger import EconomicLedger, EconomicLedgerPlugin, MissionBudget
     plugin = EconomicLedgerPlugin()
     plugin.engine = EconomicLedger()
 
@@ -275,7 +279,7 @@ async def main():
         except Exception as e:
             import traceback
             traceback.print_exc()
-            test_fail(name, str(e))
+            _fail(name, str(e))
             failed += 1
 
     print("\n" + "=" * 70)

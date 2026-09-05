@@ -2,6 +2,7 @@
 """Autonomous research plugin."""
 
 from core.research import ResearchAutonomous
+
 from core.runtime.plugin_base import PluginBase, PluginManifest
 
 

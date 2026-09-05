@@ -1,7 +1,6 @@
 """Comprehensive feature verification test."""
 
 import asyncio
-import sys
 
 print('=' * 60)
 print('COMPREHENSIVE FEATURE VERIFICATION')
@@ -12,7 +11,7 @@ print()
 print('1. PLANNING & THINKING ENGINE')
 print('-' * 40)
 try:
-    from hermes_agi.planning import Planner, get_all_features, get_all_capabilities
+    from hermes_agi.planning import Planner, get_all_capabilities, get_all_features
     
     features = get_all_features()
     print(f'   Features loaded: {len(features)}')
@@ -38,7 +37,7 @@ print()
 print('2. FEATURE REGISTRY')
 print('-' * 40)
 try:
-    from hermes_agi.planning import FeatureRegistry, FeatureCategory
+    from hermes_agi.planning import FeatureCategory, FeatureRegistry
     
     registry = FeatureRegistry()
     slash = registry.find_by_category(FeatureCategory.SLASH_COMMAND)
@@ -71,7 +70,7 @@ print()
 print('3. SAFETY GOVERNOR')
 print('-' * 40)
 try:
-    from hermes_agi.safety import SafetyGovernor, RiskLevel
+    from hermes_agi.safety import SafetyGovernor
     
     governor = SafetyGovernor()
     profile = governor.assess('Test risk', 0.8, 0.9)
@@ -90,7 +89,7 @@ print()
 print('4. KERNEL CONTROLLER')
 print('-' * 40)
 try:
-    from hermes_agi.kernel import KernelController, KernelState, KernelPhase
+    from hermes_agi.kernel import KernelController
     
     config = type('Config', (), {'project_path': '.', 'state_dir': '/tmp/test'})()
     kernel = KernelController(config)
@@ -112,7 +111,7 @@ print()
 print('5. BOT SWARM')
 print('-' * 40)
 try:
-    from hermes_agi.agents import BotSwarm, BOT_PROFILES
+    from hermes_agi.agents import BotSwarm
     
     swarm = BotSwarm()
     bots = swarm.list_bots()
@@ -136,7 +135,7 @@ print()
 print('6. BENCHMARK RUNNER')
 print('-' * 40)
 try:
-    from hermes_agi.benchmarks import BenchmarkRunner, BENCHMARK_REGISTRY
+    from hermes_agi.benchmarks import BENCHMARK_REGISTRY, BenchmarkRunner
     
     runner = BenchmarkRunner()
     print(f'   Benchmarks: {len(BENCHMARK_REGISTRY)}')
@@ -158,7 +157,7 @@ print()
 print('7. META DISCOVERY')
 print('-' * 40)
 try:
-    from hermes_agi.discovery import MetaDiscovery, DiscoveredFeature
+    from hermes_agi.discovery import MetaDiscovery
     
     discovery = asyncio.run(MetaDiscovery.create())
     print(f'   Features discovered: {len(discovery.features)}')
@@ -208,7 +207,7 @@ print()
 print('9. PLUGIN MANAGER')
 print('-' * 40)
 try:
-    from hermes_agi.plugins import PluginManager, PluginBase, PluginState
+    from hermes_agi.plugins import PluginBase, PluginManager
     
     manager = PluginManager()
     
@@ -238,7 +237,7 @@ print()
 print('10. CONFIGURATION')
 print('-' * 40)
 try:
-    from hermes_agi.config import Config, load_config
+    from hermes_agi.config import load_config
     
     config = load_config()
     print(f'   Project path: {config.project_path}')
@@ -255,7 +254,11 @@ print('11. EXCEPTIONS')
 print('-' * 40)
 try:
     from hermes_agi.exceptions import (
-        HarnessError, KernelError, PluginError, SafetyError, BenchmarkError
+        BenchmarkError,
+        HarnessError,
+        KernelError,
+        PluginError,
+        SafetyError,
     )
     
     assert issubclass(KernelError, HarnessError)
@@ -272,7 +275,7 @@ print()
 print('12. UTILITIES')
 print('-' * 40)
 try:
-    from hermes_agi.utils import setup_logging, get_logger, gather_limited
+    from hermes_agi.utils import get_logger, setup_logging
     
     setup_logging('INFO')
     logger = get_logger('test')
@@ -287,7 +290,7 @@ print()
 print('13. COGNITIVE ARCHITECTURE')
 print('-' * 40)
 try:
-    from hermes_agi.cognitive import WorldModel, SelfModel
+    from hermes_agi.cognitive import SelfModel, WorldModel
     
     world = WorldModel()
     world.update('test_entity', {'name': 'test', 'value': 42})

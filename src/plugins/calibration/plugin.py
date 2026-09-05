@@ -1,4 +1,4 @@
 """calibration — re-export module."""
-from . import logger, CalibrationTracker, CalibrationPlugin
+from . import CalibrationPlugin, CalibrationTracker, logger
 
 __all__ = ["CalibrationPlugin", "CalibrationTracker", "logger"]

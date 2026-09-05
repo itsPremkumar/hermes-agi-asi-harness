@@ -2,15 +2,23 @@
 from __future__ import annotations
 
 import asyncio
+
 import pytest
 
+pytest.importorskip(
+    "hermes_asi_master.runtime.harness",
+    reason="hermes_asi_master runtime retired in 26c4285, salvaged into "
+    "src/hermes_os (cron_expr, process_guard, watchdog); "
+    "see tests/test_new_subsystems.py",
+)
+
+from hermes_asi_master.runtime.cron import CronJob
 from hermes_asi_master.runtime.harness import (
     HarnessRuntime,
     HarnessRuntimeConfig,
 )
+from hermes_asi_master.runtime.scheduler import ScheduledTask
 from hermes_asi_master.runtime.watchdog import WatchdogConfig
-from hermes_asi_master.runtime.cron import CronJob
-from hermes_asi_master.runtime.scheduler import ScheduledTask, TaskPriority
 
 
 class TestHarnessRuntimeConfig:

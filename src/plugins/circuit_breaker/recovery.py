@@ -13,7 +13,6 @@ from typing import Any, Callable
 
 from . import (
     CircuitBreakerPlugin,
-    PlaneHealth,
     CircuitState,
     get_fallbacks,
 )

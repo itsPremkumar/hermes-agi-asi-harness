@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import ast
 import asyncio
-import io
 import inspect
+import io
 import linecache
 import logging
 import math
@@ -22,11 +22,11 @@ import sys
 import threading
 import time
 from contextlib import redirect_stderr, redirect_stdout
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
-from .bridge import RLMBridge, RLMSpawnHandle
+from .bridge import RLMBridge
 
 logger = logging.getLogger("hermes.rlm.environment")
 

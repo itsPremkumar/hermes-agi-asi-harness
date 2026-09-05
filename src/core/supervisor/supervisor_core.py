@@ -5,13 +5,12 @@ research, testing, deployment, or file editing. All actual work is done by Herme
 """
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 
 class SupervisorState(str, Enum):
@@ -223,7 +222,7 @@ class SupervisorCore:
                 # 14. Checkpoint
                 self._checkpoint()
 
-        except Exception as e:
+        except Exception:
             self._set_state(SupervisorState.FAILED)
             if self._context:
                 pass  # Error logged

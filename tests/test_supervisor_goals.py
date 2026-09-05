@@ -2,20 +2,24 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.supervisor.goal_compiler import (
-    GoalCompiler, MissionContract, GoalType, Complexity,
+    Complexity,
+    GoalCompiler,
+    GoalType,
 )
 from core.supervisor.goal_decomposer import (
-    GoalDecomposer, GoalHierarchy, GoalNode, GoalLevel, GoalStatus,
+    GoalDecomposer,
+    GoalLevel,
 )
 from core.supervisor.goal_manager import (
-    GoalDependencyGraph, AssignmentEngine, Worker, GoalManager, ReplanningEngine,
+    AssignmentEngine,
+    GoalDependencyGraph,
+    GoalManager,
+    ReplanningEngine,
+    Worker,
 )
-
 
 # ---------------------------------------------------------------------------
 # Goal Compiler tests

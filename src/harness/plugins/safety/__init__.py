@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
+import re
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-import re
-
 from .plugin_base import Plugin, PluginMetadata, PluginStatus
-
 
 # ============== Guardrails Plugin ==============
 

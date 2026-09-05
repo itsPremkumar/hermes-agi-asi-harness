@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import random
 import sys
-import time
 import traceback
 
 # Add src dir to path (evolution is at src/evolution)
@@ -16,18 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(HERE, "..", "..")
 sys.path.insert(0, SRC_DIR)
 
-from evolution.gepa import (
-    EvolutionStep,
-    GEPA,
-    Mutator,
-    Pareto,
-    ParetoPoint,
-    SafetyValidator,
-    Strategy,
-    Variant,
-)
 from evolution.benchmarks import (
-    BaselineEntry,
     BaselineTracker,
     Benchmark,
     BenchmarkResult,
@@ -36,6 +24,23 @@ from evolution.benchmarks import (
     TaskSuite,
     make_suite_id,
     quick_suite,
+)
+from evolution.evolution_loop import (
+    EvolutionLoop,
+    EvolutionState,
+    Hypothesis,
+    HypothesisResult,
+    RollbackManager,
+    Sandbox,
+)
+from evolution.gepa import (
+    GEPA,
+    EvolutionStep,
+    Mutator,
+    Pareto,
+    SafetyValidator,
+    Strategy,
+    Variant,
 )
 from evolution.strategy_search import (
     BeamSearch,
@@ -46,15 +51,6 @@ from evolution.strategy_search import (
     SearchSpace,
     StrategyConfig,
     run_search,
-)
-from evolution.evolution_loop import (
-    Checkpoint,
-    EvolutionLoop,
-    EvolutionState,
-    Hypothesis,
-    HypothesisResult,
-    RollbackManager,
-    Sandbox,
 )
 
 passed = 0

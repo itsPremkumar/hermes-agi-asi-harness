@@ -1,4 +1,4 @@
 """deep_research — re-export module."""
-from . import logger, DeepResearchPlugin, Plugin
+from . import DeepResearchPlugin, Plugin, logger
 
 __all__ = ["DeepResearchPlugin", "Plugin", "logger"]

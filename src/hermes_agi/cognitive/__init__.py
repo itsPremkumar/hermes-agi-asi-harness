@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .world_model import WorldModel
 from .self_model import SelfModel
+from .world_model import WorldModel
 
 __all__ = ["WorldModel", "SelfModel"]

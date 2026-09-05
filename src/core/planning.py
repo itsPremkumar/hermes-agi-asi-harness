@@ -200,6 +200,3 @@ class PlanningEngine:
             visit(task.id)
 
         return path
-
-
-from enum import Enum

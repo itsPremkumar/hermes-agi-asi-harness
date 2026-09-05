@@ -8,7 +8,6 @@ algorithmic patterns that the agent consults before proposing variations.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
 
 logger = logging.getLogger("hermes.avo.knowledge_base")
 

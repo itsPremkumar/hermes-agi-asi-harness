@@ -2,7 +2,6 @@
 Tests for SIQA Benchmark.
 Test count: 22
 """
-import asyncio
 import json
 import os
 import sys
@@ -11,12 +10,11 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from benchmark.siqa_benchmark import (
-    SIQAQuestion,
-    SIQADataset,
-    SIQAResult,
     SIQABenchmark,
+    SIQADataset,
+    SIQAQuestion,
+    SIQAResult,
 )
-
 
 # ──────────────────── Domain Model Tests ──────────────────────────────
 

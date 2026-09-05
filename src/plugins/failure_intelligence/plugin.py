@@ -1,4 +1,10 @@
 """failure_intelligence — re-export module."""
-from . import logger, FailureRecord, Counterfactual, FailureIntelligenceEngine, FailureIntelligencePlugin
+from . import (
+    Counterfactual,
+    FailureIntelligenceEngine,
+    FailureIntelligencePlugin,
+    FailureRecord,
+    logger,
+)
 
 __all__ = ["Counterfactual", "FailureIntelligenceEngine", "FailureIntelligencePlugin", "FailureRecord", "logger"]

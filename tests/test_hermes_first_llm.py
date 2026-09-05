@@ -1,5 +1,4 @@
 """Hermes-first LLM chain: order, fallback, and compiler default (offline-safe)."""
-import os
 import sys
 
 sys.path.insert(0, "src")

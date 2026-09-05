@@ -25,6 +25,7 @@ Domain-Specific Modules:
 - deep_research: Deep research synthesis and reporting
 - diagnostics: Runtime inspection & diagnostics
 - mesh: Consensus engine and message router
+- operations: Watchdog, scheduler, checkpointing, economic ledger
 - research: Research synthesis
 - safety: Risk assessor, policy enforcer, threat modeler
 - security: Security validator & audit
@@ -36,9 +37,9 @@ __version__ = "2.0.0"
 
 # Primary Entry Points
 try:
-    from .hermes_agi import Harness, Config, load_config
+    from .agents import DEFAULT_ROLES, Agent, Role
     from .core.runtime.kernel import HermesKernel, KernelConfig
-    from .agents import Agent, Role, DEFAULT_ROLES
-    from .engines import ExecutiveControlPlane, DailyImprovementCron
+    from .engines import DailyImprovementCron, ExecutiveControlPlane
+    from .hermes_agi import Config, Harness, load_config
 except ImportError:
     pass

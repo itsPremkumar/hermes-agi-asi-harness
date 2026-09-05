@@ -18,24 +18,26 @@ if _CURRENT_DIR not in sys.path:
 # Register alias so imports from "benchmark" resolve to "benchmarks"
 sys.modules.setdefault("benchmark", sys.modules[__name__])
 
-from .mmlu_benchmark import MMLUBenchmark
+from .arc_agi_3_full_eval import FullEvaluationSuite as ARCAGI3FullEval
+from .boolq_benchmark import BoolQBenchmark
+from .evaluation_suite import EvaluationSuite
+from .full_evaluation_suite import FullEvaluationSuite
 from .gsm8k_benchmark import GSM8KBenchmark
 from .hellaswag_benchmark import HellaSwagBenchmark
 from .human_eval_benchmark import HumanEvalBenchmark
 from .mbpp_benchmark import MBPPBenchmark
-from .boolq_benchmark import BoolQBenchmark
-from .piqa_benchmark import PIQABenchmark
-from .siqa_benchmark import SIQABenchmark
+from .mmlu_benchmark import MMLUBenchmark
 from .openbookqa_benchmark import OpenBookQABenchmark
-from .wino_grande_benchmark import WinogradBenchmark, WinogradBenchmark as WinoGrandeBenchmark
-from .winogender_benchmark import WinogenderBenchmark
+from .piqa_benchmark import PIQABenchmark
 from .real_toxicity_prompts_benchmark import RealToxicityPromptsBenchmark
-from .swe_bench_pro_benchmark import SWEBenchPro
-from .swe_bench_verified_benchmark import SWEBenchVerifiedBenchmark, SWEBenchVerifiedBenchmark as SWEBenchVerified
-from .arc_agi_3_full_eval import FullEvaluationSuite as ARCAGI3FullEval
 from .score_aggregator import ScoreAggregator
-from .full_evaluation_suite import FullEvaluationSuite
-from .evaluation_suite import EvaluationSuite
+from .siqa_benchmark import SIQABenchmark
+from .swe_bench_pro_benchmark import SWEBenchPro
+from .swe_bench_verified_benchmark import SWEBenchVerifiedBenchmark
+from .swe_bench_verified_benchmark import SWEBenchVerifiedBenchmark as SWEBenchVerified
+from .wino_grande_benchmark import WinogradBenchmark
+from .wino_grande_benchmark import WinogradBenchmark as WinoGrandeBenchmark
+from .winogender_benchmark import WinogenderBenchmark
 
 BENCHMARK_REGISTRY = {
     "mmlu": MMLUBenchmark,

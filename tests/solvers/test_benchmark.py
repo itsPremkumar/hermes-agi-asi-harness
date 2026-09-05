@@ -1,17 +1,17 @@
 """Tests for ARCAGI3Benchmark."""
-import pytest
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.benchmark import (
+from benchmarks.solvers.arc_agi_3.benchmark import (
     ARCAGI3Benchmark,
     BenchmarkReport,
     PuzzleResult,
     get_sample_puzzles,
 )
-from harness.solvers.arc_agi_3.engine import AVOPISAgingEngine
+from benchmarks.solvers.arc_agi_3.engine import AVOPISAgingEngine
 
 
 class TestPuzzleResult:

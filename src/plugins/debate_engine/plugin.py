@@ -1,4 +1,4 @@
 """debate_engine — re-export module."""
-from . import logger, Perspective, DebateRound, Debater, DebateEngine, Plugin
+from . import DebateEngine, Debater, DebateRound, Perspective, Plugin, logger
 
 __all__ = ["DebateEngine", "DebateRound", "Debater", "Perspective", "Plugin", "logger"]

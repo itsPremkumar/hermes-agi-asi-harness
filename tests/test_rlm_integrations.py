@@ -7,11 +7,9 @@ Unit tests for Hermes RLM Deep Integrations across:
 
 from __future__ import annotations
 
-import pytest
-
-from harnix.state import create_initial_state, AgentPhase
-from harnix.nodes import rlm_node, _execute_step
-from benchmarks.arc_engine.engine import Task, Grid, RLMTransformationSynthesizer
+from benchmarks.arc_engine.engine import Grid, RLMTransformationSynthesizer, Task
+from harnix.nodes import _execute_step, rlm_node
+from harnix.state import AgentPhase, create_initial_state
 from hermes_agi.research import DeepResearchAgent, ResearchDossier
 
 

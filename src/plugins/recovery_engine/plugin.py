@@ -398,7 +398,7 @@ class RecoveryEngine(PluginBase):
         cp = self.get_latest_checkpoint(task_id)
         return cp.state if cp else None
 
-    def resume(self, task_id: str) -> dict[str, Any] | None:
+    def resume_from_checkpoint(self, task_id: str) -> dict[str, Any] | None:
         """Resume from the latest checkpoint, clearing newer checkpoints."""
         cp = self.get_latest_checkpoint(task_id)
         if cp is None:

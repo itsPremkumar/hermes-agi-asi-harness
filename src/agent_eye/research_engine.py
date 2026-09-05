@@ -9,11 +9,9 @@ MIT License. See LICENSE for details.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 

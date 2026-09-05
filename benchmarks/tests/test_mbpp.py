@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from benchmark.mbpp_benchmark import MBPPBenchmark, MBPPProblem, MBPPResult, ProblemStatus
+from benchmark.mbpp_benchmark import MBPPBenchmark, ProblemStatus
 
 
 class TestMBPPBenchmark:

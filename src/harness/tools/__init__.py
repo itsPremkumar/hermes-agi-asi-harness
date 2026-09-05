@@ -8,7 +8,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
-from ..errors import ToolError, RateLimitError
+from ..errors import RateLimitError, ToolError
 
 logger = logging.getLogger(__name__)
 

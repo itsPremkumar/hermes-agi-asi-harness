@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from .engine import MetaDiscovery, DiscoveredFeature
+from .engine import DiscoveredFeature, MetaDiscovery
 
 __all__ = ["MetaDiscovery", "DiscoveredFeature"]

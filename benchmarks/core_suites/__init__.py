@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from benchmarks.core_suites.llm_client import LLMClient, LLMConfig, PromptBuilder
 
-
 # ---------------------------------------------------------------------------
 # Benchmark registry
 # ---------------------------------------------------------------------------

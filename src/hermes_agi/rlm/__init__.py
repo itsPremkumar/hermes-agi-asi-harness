@@ -8,13 +8,13 @@ Ported & Enhanced from Prime Agent (prime-agent-runtime/src/rlm/):
 - Memory heap snapshots and restorations
 """
 
-from .environment import (
-    RLMREPLExecutor,
-    REPLExecutionResult,
-)
 from .bridge import (
     RLMBridge,
     RLMSpawnHandle,
+)
+from .environment import (
+    REPLExecutionResult,
+    RLMREPLExecutor,
 )
 
 __all__ = [

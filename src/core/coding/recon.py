@@ -154,7 +154,7 @@ class RepositoryRecon:
                         if '-> ' in content and ': ' in content:
                             conventions.append("type_hints")
                             break
-                    except:
+                    except Exception:
                         pass
         
         # Check for async
@@ -168,7 +168,7 @@ class RepositoryRecon:
                         if 'async def' in content or 'await ' in content:
                             conventions.append("async_await")
                             break
-                    except:
+                    except Exception:
                         pass
         
         return list(set(conventions))
@@ -182,7 +182,7 @@ class RepositoryRecon:
             try:
                 with open(requirements) as f:
                     deps.extend(line.strip() for line in f if line.strip() and not line.startswith('#'))
-            except:
+            except Exception:
                 pass
         
         package_json = os.path.join(repo_path, 'package.json')
@@ -192,7 +192,7 @@ class RepositoryRecon:
                 with open(package_json) as f:
                     pkg = json.load(f)
                     deps.extend(pkg.get('dependencies', {}).keys())
-            except:
+            except Exception:
                 pass
         
         return deps

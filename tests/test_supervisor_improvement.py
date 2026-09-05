@@ -2,16 +2,17 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.supervisor.improvement import (
-    ImprovementAnalyzer, VersionManager, VersionInfo, ReworkDecisionEngine,
-    ReworkDecision, ReworkType, FailureClassification, FinalJudgmentSystem,
-    ImprovementArea,
+    FailureClassification,
+    FinalJudgmentSystem,
+    ImprovementAnalyzer,
+    ReworkDecisionEngine,
+    ReworkType,
+    VersionInfo,
+    VersionManager,
 )
-
 
 # ---------------------------------------------------------------------------
 # Improvement Analyzer tests
@@ -31,7 +32,7 @@ class TestImprovementAnalyzer:
             'performance': type('p', (object,), {'status': type('s', (object,), {'value': 'passed'})()})(),
         })
         result = analyzer.analyze(record)
-        assert result["can_be_better"] == False
+        assert not result["can_be_better"]
 
     def test_analyze_with_issues(self):
         analyzer = ImprovementAnalyzer()
@@ -42,7 +43,7 @@ class TestImprovementAnalyzer:
             'performance': type('p', (object,), {'status': type('s', (object,), {'value': 'failed'})()})(),
         })
         result = analyzer.analyze(record)
-        assert result["can_be_better"] == True
+        assert result["can_be_better"]
         assert len(result["improvement_areas"]) > 0
 
 

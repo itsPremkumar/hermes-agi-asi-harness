@@ -7,10 +7,9 @@ error rate measurement, and health status endpoint.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
-from . import CircuitBreakerPlugin, PlaneHealth, CircuitState, get_fallbacks
+from . import CircuitBreakerPlugin, CircuitState
 
 
 class HealthMonitor:

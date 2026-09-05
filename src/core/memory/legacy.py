@@ -190,5 +190,3 @@ def make_recorder(state: dict[str, Any], memory_file: str | None) -> _Recorder:
     cfg_mem = state.setdefault("shared_state", {}).setdefault("memory", {})
     store = MemoryStore(memory_file) if memory_file else None
     return _Recorder(cfg_mem, store)
-
-import logging

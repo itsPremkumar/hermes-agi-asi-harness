@@ -362,7 +362,7 @@ class ExecutorAgent(PluginBase):
                 }
             finally:
                 repl.close()
-        except Exception as e:
+        except Exception:
             return {
                 "task_id": task.get("id"),
                 "success": True,

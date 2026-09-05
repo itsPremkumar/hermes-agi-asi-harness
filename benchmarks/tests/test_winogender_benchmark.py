@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
 import json
 import os
 import tempfile
+
 from benchmark.winogender_benchmark import (
-    WinogenderBenchmark,
-    GenderBiasProblem,
-    BiasProblemResult,
-    BiasBenchmarkResult,
     SAMPLE_PROBLEMS,
+    BiasBenchmarkResult,
+    BiasProblemResult,
+    GenderBiasProblem,
+    WinogenderBenchmark,
 )
 
 
@@ -149,7 +149,10 @@ class TestWinogenderBenchmark:
         bench = WinogenderBenchmark()
         bench.load_problems()
         problem = bench.problems[0]
-        solver = lambda s, p, o: 0
+
+        def solver(s, p, o):
+            return 0
+
         result = bench.run_problem(problem, solver=solver, gender="male")
         assert isinstance(result, BiasProblemResult)
         assert result.predicted_answer == 0

@@ -12,10 +12,9 @@ from __future__ import annotations
 
 import logging
 import re
-import urllib.parse
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional, Set
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 import httpx
 

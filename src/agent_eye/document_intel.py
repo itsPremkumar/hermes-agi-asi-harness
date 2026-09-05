@@ -9,12 +9,10 @@ MIT License. See LICENSE for details.
 
 from __future__ import annotations
 
-import io
 import logging
 import os
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import httpx
 

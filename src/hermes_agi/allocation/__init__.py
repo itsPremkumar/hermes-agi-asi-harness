@@ -2,13 +2,13 @@
 Hermes AGI/ASI Harness — Hermes Allocation & Monitoring Package.
 """
 
+from .monitor import AgentTelemetryEvent, HermesWatchdogMonitor
 from .packet import HermesMissionPacket
-from .monitor import HermesWatchdogMonitor, AgentTelemetryEvent
 from .quality_gates import (
-    AutonomousQualityGatePolicy,
-    QualityGateVerdict,
-    QualityGateFailure,
     DEFAULT_AUTONOMOUS_CONTINUATION_DIRECTIVE,
+    AutonomousQualityGatePolicy,
+    QualityGateFailure,
+    QualityGateVerdict,
 )
 
 __all__ = [

@@ -2,23 +2,35 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.supervisor.langgraph_skeleton import (
-    LangGraphSkeleton, SupervisorState, NodeName, EdgeCondition,
-    build_default_graph, is_completed, is_stalled, has_more_steps, always_continue,
-)
 from core.supervisor.deepagent import (
-    DeepAgent, InnerMonologue, MonologueStage,
-    VirtualFileSystem, PlanningTool, Plan, SubAgentSpawner,
+    DeepAgent,
+    InnerMonologue,
+    MonologueStage,
+    Plan,
+    PlanningTool,
+    SubAgentSpawner,
+    VirtualFileSystem,
 )
 from core.supervisor.integrated import (
-    plan_node, dispatch_node, monitor_node, adjust_node, evolve_node,
     IntegratedSupervisor,
+    adjust_node,
+    dispatch_node,
+    evolve_node,
+    monitor_node,
+    plan_node,
 )
-
+from core.supervisor.langgraph_skeleton import (
+    LangGraphSkeleton,
+    NodeName,
+    SupervisorState,
+    always_continue,
+    build_default_graph,
+    has_more_steps,
+    is_completed,
+    is_stalled,
+)
 
 # ---------------------------------------------------------------------------
 # LangGraph Skeleton tests

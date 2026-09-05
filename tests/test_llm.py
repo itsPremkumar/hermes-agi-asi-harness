@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-
 from src.harness.llm import (
-    LLMConfig,
-    LLMResponse,
     ChatMessage,
     ChatModel,
-    OutputParser,
+    ConversationBuffer,
     JsonOutputParser,
+    LLMConfig,
+    LLMResponse,
+    OutputParser,
     StrOutputParser,
     ToolDefinition,
-    ConversationBuffer,
 )
 
 

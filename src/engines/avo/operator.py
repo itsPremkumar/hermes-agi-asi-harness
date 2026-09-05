@@ -13,18 +13,15 @@ from __future__ import annotations
 
 import ast
 import logging
-import re
 import subprocess
 import sys
-import time
 import uuid
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Tuple
 
 from .knowledge_base import DomainKnowledgeBase
-from .lineage import LineageDAG, LineageNode
-from .supervisor import AVOSupervisor, SupervisorIntervention
+from .lineage import LineageNode
+from .supervisor import SupervisorIntervention
 
 logger = logging.getLogger("hermes.avo.operator")
 

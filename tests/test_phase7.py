@@ -10,10 +10,11 @@ Tests:
 """
 
 import os
+
 os.environ.setdefault("HERMES_HOME", "/tmp/hermes_phase7_test")
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -29,6 +30,8 @@ def _pass(name):
 
 def _fail(name, err):
     print(f"  ✗ {name}: {err}")
+
+
 
 
 async def test_1_computer_use():
@@ -80,7 +83,11 @@ async def test_2_engineering_factory():
     header("Test 2: Engineering Factory")
 
     from plugins.engineering_factory import (
-        create as ef_create, ProjectType, Stage,
+        ProjectType,
+        Stage,
+    )
+    from plugins.engineering_factory import (
+        create as ef_create,
     )
     plugin = await ef_create()
     await plugin.load()
@@ -122,7 +129,8 @@ async def test_3_operating_modes():
     """Test 3: Operating Modes."""
     header("Test 3: Operating Modes")
 
-    from plugins.operating_modes import create as om_create, OperatingMode
+    from plugins.operating_modes import OperatingMode
+    from plugins.operating_modes import create as om_create
     plugin = await om_create()
     await plugin.load()
 
@@ -168,8 +176,10 @@ async def test_4_combined_workflow():
     header("Test 4: Combined Workflow")
 
     from plugins.computer_use import create as cu_create
-    from plugins.engineering_factory import create as ef_create, ProjectType
-    from plugins.operating_modes import create as om_create, OperatingMode
+    from plugins.engineering_factory import ProjectType
+    from plugins.engineering_factory import create as ef_create
+    from plugins.operating_modes import OperatingMode
+    from plugins.operating_modes import create as om_create
 
     cu = await cu_create()
     ef = await ef_create()
@@ -267,7 +277,7 @@ async def main():
         except Exception as e:
             import traceback
             traceback.print_exc()
-            test_fail(name, str(e))
+            _fail(name, str(e))
             failed += 1
 
     print("\n" + "=" * 70)

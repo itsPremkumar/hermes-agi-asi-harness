@@ -15,47 +15,41 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
+
 import pytest
 
 from hermes_os import (
+    # Swarm
+    AggregatedEvidencePacket,
+    # Gateway
+    DeviceNode,
+    # Drift
+    DriftSeverity,
+    EnvironmentDriftDetector,
+    EvidenceCompressor,
+    ExternalHarnessBridge,
+    ExternalHarnessType,
+    GoalDriftDetector,
+    HeartbeatMonitor,
     HermesIntelligenceOS,
     # Hooks
     HookAction,
     HookEventType,
     HookManager,
     HookResult,
+    KimiSwarmScaler,
     LifecycleHook,
-    # Gateway
-    AttentionPollResult,
-    DeviceNode,
-    ExternalHarnessBridge,
-    ExternalHarnessType,
-    HeartbeatMonitor,
+    # Perception
+    LosslessPerceptionStore,
     NodeRegistry,
     NodeStatus,
     NodeType,
     OpenClawGateway,
-    # Swarm
-    AggregatedEvidencePacket,
-    EvidenceCompressor,
-    EvidenceItem,
-    KimiSwarmScaler,
+    PerceptionModality,
     SwarmTask,
     SwarmWorkerResult,
     SwarmWorkerRole,
-    # Drift
-    DriftReport,
-    DriftSeverity,
-    EnvironmentDriftDetector,
-    EnvironmentFingerprint,
-    GoalDriftAlert,
-    GoalDriftDetector,
-    # Perception
-    LosslessPerceptionStore,
-    PerceptionModality,
-    PerceptionRecord,
 )
-
 
 # =====================================================================
 # 1. Deterministic Lifecycle Hooks (Claude Code Inspired)

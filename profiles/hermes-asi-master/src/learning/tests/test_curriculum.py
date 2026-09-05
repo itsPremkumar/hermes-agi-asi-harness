@@ -18,7 +18,6 @@ from learning.curriculum import (
     simple_task_pool,
 )
 
-
 # ---------- CapabilityGap ----------
 
 

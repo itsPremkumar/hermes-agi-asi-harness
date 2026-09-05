@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Optional
@@ -116,7 +115,7 @@ class SafetyEnforcer:
                     action=PolicyAction.BLOCK,
                     risk_level=profile.overall_level,
                     reason=f"Risk score {score} exceeds max {policy.max_risk_score}",
-                    violations=[f"max-risk-score-exceeded"],
+                    violations=["max-risk-score-exceeded"],
                 )
                 self._blocked_log.append(result)
                 return result
@@ -128,7 +127,7 @@ class SafetyEnforcer:
                     action=PolicyAction.BLOCK,
                     risk_level=profile.overall_level,
                     reason=f"Risk score {score} exceeds threshold {policy.block_threshold}",
-                    violations=[f"block-threshold-exceeded"],
+                    violations=["block-threshold-exceeded"],
                 )
                 self._blocked_log.append(result)
                 return result

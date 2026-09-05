@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import time
 import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class EvalCategory(Enum):
@@ -91,7 +91,7 @@ class EvaluationSuite:
                         total = passed = failed = 0
                         score = 0.0
 
-                except Exception as e:
+                except Exception:
                     total = passed = failed = 0
                     score = 0.0
 

@@ -27,6 +27,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from .adversarial import AdversarialVerifier, CritiqueFinding, VerificationVerdict
+from .anti_goodhart import AntiGoodhartVerifier, HoldoutTest, HoldoutVerdict
+
 
 class VerificationStatus(str, Enum):
     PENDING = "pending"
@@ -322,10 +325,6 @@ async def create(kernel=None):
     if kernel:
         plugin._kernel = kernel
     return plugin
-
-
-from .adversarial import AdversarialVerifier, VerificationVerdict, CritiqueFinding
-from .anti_goodhart import AntiGoodhartVerifier, HoldoutVerdict, HoldoutTest
 
 __all__ = [
     "VerificationEngine",

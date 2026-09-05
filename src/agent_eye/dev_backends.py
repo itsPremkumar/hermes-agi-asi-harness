@@ -10,7 +10,7 @@ MIT License. See LICENSE for details.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import httpx
 
@@ -20,6 +20,7 @@ _GITLAB_API = "https://gitlab.com/api/v4"
 _BITBUCKET_API = "https://api.bitbucket.org/2.0"
 _NPM_API = "https://registry.npmjs.org"
 _PYPI_API = "https://pypi.org/pypi"
+_PYPI_BASE = "https://pypi.org"
 _DOCKERHUB_API = "https://hub.docker.com/v2"
 _UA = "Mozilla/5.0 (compatible; agent-search-lite/4.0; +https://github.com/itsPremkumar/agent-search-lite)"
 
@@ -186,7 +187,7 @@ def pypi_search(query: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         if resp.status_code == 404:
             # Try search endpoint
             resp = httpx.get(
-                f"{_PYPI_PI}/search/",
+                f"{_PYPI_BASE}/search/",
                 params={"q": query},
                 headers={"User-Agent": _UA},
                 timeout=15,

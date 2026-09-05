@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .puzzle_parser import Grid, Puzzle
 from .solution_generator import Candidate, Solution

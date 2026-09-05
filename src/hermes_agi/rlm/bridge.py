@@ -10,16 +10,14 @@ Ported from Prime Agent (prime-agent-runtime/src/rlm/__init__.py & repl.py):
 
 from __future__ import annotations
 
-import asyncio
 import inspect
-import json
 import logging
 import pickle
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("hermes.rlm.bridge")
 

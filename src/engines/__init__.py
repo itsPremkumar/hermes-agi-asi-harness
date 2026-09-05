@@ -13,23 +13,22 @@ engines that orchestrate 24/7 autonomous operations:
 - safety_plugin: Real-time policy and guardrail enforcement
 """
 
+from .continuous_dev import (
+    ABTestingFramework,
+    CanaryDeploymentManager,
+    DailyImprovementCron,
+    ProgressDashboard,
+    RollbackManager,
+)
 from .harness_control_plane import (
     ExecutiveControlPlane,
     HarnessState,
+    PluginRegistry,
+    SafetyGuard,
     SafetyLevel,
     TaskRequest,
-    SafetyGuard,
-    PluginRegistry,
 )
-from .continuous_dev import (
-    DailyImprovementCron,
-    CanaryDeploymentManager,
-    ABTestingFramework,
-    RollbackManager,
-    ProgressDashboard,
-)
-
-from .self_evolution import SelfEvolutionLoop, EvolutionCandidate
+from .self_evolution import EvolutionCandidate, SelfEvolutionLoop
 
 __all__ = [
     "ExecutiveControlPlane",

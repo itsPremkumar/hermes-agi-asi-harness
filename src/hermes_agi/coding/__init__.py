@@ -2,7 +2,7 @@
 Hermes AGI/ASI Harness — Deep Coding Package.
 """
 
-from .loop import DeepCodingLoop, CodingResult
+from .loop import CodingResult, DeepCodingLoop
 from .winjob import ProcessIsolationManager
 
 __all__ = [

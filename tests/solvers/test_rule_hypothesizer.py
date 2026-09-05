@@ -1,23 +1,22 @@
 """Tests for RuleHypothesizer."""
-import pytest
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from harness.solvers.arc_agi_3.puzzle_parser import Grid, Puzzle, ExamplePair, PuzzleParser
-from harness.solvers.arc_agi_3.rule_hypothesizer import (
-    RuleHypothesizer,
+from benchmarks.solvers.arc_agi_3.puzzle_parser import ExamplePair, Grid, Puzzle
+from benchmarks.solvers.arc_agi_3.rule_hypothesizer import (
     Hypothesis,
-    HypothesisSet,
-    _detect_identity,
+    RuleHypothesizer,
     _detect_color_shift,
-    _detect_rotation,
-    _detect_reflection,
-    _detect_scaling,
-    _detect_flood_fill,
     _detect_crop_to_content,
+    _detect_flood_fill,
+    _detect_identity,
     _detect_padding,
+    _detect_reflection,
+    _detect_rotation,
+    _detect_scaling,
 )
 
 

@@ -24,11 +24,11 @@ from .memory import MemoryStore, retrieve, semantic_search
 from .mission_compiler import MissionCompiler
 from .planning import PlanningEngine
 from .research_engine import ResearchEngine
-from .runtime.kernel import HermesKernel, KernelConfig, KernelState, Task
+from .runtime.kernel import HermesKernel, KernelConfig, KernelState
 from .runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions, PluginState
 from .selfheal import RetryPolicy, self_heal
 
 # Soul and mission
 from .soul import Claim, CognitiveMode, EpistemicStatus, Mission, RiskTier
-from .supervisor import Supervisor, Goal, Task, SupervisorState, TaskType
+from .supervisor import Goal, Supervisor, SupervisorState, Task, TaskType
 from .world_model import CausalModel, Confidence, Entity, WorldModel, WorldTransition

@@ -60,11 +60,16 @@ class Config:
     @classmethod
     def from_env(cls) -> Config:
         config = cls()
-        if os.getenv("LLM_PROVIDER"): config.llm.provider = os.getenv("LLM_PROVIDER")
-        if os.getenv("LLM_MODEL"): config.llm.model = os.getenv("LLM_MODEL")
-        if os.getenv("OPENAI_API_KEY"): config.llm.api_key = os.getenv("OPENAI_API_KEY")
-        if os.getenv("DATABASE_URL"): config.database.url = os.getenv("DATABASE_URL")
-        if os.getenv("API_PORT"): config.api.port = int(os.getenv("API_PORT"))
+        if os.getenv("LLM_PROVIDER"):
+            config.llm.provider = os.getenv("LLM_PROVIDER")
+        if os.getenv("LLM_MODEL"):
+            config.llm.model = os.getenv("LLM_MODEL")
+        if os.getenv("OPENAI_API_KEY"):
+            config.llm.api_key = os.getenv("OPENAI_API_KEY")
+        if os.getenv("DATABASE_URL"):
+            config.database.url = os.getenv("DATABASE_URL")
+        if os.getenv("API_PORT"):
+            config.api.port = int(os.getenv("API_PORT"))
         return config
 
 def load_config(path: str | None = None) -> Config:

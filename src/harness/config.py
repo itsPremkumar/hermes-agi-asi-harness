@@ -9,8 +9,8 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
 from pathlib import Path
+from typing import Any, Callable
 
 
 @dataclass

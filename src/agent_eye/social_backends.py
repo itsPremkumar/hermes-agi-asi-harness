@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import re
-import urllib.parse
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -286,7 +285,7 @@ def telegram_get_channel_posts(channel: str, limit: int = 5) -> Optional[Dict[st
     """Get posts from a public Telegram channel."""
     try:
         resp = httpx.get(
-            f"{_TEGRAM_BASE}/{channel}",
+            f"{_TELEGRAM_BASE}/{channel}",
             headers={"User-Agent": _UA},
             timeout=15,
         )

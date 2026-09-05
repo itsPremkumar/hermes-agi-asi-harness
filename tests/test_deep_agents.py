@@ -9,11 +9,11 @@ from src.harness.deep_agents import (
     AgentRole,
     AgentStatus,
     AgentTask,
-    Team,
-    SubAgentSpawner,
     ConsensusBuilder,
     CrewOrchestrator,
     DelegationPattern,
+    SubAgentSpawner,
+    Team,
 )
 from src.harness.errors import DeepAgentError
 

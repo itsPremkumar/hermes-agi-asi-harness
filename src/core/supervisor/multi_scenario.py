@@ -16,11 +16,10 @@ Each pass tests a different dimension of the result:
 """
 from __future__ import annotations
 
-import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List
 
 
 class ScenarioType(str, Enum):

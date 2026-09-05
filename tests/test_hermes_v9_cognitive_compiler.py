@@ -18,54 +18,41 @@ Comprehensive empirical tests for the v9 Cognitive Planning & Autonomous Executi
 from __future__ import annotations
 
 import tempfile
+
 import pytest
 
 from hermes_os import (
-    HermesIntelligenceOS,
-    # Mission IR & Goal Graph
+    # Capabilities
+    CapabilityRegistry,
+    CapabilitySelector,
+    # Cognitive Compiler
+    CognitiveCompiler,
+    # Dynamic Runtime Bridges
+    DeepAgentsAdapter,
+    DynamicStateGraph,
+    # Environment Recon
+    EnvironmentReconEngine,
+    EnvironmentState,
+    # Uncertainty
+    EpistemicStatus,
+    ExecutionCapabilityPlan,
+    ExecutionPlanIR,
     GoalGraph,
     GoalInvariant,
     GoalLifecycle,
     GoalMemory,
     GoalNode,
-    MissionIR,
-    # Environment Recon
-    EnvironmentReconEngine,
-    EnvironmentState,
-    HardwareProfile,
-    # Capabilities
-    CapabilityGraph,
-    CapabilityKind,
-    CapabilityManifest,
-    CapabilityRegistry,
-    CapabilitySelector,
-    ExecutionCapabilityPlan,
-    # Uncertainty
-    EpistemicItem,
-    EpistemicStatus,
-    ResearchLaneType,
-    ResearchPlan,
-    UncertaintyAnalyzer,
-    # Strategy & Critic
-    PlanCritic,
-    PlanReviewReport,
-    SecondOpinionJudge,
-    StrategyCandidate,
-    StrategySearchEngine,
-    # Cognitive Compiler
-    CognitiveCompiler,
-    ExecutionPlanIR,
-    ExecutionWave,
-    PlanningPhase,
-    PlanningRecord,
-    PlanValidityMonitor,
-    # Dynamic Runtime Bridges
-    DeepAgentsAdapter,
-    DynamicStateGraph,
+    HermesIntelligenceOS,
     IsolatedSubagentWorkspace,
     LangGraphDynamicAdapter,
+    PlanCritic,
+    PlanningRecord,
+    PlanValidityMonitor,
+    ResearchPlan,
+    StrategyCandidate,
+    StrategySearchEngine,
+    UncertaintyAnalyzer,
 )
-
 
 # =====================================================================
 # 1. Mission IR & Goal Lifecycle Tests

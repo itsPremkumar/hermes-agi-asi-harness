@@ -14,15 +14,13 @@ Implements the Darwinian Autonomous Improvement Loop (as architected):
 from __future__ import annotations
 
 import logging
-import os
-import shutil
 import subprocess
 import sys
 import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from hermes_agi.overnight.git_manager import GitManager
 

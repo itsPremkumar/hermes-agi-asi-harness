@@ -16,13 +16,14 @@ import logging
 import re
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
+
+from hermes_agi.coding import DeepCodingLoop
 
 from .git_manager import GitManager
 from .notes_curator import NotesCurator
-from hermes_agi.coding import DeepCodingLoop
 
 logger = logging.getLogger("hermes.overnight.controller")
 
