@@ -10,11 +10,11 @@ except ImportError:
 
 
 @pytest.fixture
-async def harness():
+async def harness(tmp_path):
     """Create and initialize a harness instance."""
     if not HAS_HARNESS:
         pytest.skip("Harness/Config API not yet implemented")
-    h = await Harness.create(Config(project_path=".", state_dir="/tmp/test_state"), use_real_plugins=False)
+    h = await Harness.create(Config(project_path=".", state_dir=str(tmp_path)), use_real_plugins=False)
     yield h
     await h.shutdown()
 
