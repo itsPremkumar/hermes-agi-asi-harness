@@ -114,7 +114,18 @@ from .hooks import (
     HookManager,
     HookResult,
     LifecycleHook,
+    VerificationGates,
+    VerificationLedger,
+    HookContext,
+    HookResult as VerificationHookResult,
+    BlockReason,
+    get_verification_gates,
+    run_verification_gates,
+    VerificationGateHookManager,
 )
+from .persona import PersonaSystem, PersonaFile, PersonaSection, get_persona_system, inject_persona_into_prompt
+from .local_llm import LocalLLMRuntime, LlamaCppEngine, LLMConfig, GBNFCompiler, GBNFGrammar, create_local_llm, create_hermes_local_llm
+from .engines.avo import GitLineageDAG, LineageNode, LineageNodeType, ScoreVector, StagnationSupervisor, AVOEvolutionEngine
 from .invariants import INVARIANTS, verify_invariants
 from .kernel import HermesIntelligenceOS
 from .langsmith_exporter import (
@@ -436,4 +447,37 @@ __all__ = [
     "LangSmithConfig",
     "LangSmithTelemetryExporter",
     "LocalTraceSpan",
+    # New: Persona System (Mercury Agent pattern)
+    "PersonaSystem",
+    "PersonaFile",
+    "PersonaSection",
+    "get_persona_system",
+    "inject_persona_into_prompt",
+    # New: Local LLM Runtime (Atomic Agent pattern)
+    "LocalLLMRuntime",
+    "LlamaCppEngine",
+    "LLMConfig",
+    "GBNFCompiler",
+    "GBNFGrammar",
+    "create_local_llm",
+    "create_hermes_local_llm",
+    # New: Verification Gates (Fable-5 pattern)
+    "VerificationGates",
+    "VerificationLedger",
+    "HookContext",
+    "HookResult",
+    "HookEventType",
+    "BlockReason",
+    "get_verification_gates",
+    "run_verification_gates",
+    "VerificationGateHookManager",
+    # New: Agent Team Coordinator (Apodex pattern)
+    # (imported from hermes.agi.orchestration)
+    # New: AVO Lineage + Supervisor (NVIDIA pattern)
+    "GitLineageDAG",
+    "LineageNode",
+    "LineageNodeType",
+    "ScoreVector",
+    "StagnationSupervisor",
+    "AVOEvolutionEngine",
 ]

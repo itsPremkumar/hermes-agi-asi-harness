@@ -57,6 +57,26 @@ from .recovery import (
 )
 from .workflow import Task, WorkflowBuilder, WorkflowEngine, WorkflowLibrary
 
+# New modules
+from .verification import (
+    AdversarialVerifier,
+    AdversarialReport,
+    VerificationFinding,
+    VerificationVerdict,
+    WorkPackage,
+    verify_work_package,
+)
+from .orchestration import (
+    AgentTeamCoordinator,
+    AgentTeamResult,
+    SubAgent,
+    SubTask,
+    SharedTaskState,
+    AgentRole,
+    AgentStatus,
+    run_agent_team,
+)
+
 __all__ = [
     "Config",
     "load_config",
@@ -117,6 +137,22 @@ __all__ = [
     "HermesMissionPacket",
     "HermesWatchdogMonitor",
     "HermesIntelligenceOS",
+    # New: Adversarial Verification (Fable-5/Apodex pattern)
+    "AdversarialVerifier",
+    "AdversarialReport",
+    "VerificationFinding",
+    "VerificationVerdict",
+    "WorkPackage",
+    "verify_work_package",
+    # New: Agent Team Coordinator (Apodex pattern)
+    "AgentTeamCoordinator",
+    "AgentTeamResult",
+    "SubAgent",
+    "SubTask",
+    "SharedTaskState",
+    "AgentRole",
+    "AgentStatus",
+    "run_agent_team",
 ]
 
 from hermes.os.kernel import HermesIntelligenceOS
