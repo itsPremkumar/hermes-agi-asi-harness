@@ -76,13 +76,15 @@ def test_alignment_audit_history():
 # ---------------------------------------------------------------------------
 
 def test_boundary_repair_check_passes():
-    repair = BoundaryRepair(boundaries={"max_temp": {"temperature": 1.0}})
+    repair = BoundaryRepair()
+    repair.register_boundary("max_temp", {"temperature": 1.0})
     checks = repair.check_boundaries({"temperature": 0.5})
     assert all(c.passed for c in checks)
 
 
 def test_boundary_repair_check_fails():
-    repair = BoundaryRepair(boundaries={"max_temp": {"temperature": 0.5}})
+    repair = BoundaryRepair()
+    repair.register_boundary("max_temp", {"temperature": 0.5})
     checks = repair.check_boundaries({"temperature": 0.9})
     assert not all(c.passed for c in checks)
 
@@ -96,7 +98,8 @@ def test_boundary_repair_status():
 
 
 def test_boundary_repair_history():
-    repair = BoundaryRepair(boundaries={"max_temp": {"temperature": 0.5}})
+    repair = BoundaryRepair()
+    repair.register_boundary("max_temp", {"temperature": 0.5})
     repair.check_boundaries({"temperature": 0.9})
     repairs = repair.repair(
         repair.check_boundaries({"temperature": 0.9}),
@@ -129,7 +132,14 @@ def test_safety_gate_rejects_alignment_failure():
         mutations={"lr": 0.01},
         fitness_score=0.8,
     )
-    result = gate.evaluate_candidate(candidate, {"harmlessness": 0.1})
+    result = gate.evaluate_candidate(candidate, {
+        "harmlessness": 0.1,
+        "helpfulness": 0.1,
+        "honesty": 0.1,
+        "transparency": 0.1,
+        "corrigibility": 0.1,
+        "value_alignment": 0.1,
+    })
     assert "alignment_failed" in result["decisions"]
 
 
