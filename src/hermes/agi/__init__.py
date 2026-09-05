@@ -119,7 +119,7 @@ __all__ = [
     "HermesIntelligenceOS",
 ]
 
-from hermes_os.kernel import HermesIntelligenceOS
+from hermes.os.kernel import HermesIntelligenceOS
 
 from .allocation import HermesMissionPacket, HermesWatchdogMonitor
 from .research import DeepResearchAgent

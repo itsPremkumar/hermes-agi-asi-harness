@@ -10,7 +10,7 @@ Unit tests for NVIDIA AVO (Agentic Variation Operators) Architecture:
 
 from __future__ import annotations
 
-from engines.avo import (
+from hermes.engines.avo import (
     AgenticVariationOperator,
     AVOEvolutionEngine,
     AVOResult,

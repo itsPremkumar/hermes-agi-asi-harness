@@ -59,7 +59,7 @@ all = [
 ]
 
 [project.scripts]
-hermes-agi = "hermes_agi.__main__:main"
+hermes-agi = "hermes.agi.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

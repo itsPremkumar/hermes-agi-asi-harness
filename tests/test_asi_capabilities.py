@@ -9,11 +9,11 @@ Unit tests for ASI-Level Capabilities:
 
 from __future__ import annotations
 
-from core.verification.anti_goodhart import AntiGoodhartVerifier, HoldoutVerdict
-from engines import EvolutionCandidate, SelfEvolutionLoop
-from hermes_agi.causal import CausalImpactReport, CausalImpactSimulator
-from hermes_agi.thinking import MCTSResult, MCTSSearchEngine
-from mesh import DebateSynthesis, HeterogeneousDebateMesh
+from hermes.core.verification.anti_goodhart import AntiGoodhartVerifier, HoldoutVerdict
+from hermes.engines import EvolutionCandidate, SelfEvolutionLoop
+from hermes.agi.causal import CausalImpactReport, CausalImpactSimulator
+from hermes.agi.thinking import MCTSResult, MCTSSearchEngine
+from hermes.mesh import DebateSynthesis, HeterogeneousDebateMesh
 
 
 class TestMCTSSearch:

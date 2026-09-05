@@ -1,7 +1,7 @@
 """Tests for CI/CD integration."""
 import pytest
 
-from core.cicd import CICDManager, CICDPlatform, GitHubActionsIntegration, GitLabCIIntegration
+from hermes.core.cicd import CICDManager, CICDPlatform, GitHubActionsIntegration, GitLabCIIntegration
 
 
 class TestCICDManager:

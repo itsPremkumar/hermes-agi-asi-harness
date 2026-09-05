@@ -177,7 +177,7 @@ def main():
 
 async def run_command(args):
     """Run a command."""
-    from hermes_agi import Harness
+    from hermes.agi import Harness
 
     harness = await Harness.create()
 
@@ -221,7 +221,7 @@ async def run_command(args):
         result = await harness.discover(args.query)
         print(result)
     elif args.command in ("overnight", "gnhf"):
-        from hermes_agi.overnight import OvernightConfig, OvernightLoopController
+        from hermes.agi.overnight import OvernightConfig, OvernightLoopController
 
         config = OvernightConfig(
             objective=args.objective,
@@ -234,7 +234,7 @@ async def run_command(args):
         summary = controller.run()
         summary.print_summary()
     elif args.command == "evolve":
-        from engines.self_evolution import SelfEvolutionLoop
+        from hermes.engines.self_evolution import SelfEvolutionLoop
 
         loop = SelfEvolutionLoop(minimum_improvement_margin=args.margin)
         if args.avo:
@@ -268,13 +268,13 @@ async def run_command(args):
                     print(f"  Outcome Rationale:   {res.history[0].rationale}")
             print("\n=======================================================\n")
     elif args.command == "refine":
-        from hermes_agi.refine import HarnessRefiner
+        from hermes.agi.refine import HarnessRefiner
 
         refiner = HarnessRefiner()
         report = refiner.refine()
         report.print_summary()
     elif args.command == "repl":
-        from hermes_agi.rlm import RLMREPLExecutor
+        from hermes.agi.rlm import RLMREPLExecutor
 
         executor = RLMREPLExecutor()
         code = (
@@ -309,7 +309,7 @@ async def run_command(args):
                 print(f"Error: {e}")
         print("\nShutdown complete.")
     elif args.command == "daemon":
-        from hermes_os.kernel import HermesIntelligenceOS
+        from hermes.os.kernel import HermesIntelligenceOS
 
         os_kernel = HermesIntelligenceOS()
         if args.action == "enqueue" and args.request:
@@ -338,7 +338,7 @@ async def run_command(args):
         if args.action == "context":
             # Read-only mirror of the live Hermes installation. No kernel
             # boot, works offline, never writes to the Hermes home.
-            from harness.core.hermes_integration import HermesAgentIntegration
+            from hermes.harness.core.hermes_integration import HermesAgentIntegration
 
             mirror = HermesAgentIntegration()
             summary = mirror.mirror_hermes_home()
@@ -346,7 +346,7 @@ async def run_command(args):
             summary["boards_list"] = mirror.list_mirrored_boards()
             print(summary)
             return
-        from hermes_os.kernel import HermesIntelligenceOS
+        from hermes.os.kernel import HermesIntelligenceOS
 
         os_kernel = HermesIntelligenceOS()
         ctl = os_kernel.hermes
@@ -375,12 +375,12 @@ async def run_command(args):
             print(ctl.health())
             print(ctl.poll_completions())
     elif args.command == "consolidate":
-        from hermes_os.kernel import HermesIntelligenceOS
+        from hermes.os.kernel import HermesIntelligenceOS
 
         os_kernel = HermesIntelligenceOS()
         print(os_kernel.memory.consolidate_p22())
     elif args.command == "invariants":
-        from hermes_os.safety_kernel import SafetyKernel
+        from hermes.os.safety_kernel import SafetyKernel
 
         sk = SafetyKernel()
         print(
@@ -389,17 +389,17 @@ async def run_command(args):
             )
         )
     elif args.command == "sandbox":
-        from hermes_os.docker_sandbox import DockerSandbox
+        from hermes.os.docker_sandbox import DockerSandbox
 
         print(DockerSandbox().run(args.code))
     elif args.command == "metrics":
-        from hermes_os.plane_metrics import MetricsCollector
+        from hermes.os.plane_metrics import MetricsCollector
 
         print(MetricsCollector.for_workspace().get_all_metrics())
     elif args.command == "compact":
         from pathlib import Path
 
-        from hermes_os.context_compaction import ContextCompactor
+        from hermes.os.context_compaction import ContextCompactor
 
         text = Path(args.file).read_text(encoding="utf-8")
         rep = ContextCompactor(max_chars=args.max_chars).compact(text, label=Path(args.file).stem)
@@ -408,7 +408,7 @@ async def run_command(args):
             enc = getattr(sys.stdout, "encoding", None) or "utf-8"
             print(rep["compacted"][:2000].encode(enc, errors="replace").decode(enc))
     elif args.command == "skills":
-        from hermes_os.skills import SkillRegistry
+        from hermes.os.skills import SkillRegistry
 
         reg = SkillRegistry(workspace_root=".")
         if args.action == "sync":
@@ -421,7 +421,7 @@ async def run_command(args):
     elif args.command == "api":
         import uvicorn
 
-        from hermes_os.api import create_app
+        from hermes.os.api import create_app
 
         app = create_app()
         print(
@@ -433,7 +433,7 @@ async def run_command(args):
             uvicorn.Config(app, host="127.0.0.1", port=args.port, log_level="warning")
         ).serve()
     elif args.command == "llm":
-        from hermes_os.hermes_llm import HermesFirstLLMClient, resolve_tier
+        from hermes.os.hermes_llm import HermesFirstLLMClient, resolve_tier
 
         if args.action == "refresh":
             print(resolve_tier(force_refresh=True))
@@ -451,7 +451,7 @@ async def run_command(args):
         else:
             print(client.status())
     elif args.command == "killswitch":
-        from hermes_os.safety_kernel import SafetyKernel
+        from hermes.os.safety_kernel import SafetyKernel
 
         sk = SafetyKernel()
         if args.action == "engage":

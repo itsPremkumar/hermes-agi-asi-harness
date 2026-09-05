@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def test_world_model():
     """Test WorldModel entity tracking, causal links, and predictions."""
-    from plugins.world_model import WorldModel
+    from hermes.plugins.world_model import WorldModel
 
     wm = WorldModel()
     try:
@@ -56,7 +56,7 @@ def test_world_model():
 
 def test_jit_harness():
     """Test JIT harness task profiling."""
-    from plugins.jit_harness import JITHarnessGenerator
+    from hermes.plugins.jit_harness import JITHarnessGenerator
 
     gen = JITHarnessGenerator()
 
@@ -82,7 +82,7 @@ def test_jit_harness():
 
 def test_self_healing():
     """Test self-healing failure diagnosis and repair."""
-    from plugins.self_healing import FailureClass, SelfHealingEngine
+    from hermes.plugins.self_healing import FailureClass, SelfHealingEngine
 
     engine = SelfHealingEngine()
 
@@ -113,7 +113,7 @@ def test_self_healing():
 
 def test_knowledge_graph():
     """Test knowledge graph entity and relation management."""
-    from plugins.knowledge_graph import KnowledgeGraph, RelationType
+    from hermes.plugins.knowledge_graph import KnowledgeGraph, RelationType
 
     kg = KnowledgeGraph()
     try:
@@ -149,7 +149,7 @@ def test_knowledge_graph():
 
 def test_benchmarks():
     """Test canonical benchmark runner (core.benchmark.harness)."""
-    from core.benchmark.harness import BenchmarkRunner, ScoringFunction
+    from hermes.core.benchmark.harness import BenchmarkRunner, ScoringFunction
 
     runner = BenchmarkRunner(ScoringFunction())
     tasks = [
@@ -176,7 +176,7 @@ def test_benchmarks():
 
 async def test_multi_agent():
     """Test multi-agent orchestration with different topologies."""
-    from plugins.multi_agent import AgentSpec, MultiAgentOrchestrator
+    from hermes.plugins.multi_agent import AgentSpec, MultiAgentOrchestrator
 
     orch = MultiAgentOrchestrator()
 
@@ -216,7 +216,7 @@ async def test_multi_agent():
 
 async def test_evolution_v2():
     """Test advanced evolution engine with GEPA optimization."""
-    from plugins.evolution_engine_v2 import GEPAOptimizer, TrajectoryRLExporter
+    from hermes.plugins.evolution_engine_v2 import GEPAOptimizer, TrajectoryRLExporter
 
     # Test GEPA optimizer
     gepa = GEPAOptimizer(
@@ -257,7 +257,7 @@ async def test_evolution_v2():
 
 async def test_supervisor():
     """Test 24/7 supervisor with heartbeat and auto-recovery."""
-    from plugins.supervisor import ResourceBudget, TaskSupervisor
+    from hermes.plugins.supervisor import ResourceBudget, TaskSupervisor
 
     supervisor = TaskSupervisor()
     budget = ResourceBudget(max_tasks_per_hour=100, heartbeat_interval_seconds=1)
@@ -295,7 +295,7 @@ async def test_supervisor():
 
 def test_goal_engine():
     """Test goal engine with DAG decomposition."""
-    from plugins.goal_engine import GoalEngine, TaskStatus
+    from hermes.plugins.goal_engine import GoalEngine, TaskStatus
 
     engine = GoalEngine()
 
@@ -330,7 +330,7 @@ def test_goal_engine():
 
 async def test_ecosystem_intelligence():
     """Test ecosystem intelligence discovery and secret scanning."""
-    from plugins.ecosystem_intelligence import EcosystemDiscoveryEngine
+    from hermes.plugins.ecosystem_intelligence import EcosystemDiscoveryEngine
 
     engine = EcosystemDiscoveryEngine()
 
@@ -360,7 +360,7 @@ async def test_ecosystem_intelligence():
 
 async def test_kernel_integration_advanced():
     """Test that the kernel boots all advanced plugins."""
-    from core.runtime.kernel import HermesKernel, KernelConfig
+from hermes.core.runtime.kernel import HermesKernel, KernelConfig
 
     k = HermesKernel(config=KernelConfig(zero_cost=True, offline=True))
     await k.boot()
@@ -398,7 +398,7 @@ async def test_end_to_end_advanced():
     """Test full end-to-end execution with advanced components."""
     import os
 
-    from core.runtime.kernel import HermesKernel, KernelConfig, Task
+    from hermes.core.runtime.kernel import HermesKernel, KernelConfig, Task
 
     k = HermesKernel(config=KernelConfig(zero_cost=True, offline=True))
     await k.boot()

@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from harness.config import Config, ConfigChangeEvent
+from hermes.harness.config import Config, ConfigChangeEvent
 
 
 class TestConfig:

@@ -23,7 +23,7 @@ async def test_all():
     print("Testing core components...")
     
     try:
-        from core.reasoning import ReasoningEngine, ReasoningMode
+        from hermes.core.reasoning import ReasoningEngine, ReasoningMode
         engine = ReasoningEngine()
         result = await engine.reason("What is AI?", ReasoningMode.COT)
         results.append(("ReasoningEngine", True, result.confidence))
@@ -31,7 +31,7 @@ async def test_all():
         results.append(("ReasoningEngine", False, str(e)))
     
     try:
-        from core.swarm import SwarmOrchestrator
+        from hermes.core.swarm import SwarmOrchestrator
         swarm = SwarmOrchestrator()
         agent_ids = await swarm.spawn_swarm("test task", 3)
         results.append(("SwarmOrchestrator", True, len(agent_ids)))
@@ -39,7 +39,7 @@ async def test_all():
         results.append(("SwarmOrchestrator", False, str(e)))
     
     try:
-        from core.protocol import CommunicationProtocol
+        from hermes.core.protocol import CommunicationProtocol
         protocol = CommunicationProtocol()
         await protocol.send("agent1", "agent2", "test message")
         results.append(("CommunicationProtocol", True, "sent"))
@@ -47,7 +47,7 @@ async def test_all():
         results.append(("CommunicationProtocol", False, str(e)))
     
     try:
-        from core.metacognition import CognitiveMode, MetacognitiveMonitor
+        from hermes.core.metacognition import CognitiveMode, MetacognitiveMonitor
         monitor = MetacognitiveMonitor()
         assessment = await monitor.assess(CognitiveMode.FAST)
         results.append(("MetacognitiveMonitor", True, len(assessment.issues)))
@@ -55,7 +55,7 @@ async def test_all():
         results.append(("MetacognitiveMonitor", False, str(e)))
     
     try:
-        from core.causal import CausalEngine
+        from hermes.core.causal import CausalEngine
         causal = CausalEngine()
         graph = causal.build_graph("test")
         results.append(("CausalEngine", True, len(graph.nodes)))
@@ -63,21 +63,21 @@ async def test_all():
         results.append(("CausalEngine", False, str(e)))
     
     try:
-        from core.genetic import GeneticEvolution
+        from hermes.core.genetic import GeneticEvolution
         genetic = GeneticEvolution()
         results.append(("GeneticEvolution", True, "initialized"))
     except Exception as e:
         results.append(("GeneticEvolution", False, str(e)))
     
     try:
-        from core.sandbox import SandboxedExecution
+        from hermes.core.sandbox import SandboxedExecution
         sandbox = SandboxedExecution()
         results.append(("SandboxedExecution", True, "ready"))
     except Exception as e:
         results.append(("SandboxedExecution", False, str(e)))
     
     try:
-        from core.secrets import SecretManager
+        from hermes.core.secrets import SecretManager
         secrets = SecretManager()
         secrets.store_secret("test", "value")
         results.append(("SecretManager", True, secrets.get_secret("test")))
@@ -88,7 +88,7 @@ async def test_all():
     print("Testing search plugins...")
     
     try:
-        from plugins.agent_eye_search import Plugin as AgentEyePlugin
+        from hermes.plugins.agent_eye_search import Plugin as AgentEyePlugin
         plugin = AgentEyePlugin()
         await plugin.load()
         await plugin.start()
@@ -98,7 +98,7 @@ async def test_all():
         results.append(("AgentEyeSearch", False, str(e)))
     
     try:
-        from plugins.deep_research_agent import Plugin as DeepResearchPlugin
+        from hermes.plugins.deep_research_agent import Plugin as DeepResearchPlugin
         plugin = DeepResearchPlugin()
         await plugin.load()
         await plugin.start()
@@ -108,7 +108,7 @@ async def test_all():
         results.append(("DeepResearchAgent", False, str(e)))
     
     try:
-        from plugins.langgraph_orchestration import Plugin as LangGraphPlugin
+        from hermes.plugins.langgraph_orchestration import Plugin as LangGraphPlugin
         plugin = LangGraphPlugin()
         await plugin.load()
         await plugin.start()
@@ -119,7 +119,7 @@ async def test_all():
     
     # Test existing research plugin
     try:
-        from plugins.research import Plugin as ResearchPlugin
+        from hermes.plugins.research import Plugin as ResearchPlugin
         plugin = ResearchPlugin()
         results.append(("ResearchPlugin", True, f"capabilities: {plugin.capabilities()}"))
     except Exception as e:

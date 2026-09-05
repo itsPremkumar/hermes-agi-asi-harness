@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from plugins.circuit_breaker import (
+from hermes.plugins.circuit_breaker import (
     CircuitBreakerPlugin,
     CircuitBreakerConfig,
     HealthMonitor,

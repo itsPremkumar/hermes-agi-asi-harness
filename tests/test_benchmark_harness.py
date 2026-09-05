@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core.benchmark.harness import BenchmarkRunner, ScoringFunction
+from hermes.core.benchmark.harness import BenchmarkRunner, ScoringFunction
 
 
 class TestScoringFunction:

@@ -38,14 +38,14 @@ def test(name: str):
 
 @test("version is 2.0.0")
 def _t_version():
-    import hermes_agi
+    import hermes.agi as hermes_agi
 
     assert hermes_agi.__version__ == "2.0.0", hermes_agi.__version__
 
 
 @test("harness creates and reports healthy offline")
 def _t_harness_health():
-    from hermes_agi import Harness
+    from hermes.agi import Harness
 
     async def go():
         h = await Harness.create()
@@ -63,8 +63,8 @@ def _t_harness_health():
 
 @test("all 10 core plugins register on a real PluginManager")
 def _t_plugins():
-    from hermes_agi.plugins.core_plugins import ALL_PLUGINS, register_all_plugins
-    from hermes_agi.plugins.manager import PluginManager
+from hermes.agi.plugins.core_plugins import ALL_PLUGINS, register_all_plugins
+from hermes.agi.plugins.manager import PluginManager
 
     assert len(ALL_PLUGINS) == 10, len(ALL_PLUGINS)
     mgr = PluginManager()
@@ -74,7 +74,7 @@ def _t_plugins():
 
 @test("benchmark runner scores pass/fail honestly")
 def _t_benchmark():
-    from core.benchmark.harness import BenchmarkRunner
+    from hermes.core.benchmark.harness import BenchmarkRunner
 
     runner = BenchmarkRunner()
     scores = runner.run(
@@ -97,7 +97,7 @@ def _t_benchmark():
 
 @test("operations watchdog tracks heartbeat and restart budget")
 def _t_watchdog():
-    from operations import Watchdog
+    from hermes.operations import Watchdog
 
     wd = Watchdog(heartbeat_timeout=60.0, max_restarts=1)
     wd.register("agent-1", pid=1234)
@@ -114,7 +114,7 @@ def _t_watchdog():
 
 @test("operations scheduler orders by priority")
 def _t_scheduler():
-    from operations import Scheduler
+    from hermes.operations import Scheduler
 
     async def go():
         sch = Scheduler(max_concurrent=2)
@@ -134,7 +134,7 @@ def _t_scheduler():
 def _t_checkpoint():
     import time
 
-    from operations import Checkpoint, CheckpointManager
+    from hermes.operations import Checkpoint, CheckpointManager
 
     with tempfile.TemporaryDirectory() as tmp:
         mgr = CheckpointManager(Path(tmp))
@@ -153,7 +153,7 @@ def _t_checkpoint():
 def _t_ledger():
     import time
 
-    from operations import EconomicEntry, EconomicLedger
+    from hermes.operations import EconomicEntry, EconomicLedger
 
     with tempfile.TemporaryDirectory() as tmp:
         ledger = EconomicLedger(Path(tmp) / "ledger.jsonl")
@@ -171,7 +171,7 @@ def _t_ledger():
 
 @test("safety risk assessment dataclass works")
 def _t_safety():
-    from safety import RiskAssessment
+    from hermes.safety import RiskAssessment
 
     ra = RiskAssessment(
         risk_id="r1", title="t", level="HIGH",
@@ -183,7 +183,7 @@ def _t_safety():
 
 @test("harness graph State get/set round-trips")
 def _t_graph():
-    from harness.graph import State
+    from hermes.harness.graph import State
 
     st = State()
     st.set("k", "v")
@@ -193,7 +193,7 @@ def _t_graph():
 
 @test("dashboard logic imports without optional fastapi server")
 def _t_dashboard():
-    import core.dashboard as dash
+    import hermes.core.dashboard as dash
 
     assert dash.plugins.count() >= 0
     assert dash.missions.count() >= 0
@@ -209,7 +209,7 @@ def _t_canonical():
 
     root = _P(__file__).resolve().parent.parent.parent
     bad = []
-    for area in ("src/hermes_os", "src/memory", "src/harness", "src/safety"):
+    for area in ("src/hermes/os", "src/memory", "src/harness", "src/safety"):
         base = root / area
         if not base.is_dir():
             continue

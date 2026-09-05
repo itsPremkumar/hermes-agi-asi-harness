@@ -8,15 +8,15 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from harness.core.dynamic_config import DynamicConfig
-from harness.core.hermes_integration import (
+from hermes.harness.core.dynamic_config import DynamicConfig
+from hermes.harness.core.hermes_integration import (
     CronJob,
     HermesAgentIntegration,
     KanbanCard,
     MCPEndpoint,
     ProfileConfig,
 )
-from harness.core.high_availability import (
+from hermes.harness.core.high_availability import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitState,
