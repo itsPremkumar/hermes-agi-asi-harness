@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "harnix"
-version = "1.0.0"
-description = "Harness Runtime Kernel — LangGraph StateGraph + Agent Lifecycle"
+version = "3.0.0"
+description = "Hermes AGI/ASI Harness — Unified agent runtime kernel"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "Hermes AGI/ASI Contributors"},
 ]
-keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph"]
+keywords = ["agi", "asi", "agent", "harness", "langgraph", "state-graph", "plugin", "safety"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -25,8 +25,63 @@ classifiers = [
 ]
 
 dependencies = [
+    # Core runtime
     "langgraph>=1.0.0",
-    "langchain-core>=0.3.0",
+    "langchain_core>=0.3.0",
+    "langchain>=1.0.0",
+
+    # LLM providers
+    "anthropic>=0.20.0",
+    "openai>=1.0.0",
+    "httpx>=0.25.0",
+
+    # Configuration & parsing
+    "pyyaml>=6.0",
+    "tomli>=2.0.0; python_version<'3.11'",
+    "tomllib>=2.0.0; python_version>='3.11'",
+    "pydantic>=2.0.0",
+
+    # Testing
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "coverage>=7.0",
+
+    # Async I/O
+    "aiofiles>=23.0",
+    "aiosqlite>=0.19.0",
+
+    # Terminal UI
+    "rich>=13.0",
+    "typer>=0.9.0",
+
+    # Data processing
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+
+    # ML / embeddings
+    "sentence-transformers>=2.0.0",
+    "faiss-cpu>=1.7.0",
+    "chromadb>=0.4.0",
+    "qdrant-client>=1.7.0",
+
+    # Vector search
+    "redis>=4.5.0",
+
+    # PDF processing
+    "pymupdf>=1.23.0",
+
+    # Tokenization
+    "tiktoken>=0.5.0",
+
+    # Visualization
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+
+    # Graph analysis
+    "networkx>=3.0",
+
+    # Progress
+    "tqdm>=4.65.0",
 ]
 
 [project.optional-dependencies]
@@ -35,12 +90,33 @@ dev = [
     "pytest-asyncio>=0.21",
     "black",
     "ruff",
+    "mypy",
+    "bandit",
+    "pip-audit",
 ]
 
+[project.scripts]
+hermes = "hermes_agi_v2:main"
+hermes-agi = "hermes_agi_v2:main"
+
 [tool.setuptools.packages.find]
-include = ["harnix*"]
+include = ["harnix*", "core*", "plugins*", "agents*", "src*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

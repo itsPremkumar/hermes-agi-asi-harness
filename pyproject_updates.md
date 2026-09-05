@@ -1,0 +1,28 @@
+pyproject.toml — Hermes AGI/ASI Harness v3.0
+Updated dependencies from real import scan.
+
+Key additions over original:
+- anthropic (Claude API client)
+- httpx (HTTP client)
+- PyYAML (config parsing)
+- pytest + pytest-asyncio (testing)
+- coverage (test coverage)
+- aiofiles (async file I/O)
+- rich (terminal formatting)
+- typer (CLI framework)
+- pydantic (data validation)
+- pymupdf (PDF processing)
+- openai (OpenAI API client)
+- tiktoken (token counting)
+- sentence-transformers (embeddings)
+- faiss-cpu (vector search)
+- chromadb (vector database)
+- qdrant-client (vector DB client)
+- redis (caching)
+- aiosqlite (async SQLite)
+- numpy, pandas (data processing)
+- scikit-learn (ML utilities)
+- matplotlib, seaborn (visualization)
+- networkx (graph analysis)
+- tqdm (progress bars)
+- tomli/tomllib (TOML parsing)

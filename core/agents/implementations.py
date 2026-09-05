@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-HERMES AGI/ASI HARNESS v5.0 — AGENT ROLE IMPLEMENTATIONS
-=========================================================
+HERMES AGI/ASI HARNESS — AGENT IMPLEMENTATIONS
+===================================================
 All 6 agent roles fully implemented with specialized prompts and tools.
+Merged from: agents/implementations.py
 """
 
 from __future__ import annotations
@@ -10,17 +11,18 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from core.runtime.plugin_base import PluginBase, PluginManifest
+from core.runtime.plugin_base import PluginBase, PluginManifest, PluginPermissions
 
 logger = logging.getLogger("hermes_agents")
 
 
 class ResearcherAgent(PluginBase):
     """Research agent — gathers and synthesizes information."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="researcher_agent",
             version="1.0.0",
             description="Research agent for information gathering and synthesis",
@@ -31,19 +33,19 @@ class ResearcherAgent(PluginBase):
         )
         self.system_prompt = """You are the Lead Research Specialist. Perform rigorous analysis, 
         extract facts, and map dependencies. Output clear, verified findings with sources."""
-    
+
     async def load(self) -> bool:
         logger.info("Researcher agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Researcher agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Researcher agent stopped")
         return True
-    
+
     async def research(self, question: str, depth: int = 3) -> dict[str, Any]:
         """Conduct research on a question."""
         return {
@@ -56,10 +58,11 @@ class ResearcherAgent(PluginBase):
 
 class CoderAgent(PluginBase):
     """Coding agent — generates and reviews code."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="coder_agent",
             version="1.0.0",
             description="Coding agent for code generation and review",
@@ -70,19 +73,19 @@ class CoderAgent(PluginBase):
         )
         self.system_prompt = """You are the Senior Implementation Engineer. Write clean, deterministic, 
         robust code adhering to strict safety contracts and clean interfaces."""
-    
+
     async def load(self) -> bool:
         logger.info("Coder agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Coder agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Coder agent stopped")
         return True
-    
+
     async def generate_code(self, spec: str, language: str = "python") -> dict[str, Any]:
         """Generate code from a specification."""
         return {
@@ -91,7 +94,7 @@ class CoderAgent(PluginBase):
             "code": "",
             "tests": [],
         }
-    
+
     async def review_code(self, code: str) -> dict[str, Any]:
         """Review code for quality and correctness."""
         return {
@@ -104,10 +107,11 @@ class CoderAgent(PluginBase):
 
 class PlannerAgent(PluginBase):
     """Planning agent — creates execution plans."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="planner_agent",
             version="1.0.0",
             description="Planning agent for creating execution plans",
@@ -118,19 +122,19 @@ class PlannerAgent(PluginBase):
         )
         self.system_prompt = """You are the Lead Systems Architect. Formulate technical architectures, 
         state invariants, and step-by-step implementation blueprints."""
-    
+
     async def load(self) -> bool:
         logger.info("Planner agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Planner agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Planner agent stopped")
         return True
-    
+
     async def create_plan(self, goal: str) -> dict[str, Any]:
         """Create an execution plan for a goal."""
         return {
@@ -143,10 +147,11 @@ class PlannerAgent(PluginBase):
 
 class ReviewerAgent(PluginBase):
     """Review agent — reviews and critiques work products."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="reviewer_agent",
             version="1.0.0",
             description="Review agent for critiquing work products",
@@ -157,19 +162,19 @@ class ReviewerAgent(PluginBase):
         )
         self.system_prompt = """You are the Red Team Critic. Identify edge cases, race conditions, 
         security vulnerabilities, and boundary failure modes."""
-    
+
     async def load(self) -> bool:
         logger.info("Reviewer agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Reviewer agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Reviewer agent stopped")
         return True
-    
+
     async def review(self, work_product: str, criteria: list[str]) -> dict[str, Any]:
         """Review a work product against criteria."""
         return {
@@ -183,10 +188,11 @@ class ReviewerAgent(PluginBase):
 
 class VerifierAgent(PluginBase):
     """Verification agent — verifies correctness through testing."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="verifier_agent",
             version="1.0.0",
             description="Verification agent for testing and formal verification",
@@ -197,19 +203,19 @@ class VerifierAgent(PluginBase):
         )
         self.system_prompt = """You are the Verification & QA Gatekeeper. Execute test suites, 
         verify proofs, and enforce earned-completion criteria before promotion."""
-    
+
     async def load(self) -> bool:
         logger.info("Verifier agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Verifier agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Verifier agent stopped")
         return True
-    
+
     async def verify(self, artifact: str, acceptance_criteria: list[str]) -> dict[str, Any]:
         """Verify an artifact against acceptance criteria."""
         return {
@@ -222,10 +228,11 @@ class VerifierAgent(PluginBase):
 
 class ExecutorAgent(PluginBase):
     """Execution agent — executes tasks and manages workflows."""
-    
+
     def __init__(self):
         super().__init__(None)
         self.manifest = PluginManifest(
+            permissions=PluginPermissions(),
             name="executor_agent",
             version="1.0.0",
             description="Execution agent for task and workflow execution",
@@ -236,19 +243,19 @@ class ExecutorAgent(PluginBase):
         )
         self.system_prompt = """You are the Execution Agent. Execute tasks efficiently, 
         manage resources, and report progress."""
-    
+
     async def load(self) -> bool:
         logger.info("Executor agent loaded")
         return True
-    
+
     async def start(self) -> bool:
         logger.info("Executor agent started")
         return True
-    
+
     async def stop(self) -> bool:
         logger.info("Executor agent stopped")
         return True
-    
+
     async def execute_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Execute a task."""
         return {

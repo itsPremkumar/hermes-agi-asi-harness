@@ -40,5 +40,5 @@ class SelfReplicationGuard:
         
         return True
     
-    async def health(self) -> dict[str, Any]:
+    def health(self) -> dict[str, Any]:
         return {"status": "healthy", "spawn_count": self._spawn_count}

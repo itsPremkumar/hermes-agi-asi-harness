@@ -19,13 +19,15 @@ class PromptInjectionDefense:
     
     def __init__(self):
         self._blocked_patterns = [
-            r"disregard.*prior.*directives",
-            r"ignore.*previous.*instructions",
-            r"system.*prompt.*override",
-            r"new.*instructions.*follow",
+            r"discard.*(directives|instructions)",
+            r"disregard.*(directives|instructions)",
+            r"ignore.*instructions",
+            r"system\s+prompt\s+override",
+            r"override.*system\s+prompt",
+            r"new\s+instructions\s+follow",
             r"reveal.*secrets?",
             r"grant.*access",
-            r"you are now.*without.*constraints",
+            r"you\s+are\s+now\s+without.*constraints",
         ]
     
     def sanitize(self, content: str) -> str:
@@ -36,6 +38,13 @@ class PromptInjectionDefense:
         # Remove potential injection patterns
         for pattern in self._blocked_patterns:
             marked = re.sub(pattern, "[REDACTED]", marked, flags=re.IGNORECASE)
+        
+        # Second pass: check for multi-word phrases that may have been partially redacted
+        # e.g. "reveal [REDACTED]" from "reveal your secrets" - check whole phrase
+        combined = re.sub(r'\s+', ' ', marked).lower()
+        for phrase in ["reveal secrets", "grant access", "system prompt", "without constraints", "system prompt override"]:
+            if phrase in combined:
+                marked = re.sub(re.escape(phrase), "[REDACTED]", marked, flags=re.IGNORECASE)
         
         return marked
     

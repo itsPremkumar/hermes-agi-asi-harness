@@ -76,14 +76,15 @@ class SafetyGatesPlugin:
     # Patterns that trigger safety concerns
     DANGEROUS_PATTERNS = [
         r"rm\s+-rf",
-        r"DELETE\s+FROM",
-        r"DROP\s+TABLE",
+        r"delete\s+from",
+        r"drop\s+table",
         r"sudo\s+rm",
         r"format\s+c:",
         r"dd\s+if=",
         r"mkfs",
         r"shutdown\s+now",
-        r":(){ :|:&};:",  # fork bomb
+        r":\(\)\s*\{.*\|:.*\};:",  # fork bomb
+        r"rm\s+-rf\s+/",
     ]
 
     def __init__(self):

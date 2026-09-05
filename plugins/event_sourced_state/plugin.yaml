@@ -1,0 +1,28 @@
+name: event_sourced_state
+version: 2.0.0
+description: "Event-sourced state store — append-only event log with replay, causal debugging, mission reconstruction, counterfactual evaluation, and audit trail (v7 §80)"
+license: MIT
+source: internal
+capabilities:
+  - event.emit
+  - event.replay
+  - event.causal_debug
+  - mission.reconstruct
+  - mission.trace
+  - counterfactual.evaluate
+  - audit.diff
+  - state.snapshot
+dependencies:
+  - causal
+cost:
+  default: free
+permissions:
+  filesystem:
+    read: project
+    write: project
+  network:
+    allowed: []
+  shell:
+    allowed: []
+  secrets:
+    access: none

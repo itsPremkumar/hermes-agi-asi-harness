@@ -1,0 +1,42 @@
+plugin_name: self_model
+version: "1.0.0"
+description: "Capability measurement, calibration tracking, self-awareness"
+author: "Hermes AGI/ASI Team"
+license: MIT
+entry_point: plugins.self_model
+class_name: SelfModel
+capabilities:
+  - capability.measurement
+  - capability.calibration
+  - capability.self_awareness
+  - capability.model_recommendation
+depends_on:
+  - event_sourced_state
+  - memory_system
+config:
+  history_size: 10000
+  calibration_window: 100
+  min_samples_for_calibration: 10
+  brier_threshold_well_calibrated: 0.15
+  brier_threshold_poorly_calibrated: 0.25
+metrics:
+  - success_rate
+  - latency_ms
+  - error_rate
+  - brier_score
+  - calibration_status
+  - confidence_accuracy_correlation
+monitoring:
+  enabled: true
+  alert_on_poor_calibration: true
+  alert_threshold_brier: 0.25
+  alert_on_error_spike: true
+  error_spike_window: 100
+integration:
+  feeds:
+    - planner
+    - model_router
+    - curriculum_engine
+    - risk_policy
+    - evolution_engine
+    - safety_gates
