@@ -309,23 +309,30 @@ class BenchmarkPlugin(PluginBase):
         raise ValueError(f"Unknown action: {action}")
     
     async def _run_benchmark(self, name: str, **kwargs) -> dict:
-        """Run a benchmark."""
+        """Run a benchmark (mock plugin: no execution, never a fake score)."""
         from ..benchmarks import BENCHMARK_REGISTRY
-        
+
         if name not in BENCHMARK_REGISTRY and name != "all":
             return {"error": f"Unknown benchmark: {name}"}
-        
+
+        def _mock_result(bench_name: str) -> dict:
+            return {
+                "name": bench_name,
+                "status": "mock",
+                "score": None,
+                "message": "Mock plugin mode (use_real_plugins=False): "
+                "no benchmark executed; scores are never fabricated.",
+            }
+
         if name == "all":
-            results = {}
-            for bench_name in BENCHMARK_REGISTRY:
-                results[bench_name] = {"score": 0.85, "status": "completed"}
-            return {"benchmarks": results}
-        
-        return {
-            "name": name,
-            "score": 0.85,
-            "status": "completed",
-        }
+            return {
+                "benchmarks": {
+                    bench_name: _mock_result(bench_name)
+                    for bench_name in BENCHMARK_REGISTRY
+                }
+            }
+
+        return _mock_result(name)
     
     async def _list_benchmarks(self) -> dict:
         """List available benchmarks."""

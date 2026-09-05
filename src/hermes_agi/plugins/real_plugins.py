@@ -10,12 +10,16 @@ Replaces mock plugins with real implementations that:
 
 from __future__ import annotations
 
+import importlib.util
+import inspect
 import json
 import logging
 import os
 import subprocess
+import sys
 import time
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..llm_planning import EvaluationUtility, KnowledgeBase, LLMClient
@@ -436,35 +440,156 @@ class RealBenchmarkPlugin(PluginBase):
         
         return await self._execute_benchmark(name)
     
+    # Registry name -> benchmarks/<module>.py basename. Most follow the
+    # "<name>_benchmark" convention; these three do not.
+    BENCHMARK_MODULE_ALIASES = {
+        "humaneval": "human_eval_benchmark",
+        "swe_bench": "swe_bench_verified_benchmark",
+        "winogrande": "wino_grande_benchmark",
+    }
+
     async def _execute_benchmark(self, name: str) -> dict:
-        """Execute a single benchmark."""
+        """Execute a single benchmark via an in-process offline smoke probe.
+
+        The modules under benchmarks/ are dataset/scoring libraries (they need
+        an external dataset + a solver model for full scored runs), so a CLI
+        "run" honestly does the offline-verifiable part: it imports the real
+        module, instantiates the real benchmark class, and exercises its
+        read-only probes (category listings, stats, loaders). Every number
+        returned was measured here; full scoring is reported as not-run,
+        never fabricated.
+        """
+        started = time.perf_counter()
         try:
-            # Run benchmark script if it exists
-            benchmark_script = f"benchmarks/{name}.py"
-            if os.path.exists(benchmark_script):
-                result = subprocess.run(
-                    ["python3", benchmark_script],
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                    cwd=os.getcwd(),
-                )
-                return {
-                    "name": name,
-                    "success": result.returncode == 0,
-                    "output": result.stdout,
-                    "errors": result.stderr,
-                }
-            else:
+            from ..benchmarks import BENCHMARK_REGISTRY
+
+            if name not in BENCHMARK_REGISTRY:
+                return {"name": name, "error": f"Unknown benchmark: {name}"}
+            repo_root = Path.cwd()
+            module_base = self.BENCHMARK_MODULE_ALIASES.get(name, f"{name}_benchmark")
+            module, module_file = None, None
+            for candidate in (module_base, name):  # legacy benchmarks/<name>.py
+                fp = repo_root / "benchmarks" / f"{candidate}.py"
+                if fp.is_file():
+                    spec = importlib.util.spec_from_file_location(
+                        f"benchmarks.{candidate}", fp
+                    )
+                    module = importlib.util.module_from_spec(spec)
+                    # Register before exec: dataclass processing resolves
+                    # class annotations via sys.modules[cls.__module__].
+                    sys.modules[spec.name] = module
+                    spec.loader.exec_module(module)
+                    module_file = str(fp)
+                    break
+            if module is None:
                 return {
                     "name": name,
                     "status": "not_implemented",
-                    "message": f"Benchmark script not found: {benchmark_script}",
+                    "message": (
+                        f"No benchmark module for {name!r} "
+                        f"(tried benchmarks/{module_base}.py, benchmarks/{name}.py)"
+                    ),
                 }
-        except subprocess.TimeoutExpired:
-            return {"name": name, "error": "Timeout"}
+            bench_cls = None
+            for attr_name in dir(module):
+                attr = getattr(module, attr_name)
+                if (
+                    attr_name.endswith("Benchmark")
+                    and inspect.isclass(attr)
+                    and attr.__module__ == module.__name__
+                ):
+                    bench_cls = attr
+                    break
+            if bench_cls is None:
+                return {
+                    "name": name,
+                    "status": "smoke_failed",
+                    "module": module_file,
+                    "error": "No *Benchmark class defined in module",
+                }
+            instance = self._instantiate_benchmark(bench_cls, repo_root, name)
+            facts = self._probe_benchmark(instance)
+            return {
+                "name": name,
+                "status": "smoke_passed",
+                "module": module_file,
+                "class": bench_cls.__name__,
+                "facts": facts,
+                "scoring": "not run: full scoring needs dataset + solver model (unavailable offline)",
+                "duration_s": round(time.perf_counter() - started, 3),
+            }
         except Exception as e:
-            return {"name": name, "error": str(e)}
+            return {
+                "name": name,
+                "status": "smoke_failed",
+                "error": f"{type(e).__name__}: {e}",
+                "duration_s": round(time.perf_counter() - started, 3),
+            }
+
+    @staticmethod
+    def _instantiate_benchmark(bench_cls: type, repo_root: Path, name: str) -> Any:
+        """Build the benchmark class with offline-safe constructor args."""
+        try:
+            return bench_cls()
+        except TypeError:
+            pass
+        kwargs: dict[str, Any] = {}
+        for param in inspect.signature(bench_cls).parameters.values():
+            if (
+                param.default is inspect.Parameter.empty
+                and param.kind
+                in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+            ):
+                if "data" in param.name or "dir" in param.name or "path" in param.name:
+                    kwargs[param.name] = str(repo_root / "benchmarks" / "data" / name)
+                else:
+                    raise TypeError(
+                        f"Cannot auto-construct {bench_cls.__name__}: "
+                        f"required param {param.name!r} has no offline default"
+                    )
+        return bench_cls(**kwargs)
+
+    @staticmethod
+    def _probe_benchmark(instance: Any) -> dict:
+        """Exercise read-only probes; every value returned is measured live."""
+        facts: dict[str, Any] = {}
+        for probe in ("load_categories", "get_stats"):
+            method = getattr(instance, probe, None)
+            if callable(method):
+                try:
+                    facts[probe] = RealBenchmarkPlugin._jsonable(method())
+                except Exception as e:  # noqa: BLE001, PERF203
+                    facts[probe] = f"probe error: {type(e).__name__}: {e}"
+        for loader in ("load", "load_questions", "load_problems"):
+            method = getattr(instance, loader, None)
+            if callable(method):
+                try:
+                    facts[loader] = RealBenchmarkPlugin._measure_loaded(method)
+                except Exception as e:  # noqa: BLE001, PERF203
+                    facts[loader] = f"probe error: {type(e).__name__}: {e}"
+        return facts
+
+    @staticmethod
+    def _measure_loaded(method: Any) -> Any:
+        """Call a no-arg loader; return its size, never the raw dataset."""
+        loaded = method()
+        if hasattr(loaded, "__len__"):
+            return len(loaded)
+        questions = getattr(loaded, "questions", None)
+        if hasattr(questions, "__len__"):
+            return {"items": len(questions), "type": type(loaded).__name__}
+        return RealBenchmarkPlugin._jsonable(loaded)
+
+    @staticmethod
+    def _jsonable(value: Any) -> Any:
+        """Coerce probe output to JSON-safe scalars (CLI prints dossiers)."""
+        if value is None or isinstance(value, (bool, int, float, str)):
+            return value
+        if isinstance(value, dict):
+            return {str(k): RealBenchmarkPlugin._jsonable(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [RealBenchmarkPlugin._jsonable(v) for v in value[:100]]
+        return f"<{type(value).__name__}>"
     
     async def _list_benchmarks(self) -> dict:
         """List available benchmarks."""
