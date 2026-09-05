@@ -10,17 +10,19 @@ Replaces mock plugins with real implementations that:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
 import subprocess
 import time
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from ..llm_planning import EvaluationUtility, KnowledgeBase, LLMClient
 from .manager import PluginBase, PluginMetadata, PluginPriority
-from ..llm_planning import LLMClient, KnowledgeBase, EvaluationUtility
+
+if TYPE_CHECKING:
+    from .manager import PluginManager
 
 logger = logging.getLogger(__name__)
 

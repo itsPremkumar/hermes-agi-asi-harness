@@ -1,16 +1,31 @@
-"""Web Dashboard - FastAPI + WebSocket dashboard server."""
+"""Web Dashboard - FastAPI + WebSocket dashboard server.
+
+The monitoring logic (plugins, missions, health, events, config) has no
+third-party dependencies and always imports. The HTTP server itself needs
+``fastapi`` (``pip install -e ".[api]"``); when it is missing, ``app`` is
+``None`` and only the route table is skipped.
+"""
 from __future__ import annotations
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from typing import Any
 
-from .plugins import PluginManager
-from .missions import MissionController
-from .health import HealthMonitor, HealthStatus
-from .events import EventLog
 from .config import ConfigEditor
+from .events import EventLog
+from .health import HealthMonitor, HealthStatus
+from .missions import MissionController
+from .plugins import PluginManager
 
-app = FastAPI(title="Hermes AGI Dashboard")
+try:
+    from fastapi import FastAPI, Request
+    from fastapi.responses import HTMLResponse
+except ImportError:  # minimal installs: logic stays importable, server disabled
+    FastAPI = None  # type: ignore[assignment,misc]
+    Request = None  # type: ignore[assignment,misc]
+    HTMLResponse = None  # type: ignore[assignment,misc]
+
+FASTAPI_AVAILABLE = FastAPI is not None
+
+app: Any = FastAPI(title="Hermes AGI Dashboard") if FASTAPI_AVAILABLE else None
 
 # Shared state
 plugins = PluginManager()
@@ -167,107 +182,108 @@ DASHBOARD_HTML = """
 </html>
 """
 
-@app.get("/", response_class=HTMLResponse)
-async def dashboard():
-    return DASHBOARD_HTML
+if app is not None:  # server routes require fastapi
+    @app.get("/", response_class=HTMLResponse)
+    async def dashboard():
+        return DASHBOARD_HTML
 
-@app.get("/api/status")
-async def status():
-    return {
-        "status": "running",
-        "version": "2.1.0",
-        "plugins": plugins.count(),
-        "missions": missions.count(),
-        "health": health.overall_status().value,
-    }
+    @app.get("/api/status")
+    async def status():
+        return {
+            "status": "running",
+            "version": "2.1.0",
+            "plugins": plugins.count(),
+            "missions": missions.count(),
+            "health": health.overall_status().value,
+        }
 
-@app.get("/api/plugins")
-async def list_plugins():
-    return [
-        {"id": p.id, "name": p.name, "version": p.version, "status": p.status.value, "capabilities": p.capabilities}
-        for p in plugins.list_all()
-    ]
+    @app.get("/api/plugins")
+    async def list_plugins():
+        return [
+            {"id": p.id, "name": p.name, "version": p.version, "status": p.status.value, "capabilities": p.capabilities}
+            for p in plugins.list_all()
+        ]
 
-@app.post("/api/plugins")
-async def register_plugin(req: Request):
-    body = await req.json()
-    p = plugins.register(body.get("name", ""), body.get("version", "0.1.0"), body.get("description", ""), body.get("capabilities", []))
-    events.info(f"Plugin registered: {p.name}", "plugins")
-    return {"id": p.id, "name": p.name}
+    @app.post("/api/plugins")
+    async def register_plugin(req: Request):
+        body = await req.json()
+        p = plugins.register(body.get("name", ""), body.get("version", "0.1.0"), body.get("description", ""), body.get("capabilities", []))
+        events.info(f"Plugin registered: {p.name}", "plugins")
+        return {"id": p.id, "name": p.name}
 
-@app.delete("/api/plugins/{plugin_id}")
-async def unregister_plugin(plugin_id: str):
-    if plugins.unregister(plugin_id):
-        events.info(f"Plugin unregistered: {plugin_id}", "plugins")
-        return {"status": "removed"}
-    return {"error": "not found"}
+    @app.delete("/api/plugins/{plugin_id}")
+    async def unregister_plugin(plugin_id: str):
+        if plugins.unregister(plugin_id):
+            events.info(f"Plugin unregistered: {plugin_id}", "plugins")
+            return {"status": "removed"}
+        return {"error": "not found"}
 
-@app.post("/api/plugins/{plugin_id}/enable")
-async def enable_plugin(plugin_id: str):
-    return {"status": "enabled" if plugins.enable(plugin_id) else "not found"}
+    @app.post("/api/plugins/{plugin_id}/enable")
+    async def enable_plugin(plugin_id: str):
+        return {"status": "enabled" if plugins.enable(plugin_id) else "not found"}
 
-@app.post("/api/plugins/{plugin_id}/disable")
-async def disable_plugin(plugin_id: str):
-    return {"status": "disabled" if plugins.disable(plugin_id) else "not found"}
+    @app.post("/api/plugins/{plugin_id}/disable")
+    async def disable_plugin(plugin_id: str):
+        return {"status": "disabled" if plugins.disable(plugin_id) else "not found"}
 
-@app.get("/api/missions")
-async def list_missions():
-    return [
-        {"id": m.id, "goal": m.goal, "status": m.status.value}
-        for m in missions.list_all()
-    ]
+    @app.get("/api/missions")
+    async def list_missions():
+        return [
+            {"id": m.id, "goal": m.goal, "status": m.status.value}
+            for m in missions.list_all()
+        ]
 
-@app.post("/api/missions")
-async def create_mission(req: Request):
-    body = await req.json()
-    m = missions.create(body.get("goal", ""))
-    events.info(f"Mission created: {m.goal}", "missions")
-    return {"id": m.id, "goal": m.goal}
+    @app.post("/api/missions")
+    async def create_mission(req: Request):
+        body = await req.json()
+        m = missions.create(body.get("goal", ""))
+        events.info(f"Mission created: {m.goal}", "missions")
+        return {"id": m.id, "goal": m.goal}
 
-@app.post("/api/missions/{mission_id}/start")
-async def start_mission(mission_id: str):
-    missions.start(mission_id)
-    return {"status": "started"}
+    @app.post("/api/missions/{mission_id}/start")
+    async def start_mission(mission_id: str):
+        missions.start(mission_id)
+        return {"status": "started"}
 
-@app.post("/api/missions/{mission_id}/complete")
-async def complete_mission(mission_id: str):
-    missions.complete(mission_id)
-    events.success(f"Mission completed: {mission_id}", "missions")
-    return {"status": "completed"}
+    @app.post("/api/missions/{mission_id}/complete")
+    async def complete_mission(mission_id: str):
+        missions.complete(mission_id)
+        events.success(f"Mission completed: {mission_id}", "missions")
+        return {"status": "completed"}
 
-@app.post("/api/missions/{mission_id}/fail")
-async def fail_mission(mission_id: str, req: Request):
-    body = await req.json()
-    missions.fail(mission_id, body.get("error", ""))
-    events.error(f"Mission failed: {mission_id}", "missions")
-    return {"status": "failed"}
+    @app.post("/api/missions/{mission_id}/fail")
+    async def fail_mission(mission_id: str, req: Request):
+        body = await req.json()
+        missions.fail(mission_id, body.get("error", ""))
+        events.error(f"Mission failed: {mission_id}", "missions")
+        return {"status": "failed"}
 
-@app.get("/api/health")
-async def get_health():
-    return {
-        "overall": health.overall_status().value,
-        "components": {k: v.status.value for k, v in health.get_all().items()},
-    }
+    @app.get("/api/health")
+    async def get_health():
+        return {
+            "overall": health.overall_status().value,
+            "components": {k: v.status.value for k, v in health.get_all().items()},
+        }
 
-@app.get("/api/events")
-async def get_events():
-    return [
-        {"id": e.id, "message": e.message, "level": e.level.value, "timestamp": e.timestamp}
-        for e in events.get_recent(100)
-    ]
+    @app.get("/api/events")
+    async def get_events():
+        return [
+            {"id": e.id, "message": e.message, "level": e.level.value, "timestamp": e.timestamp}
+            for e in events.get_recent(100)
+        ]
 
-@app.get("/api/config")
-async def get_config():
-    return {k: v.value for k, v in config._config.items()}
+    @app.get("/api/config")
+    async def get_config():
+        return {k: v.value for k, v in config._config.items()}
 
-@app.post("/api/config")
-async def set_config(req: Request):
-    body = await req.json()
-    for key, value in body.items():
-        config.set(key, value)
-    events.info("Configuration updated", "config")
-    return {"status": "updated"}
+    @app.post("/api/config")
+    async def set_config(req: Request):
+        body = await req.json()
+        for key, value in body.items():
+            config.set(key, value)
+        events.info("Configuration updated", "config")
+        return {"status": "updated"}
 
-def run_dashboard(host: str = "0.0.0.0", port: int = 8080):
-    import uvicorn
-    uvicorn.run(app, host=host, port=port)
+    def run_dashboard(host: str = "0.0.0.0", port: int = 8080):
+        import uvicorn
+        uvicorn.run(app, host=host, port=port)

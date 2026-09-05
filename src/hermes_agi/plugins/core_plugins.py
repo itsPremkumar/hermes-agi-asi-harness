@@ -17,14 +17,15 @@ This file implements all major harness capabilities as plugins:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import os
 import time
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .manager import PluginBase, PluginMetadata, PluginPriority
+
+if TYPE_CHECKING:
+    from .manager import PluginManager
 
 logger = logging.getLogger(__name__)
 

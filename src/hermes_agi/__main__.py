@@ -141,6 +141,8 @@ def main():
     sk_parser.add_argument("action", nargs="?", default="list", help="list|search|sync")
     sk_parser.add_argument("query", nargs="?", default="", help="Search text or sync source dir")
     sk_parser.add_argument("--limit", type=int, default=60, help="Max imports on sync")
+    # Self-test command (offline, no Harness boot needed)
+    subparsers.add_parser("self-test", help="Run offline self-test with REAL asserts")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
 
@@ -149,6 +151,12 @@ def main():
     if not args.command:
         parser.print_help()
         sys.exit(1)
+
+    if args.command == "self-test":
+        # Offline fast path: no Harness boot, no network, no API keys.
+        from hermes_agi.self_test import main as self_test_main
+
+        sys.exit(self_test_main())
 
     asyncio.run(run_command(args))
 
@@ -207,7 +215,7 @@ async def run_command(args):
             print("\n=======================================================")
             print("  HERMES NVIDIA AVO (AGENTIC VARIATION OPERATORS) ENGINE")
             print("=======================================================")
-            print(f"Running AVO evolution with Lineage DAG & In-Harness Multi-Turn Repair...")
+            print("Running AVO evolution with Lineage DAG & In-Harness Multi-Turn Repair...")
             res = loop.run_avo_evolution(objective="runtime_performance", generations=args.cycles)
             print(f"  Generations Completed:  {res['generations_completed']}")
             print(f"  Candidates Evaluated:   {res['total_candidates_evaluated']}")
@@ -352,8 +360,9 @@ async def run_command(args):
 
         print(MetricsCollector.for_workspace().get_all_metrics())
     elif args.command == "compact":
-        from hermes_os.context_compaction import ContextCompactor
         from pathlib import Path
+
+        from hermes_os.context_compaction import ContextCompactor
 
         text = Path(args.file).read_text(encoding="utf-8")
         rep = ContextCompactor(max_chars=args.max_chars).compact(text, label=Path(args.file).stem)
@@ -373,8 +382,9 @@ async def run_command(args):
         else:
             print([s["name"] for s in reg.list()])
     elif args.command == "api":
-        from hermes_os.api import create_app
         import uvicorn
+
+        from hermes_os.api import create_app
 
         app = create_app()
         print(

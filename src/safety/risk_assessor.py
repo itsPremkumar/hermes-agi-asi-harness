@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from src.safety.threat_modeler import ThreatSeverity
+from safety.threat_modeler import ThreatSeverity
 
 
 class RiskLevel(str, Enum):
@@ -236,9 +236,7 @@ class RiskAssessor:
 
 
 # Backward compat
-from dataclasses import dataclass as _dataclass
-
-@_dataclass
+@dataclass
 class RiskAssessment:
     """Backward compat for old tests."""
     risk_id: str

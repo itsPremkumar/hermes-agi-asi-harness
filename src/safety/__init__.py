@@ -1,28 +1,7 @@
 """Advanced Safety Module — threat modeling, risk assessment, policy enforcement, incident response, and compliance auditing."""
 from __future__ import annotations
 
-from src.safety.threat_modeler import (
-    Threat,
-    ThreatCategory,
-    ThreatModel,
-    ThreatModeler,
-    ThreatSeverity,
-)
-from src.safety.risk_assessor import (
-    Risk,
-    RiskAssessment,
-    RiskAssessor,
-    RiskLevel,
-    RiskProfile,
-    score_to_level,
-)
-from src.safety.safety_enforcer import (
-    EnforcementResult,
-    PolicyAction,
-    SafetyEnforcer,
-    SafetyPolicy,
-)
-from src.safety.incident_responder import (
+from safety.incident_responder import (
     EscalationLevel,
     EscalationRule,
     Incident,
@@ -30,13 +9,34 @@ from src.safety.incident_responder import (
     IncidentResponder,
     IncidentStatus,
 )
-from src.safety.safety_auditor import (
+from safety.risk_assessor import (
+    Risk,
+    RiskAssessment,
+    RiskAssessor,
+    RiskLevel,
+    RiskProfile,
+    score_to_level,
+)
+from safety.safety_auditor import (
     AuditFinding,
     AuditReport,
     AuditSeverity,
     AuditStatus,
     ComplianceStandard,
     SafetyAuditor,
+)
+from safety.safety_enforcer import (
+    EnforcementResult,
+    PolicyAction,
+    SafetyEnforcer,
+    SafetyPolicy,
+)
+from safety.threat_modeler import (
+    Threat,
+    ThreatCategory,
+    ThreatModel,
+    ThreatModeler,
+    ThreatSeverity,
 )
 
 __all__ = [

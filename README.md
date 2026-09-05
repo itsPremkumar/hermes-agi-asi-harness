@@ -1,7 +1,7 @@
 # Hermes AGI/ASI Autonomous Multi-Step Operating System & Harness
 
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/architecture-18--Plane%20Master%20OS-purple.svg)](#18-plane-master-operating-system)
 [![Dual Substrate](https://img.shields.io/badge/execution-LangGraph%20%2B%20Deep%20Agents-orange.svg)](#dual-substrate-execution-engine)
 [![Verification](https://img.shields.io/badge/verification-L5%20Earned%20Proofs-red.svg)](#reality-verification-engine-l0l6)
