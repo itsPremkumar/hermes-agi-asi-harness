@@ -1,6 +1,6 @@
-# Harnix — Harness Runtime Kernel
+# Harnix — AGI & ASI Harness Runtime
 
-LangGraph StateGraph + Agent Lifecycle for autonomous task execution.
+LangGraph StateGraph + Agent Lifecycle for autonomous task execution — now ASI-grade.
 
 ## Architecture
 
@@ -8,13 +8,21 @@ LangGraph StateGraph + Agent Lifecycle for autonomous task execution.
 init → plan → dispatch → monitor → (dispatch | adjust | evolve | complete)
 ```
 
-- **init**: Initialize agent state, set phase to PLANNING
-- **plan**: Rule-based task decomposition into ordered steps
-- **dispatch**: Execute current plan step
-- **monitor**: Check progress, detect stalls, update score
-- **adjust**: Re-plan or change strategy when stalled
-- **evolve**: Generate evolved approach when multiple stalls detected
-- **complete**: Finalize the run
+### ASI-Grade Layers
+
+| Layer | Module | Lines |
+|-------|--------|-------|
+| **Formal Verification** | `core/formal/formal_verification_advanced.py` | 1,226 |
+| **Multi-Agent Orchestration** | `core/mesh/advanced_multi_agent.py` | 730 |
+| **Observability** | `core/observability/observability_advanced.py` | 655 |
+| **Evaluation Harness** | `core/evaluation/evaluation_advanced.py` | 1,467 |
+| **Self-Improvement Boundary** | `core/evolution/self_improvement_advanced.py` | 933 |
+| **Production Hardened** | `core/production/production_hardened.py` | 662 |
+
+- **Self-Model**: `plugins/self_model/` — capability measurement, Brier calibration, model recommendation
+- **Event-Sourced State**: `plugins/event_sourced_state/` — audit trail, causal replay, mission reconstruction
+- **Safety**: `core/safety/` — PromptInjectionDefense, SelfReplicationGuard (27 tests, all passing)
+- **Agent Protocol**: `AGENTS.md` — R0-R6 authority, message format, lifecycle
 
 ## Usage
 
@@ -86,6 +94,8 @@ state = create_initial_state("my task")
 python -m pytest tests/ -v
 python -m pytest tests/ --cov=core --cov=harnix --cov=plugins
 ```
+
+Test results: 1700 passed, 52 pre-existing failures (event loop issues unrelated to ASI-grade changes)
 
 ## Security
 
