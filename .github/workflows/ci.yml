@@ -37,6 +37,14 @@ jobs:
           [ -e integration ] && { echo "integration/ must not return (see archive/)"; fail=1; }
           exit $fail
 
+      - name: Canonical imports
+        shell: bash
+        run: python scripts/check_canonical.py
+
+      - name: Import cycles (no new cycles beyond allowlist)
+        shell: bash
+        run: python scripts/check_cycles.py --allow scripts/cycles.allow
+
   # ===== Lint & Format =====
   lint:
     name: Lint & Format

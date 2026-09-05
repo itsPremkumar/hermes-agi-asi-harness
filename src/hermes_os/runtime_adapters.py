@@ -49,6 +49,7 @@ def _output_law_ok(artifact_path: str) -> tuple[bool, str]:
 # 1. LangGraph Runtime Adapter (Durable Foundation Runtime)
 # =====================================================================
 
+
 class LangGraphRuntimeAdapter(RuntimeAdapter):
     """
     Substrate executing ExecutionPlanIR as a durable, checkpointed state graph.
@@ -80,9 +81,13 @@ class LangGraphRuntimeAdapter(RuntimeAdapter):
         checkpoints: List[str] = []
 
         if self.exporter:
-            self.exporter.start_mission_trace(plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id})
+            self.exporter.start_mission_trace(
+                plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id}
+            )
 
-        logger.info(f"[LangGraph] Beginning durable execution of {len(plan.execution_waves)} waves for mission {plan.mission_id}")
+        logger.info(
+            f"[LangGraph] Beginning durable execution of {len(plan.execution_waves)} waves for mission {plan.mission_id}"
+        )
 
         for wave in plan.execution_waves:
             if self.exporter:
@@ -91,7 +96,9 @@ class LangGraphRuntimeAdapter(RuntimeAdapter):
             if plan.mission_id in self._paused_missions:
                 logger.warning(f"[LangGraph] Execution paused at wave {wave.wave_number}")
                 if self.exporter:
-                    self.exporter.end_wave_span(plan.mission_id, wave.wave_number, completed_tasks, error="Mission paused")
+                    self.exporter.end_wave_span(
+                        plan.mission_id, wave.wave_number, completed_tasks, error="Mission paused"
+                    )
                 return ExecutionResult(
                     mission_id=plan.mission_id,
                     runtime_id=self.runtime_id,
@@ -119,10 +126,14 @@ class LangGraphRuntimeAdapter(RuntimeAdapter):
             checkpoints.append(ckpt_id)
 
             if self.exporter:
-                self.exporter.end_wave_span(plan.mission_id, wave.wave_number, completed_tasks, checkpoint_id=ckpt_id)
+                self.exporter.end_wave_span(
+                    plan.mission_id, wave.wave_number, completed_tasks, checkpoint_id=ckpt_id
+                )
 
         elapsed = time.perf_counter() - start_t
-        proof_hash = hashlib.sha256(f"{plan.mission_id}:{len(completed_tasks)}:LG".encode()).hexdigest()
+        proof_hash = hashlib.sha256(
+            f"{plan.mission_id}:{len(completed_tasks)}:LG".encode()
+        ).hexdigest()
 
         if self.exporter:
             self.exporter.end_mission_trace(
@@ -152,7 +163,9 @@ class LangGraphRuntimeAdapter(RuntimeAdapter):
     async def resume(self, mission_id: str, checkpoint_id: Optional[str] = None) -> ExecutionResult:
         if mission_id in self._paused_missions:
             self._paused_missions.remove(mission_id)
-        logger.info(f"[LangGraph] Resumed mission {mission_id} from {checkpoint_id or 'latest checkpoint'}")
+        logger.info(
+            f"[LangGraph] Resumed mission {mission_id} from {checkpoint_id or 'latest checkpoint'}"
+        )
         return ExecutionResult(
             mission_id=mission_id,
             runtime_id=self.runtime_id,
@@ -167,6 +180,7 @@ class LangGraphRuntimeAdapter(RuntimeAdapter):
 # =====================================================================
 # 2. Deep Agents Runtime Adapter (Isolated Worker Harness)
 # =====================================================================
+
 
 class DeepAgentsRuntimeAdapter(RuntimeAdapter):
     """
@@ -188,7 +202,9 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
     def description(self) -> str:
         return "Deep Agents Worker Harness (Isolated filesystem scratchpads & subagent teams)"
 
-    async def compile_execution_substrate(self, plan: ExecutionPlanIR) -> Dict[str, IsolatedSubagentWorkspace]:
+    async def compile_execution_substrate(
+        self, plan: ExecutionPlanIR
+    ) -> Dict[str, IsolatedSubagentWorkspace]:
         workspaces: Dict[str, IsolatedSubagentWorkspace] = {}
         for goal in plan.task_graph.list_goals():
             cap_plan = plan.capability_plans.get(goal.goal_id)
@@ -209,7 +225,9 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
         artifacts: List[str] = []
 
         if self.exporter:
-            self.exporter.start_mission_trace(plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id})
+            self.exporter.start_mission_trace(
+                plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id}
+            )
 
         for gid, ws in workspaces.items():
             if self.exporter:
@@ -223,7 +241,9 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
 
             if plan.mission_id in self._paused_missions:
                 if self.exporter:
-                    self.exporter.end_worker_span(plan.mission_id, ws.worker_id, error="Mission paused")
+                    self.exporter.end_worker_span(
+                        plan.mission_id, ws.worker_id, error="Mission paused"
+                    )
                 return ExecutionResult(
                     mission_id=plan.mission_id,
                     runtime_id=self.runtime_id,
@@ -238,7 +258,11 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
 
             goal_node = plan.task_graph.get_goal(gid)
             exec_code = None
-            if goal_node and hasattr(goal_node, "metadata") and isinstance(goal_node.metadata, dict):
+            if (
+                goal_node
+                and hasattr(goal_node, "metadata")
+                and isinstance(goal_node.metadata, dict)
+            ):
                 exec_code = goal_node.metadata.get("code") or goal_node.metadata.get("command")
 
             stdout_val = ""
@@ -247,6 +271,7 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
                 try:
                     import subprocess
                     import sys
+
                     is_py = "import" in exec_code or "print" in exec_code or "def " in exec_code
                     proc = subprocess.run(
                         [sys.executable, "-c", exec_code] if is_py else exec_code,
@@ -287,10 +312,14 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
             completed_tasks.append(gid)
 
             if self.exporter:
-                self.exporter.end_worker_span(plan.mission_id, ws.worker_id, artifacts=[str(art_file)])
+                self.exporter.end_worker_span(
+                    plan.mission_id, ws.worker_id, artifacts=[str(art_file)]
+                )
 
         elapsed = time.perf_counter() - start_t
-        proof_hash = hashlib.sha256(f"{plan.mission_id}:{len(completed_tasks)}:DA".encode()).hexdigest()
+        proof_hash = hashlib.sha256(
+            f"{plan.mission_id}:{len(completed_tasks)}:DA".encode()
+        ).hexdigest()
 
         if self.exporter:
             self.exporter.end_mission_trace(
@@ -331,6 +360,7 @@ class DeepAgentsRuntimeAdapter(RuntimeAdapter):
 # 3. Composite Dual-Substrate Adapter (LangGraph + Deep Agents Synergy)
 # =====================================================================
 
+
 class CompositeDualSubstrateAdapter(RuntimeAdapter):
     """
     The Recommended Dual-Substrate Engine:
@@ -342,7 +372,9 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
         self.workspace_root = workspace_root
         self.exporter = exporter
         self.langgraph = LangGraphRuntimeAdapter(workspace_root=workspace_root, exporter=exporter)
-        self.deep_agents = DeepAgentsRuntimeAdapter(workspace_root=workspace_root, exporter=exporter)
+        self.deep_agents = DeepAgentsRuntimeAdapter(
+            workspace_root=workspace_root, exporter=exporter
+        )
 
     @property
     def runtime_id(self) -> str:
@@ -370,9 +402,13 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
         artifacts: List[str] = []
 
         if self.exporter:
-            self.exporter.start_mission_trace(plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id})
+            self.exporter.start_mission_trace(
+                plan.mission_id, plan.objective, metadata={"runtime": self.runtime_id}
+            )
 
-        logger.info(f"[DualSubstrate] Launching LangGraph wave scheduler with Deep Agents sandboxes for {plan.mission_id}")
+        logger.info(
+            f"[DualSubstrate] Launching LangGraph wave scheduler with Deep Agents sandboxes for {plan.mission_id}"
+        )
 
         for wave in plan.execution_waves:
             if self.exporter:
@@ -383,15 +419,23 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
                 ws: IsolatedSubagentWorkspace = workspaces.get(tid)
                 if ws:
                     if self.exporter:
-                        self.exporter.start_worker_span(plan.mission_id, ws.worker_id, tid, sandbox_dir=ws.workspace_dir)
+                        self.exporter.start_worker_span(
+                            plan.mission_id, ws.worker_id, tid, sandbox_dir=ws.workspace_dir
+                        )
                     art_file = Path(ws.workspace_dir) / f"result_{tid}.json"
-                    art_file.write_text(f'{{"task_id": "{tid}", "status": "verified"}}\n', encoding="utf-8")
+                    art_file.write_text(
+                        f'{{"task_id": "{tid}", "status": "verified"}}\n', encoding="utf-8"
+                    )
                     if self.exporter:
-                        self.exporter.end_worker_span(plan.mission_id, ws.worker_id, artifacts=[str(art_file)])
+                        self.exporter.end_worker_span(
+                            plan.mission_id, ws.worker_id, artifacts=[str(art_file)]
+                        )
                     return tid, str(art_file)
                 return tid, ""
 
-            wave_results = await asyncio.gather(*[_run_sandboxed_task(tid) for tid in wave.task_ids])
+            wave_results = await asyncio.gather(
+                *[_run_sandboxed_task(tid) for tid in wave.task_ids]
+            )
 
             failed_tasks: List[str] = []
             for tid, art in wave_results:
@@ -411,10 +455,17 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
             checkpoints.append(ckpt_id)
 
             if self.exporter:
-                self.exporter.end_wave_span(plan.mission_id, wave.wave_number, [tid for tid, _ in wave_results], checkpoint_id=ckpt_id)
+                self.exporter.end_wave_span(
+                    plan.mission_id,
+                    wave.wave_number,
+                    [tid for tid, _ in wave_results],
+                    checkpoint_id=ckpt_id,
+                )
 
         elapsed = time.perf_counter() - start_t
-        proof_hash = hashlib.sha256(f"{plan.mission_id}:{len(completed_tasks)}:DUAL".encode()).hexdigest()
+        proof_hash = hashlib.sha256(
+            f"{plan.mission_id}:{len(completed_tasks)}:DUAL".encode()
+        ).hexdigest()
 
         if self.exporter:
             self.exporter.end_mission_trace(
@@ -424,8 +475,11 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
                 artifacts=artifacts,
             )
 
-        status = ExecutionStatus.COMPLETED if not failed_tasks else (
-            ExecutionStatus.FAILED if not completed_tasks else ExecutionStatus.COMPLETED)
+        status = (
+            ExecutionStatus.COMPLETED
+            if not failed_tasks
+            else (ExecutionStatus.FAILED if not completed_tasks else ExecutionStatus.COMPLETED)
+        )
         return ExecutionResult(
             mission_id=plan.mission_id,
             runtime_id=self.runtime_id,
@@ -435,7 +489,11 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
             checkpoints_created=checkpoints,
             tokens_consumed=plan.resource_budget.get("max_tokens", 10000),
             elapsed_seconds=elapsed,
-            proof={"verified": bool(completed_tasks), "proof_hash": proof_hash, "tier": "L5_compiler_proof"},
+            proof={
+                "verified": bool(completed_tasks),
+                "proof_hash": proof_hash,
+                "tier": "L5_compiler_proof",
+            },
             artifacts_produced=artifacts,
             metadata={
                 "waves_executed": len(plan.execution_waves),
@@ -460,6 +518,7 @@ class CompositeDualSubstrateAdapter(RuntimeAdapter):
 # =====================================================================
 # 4. OpenClaw Runtime Adapter (Distributed Device Nodes)
 # =====================================================================
+
 
 class OpenClawRuntimeAdapter(RuntimeAdapter):
     """Bridges execution to OpenClaw device nodes or ACP external harnesses."""
@@ -497,12 +556,15 @@ class OpenClawRuntimeAdapter(RuntimeAdapter):
         return True
 
     async def resume(self, mission_id: str, checkpoint_id: Optional[str] = None) -> ExecutionResult:
-        return ExecutionResult(mission_id=mission_id, runtime_id=self.runtime_id, status=ExecutionStatus.COMPLETED)
+        return ExecutionResult(
+            mission_id=mission_id, runtime_id=self.runtime_id, status=ExecutionStatus.COMPLETED
+        )
 
 
 # =====================================================================
 # 5. Prime Runtime Adapter (Programmable Persistent REPL)
 # =====================================================================
+
 
 class PrimeRuntimeAdapter(RuntimeAdapter):
     """Bridges execution to persistent programmable Python REPL session."""
@@ -536,4 +598,6 @@ class PrimeRuntimeAdapter(RuntimeAdapter):
         return True
 
     async def resume(self, mission_id: str, checkpoint_id: Optional[str] = None) -> ExecutionResult:
-        return ExecutionResult(mission_id=mission_id, runtime_id=self.runtime_id, status=ExecutionStatus.COMPLETED)
+        return ExecutionResult(
+            mission_id=mission_id, runtime_id=self.runtime_id, status=ExecutionStatus.COMPLETED
+        )

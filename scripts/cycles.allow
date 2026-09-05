@@ -1,0 +1,3 @@
+# Grandfathered import cycles (do not extend; break, don't grow).
+# One entry per line, as printed by check_cycles.py.
+agents -> core -> engines -> harnix -> hermes_agi -> hermes_os -> plugins -> verification -> agents

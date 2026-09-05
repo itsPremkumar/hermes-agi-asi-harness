@@ -23,6 +23,7 @@ logger = logging.getLogger("hermes.os.capabilities")
 
 class CapabilityKind(str, enum.Enum):
     """Classification of intelligence and actuation capabilities."""
+
     MODEL = "model"
     AGENT = "agent"
     TOOL = "tool"
@@ -36,6 +37,7 @@ class CapabilityKind(str, enum.Enum):
 @dataclass
 class CapabilityManifest:
     """Machine-readable contract describing an operational capability."""
+
     id: str
     kind: CapabilityKind
     name: str
@@ -44,12 +46,12 @@ class CapabilityManifest:
     outputs: List[str] = field(default_factory=list)
     prerequisites: List[str] = field(default_factory=list)
     permissions: List[str] = field(default_factory=list)
-    risk: str = "low"                      # "low", "medium", "high", "critical"
+    risk: str = "low"  # "low", "medium", "high", "critical"
     cost: Dict[str, str] = field(default_factory=lambda: {"tokens": "medium", "latency": "medium"})
     best_for: List[str] = field(default_factory=list)
     avoid_for: List[str] = field(default_factory=list)
     verification: str = "oracle_check"
-    is_loaded: bool = False                # Distinction: "available" vs "currently loaded into context"
+    is_loaded: bool = False  # Distinction: "available" vs "currently loaded into context"
     skill_file_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -75,6 +77,7 @@ class CapabilityManifest:
 @dataclass
 class ExecutionCapabilityPlan:
     """Explicit capability bindings resolved for a specific task/subgoal."""
+
     task_id: str
     required_capabilities: List[str] = field(default_factory=list)
     selected_models: List[str] = field(default_factory=list)
@@ -104,6 +107,7 @@ class ExecutionCapabilityPlan:
 # =====================================================================
 # Hierarchical Capability Graph
 # =====================================================================
+
 
 class CapabilityGraph:
     """
@@ -159,6 +163,7 @@ class CapabilityGraph:
 # Capability Registry
 # =====================================================================
 
+
 class CapabilityRegistry:
     """
     Master repository of all operational capabilities available to Hermes.
@@ -174,160 +179,192 @@ class CapabilityRegistry:
     def _register_default_capabilities(self) -> None:
         """Populate baseline manifests for models, tools, skills, plugins, and commands."""
         # 1. Models
-        self.register(CapabilityManifest(
-            id="model.frontier_reasoner",
-            kind=CapabilityKind.MODEL,
-            name="Frontier Reasoning Model",
-            description="Deep multi-step reasoning, mathematical deduction, and causal analysis",
-            cost={"tokens": "high", "latency": "medium"},
-            best_for=["architecture_planning", "complex_debugging", "adversarial_critique"],
-            avoid_for=["simple_summaries", "low_latency_streaming"],
-        ))
-        self.register(CapabilityManifest(
-            id="model.fast_executor",
-            kind=CapabilityKind.MODEL,
-            name="Fast Lightweight Model",
-            description="Rapid tool routing, summarization, and data extraction",
-            cost={"tokens": "low", "latency": "low"},
-            best_for=["swarm_workers", "syntax_checks", "evidence_compression"],
-            avoid_for=["novel_mathematics", "multi-turn_causal_plans"],
-        ))
+        self.register(
+            CapabilityManifest(
+                id="model.frontier_reasoner",
+                kind=CapabilityKind.MODEL,
+                name="Frontier Reasoning Model",
+                description="Deep multi-step reasoning, mathematical deduction, and causal analysis",
+                cost={"tokens": "high", "latency": "medium"},
+                best_for=["architecture_planning", "complex_debugging", "adversarial_critique"],
+                avoid_for=["simple_summaries", "low_latency_streaming"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="model.fast_executor",
+                kind=CapabilityKind.MODEL,
+                name="Fast Lightweight Model",
+                description="Rapid tool routing, summarization, and data extraction",
+                cost={"tokens": "low", "latency": "low"},
+                best_for=["swarm_workers", "syntax_checks", "evidence_compression"],
+                avoid_for=["novel_mathematics", "multi-turn_causal_plans"],
+            )
+        )
 
         # 2. Tools (Standard & Developer Agency Suite)
-        self.register(CapabilityManifest(
-            id="tool.python_repl",
-            kind=CapabilityKind.TOOL,
-            name="Python REPL Kernel",
-            description="Executes Python code in a persistent session with memory state",
-            permissions=["write:code", "exec:python"],
-            risk="medium",
-            best_for=["calculations", "data_transformation", "scripted_verification"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.bash_shell",
-            kind=CapabilityKind.TOOL,
-            name="System Shell",
-            description="Executes CLI commands, test suites, and process management",
-            permissions=["exec:shell"],
-            risk="high",
-            best_for=["running_tests", "git_operations", "package_management"],
-            verification="exit_code_and_stderr_audit",
-        ))
-        self.register(CapabilityManifest(
-            id="tool.write_file",
-            kind=CapabilityKind.TOOL,
-            name="Write File Tool",
-            description="Write or overwrite a file in the workspace",
-            permissions=["write:workspace"],
-            risk="medium",
-            best_for=["creating_files", "overwriting_files", "scaffolding"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.edit_file",
-            kind=CapabilityKind.TOOL,
-            name="Edit File Tool",
-            description="Surgically replace target content in an existing file",
-            permissions=["write:workspace"],
-            risk="medium",
-            best_for=["targeted_code_edits", "bug_fixes", "refactoring"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.list_dir",
-            kind=CapabilityKind.TOOL,
-            name="List Directory Tool",
-            description="List directory contents with file metadata",
-            permissions=["read:workspace"],
-            risk="low",
-            best_for=["directory_exploration", "file_enumeration"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.grep_search",
-            kind=CapabilityKind.TOOL,
-            name="Grep Search Tool",
-            description="Ripgrep-style pattern matching across files",
-            permissions=["read:workspace"],
-            risk="low",
-            best_for=["code_search", "pattern_matching", "symbol_lookup"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.find_by_name",
-            kind=CapabilityKind.TOOL,
-            name="Find By Name Tool",
-            description="Find files matching a glob pattern",
-            permissions=["read:workspace"],
-            risk="low",
-            best_for=["locating_files", "glob_search"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.execute_shell",
-            kind=CapabilityKind.TOOL,
-            name="Execute Shell Tool",
-            description="Execute shell command safely under SafetyKernel policy",
-            permissions=["exec:shell"],
-            risk="high",
-            best_for=["running_tests", "running_scripts", "environment_inspection"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.git_status",
-            kind=CapabilityKind.TOOL,
-            name="Git Status Tool",
-            description="Get workspace git status",
-            permissions=["read:workspace"],
-            risk="low",
-            best_for=["vcs_inspection", "modified_files_check"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.git_diff",
-            kind=CapabilityKind.TOOL,
-            name="Git Diff Tool",
-            description="Get workspace git diff",
-            permissions=["read:workspace"],
-            risk="low",
-            best_for=["patch_review", "diff_generation"],
-        ))
-        self.register(CapabilityManifest(
-            id="tool.apply_patch",
-            kind=CapabilityKind.TOOL,
-            name="Apply Patch Tool",
-            description="Apply a unified git diff patch to the workspace",
-            permissions=["write:workspace"],
-            risk="high",
-            best_for=["applying_patches", "swe_bench_solutions"],
-        ))
+        self.register(
+            CapabilityManifest(
+                id="tool.python_repl",
+                kind=CapabilityKind.TOOL,
+                name="Python REPL Kernel",
+                description="Executes Python code in a persistent session with memory state",
+                permissions=["write:code", "exec:python"],
+                risk="medium",
+                best_for=["calculations", "data_transformation", "scripted_verification"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.bash_shell",
+                kind=CapabilityKind.TOOL,
+                name="System Shell",
+                description="Executes CLI commands, test suites, and process management",
+                permissions=["exec:shell"],
+                risk="high",
+                best_for=["running_tests", "git_operations", "package_management"],
+                verification="exit_code_and_stderr_audit",
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.write_file",
+                kind=CapabilityKind.TOOL,
+                name="Write File Tool",
+                description="Write or overwrite a file in the workspace",
+                permissions=["write:workspace"],
+                risk="medium",
+                best_for=["creating_files", "overwriting_files", "scaffolding"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.edit_file",
+                kind=CapabilityKind.TOOL,
+                name="Edit File Tool",
+                description="Surgically replace target content in an existing file",
+                permissions=["write:workspace"],
+                risk="medium",
+                best_for=["targeted_code_edits", "bug_fixes", "refactoring"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.list_dir",
+                kind=CapabilityKind.TOOL,
+                name="List Directory Tool",
+                description="List directory contents with file metadata",
+                permissions=["read:workspace"],
+                risk="low",
+                best_for=["directory_exploration", "file_enumeration"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.grep_search",
+                kind=CapabilityKind.TOOL,
+                name="Grep Search Tool",
+                description="Ripgrep-style pattern matching across files",
+                permissions=["read:workspace"],
+                risk="low",
+                best_for=["code_search", "pattern_matching", "symbol_lookup"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.find_by_name",
+                kind=CapabilityKind.TOOL,
+                name="Find By Name Tool",
+                description="Find files matching a glob pattern",
+                permissions=["read:workspace"],
+                risk="low",
+                best_for=["locating_files", "glob_search"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.execute_shell",
+                kind=CapabilityKind.TOOL,
+                name="Execute Shell Tool",
+                description="Execute shell command safely under SafetyKernel policy",
+                permissions=["exec:shell"],
+                risk="high",
+                best_for=["running_tests", "running_scripts", "environment_inspection"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.git_status",
+                kind=CapabilityKind.TOOL,
+                name="Git Status Tool",
+                description="Get workspace git status",
+                permissions=["read:workspace"],
+                risk="low",
+                best_for=["vcs_inspection", "modified_files_check"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.git_diff",
+                kind=CapabilityKind.TOOL,
+                name="Git Diff Tool",
+                description="Get workspace git diff",
+                permissions=["read:workspace"],
+                risk="low",
+                best_for=["patch_review", "diff_generation"],
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="tool.apply_patch",
+                kind=CapabilityKind.TOOL,
+                name="Apply Patch Tool",
+                description="Apply a unified git diff patch to the workspace",
+                permissions=["write:workspace"],
+                risk="high",
+                best_for=["applying_patches", "swe_bench_solutions"],
+            )
+        )
 
         # 3. Skills (On-Demand loaded)
-        self.register(CapabilityManifest(
-            id="skill.deep_research",
-            kind=CapabilityKind.SKILL,
-            name="Deep Research Skill",
-            description="Multi-source web and literature investigation with cross-verification",
-            inputs=["research_objective", "hypotheses"],
-            outputs=["evidence_packet", "verified_claims"],
-            risk="low",
-            best_for=["market_analysis", "new_library_evaluation", "domain_recon"],
-            avoid_for=["local_filesystem_queries"],
-            is_loaded=False,
-        ))
-        self.register(CapabilityManifest(
-            id="skill.refactor",
-            kind=CapabilityKind.SKILL,
-            name="Safe Refactoring Skill",
-            description="AST-guided multi-file refactoring with invariant checks",
-            permissions=["write:workspace"],
-            risk="medium",
-            best_for=["codebase_modernization", "type_annotation", "modularization"],
-            is_loaded=False,
-        ))
+        self.register(
+            CapabilityManifest(
+                id="skill.deep_research",
+                kind=CapabilityKind.SKILL,
+                name="Deep Research Skill",
+                description="Multi-source web and literature investigation with cross-verification",
+                inputs=["research_objective", "hypotheses"],
+                outputs=["evidence_packet", "verified_claims"],
+                risk="low",
+                best_for=["market_analysis", "new_library_evaluation", "domain_recon"],
+                avoid_for=["local_filesystem_queries"],
+                is_loaded=False,
+            )
+        )
+        self.register(
+            CapabilityManifest(
+                id="skill.refactor",
+                kind=CapabilityKind.SKILL,
+                name="Safe Refactoring Skill",
+                description="AST-guided multi-file refactoring with invariant checks",
+                permissions=["write:workspace"],
+                risk="medium",
+                best_for=["codebase_modernization", "type_annotation", "modularization"],
+                is_loaded=False,
+            )
+        )
 
         # 4. Plugins
-        self.register(CapabilityManifest(
-            id="plugin.web_search",
-            kind=CapabilityKind.PLUGIN,
-            name="Web Search Plugin",
-            description="High-throughput search engine interface with snippet ranking",
-            risk="low",
-            best_for=["retrieving_fresh_information", "documentation_lookup"],
-        ))
+        self.register(
+            CapabilityManifest(
+                id="plugin.web_search",
+                kind=CapabilityKind.PLUGIN,
+                name="Web Search Plugin",
+                description="High-throughput search engine interface with snippet ranking",
+                risk="low",
+                best_for=["retrieving_fresh_information", "documentation_lookup"],
+            )
+        )
 
         # 5. Control-Plane Commands
         commands = [
@@ -345,14 +382,16 @@ class CapabilityRegistry:
             ("/rollback", "Restores prior verified checkpoint"),
         ]
         for cmd, desc in commands:
-            self.register(CapabilityManifest(
-                id=f"command.{cmd.replace('/', '')}",
-                kind=CapabilityKind.COMMAND,
-                name=cmd,
-                description=desc,
-                risk="low",
-                best_for=["control_plane_steering"],
-            ))
+            self.register(
+                CapabilityManifest(
+                    id=f"command.{cmd.replace('/', '')}",
+                    kind=CapabilityKind.COMMAND,
+                    name=cmd,
+                    description=desc,
+                    risk="low",
+                    best_for=["control_plane_steering"],
+                )
+            )
 
     def register(self, manifest: CapabilityManifest) -> None:
         self._registry[manifest.id] = manifest
@@ -384,7 +423,13 @@ class CapabilityRegistry:
         skill_name = skill_id.replace("skill.", "")
         candidates = [
             Path(self.workspace_root) / "skills" / skill_name / "SKILL.md",
-            Path(self.workspace_root) / ".gemini" / "antigravity" / "builtin" / "skills" / skill_name / "SKILL.md",
+            Path(self.workspace_root)
+            / ".gemini"
+            / "antigravity"
+            / "builtin"
+            / "skills"
+            / skill_name
+            / "SKILL.md",
         ]
         for c in candidates:
             if c.exists():
@@ -395,7 +440,9 @@ class CapabilityRegistry:
         manifest.is_loaded = True
         return f"# Skill: {manifest.name}\n\n{manifest.description}\n\nBest for: {', '.join(manifest.best_for)}"
 
-    def register_mcp_tools(self, tools: List[Dict[str, Any]], server_name: str = "mcp") -> List[CapabilityManifest]:
+    def register_mcp_tools(
+        self, tools: List[Dict[str, Any]], server_name: str = "mcp"
+    ) -> List[CapabilityManifest]:
         """
         Dynamically register MCP tools into the Capability Awareness OS.
         """
@@ -423,10 +470,10 @@ class CapabilityRegistry:
         return registered
 
 
-
 # =====================================================================
 # Capability Selector (Deliberation Step)
 # =====================================================================
+
 
 class CapabilitySelector:
     """
@@ -447,10 +494,15 @@ class CapabilitySelector:
         plan = self.select_for_task(task_id, task_description, risk_level)
         try:
             from .tool_scoring import ToolScorecard
+
             sc = ToolScorecard(workspace_root=self.registry.workspace_root)
-            ranked = sc.rank([{"name": t, "risk": "medium", "est_tokens": 500} for t in plan.selected_tools])
+            ranked = sc.rank(
+                [{"name": t, "risk": "medium", "est_tokens": 500} for t in plan.selected_tools]
+            )
             plan.selected_tools = [r["name"] for r in ranked] or plan.selected_tools
-            plan.required_capabilities = plan.selected_tools + plan.selected_skills + plan.selected_plugins
+            plan.required_capabilities = (
+                plan.selected_tools + plan.selected_skills + plan.selected_plugins
+            )
         except Exception:
             pass
         return plan
@@ -469,7 +521,9 @@ class CapabilitySelector:
         desc_lower = task_description.lower()
 
         # 1. Model Selection
-        if any(w in desc_lower for w in ["architect", "plan", "complex", "debug", "math", "verify"]):
+        if any(
+            w in desc_lower for w in ["architect", "plan", "complex", "debug", "math", "verify"]
+        ):
             models = ["model.frontier_reasoner"]
         else:
             models = ["model.fast_executor"]
@@ -483,7 +537,9 @@ class CapabilitySelector:
 
         # 3. Skill Selection (On-Demand)
         skills = []
-        if any(w in desc_lower for w in ["research", "investigate", "explore", "search", "competitor"]):
+        if any(
+            w in desc_lower for w in ["research", "investigate", "explore", "search", "competitor"]
+        ):
             skills.append("skill.deep_research")
             # Mark loaded
             self.registry.load_skill_body("skill.deep_research")
@@ -516,7 +572,9 @@ class CapabilitySelector:
             perms.extend(["write:code", "exec:tool"])
 
         # Verification requirement
-        verification = "l4_independent_reproduction" if risk_level == "high" else "l2_clean_inspection"
+        verification = (
+            "l4_independent_reproduction" if risk_level == "high" else "l2_clean_inspection"
+        )
 
         return ExecutionCapabilityPlan(
             task_id=task_id,

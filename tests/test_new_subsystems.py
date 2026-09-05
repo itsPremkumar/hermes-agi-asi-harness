@@ -699,6 +699,26 @@ async def test_tool_metrics_hook(tmp_path):
     assert MetricsCollector.for_workspace(str(tmp_path)).get_plane_invocations().get("list_dir") == 1
 
 
+# ---------------- canonical map + planning split ----------------
+
+def test_canonical_imports():
+    import subprocess
+    import sys
+    r = subprocess.run([sys.executable, "scripts/check_canonical.py"],
+                       capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_planning_split_compat():
+    import sys
+    sys.path.insert(0, "src")
+    import hermes_agi.planning as P
+    import hermes_agi.planning_registry as R
+    assert P.FeatureRegistry is R.FeatureRegistry
+    assert len(P.get_all_features()) > 0
+    assert "Phase" in P.__all__
+
+
 # ---------------- goal graph mutations ----------------
 
 def test_goal_graph_mutations():

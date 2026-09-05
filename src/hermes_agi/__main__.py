@@ -11,30 +11,32 @@ import sys
 def main():
     parser = argparse.ArgumentParser(description="Hermes AGI/ASI Harness")
     parser.add_argument("--version", action="version", version="%(prog)s 2.0.0")
-    
+
     subparsers = parser.add_subparsers(dest="command")
-    
+
     # Run command
     run_parser = subparsers.add_parser("run", help="Run a task")
     run_parser.add_argument("task", help="Task description")
-    
+
     # Benchmark command
     bench_parser = subparsers.add_parser("benchmark", help="Run benchmarks")
     bench_parser.add_argument("--name", default="all", help="Benchmark name")
-    
+
     # Spawn command
     spawn_parser = subparsers.add_parser("spawn", help="Spawn a bot")
     spawn_parser.add_argument("bot", help="Bot name")
     spawn_parser.add_argument("command", help="Command for the bot")
-    
+
     # Status command
     subparsers.add_parser("status", help="Show system status")
-    
+
     # Health command
     subparsers.add_parser("health", help="Show health status")
-    
+
     # Research command
-    research_parser = subparsers.add_parser("research", help="Run autonomous deep research on a topic")
+    research_parser = subparsers.add_parser(
+        "research", help="Run autonomous deep research on a topic"
+    )
     research_parser.add_argument("topic", help="Research topic or question")
     research_parser.add_argument("--depth", type=int, default=3, help="Research depth (1-5)")
 
@@ -53,36 +55,66 @@ def main():
 
     # Overnight (gnhf) command
     for name in ("overnight", "gnhf"):
-        ov_parser = subparsers.add_parser(name, help="Run autonomous overnight endurance loop (gnhf pattern)")
+        ov_parser = subparsers.add_parser(
+            name, help="Run autonomous overnight endurance loop (gnhf pattern)"
+        )
         ov_parser.add_argument("objective", help="High-level engineering objective")
-        ov_parser.add_argument("--max-iterations", type=int, default=10, help="Maximum iterations to run")
-        ov_parser.add_argument("--max-failures", type=int, default=3, help="Consecutive failure abort limit")
-        ov_parser.add_argument("--current-branch", action="store_true", help="Commit directly on current branch")
-        ov_parser.add_argument("--stop-when", default="", help="Natural language stopping condition")
+        ov_parser.add_argument(
+            "--max-iterations", type=int, default=10, help="Maximum iterations to run"
+        )
+        ov_parser.add_argument(
+            "--max-failures", type=int, default=3, help="Consecutive failure abort limit"
+        )
+        ov_parser.add_argument(
+            "--current-branch", action="store_true", help="Commit directly on current branch"
+        )
+        ov_parser.add_argument(
+            "--stop-when", default="", help="Natural language stopping condition"
+        )
 
     # Evolve command (Darwinian Closed-Loop Self-Improvement)
-    evolve_parser = subparsers.add_parser("evolve", help="Run Darwinian Closed-Loop Self-Evolution cycle")
-    evolve_parser.add_argument("--cycles", type=int, default=1, help="Number of recursive evolution cycles to run")
-    evolve_parser.add_argument("--margin", type=float, default=0.015, help="Minimum improvement margin to accept patch")
-    evolve_parser.add_argument("--avo", action="store_true", help="Use NVIDIA Agentic Variation Operators (AVO) with lineage DAG")
+    evolve_parser = subparsers.add_parser(
+        "evolve", help="Run Darwinian Closed-Loop Self-Evolution cycle"
+    )
+    evolve_parser.add_argument(
+        "--cycles", type=int, default=1, help="Number of recursive evolution cycles to run"
+    )
+    evolve_parser.add_argument(
+        "--margin", type=float, default=0.015, help="Minimum improvement margin to accept patch"
+    )
+    evolve_parser.add_argument(
+        "--avo",
+        action="store_true",
+        help="Use NVIDIA Agentic Variation Operators (AVO) with lineage DAG",
+    )
 
     # Refine command (Prime Agent Continual Self-Refinement)
-    subparsers.add_parser("refine", help="Run continual harness self-refinement on session logs (/refine)")
+    subparsers.add_parser(
+        "refine", help="Run continual harness self-refinement on session logs (/refine)"
+    )
 
     # REPL command (Prime Agent Recursive Language Model)
-    repl_parser = subparsers.add_parser("repl", help="Execute Python code snippet in RLM persistent REPL")
-    repl_parser.add_argument("code", nargs="?", default="", help="Python code to evaluate with 'agent' bridge")
+    repl_parser = subparsers.add_parser(
+        "repl", help="Execute Python code snippet in RLM persistent REPL"
+    )
+    repl_parser.add_argument(
+        "code", nargs="?", default="", help="Python code to evaluate with 'agent' bridge"
+    )
 
     # Daemon command (24/7 continuous operation)
     daemon_parser = subparsers.add_parser("daemon", help="Run 24/7 continuous daemon loop")
     daemon_parser.add_argument("action", nargs="?", default="run", help="run|enqueue|status|stop")
-    daemon_parser.add_argument("request", nargs="?", default="", help="Mission request (for enqueue)")
+    daemon_parser.add_argument(
+        "request", nargs="?", default="", help="Mission request (for enqueue)"
+    )
     daemon_parser.add_argument("--max-iterations", type=int, default=0, help="0 = infinite")
     daemon_parser.add_argument("--poll", type=float, default=2.0, help="Poll interval seconds")
 
     # Hermes control command
     hx_parser = subparsers.add_parser("hermes", help="Hermes lifecycle control")
-    hx_parser.add_argument("action", nargs="?", default="health", help="health|spawn|delegate|kill|update|list")
+    hx_parser.add_argument(
+        "action", nargs="?", default="health", help="health|spawn|delegate|kill|update|list"
+    )
     hx_parser.add_argument("task", nargs="?", default="", help="Task text for spawn/delegate")
     hx_parser.add_argument("--profile", default="default", help="Hermes profile")
     hx_parser.add_argument("--role", default="leaf", help="leaf|orchestrator")
@@ -110,22 +142,22 @@ def main():
     sk_parser.add_argument("--limit", type=int, default=60, help="Max imports on sync")
     kill_parser = subparsers.add_parser("killswitch", help="Kill-switch control")
     kill_parser.add_argument("action", nargs="?", default="status", help="status|engage|release")
-    
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         sys.exit(1)
-    
+
     asyncio.run(run_command(args))
 
 
 async def run_command(args):
     """Run a command."""
     from hermes_agi import Harness
-    
+
     harness = await Harness.create()
-    
+
     if args.command == "run":
         result = await harness.run(args.task)
         print(result)
@@ -155,6 +187,7 @@ async def run_command(args):
         print(result)
     elif args.command in ("overnight", "gnhf"):
         from hermes_agi.overnight import OvernightConfig, OvernightLoopController
+
         config = OvernightConfig(
             objective=args.objective,
             max_iterations=args.max_iterations,
@@ -167,6 +200,7 @@ async def run_command(args):
         summary.print_summary()
     elif args.command == "evolve":
         from engines.self_evolution import SelfEvolutionLoop
+
         loop = SelfEvolutionLoop(minimum_improvement_margin=args.margin)
         if args.avo:
             print("\n=======================================================")
@@ -200,13 +234,18 @@ async def run_command(args):
             print("\n=======================================================\n")
     elif args.command == "refine":
         from hermes_agi.refine import HarnessRefiner
+
         refiner = HarnessRefiner()
         report = refiner.refine()
         report.print_summary()
     elif args.command == "repl":
         from hermes_agi.rlm import RLMREPLExecutor
+
         executor = RLMREPLExecutor()
-        code = args.code or "print('Hermes RLM REPL Active. Variables and agent.* functions available.')"
+        code = (
+            args.code
+            or "print('Hermes RLM REPL Active. Variables and agent.* functions available.')"
+        )
         res = executor.execute(code)
         if res.stdout:
             print(res.stdout, end="")
@@ -216,6 +255,7 @@ async def run_command(args):
             print(res.returned_value)
     elif args.command == "daemon":
         from hermes_os.kernel import HermesIntelligenceOS
+
         os_kernel = HermesIntelligenceOS()
         if args.action == "enqueue" and args.request:
             mid = os_kernel.enqueue(args.request)
@@ -233,21 +273,32 @@ async def run_command(args):
             try:
                 # run_command already runs inside asyncio.run — await directly.
                 summary = await os_kernel.run_daemon_forever(
-                    poll_interval_seconds=args.poll, max_iterations=max_iter)
+                    poll_interval_seconds=args.poll, max_iterations=max_iter
+                )
                 print(summary)
             except KeyboardInterrupt:
                 os_kernel.daemon.request_stop()
                 print("stopped by user")
     elif args.command == "hermes":
         from hermes_os.kernel import HermesIntelligenceOS
+
         os_kernel = HermesIntelligenceOS()
         ctl = os_kernel.hermes
         if ctl is None:
-            print("Hermes controller unavailable"); return
+            print("Hermes controller unavailable")
+            return
         if args.action == "spawn" and args.task:
-            print(ctl.spawn(args.task, profile=args.profile, role=args.role, background=args.background).to_dict())
+            print(
+                ctl.spawn(
+                    args.task, profile=args.profile, role=args.role, background=args.background
+                ).to_dict()
+            )
         elif args.action == "delegate" and args.task:
-            print(ctl.delegate_task(args.task, role=args.role, background=args.background, profile=args.profile))
+            print(
+                ctl.delegate_task(
+                    args.task, role=args.role, background=args.background, profile=args.profile
+                )
+            )
         elif args.action == "kill" and args.iid:
             print({"killed": ctl.kill(args.iid)})
         elif args.action == "update":
@@ -259,21 +310,30 @@ async def run_command(args):
             print(ctl.poll_completions())
     elif args.command == "consolidate":
         from hermes_os.kernel import HermesIntelligenceOS
+
         os_kernel = HermesIntelligenceOS()
         print(os_kernel.memory.consolidate_p22())
     elif args.command == "invariants":
         from hermes_os.safety_kernel import SafetyKernel
+
         sk = SafetyKernel()
-        print(sk.verify_invariants({"action_type": "mission_dispatch", "action_args": {}, "principal": "system:master"}))
+        print(
+            sk.verify_invariants(
+                {"action_type": "mission_dispatch", "action_args": {}, "principal": "system:master"}
+            )
+        )
     elif args.command == "sandbox":
         from hermes_os.docker_sandbox import DockerSandbox
+
         print(DockerSandbox().run(args.code))
     elif args.command == "metrics":
         from hermes_os.plane_metrics import MetricsCollector
+
         print(MetricsCollector.for_workspace().get_all_metrics())
     elif args.command == "compact":
         from hermes_os.context_compaction import ContextCompactor
         from pathlib import Path
+
         text = Path(args.file).read_text(encoding="utf-8")
         rep = ContextCompactor(max_chars=args.max_chars).compact(text, label=Path(args.file).stem)
         print({k: (v if k != "compacted" else f"<{len(v)} chars>") for k, v in rep.items()})
@@ -282,6 +342,7 @@ async def run_command(args):
             print(rep["compacted"][:2000].encode(enc, errors="replace").decode(enc))
     elif args.command == "skills":
         from hermes_os.skills import SkillRegistry
+
         reg = SkillRegistry(workspace_root=".")
         if args.action == "sync":
             src = args.query or "../hermes-agent/skills"
@@ -293,23 +354,33 @@ async def run_command(args):
     elif args.command == "api":
         from hermes_os.api import create_app
         import uvicorn
+
         app = create_app()
-        print(f"Serving Hermes API on 127.0.0.1:{args.port} (HERMES_API_KEY={'set' if __import__('os').getenv('HERMES_API_KEY') else 'unset-local-only'})")
+        print(
+            f"Serving Hermes API on 127.0.0.1:{args.port} (HERMES_API_KEY={'set' if __import__('os').getenv('HERMES_API_KEY') else 'unset-local-only'})"
+        )
         uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
     elif args.command == "llm":
         from hermes_os.hermes_llm import HermesFirstLLMClient, resolve_tier
+
         if args.action == "refresh":
             print(resolve_tier(force_refresh=True))
             return
         client = HermesFirstLLMClient()
         if args.ask:
             out = client.generate(args.ask)
-            print({"tier": client.active_tier, "model": client.active_model,
-                   "output": (out[:500] if out else None)})
+            print(
+                {
+                    "tier": client.active_tier,
+                    "model": client.active_model,
+                    "output": (out[:500] if out else None),
+                }
+            )
         else:
             print(client.status())
     elif args.command == "killswitch":
         from hermes_os.safety_kernel import SafetyKernel
+
         sk = SafetyKernel()
         if args.action == "engage":
             print({"engaged": sk.engage_kill_switch("manual")})

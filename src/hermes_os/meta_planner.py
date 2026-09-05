@@ -20,11 +20,12 @@ logger = logging.getLogger("hermes.os.meta_planner")
 @dataclass
 class ExecutionArchitecture:
     """The synthesized execution envelope for a mission."""
-    model_tier: str            # reactive, deep_reason, frontier_astra
-    agent_topology: str        # solo_specialist, hierarchical_swarm, dialectical_debate
+
+    model_tier: str  # reactive, deep_reason, frontier_astra
+    agent_topology: str  # solo_specialist, hierarchical_swarm, dialectical_debate
     tools: list[str]
-    planning_mode: str         # linear, mcts_graph_of_thought, reactive
-    reasoning_mode: str        # deductive, causal, counterfactual, programmatic
+    planning_mode: str  # linear, mcts_graph_of_thought, reactive
+    reasoning_mode: str  # deductive, causal, counterfactual, programmatic
     verification_tier: VerificationTier
     context_budget: ContextBudget
     max_agent_slots: int = 4
@@ -50,12 +51,27 @@ class MetaPlanner:
     def __init__(self):
         pass
 
-    def select_architecture(self, task_description: str, risk_level: str = "medium") -> ExecutionArchitecture:
+    def select_architecture(
+        self, task_description: str, risk_level: str = "medium"
+    ) -> ExecutionArchitecture:
         desc_lower = task_description.lower()
 
         # 1. Complexity & Domain classification
-        is_deep = any(k in desc_lower for k in ("prove", "theorem", "refactor", "optimize", "architecture", "distributed", "consensus"))
-        is_security = any(k in desc_lower for k in ("auth", "security", "permission", "crypto", "sandbox"))
+        is_deep = any(
+            k in desc_lower
+            for k in (
+                "prove",
+                "theorem",
+                "refactor",
+                "optimize",
+                "architecture",
+                "distributed",
+                "consensus",
+            )
+        )
+        is_security = any(
+            k in desc_lower for k in ("auth", "security", "permission", "crypto", "sandbox")
+        )
 
         # 2. Model & Compute
         if is_security or risk_level == "critical":
@@ -65,7 +81,13 @@ class MetaPlanner:
             reasoning = "counterfactual"
             v_tier = VerificationTier.L5_DETERMINISTIC_ORACLE
             budget = ContextBudget.deep_reason_200k()
-            tools = ["permission_sandbox", "anti_goodhart", "python_tool", "rlm_repl", "audit_logger"]
+            tools = [
+                "permission_sandbox",
+                "anti_goodhart",
+                "python_tool",
+                "rlm_repl",
+                "audit_logger",
+            ]
         elif is_deep:
             model_tier = "deep_reason"
             topology = "hierarchical_swarm"

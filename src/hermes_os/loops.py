@@ -52,19 +52,26 @@ class LoopEngine:
 
         # 2. Act: Execute in isolated RLM REPL
         from hermes_agi.rlm import RLMREPLExecutor
+
         executor = RLMREPLExecutor(workspace_root=self.workspace_root)
         try:
-            code = action_args.get("code") or action_args.get("command") or f"# {action_type}\nresult = 'OK'"
+            code = (
+                action_args.get("code")
+                or action_args.get("command")
+                or f"# {action_type}\nresult = 'OK'"
+            )
             res = executor.execute(code)
             raw_out = res.returned_value if res.returned_value is not None else res.stdout.strip()
 
             # 3. Observe: Update World Model
             observation_text = f"Action {action_type} produced: {raw_out}"
-            self.world_model.update_from_observation({
-                "entity": action_type,
-                "fact": f"{action_type}_succeeded",
-                "source": "action_loop://rlm",
-            })
+            self.world_model.update_from_observation(
+                {
+                    "entity": action_type,
+                    "fact": f"{action_type}_succeeded",
+                    "source": "action_loop://rlm",
+                }
+            )
 
             # 4. Correct: If failed, record to failure memory
             if not res.success:
@@ -193,6 +200,7 @@ class LoopEngine:
         """Execute a real Darwinian mutation cycle on an isolated cloned branch."""
         try:
             from engines.self_evolution import SelfEvolutionLoop
+
             evo = SelfEvolutionLoop(workspace_root=self.workspace_root)
             cycle_result = evo.run_evolution_cycle(max_mutations=1)
             return {

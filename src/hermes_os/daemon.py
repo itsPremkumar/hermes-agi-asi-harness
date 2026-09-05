@@ -34,6 +34,7 @@ class MissionPriority(str, Enum):
 @dataclass
 class CheckpointSnapshot:
     """Complete checkpoint of an in-flight mission for disaster recovery."""
+
     checkpoint_id: str
     mission_id: str
     objective: str
@@ -142,7 +143,12 @@ class PersistentDaemonRuntime:
         )
         self._queue.append(item)
         # Sort queue by priority: CRITICAL > HIGH > NORMAL > LOW
-        p_weights = {MissionPriority.CRITICAL: 4, MissionPriority.HIGH: 3, MissionPriority.NORMAL: 2, MissionPriority.LOW: 1}
+        p_weights = {
+            MissionPriority.CRITICAL: 4,
+            MissionPriority.HIGH: 3,
+            MissionPriority.NORMAL: 2,
+            MissionPriority.LOW: 1,
+        }
         self._queue.sort(key=lambda x: p_weights.get(x.priority, 0), reverse=True)
         self._save_queue()
         return mid
@@ -173,7 +179,9 @@ class PersistentDaemonRuntime:
                 {
                     "mission_id": q.mission_id,
                     "request": q.request,
-                    "priority": q.priority.value if isinstance(q.priority, MissionPriority) else str(q.priority),
+                    "priority": q.priority.value
+                    if isinstance(q.priority, MissionPriority)
+                    else str(q.priority),
                     "risk_level": q.risk_level,
                     "submitted_at": q.submitted_at,
                 }
@@ -193,13 +201,15 @@ class PersistentDaemonRuntime:
                     prio = MissionPriority(item.get("priority", "normal"))
                 except Exception:
                     prio = MissionPriority.NORMAL
-                self._queue.append(QueuedMission(
-                    mission_id=item.get("mission_id", f"m-{uuid.uuid4().hex[:6]}"),
-                    request=item.get("request", ""),
-                    priority=prio,
-                    risk_level=item.get("risk_level", "medium"),
-                    submitted_at=item.get("submitted_at", time.time()),
-                ))
+                self._queue.append(
+                    QueuedMission(
+                        mission_id=item.get("mission_id", f"m-{uuid.uuid4().hex[:6]}"),
+                        request=item.get("request", ""),
+                        priority=prio,
+                        risk_level=item.get("risk_level", "medium"),
+                        submitted_at=item.get("submitted_at", time.time()),
+                    )
+                )
         except Exception as e:
             logger.debug("Failed loading daemon queue: %s", e)
 
@@ -210,7 +220,9 @@ class PersistentDaemonRuntime:
         for snap in interrupted:
             if any(q.request == snap.objective for q in self._queue):
                 continue
-            mid = self.enqueue_mission(snap.objective, priority=MissionPriority.HIGH, risk_level="medium")
+            mid = self.enqueue_mission(
+                snap.objective, priority=MissionPriority.HIGH, risk_level="medium"
+            )
             requeued.append(mid)
             snap.status = "in_progress"
         return requeued
@@ -225,16 +237,23 @@ class PersistentDaemonRuntime:
                     alive: Optional[bool] = None
                     try:
                         import psutil  # type: ignore
+
                         alive = psutil.pid_exists(old_pid)
                     except Exception:
                         alive = None
                     if alive is False:
                         logger.warning("Stale daemon pid file (pid=%s dead); taking over.", old_pid)
                     elif alive is True:
-                        logger.warning("Another daemon holds the lock (pid=%s); refusing second instance.", old_pid)
+                        logger.warning(
+                            "Another daemon holds the lock (pid=%s); refusing second instance.",
+                            old_pid,
+                        )
                         return False
                     else:
-                        logger.warning("Existing daemon pid file found (pid=%s); continuing single-instance.", old_pid)
+                        logger.warning(
+                            "Existing daemon pid file found (pid=%s); continuing single-instance.",
+                            old_pid,
+                        )
                 except Exception:
                     pass
             self._pid_file.write_text(str(os.getpid()), encoding="utf-8")
@@ -285,9 +304,14 @@ class PersistentDaemonRuntime:
         grace period on an empty queue instead of hanging forever.
         """
         if not self._acquire_pid_lock():
-            return {"status": "locked", "completed": 0, "failed": 0,
-                    "iterations": self._iterations_completed, "elapsed_seconds": 0.0,
-                    "pending": self.pending_count()}
+            return {
+                "status": "locked",
+                "completed": 0,
+                "failed": 0,
+                "iterations": self._iterations_completed,
+                "elapsed_seconds": 0.0,
+                "pending": self.pending_count(),
+            }
         self.clear_stop()
         self._is_running = True
         self.requeue_interrupted()
@@ -295,7 +319,11 @@ class PersistentDaemonRuntime:
         failed = 0
         idle_polls = 0
         started_at = time.time()
-        logger.info("Daemon 24/7 loop started (poll=%.1fs, max_iter=%s)", poll_interval_seconds, max_iterations)
+        logger.info(
+            "Daemon 24/7 loop started (poll=%.1fs, max_iter=%s)",
+            poll_interval_seconds,
+            max_iterations,
+        )
         try:
             while not self._stop_signalled():
                 if max_iterations is not None and self._iterations_completed >= max_iterations:
@@ -340,16 +368,22 @@ class PersistentDaemonRuntime:
                         failed += 1
                         self._consecutive_failures += 1
                 except Exception as e:
-                    logger.error("Daemon mission %s crashed: %s", mission.mission_id, e)
+                    import traceback as _tb
+
+                    tb = _tb.format_exc(limit=8)
+                    logger.exception("Daemon mission %s crashed: %s", mission.mission_id, e)
                     snap.status = "failed"
                     snap.completed_steps = [f"crash: {e}"]
                     snap.pending_steps = [mission.request]
+                    snap.state_registers = {**snap.state_registers, "traceback": tb[-2000:]}
                     self.save_checkpoint(snap)
                     failed += 1
                     self._consecutive_failures += 1
                 self._iterations_completed += 1
                 if self._consecutive_failures >= max_consecutive_failures:
-                    logger.error("Daemon aborting: %d consecutive failures", self._consecutive_failures)
+                    logger.error(
+                        "Daemon aborting: %d consecutive failures", self._consecutive_failures
+                    )
                     break
             if self._stop_signalled():
                 final = "stopped"
