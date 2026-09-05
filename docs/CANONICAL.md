@@ -30,3 +30,6 @@ do not extend them.
 Enforcement: `scripts/check_canonical.py` fails CI if `src/hermes_os/*`,
 `src/memory/*`, or `src/hermes_agi/__main__.py` import a legacy generation
 (`-Planner-` spot-names below are illustrative; the script holds the list).
+It also fails on any `src.`-prefixed import in `tests/`: with both repo root
+and `src/` on `sys.path`, `src.X` and bare `X` load as twin module objects
+and silently break `pytest.raises` / `isinstance` — always use bare roots.

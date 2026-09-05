@@ -82,6 +82,21 @@ def main() -> int:
                 for leg in LEGACY:
                     if mod == leg or mod.startswith(leg + "."):
                         violations.append(f"{path.as_posix()}: imports legacy {mod}")
+    # Singled-out entry points held to the same bar (see docs/CANONICAL.md).
+    for single in (root / "src/hermes_agi/__main__.py",):
+        if single.is_file() and single.name not in ALLOW_FILES:
+            try:
+                text = single.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+            for m in IMPORT_RE.finditer(text):
+                mod = ((m.group(1) or m.group(2)).split(",")[0].strip())
+                mod = re.split(r"\s+as\s+", mod)[0].strip()
+                if mod.startswith("."):
+                    continue
+                for leg in LEGACY:
+                    if mod == leg or mod.startswith(leg + "."):
+                        violations.append(f"{single.as_posix()}: imports legacy {mod}")
     _check_dual_root(root, violations)
     if violations:
         print("CANONICAL VIOLATIONS:")
