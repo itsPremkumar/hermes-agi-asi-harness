@@ -427,7 +427,11 @@ async def run_command(args):
         print(
             f"Serving Hermes API on 127.0.0.1:{args.port} (HERMES_API_KEY={'set' if __import__('os').getenv('HERMES_API_KEY') else 'unset-local-only'})"
         )
-        uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
+        # run_command already executes inside asyncio.run: uvicorn.run() would
+        # try to own a second loop and crash, so serve on this loop instead.
+        await uvicorn.Server(
+            uvicorn.Config(app, host="127.0.0.1", port=args.port, log_level="warning")
+        ).serve()
     elif args.command == "llm":
         from hermes_os.hermes_llm import HermesFirstLLMClient, resolve_tier
 

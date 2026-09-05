@@ -52,6 +52,7 @@ dev = [
     "ruff>=0.16.5",
     "mypy>=2.3.1",
     "mcp",
+    "hermes-agi-asi-harness[api]",
 ]
 all = [
     "hermes-agi-asi-harness[dev,api]",

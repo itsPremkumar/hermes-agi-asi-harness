@@ -161,3 +161,31 @@ def test_hermes_context_cli_prints_mirror():
     assert proc.returncode == 0, proc.stderr[-500:]
     for key in ("'home'", "'profiles'", "'skills'", "'boards'", "'cron_jobs'"):
         assert key in proc.stdout, proc.stdout[-500:]
+
+
+def test_api_command_serves_on_running_loop(monkeypatch):
+    """Regression: `hermes_agi api` called blocking uvicorn.run() from inside
+    asyncio.run(run_command(...)) and crashed with 'Cannot run the event loop
+    while another loop is running'. It must serve on the running loop."""
+    import sys
+    import types
+    from argparse import Namespace
+
+    served = {}
+
+    class FakeServer:
+        def __init__(self, config):
+            served["config"] = config
+
+        async def serve(self):
+            served["served"] = True
+
+    fake_uvicorn = types.SimpleNamespace(
+        Server=FakeServer, Config=lambda app, **kwargs: ("config", kwargs)
+    )
+    monkeypatch.setitem(sys.modules, "uvicorn", fake_uvicorn)
+
+    from hermes_agi.__main__ import run_command
+
+    _run(run_command(Namespace(command="api", port=8479)))
+    assert served.get("served") is True, served
