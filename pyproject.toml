@@ -70,6 +70,12 @@ exclude = ["tests*", "workspaces*", "docs*", "scripts*"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+filterwarnings = [
+    # Third-party noise: starlette 1.6 TestClient still imports the
+    # anyio.abc.BlockingPortal alias deprecated in anyio 4.x. Not our code;
+    # revisit when starlette migrates to anyio.from_thread.BlockingPortal.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated.*:DeprecationWarning",
+]
 
 [tool.black]
 line-length = 100
