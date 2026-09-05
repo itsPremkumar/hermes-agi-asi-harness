@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.harness.feedback import (
+from harness.feedback import (
     CritiqueResult,
     FeedbackEngine,
     NodeValidator,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.memory import (
+from harness.memory import (
     EmbeddingModel,
     LongTermMemory,
     MemoryEntry,

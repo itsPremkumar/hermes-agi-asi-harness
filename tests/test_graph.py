@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.errors import GraphError, NodeError
-from src.harness.graph import (
+from harness.errors import GraphError, NodeError
+from harness.graph import (
     Edge,
     Graph,
     Node,

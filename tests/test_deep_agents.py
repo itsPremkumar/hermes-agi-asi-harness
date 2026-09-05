@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.deep_agents import (
+from harness.deep_agents import (
     Agent,
     AgentRole,
     AgentStatus,
@@ -15,7 +15,7 @@ from src.harness.deep_agents import (
     SubAgentSpawner,
     Team,
 )
-from src.harness.errors import DeepAgentError
+from harness.errors import DeepAgentError
 
 
 class TestAgent:

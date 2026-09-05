@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.errors import RateLimitError, ToolError
-from src.harness.tools import RateLimiter, Tool, ToolRegistry, ToolSchema
+from harness.errors import RateLimitError, ToolError
+from harness.tools import RateLimiter, Tool, ToolRegistry, ToolSchema
 
 
 class TestRateLimiter:

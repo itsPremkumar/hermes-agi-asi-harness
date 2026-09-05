@@ -17,9 +17,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Fallback import root for script-style runs. Appended (never prepended):
+# prepending src/core here once shadowed the canonical src/memory package
+# for the whole test session after kernel boot (plugin load order).
+_CORE_FALLBACK = str(Path(__file__).parent.parent)
+if _CORE_FALLBACK not in sys.path:
+    sys.path.append(_CORE_FALLBACK)
 
-from core.runtime.kernel import HermesKernel, KernelConfig
+from core.runtime.kernel import (  # noqa: E402 -- needs fallback root above
+    HermesKernel,
+    KernelConfig,
+)
 
 
 @dataclass

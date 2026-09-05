@@ -148,31 +148,29 @@ def test_knowledge_graph():
 
 
 def test_benchmarks():
-    """Test benchmark engine with 12 suites."""
-    from plugins.benchmarks import BenchmarkEngine, BenchmarkSuite
+    """Test canonical benchmark runner (core.benchmark.harness)."""
+    from core.benchmark.harness import BenchmarkRunner, ScoringFunction
 
-    engine = BenchmarkEngine()
+    runner = BenchmarkRunner(ScoringFunction())
+    tasks = [
+        {"name": "truthy", "fn": lambda: True},
+        {"name": "falsy", "fn": lambda: False},
+        {"name": "broken", "fn": lambda: 1 / 0},
+    ]
+    scores = runner.run(tasks)
+    assert len(scores) == 3
+    by_name = {s.name: s for s in scores}
+    assert by_name["truthy"].passed is True
+    assert by_name["falsy"].passed is False
+    assert by_name["broken"].passed is False and by_name["broken"].error != ""
 
-    # Test that all 12 suites are populated
-    assert len(engine.suites) == 12
-    for suite in BenchmarkSuite:
-        assert suite in engine.suites
-        assert len(engine.suites[suite]) >= 1
+    summary = runner.summary()
+    assert summary["total_tasks"] == 3
+    assert summary["passed_tasks"] == 1
+    assert summary["failed_tasks"] == 2
+    assert summary["passed_tasks"] + summary["failed_tasks"] == summary["total_tasks"]
 
-    # Test getting all tests
-    all_tests = engine.get_all_tests()
-    assert len(all_tests) >= 12  # At least one per suite
-
-    # Test leaderboard (empty initially)
-    lb = engine.leaderboard()
-    assert isinstance(lb, list)
-
-    # Test report generation
-    report = engine.generate_report()
-    assert report.total_tests >= 0
-    assert report.passed + report.failed == report.total_tests
-
-    print("  ✓ Benchmarks: 12 suites loaded, report generation, leaderboard")
+    print("  ✓ Benchmarks: canonical runner, pass/fail/error, summary")
     return True
 
 
@@ -370,10 +368,13 @@ async def test_kernel_integration_advanced():
     # Check new plugins are loaded
     new_plugins = [
         'world_model', 'jit_harness', 'self_healing', 'knowledge_graph',
-        'benchmarks', 'sandbox_plugin', 'metacognition', 'goal_engine', 'supervisor',
+        'goal_engine', 'supervisor',
     ]
     loaded = [p for p in new_plugins if p in k._plugins]
-    assert len(loaded) == 9, f"Expected 9 new plugins, got {len(loaded)}: {loaded}"
+    assert len(loaded) == 6, f"Expected 6 new plugins, got {len(loaded)}: {loaded}"
+    # Archived generations stay out (see archive/legacy-plugins, legacy-eval-plugins)
+    for archived in ('benchmarks', 'sandbox_plugin', 'metacognition'):
+        assert archived not in k._plugins, f"archived plugin resurrected: {archived}"
 
     # Check kernel attributes are wired
     assert k.supervisor is not None
@@ -410,7 +411,7 @@ async def test_end_to_end_advanced():
     assert profile.domain == "software_engineering"
 
     # Submit task
-    task_id = await k.submit_task(task)
+    await k.submit_task(task)
     await asyncio.sleep(2)
 
     # Verify file created

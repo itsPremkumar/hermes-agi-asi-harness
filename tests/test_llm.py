@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.harness.llm import (
+from harness.llm import (
     ChatMessage,
     ChatModel,
     ConversationBuffer,

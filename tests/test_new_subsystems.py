@@ -5,6 +5,8 @@ All offline, all tmp-root isolated.
 """
 import sys
 
+import pytest
+
 sys.path.insert(0, "src")
 
 
@@ -155,7 +157,7 @@ def test_invariants_gate(tmp_path):
 def test_skill_lifecycle(tmp_path):
     from hermes_os.skills import SkillForge, SkillRegistry
     reg = SkillRegistry(workspace_root=str(tmp_path))
-    s = reg.install("demo", "# Skill: demo\n\nBody.\n", triggers=["pytest"])
+    reg.install("demo", "# Skill: demo\n\nBody.\n", triggers=["pytest"])
     assert reg.load("demo").startswith("# Skill")
     assert reg.search("run pytest now")[0].name == "demo"
     reg.record_outcome("demo", True)
@@ -376,6 +378,7 @@ def test_docker_sandbox_fallback(monkeypatch):
 # ---------------- status api ----------------
 
 def test_status_api(tmp_path):
+    pytest.importorskip("fastapi")  # optional [api] extra
     from fastapi.testclient import TestClient
 
     from hermes_os.api import create_app
@@ -390,6 +393,7 @@ def test_status_api(tmp_path):
 
 
 def test_status_api_key(monkeypatch, tmp_path):
+    pytest.importorskip("fastapi")  # optional [api] extra
     from fastapi.testclient import TestClient
 
     from hermes_os.api import create_app

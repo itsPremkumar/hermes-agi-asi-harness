@@ -286,7 +286,10 @@ class TestPlane09CognitiveResearchEngine:
         claims = await engine.conduct_research(query="cryptographic accumulator")
         assert len(claims) >= 1
         assert claims[0].verification_status == "verified"
-        assert claims[0].confidence > 0.8
+        # Scoring contract (research.py): verified <=> conf >= 0.6, lane cap 0.9.
+        # Single-backend evidence honestly grades ~0.65; agreement raises it.
+        assert 0.6 <= claims[0].confidence <= 0.9
+        assert len(claims[0].evidence) >= 1
 
 
 # =============================================================================

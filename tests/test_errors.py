@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.harness.errors import (
+from harness.errors import (
     CircuitBreakerOpenError,
     DeadLetterError,
     DeepAgentError,
@@ -19,7 +19,7 @@ from src.harness.errors import (
     RateLimitError,
     ToolError,
 )
-from src.harness.errors.resilience import (
+from harness.errors.resilience import (
     CircuitBreaker,
     CircuitState,
     DeadLetterQueue,

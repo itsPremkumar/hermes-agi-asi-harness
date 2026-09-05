@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.harness.langsmith import (
+from harness.langsmith import (
     Dataset,
     EvalResult,
     EvalRunner,
