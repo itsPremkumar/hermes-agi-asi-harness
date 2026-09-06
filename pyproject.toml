@@ -8,6 +8,17 @@ version = "0.1.0"
 description = "AGI/ASI Harness — Plugin & Hook System"
 requires-python = ">=3.11"
 
+dependencies = [
+    "pyyaml>=6.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "trafilatura>=1.12.0",
+    "ddgs>=9.0.0",
+    "psutil>=5.9.0",
+    "aiofiles>=23.2.0",
+    "mcp>=2.0.0",
+]
+
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
 
