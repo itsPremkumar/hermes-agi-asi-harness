@@ -32,8 +32,16 @@ def inv_no_destructive_without_approval(s: Dict[str, Any]) -> Tuple[bool, str]:
 
 def inv_no_raw_system_destroy(s: Dict[str, Any]) -> Tuple[bool, str]:
     cmd = str((s.get("action_args") or {}).get("command", ""))[:500].lower()
-    for sig in ("rm -rf /", "rm -rf ~", "rm -rf $home", "rm -rf ${home}",
-                "mkfs", "format-volume", "clear-disk", ":(){:|:&};:"):
+    for sig in (
+        "rm -rf /",
+        "rm -rf ~",
+        "rm -rf $home",
+        "rm -rf ${home}",
+        "mkfs",
+        "format-volume",
+        "clear-disk",
+        ":(){:|:&};:",
+    ):
         if sig in cmd:
             return False, f"System-destroy signature: {sig}"
     return _ok()

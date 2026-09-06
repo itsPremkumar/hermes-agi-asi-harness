@@ -42,8 +42,12 @@ def test_hostile_state_trips_invariant(state: dict, invariant: str):
 
 def test_benign_read_with_principal_passes_all():
     res = verify_invariants(
-        {"action_type": "read_file", "action_args": {}, "principal": "test:suite",
-         "risk_level": "low"}
+        {
+            "action_type": "read_file",
+            "action_args": {},
+            "principal": "test:suite",
+            "risk_level": "low",
+        }
     )
     assert res["passed"] is True, res["failures"]
     assert res["checked"] == 22
