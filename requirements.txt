@@ -5,7 +5,7 @@
 # All dependencies are MIT/Apache-2.0/BSD licensed.
 
 # Core runtime (== [project.dependencies])
-langgraph>=1.0.0
+langgraph>=1.2.11
 langchain-core>=0.3.0
 pyyaml>=6.0.3
 psutil>=5.9.0
