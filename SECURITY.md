@@ -74,3 +74,61 @@ We monitor our dependencies for security vulnerabilities using:
 - GitHub Dependabot
 - pip-audit in CI
 - Manual review of dependency updates
+
+---
+
+## Security Audit Log
+
+### 2026-09-07 Weekly Security Audit
+
+**Audit Date:** 2026-09-07 (Monday)  
+**Auditor:** Automated Security Audit (Cron)  
+**Scope:** CodeQL, dependencies, branch protection, secrets, access controls
+
+#### Findings Summary
+
+| Category | Status | Details |
+|----------|--------|---------|
+| CodeQL Alerts | ⚠️ 100 open | 3 errors, 4 warnings, 93 notes |
+| Secret Scanning | ✅ Clean | 0 alerts |
+| Dependencies | ✅ Clean | 0 known vulnerabilities (pip-audit) |
+| Branch Protection | ✅ Configured | Main branch protected, 4 required checks |
+| CI Pipeline | ❌ Failing | Structure + Lint & Format failing on main |
+| Dependabot Alerts | ❌ Disabled | Security alerts not enabled |
+| Access Control | ✅ Minimal | 1 collaborator (admin) |
+| Actions Secrets | ✅ None | No secrets configured |
+
+#### Critical Findings
+
+1. **Empty Exception Handlers (CWE-390)** — 32 instances of `except: pass` in production code
+   - Can mask security-relevant failures
+   - Affects: recovery.py, watchdog.py, safety_kernel.py, tool_env.py, skills.py, recon.py, process_guard.py, and others
+   - Issue: [#27](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/27)
+
+2. **Illegal Raise Statements** — 2 instances in `src/hermes/agi/recovery.py`
+   - `raise` used outside of except block (lines 365, 508)
+   - Issue: [#27](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/27)
+
+3. **Dependabot Security Alerts Disabled** — No automated CVE alerts
+   - Version updates active but security alerts disabled
+   - Issue: [#28](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/28)
+
+4. **CI Pipeline Failure** — Main branch has failing checks
+   - Structure check: FAILED
+   - Lint & Format: FAILED
+   - Blocks all merges including Dependabot PRs
+   - Issue: [#29](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/29)
+
+#### Recommendations
+
+1. **Immediate:** Fix empty exception handlers with proper logging/error handling
+2. **Immediate:** Enable Dependabot security alerts in repository settings
+3. **Immediate:** Fix CI pipeline failures on main branch
+4. **Short-term:** Address CodeQL warnings (unused imports, unreachable statements)
+5. **Ongoing:** Review and dismiss false-positive CodeQL notes
+
+#### Audit History
+
+| Date | CodeQL Alerts | Vulns | CI Status | Notes |
+|------|---------------|-------|-----------|-------|
+| 2026-09-07 | 100 open | 0 known | Failing | First weekly audit |
