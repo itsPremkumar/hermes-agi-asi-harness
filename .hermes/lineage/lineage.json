@@ -1,0 +1,38 @@
+{
+  "a1": {
+    "generation": 0,
+    "agent_id": "a1",
+    "parent_id": null,
+    "mutation_description": "init",
+    "fitness_score": 0.8,
+    "alignment_score": 0.9,
+    "diversity_score": 1.0,
+    "safety_gate_passed": true,
+    "timestamp": 1788606291.4799962,
+    "metadata": {}
+  },
+  "a2": {
+    "generation": 1,
+    "agent_id": "a2",
+    "parent_id": "a1",
+    "mutation_description": "mut1",
+    "fitness_score": 0.85,
+    "alignment_score": 0.92,
+    "diversity_score": 0.8,
+    "safety_gate_passed": true,
+    "timestamp": 1788606291.4809957,
+    "metadata": {}
+  },
+  "a3": {
+    "generation": 2,
+    "agent_id": "a3",
+    "parent_id": "a2",
+    "mutation_description": "mut2",
+    "fitness_score": 0.9,
+    "alignment_score": 0.95,
+    "diversity_score": 0.7,
+    "safety_gate_passed": true,
+    "timestamp": 1788606291.4809957,
+    "metadata": {}
+  }
+}

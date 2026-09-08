@@ -1,0 +1,22 @@
+{
+  "id": "skill_a380f14b88b3",
+  "name": "File backup",
+  "description": "Backup a file to a timestamped copy",
+  "trigger_patterns": [
+    "backup",
+    "copy file",
+    "archive"
+  ],
+  "steps": [
+    "read source",
+    "create timestamped name",
+    "write copy"
+  ],
+  "success_count": 2,
+  "failure_count": 0,
+  "avg_duration": 0.4,
+  "created_at": "2026-09-05T11:04:41.206367",
+  "last_used": "2026-09-05T11:04:41.207479",
+  "version": 1,
+  "metadata": {}
+}

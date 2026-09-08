@@ -1,0 +1,14 @@
+{
+  "cand-12": {
+    "generation": 1,
+    "agent_id": "cand-12",
+    "parent_id": "parent-12",
+    "mutation_description": "{'novel_param': 0.5}",
+    "fitness_score": 0.96,
+    "alignment_score": 1.0,
+    "diversity_score": 1.0,
+    "safety_gate_passed": true,
+    "timestamp": 1788606291.488593,
+    "metadata": {}
+  }
+}
