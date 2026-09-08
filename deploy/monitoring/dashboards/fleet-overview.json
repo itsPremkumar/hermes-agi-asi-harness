@@ -1,0 +1,77 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "aetheria-main",
+    "title": "Aetheria Fleet Overview",
+    "tags": ["aetheria", "ai", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Fleet CPU Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {"expr": "sum(rate(container_cpu_usage_seconds_total{namespace='aetheria-prod'}[5m])) by (pod)"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage by Service",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {"expr": "container_memory_usage_bytes{namespace='aetheria-prod'}"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "HTTP Request Rate",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 8},
+        "targets": [
+          {"expr": "rate(http_requests_total{namespace='aetheria-prod'}[5m])"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 8},
+        "targets": [
+          {"expr": "rate(http_requests_total{status=~'5..',namespace='aetheria-prod'}[5m])"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "P95 Latency",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 8},
+        "targets": [
+          {"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace='aetheria-prod'}[5m]))"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "LLM Token Usage",
+        "type": "barchart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {"expr": "sum by (model) (llm_tokens_total{namespace='aetheria-prod'})"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Task Queue Depth",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {"expr": "kanban_tasks_ready_total"}
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}

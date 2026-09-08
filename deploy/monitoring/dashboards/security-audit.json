@@ -1,0 +1,50 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "aetheria-security",
+    "title": "Aetheria Security Audit",
+    "tags": ["security", "compliance"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Open Vulnerabilities by Severity",
+        "type": "barchart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {"expr": "sum by (severity) (security_vulnerabilities_total{namespace='aetheria-prod'})"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Compliance Score",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {"expr": "compliance_score{namespace='aetheria-prod'}"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Failed Login Attempts",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {"expr": "rate(auth_failures_total{namespace='aetheria-prod'}[5m])"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Supply Chain Alerts",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {"expr": "supply_chain_alerts_total{namespace='aetheria-prod'}"}
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}
