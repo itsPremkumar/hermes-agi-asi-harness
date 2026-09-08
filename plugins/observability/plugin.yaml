@@ -1,22 +1,19 @@
 name: observability
 version: 1.0.0
-description: "Observability — tracing, metrics, logging, dashboards"
-license: MIT
-source: internal
+description: Observability & Evaluation Pipeline with LangSmith integration
+author: devops-engineer
 capabilities:
-  - tracing
-  - metrics
-  - logging
-  - dashboard
-cost:
-  default: free
-permissions:
-  filesystem:
-    read: workspace
-    write: workspace
-  network:
-    allowed: []
-  shell:
-    allowed: []
-  secrets:
-    access: none
+  - metrics_collection
+  - distributed_tracing
+  - benchmark_evaluation
+  - langsmith_integration
+  - report_generation
+dependencies:
+  - langsmith>=0.1.0
+  - prometheus-client>=0.20.0
+  - opentelemetry-api>=1.20.0
+config:
+  langsmith_project: aetheria
+  metrics_port: 9090
+  trace_sample_rate: 1.0
+tags: [observability, monitoring, evaluation, langsmith, tracing]
