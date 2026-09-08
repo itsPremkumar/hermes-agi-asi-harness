@@ -63,8 +63,8 @@ def _t_harness_health():
 
 @test("all 10 core plugins register on a real PluginManager")
 def _t_plugins():
-from hermes.agi.plugins.core_plugins import ALL_PLUGINS, register_all_plugins
-from hermes.agi.plugins.manager import PluginManager
+    from hermes.agi.plugins.core_plugins import ALL_PLUGINS, register_all_plugins
+    from hermes.agi.plugins.manager import PluginManager
 
     assert len(ALL_PLUGINS) == 10, len(ALL_PLUGINS)
     mgr = PluginManager()

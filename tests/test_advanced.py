@@ -360,7 +360,7 @@ async def test_ecosystem_intelligence():
 
 async def test_kernel_integration_advanced():
     """Test that the kernel boots all advanced plugins."""
-from hermes.core.runtime.kernel import HermesKernel, KernelConfig
+    from hermes.core.runtime.kernel import HermesKernel, KernelConfig
 
     k = HermesKernel(config=KernelConfig(zero_cost=True, offline=True))
     await k.boot()
