@@ -264,3 +264,48 @@ class Observability:
             "span_count": len(self.tracer.get_spans()),
             "health": self.health.check_all(),
         }
+
+
+# ─── Module exports ───────────────────────────────────────────────────────────
+
+from observability.langsmith_integration import LangSmithClient, LangSmithRun, LangSmithTracer
+from observability.monitoring_pipeline import (
+    MetricPoint,
+    AlertRule,
+    Alert,
+    TimeSeriesStore,
+    MonitoringPipeline,
+)
+from observability.benchmark_engine import (
+    BenchmarkCase,
+    BenchmarkResult,
+    ModelScore,
+    Scorer,
+    BenchmarkEngine,
+)
+
+__all__ = [
+    "MetricSample",
+    "MetricsCollector",
+    "LogEntry",
+    "StructuredLogger",
+    "Span",
+    "Tracer",
+    "EvaluationResult",
+    "EvaluationRunner",
+    "HealthChecker",
+    "Observability",
+    "LangSmithClient",
+    "LangSmithRun",
+    "LangSmithTracer",
+    "MetricPoint",
+    "AlertRule",
+    "Alert",
+    "TimeSeriesStore",
+    "MonitoringPipeline",
+    "BenchmarkCase",
+    "BenchmarkResult",
+    "ModelScore",
+    "Scorer",
+    "BenchmarkEngine",
+]
