@@ -1,0 +1,36 @@
+{
+  "name": "@hermes-design-system/core",
+  "version": "1.0.0",
+  "description": "A comprehensive design system with tokens, components, and framework integrations.",
+  "main": "dist/hermes.js",
+  "module": "dist/hermes.esm.js",
+  "style": "dist/tokens.css",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'Build pipeline placeholder'",
+    "test": "echo 'Tests placeholder'"
+  },
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "components",
+    "ui-library",
+    "css",
+    "react",
+    "vue"
+  ],
+  "author": "Hermes Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itsPremkumar/hermes-design-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itsPremkumar/hermes-design-system/issues"
+  },
+  "homepage": "https://github.com/itsPremkumar/hermes-design-system#readme"
+}

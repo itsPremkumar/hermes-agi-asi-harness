@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Design System — Documentation</title>
+  <meta name="description" content="Complete design system documentation with tokens, components, and framework integration guides.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/styles/tokens.css">
+  <link rel="stylesheet" href="src/styles/main.css">
+  <link rel="stylesheet" href="src/styles/components.css">
+</head>
+<body>
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header" id="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo" aria-label="Hermes Design System Home">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
+          <path d="M8 16L14 10L20 16L14 22L8 16Z" fill="white" opacity="0.9"/>
+          <path d="M14 10L20 16L26 10L20 4L14 10Z" fill="white" opacity="0.6"/>
+          <path d="M14 22L20 16L26 22L20 28L14 22Z" fill="white" opacity="0.6"/>
+        </svg>
+        <span class="logo-text">Hermes <strong>Design System</strong></span>
+      </a>
+
+      <nav class="header-nav" aria-label="Primary">
+        <a href="#tokens" class="nav-link">Tokens</a>
+        <a href="#components" class="nav-link">Components</a>
+        <a href="#integration" class="nav-link">Integration</a>
+        <a href="#changelog" class="nav-link">Changelog</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="search-trigger" aria-label="Search documentation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <kbd>⌘K</kbd>
+        </button>
+        <button class="icon-btn" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a href="https://github.com/itsPremkumar/hermes-design-system" class="btn btn-sm btn-ghost" aria-label="View on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search Modal -->
+  <div class="search-modal" id="search-modal" aria-hidden="true">
+    <div class="search-backdrop" data-close-search></div>
+    <div class="search-container" role="dialog" aria-label="Search documentation">
+      <div class="search-input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="search-input" placeholder="Search tokens, components, guides..." autocomplete="off" aria-label="Search documentation">
+        <kbd>ESC</kbd>
+      </div>
+      <div class="search-results" id="search-results"></div>
+      <div class="search-footer">
+        <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Select</span>
+        <span><kbd>ESC</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="container">
+        <div class="hero-content">
+          <span class="badge badge-primary">v1.0.0 — Initial Release</span>
+          <h1 class="hero-title">Build consistent, <br>beautiful interfaces</h1>
+          <p class="hero-subtitle">A comprehensive design system with tokens, components, and framework integrations. From design to production in minutes.</p>
+          <div class="hero-actions">
+            <a href="#components" class="btn btn-primary btn-lg">Explore Components</a>
+            <a href="#tokens" class="btn btn-outline btn-lg">View Tokens</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-value">85+</span>
+              <span class="stat-label">Design Tokens</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">18</span>
+              <span class="stat-label">Components</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">3</span>
+              <span class="stat-label">Framework Guides</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-glow" aria-hidden="true"></div>
+    </section>
+
+    <!-- Tokens Section -->
+    <section class="section" id="tokens">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Design Tokens</h2>
+          <p class="section-subtitle">The atomic building blocks of the design system. Tokens store visual design attributes in a platform-agnostic format.</p>
+        </div>
+
+        <!-- Color Tokens -->
+        <div class="token-group" id="color-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+            Color
+          </h3>
+          <div class="token-grid" id="color-grid"></div>
+        </div>
+
+        <!-- Typography Tokens -->
+        <div class="token-group" id="typography-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            Typography
+          </h3>
+          <div class="token-card">
+            <h4>Font Family</h4>
+            <div class="token-list" id="font-family-list"></div>
+          </div>
+          <div class="token-card">
+            <h4>Font Size</h4>
+            <div class="token-list" id="font-size-list"></div>
+          </div>
+          <div class="token-card">
+            <h4>Font Weight</h4>
+            <div class="token-list" id="font-weight-list"></div>
+          </div>
+        </div>
+
+        <!-- Spacing Tokens -->
+        <div class="token-group" id="spacing-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+            Spacing
+          </h3>
+          <div class="spacing-visual" id="spacing-visual"></div>
+        </div>
+
+        <!-- Elevation Tokens -->
+        <div class="token-group" id="elevation-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Elevation
+          </h3>
+          <div class="elevation-grid" id="elevation-grid"></div>
+        </div>
+
+        <!-- Border Radius Tokens -->
+        <div class="token-group" id="radius-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            Border Radius
+          </h3>
+          <div class="radius-grid" id="radius-grid"></div>
+        </div>
+
+        <!-- Breakpoint Tokens -->
+        <div class="token-group" id="breakpoint-tokens">
+          <h3 class="token-group-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Breakpoints
+          </h3>
+          <div class="token-table-wrapper">
+            <table class="token-table">
+              <thead><tr><th>Token</th><th>Value</th><th>Usage</th></tr></thead>
+              <tbody id="breakpoint-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Components Section -->
+    <section class="section section-alt" id="components">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Components</h2>
+          <p class="section-subtitle">Production-ready components with live examples, code snippets, and accessibility guidelines.</p>
+        </div>
+
+        <div class="component-showcase">
+          <!-- Buttons -->
+          <div class="component-block" id="component-buttons">
+            <div class="component-header">
+              <h3>Buttons</h3>
+              <span class="component-tag">Form</span>
+            </div>
+            <p class="component-description">Buttons trigger actions. Use primary for the main action, secondary for alternatives, and ghost for tertiary actions.</p>
+            <div class="component-demo">
+              <div class="demo-row">
+                <button class="btn btn-primary">Primary</button>
+                <button class="btn btn-secondary">Secondary</button>
+                <button class="btn btn-outline">Outline</button>
+                <button class="btn btn-ghost">Ghost</button>
+                <button class="btn btn-danger">Danger</button>
+              </div>
+              <div class="demo-row">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-primary">Default</button>
+                <button class="btn btn-primary btn-lg">Large</button>
+              </div>
+              <div class="demo-row">
+                <button class="btn btn-primary" disabled>Disabled</button>
+                <button class="btn btn-primary btn-loading">
+                  <span class="spinner"></span> Loading
+                </button>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;button class="btn btn-primary"&gt;Primary&lt;/button&gt;
+&lt;button class="btn btn-secondary"&gt;Secondary&lt;/button&gt;
+&lt;button class="btn btn-outline"&gt;Outline&lt;/button&gt;
+&lt;button class="btn btn-ghost"&gt;Ghost&lt;/button&gt;
+&lt;button class="btn btn-danger"&gt;Danger&lt;/button&gt;
+
+&lt;!-- Sizes --&gt;
+&lt;button class="btn btn-primary btn-sm"&gt;Small&lt;/button&gt;
+&lt;button class="btn btn-primary btn-lg"&gt;Large&lt;/button&gt;
+
+&lt;!-- States --&gt;
+&lt;button class="btn btn-primary" disabled&gt;Disabled&lt;/button&gt;
+&lt;button class="btn btn-primary btn-loading"&gt;Loading&lt;/button&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Cards -->
+          <div class="component-block" id="component-cards">
+            <div class="component-header">
+              <h3>Cards</h3>
+              <span class="component-tag">Layout</span>
+            </div>
+            <p class="component-description">Cards group related content and actions. They provide a flexible container for information display.</p>
+            <div class="component-demo">
+              <div class="demo-cards">
+                <div class="card">
+                  <div class="card-header">
+                    <h4>Basic Card</h4>
+                  </div>
+                  <div class="card-body">
+                    <p>Cards provide a flexible and extensible content container with multiple variants and options.</p>
+                  </div>
+                  <div class="card-footer">
+                    <button class="btn btn-sm btn-primary">Action</button>
+                  </div>
+                </div>
+                <div class="card card-interactive">
+                  <div class="card-body">
+                    <h4>Interactive Card</h4>
+                    <p>Clickable cards with hover elevation. Great for navigation.</p>
+                  </div>
+                </div>
+                <div class="card card-highlighted">
+                  <div class="card-body">
+                    <h4>Highlighted Card</h4>
+                    <p>Featured content with a left accent border.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="card"&gt;
+  &lt;div class="card-header"&gt;&lt;h4&gt;Card Title&lt;/h4&gt;&lt;/div&gt;
+  &lt;div class="card-body"&gt;Content here&lt;/div&gt;
+  &lt;div class="card-footer"&gt;&lt;button class="btn btn-sm btn-primary"&gt;Action&lt;/button&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="card card-interactive"&gt;Hover me&lt;/div&gt;
+&lt;div class="card card-highlighted"&gt;Featured&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Badges -->
+          <div class="component-block" id="component-badges">
+            <div class="component-header">
+              <h3>Badges</h3>
+              <span class="component-tag">Display</span>
+            </div>
+            <p class="component-description">Badges provide small status descriptors for UI elements.</p>
+            <div class="component-demo">
+              <div class="demo-row">
+                <span class="badge badge-primary">Primary</span>
+                <span class="badge badge-secondary">Secondary</span>
+                <span class="badge badge-success">Success</span>
+                <span class="badge badge-warning">Warning</span>
+                <span class="badge badge-error">Error</span>
+                <span class="badge badge-info">Info</span>
+              </div>
+              <div class="demo-row">
+                <span class="badge badge-primary badge-outline">Outline</span>
+                <span class="badge badge-success badge-pill">Pill</span>
+                <span class="badge badge-info badge-dot">Dot</span>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;
+&lt;span class="badge badge-success"&gt;Success&lt;/span&gt;
+&lt;span class="badge badge-warning"&gt;Warning&lt;/span&gt;
+&lt;span class="badge badge-error"&gt;Error&lt;/span&gt;
+
+&lt;!-- Variants --&gt;
+&lt;span class="badge badge-primary badge-outline"&gt;Outline&lt;/span&gt;
+&lt;span class="badge badge-success badge-pill"&gt;Pill&lt;/span&gt;
+&lt;span class="badge badge-info badge-dot"&gt;Dot&lt;/span&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Inputs -->
+          <div class="component-block" id="component-inputs">
+            <div class="component-header">
+              <h3>Form Inputs</h3>
+              <span class="component-tag">Form</span>
+            </div>
+            <p class="component-description">Form inputs allow users to enter and edit text with consistent styling and validation states.</p>
+            <div class="component-demo">
+              <div class="demo-form">
+                <div class="form-group">
+                  <label for="input-default" class="form-label">Default Input</label>
+                  <input type="text" class="form-input" id="input-default" placeholder="Enter text...">
+                  <span class="form-helper">Helper text goes here</span>
+                </div>
+                <div class="form-group">
+                  <label for="input-success" class="form-label">Success State</label>
+                  <input type="text" class="form-input form-input-success" id="input-success" value="Valid input">
+                  <span class="form-helper form-helper-success">Looks good!</span>
+                </div>
+                <div class="form-group">
+                  <label for="input-error" class="form-label">Error State</label>
+                  <input type="text" class="form-input form-input-error" id="input-error" value="Invalid input">
+                  <span class="form-helper form-helper-error">This field is required</span>
+                </div>
+                <div class="form-group">
+                  <label for="input-disabled" class="form-label">Disabled</label>
+                  <input type="text" class="form-input" id="input-disabled" disabled placeholder="Disabled input">
+                </div>
+                <div class="form-group">
+                  <label for="input-textarea" class="form-label">Textarea</label>
+                  <textarea class="form-input form-textarea" id="input-textarea" placeholder="Enter longer text..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="input-select" class="form-label">Select</label>
+                  <select class="form-input form-select" id="input-select">
+                    <option>Option 1</option>
+                    <option>Option 2</option>
+                    <option>Option 3</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="form-group"&gt;
+  &lt;label class="form-label"&gt;Email&lt;/label&gt;
+  &lt;input type="email" class="form-input" placeholder="you@example.com"&gt;
+  &lt;span class="form-helper"&gt;We'll never share your email&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;!-- States --&lt;
+&lt;input class="form-input form-input-success"&gt;
+&lt;input class="form-input form-input-error"&gt;
+&lt;input class="form-input" disabled&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Alerts -->
+          <div class="component-block" id="component-alerts">
+            <div class="component-header">
+              <h3>Alerts</h3>
+              <span class="component-tag">Feedback</span>
+            </div>
+            <p class="component-description">Alerts provide contextual feedback messages for user actions.</p>
+            <div class="component-demo">
+              <div class="demo-alerts">
+                <div class="alert alert-success" role="alert">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <div><strong>Success!</strong> Your changes have been saved successfully.</div>
+                </div>
+                <div class="alert alert-warning" role="alert">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <div><strong>Warning!</strong> Please review your settings before continuing.</div>
+                </div>
+                <div class="alert alert-error" role="alert">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  <div><strong>Error!</strong> Something went wrong. Please try again.</div>
+                </div>
+                <div class="alert alert-info" role="alert">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <div><strong>Info:</strong> A new version is available. Update when ready.</div>
+                </div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="alert alert-success" role="alert"&gt;
+  &lt;svg&gt;...&lt;/svg&gt;
+  &lt;div&gt;&lt;strong&gt;Success!&lt;/strong&gt; Changes saved.&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="alert alert-warning" role="alert"&gt;...&lt;/div&gt;
+&lt;div class="alert alert-error" role="alert"&gt;...&lt;/div&gt;
+&lt;div class="alert alert-info" role="alert"&gt;...&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Modal -->
+          <div class="component-block" id="component-modals">
+            <div class="component-header">
+              <h3>Modal Dialog</h3>
+              <span class="component-tag">Overlay</span>
+            </div>
+            <p class="component-description">Modals overlay the primary content to capture user attention for critical information or decisions.</p>
+            <div class="component-demo">
+              <button class="btn btn-primary" onclick="document.getElementById('demo-modal').showModal()">Open Modal</button>
+              <dialog class="modal" id="demo-modal" aria-labelledby="modal-title">
+                <div class="modal-header">
+                  <h3 id="modal-title">Confirm Action</h3>
+                  <button class="icon-btn" onclick="document.getElementById('demo-modal').close()" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure you want to proceed with this action? This will permanently affect your account settings.</p>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-outline" onclick="document.getElementById('demo-modal').close()">Cancel</button>
+                  <button class="btn btn-primary" onclick="document.getElementById('demo-modal').close()">Confirm</button>
+                </div>
+              </dialog>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;dialog class="modal" id="myModal"&gt;
+  &lt;div class="modal-header"&gt;
+    &lt;h3&gt;Confirm Action&lt;/h3&gt;
+    &lt;button onclick="modal.close()"&gt;✕&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="modal-body"&gt;Content&lt;/div&gt;
+  &lt;div class="modal-footer"&gt;
+    &lt;button class="btn btn-outline"&gt;Cancel&lt;/button&gt;
+    &lt;button class="btn btn-primary"&gt;Confirm&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/dialog&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Avatar -->
+          <div class="component-block" id="component-avatars">
+            <div class="component-header">
+              <h3>Avatars</h3>
+              <span class="component-tag">Display</span>
+            </div>
+            <p class="component-description">Avatars represent users or entities with images, initials, or fallback icons.</p>
+            <div class="component-demo">
+              <div class="demo-row demo-avatars">
+                <div class="avatar avatar-lg" data-initial="PK"></div>
+                <div class="avatar avatar-md" data-initial="JD"></div>
+                <div class="avatar avatar-sm" data-initial="A"></div>
+                <div class="avatar avatar-xs" data-initial="B"></div>
+              </div>
+              <div class="demo-row demo-avatars">
+                <div class="avatar avatar-lg avatar-group"><span class="avatar-ring"></span><div data-initial="PK"></div></div>
+                <div class="avatar avatar-md avatar-online" data-initial="ON"></div>
+                <div class="avatar avatar-sm avatar-offline" data-initial="OF"></div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="avatar avatar-lg" data-initial="PK"&gt;&lt;/div&gt;
+&lt;div class="avatar avatar-md" data-initial="JD"&gt;&lt;/div&gt;
+&lt;div class="avatar avatar-sm avatar-online" data-initial="A"&gt;&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Tabs -->
+          <div class="component-block" id="component-tabs">
+            <div class="component-header">
+              <h3>Tabs</h3>
+              <span class="component-tag">Navigation</span>
+            </div>
+            <p class="component-description">Tabs organize content across different panels within the same context.</p>
+            <div class="component-demo">
+              <div class="tabs" role="tablist">
+                <button class="tab active" role="tab" aria-selected="true">Overview</button>
+                <button class="tab" role="tab" aria-selected="false">Settings</button>
+                <button class="tab" role="tab" aria-selected="false">Activity</button>
+                <button class="tab" role="tab" aria-selected="false">Billing</button>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="tabs" role="tablist"&gt;
+  &lt;button class="tab active" role="tab"&gt;Overview&lt;/button&gt;
+  &lt;button class="tab" role="tab"&gt;Settings&lt;/button&gt;
+  &lt;button class="tab" role="tab"&gt;Activity&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Tooltips -->
+          <div class="component-block" id="component-tooltips">
+            <div class="component-header">
+              <h3>Tooltips</h3>
+              <span class="component-tag">Feedback</span>
+            </div>
+            <p class="component-description">Tooltips display informative text when users hover over or focus on an element.</p>
+            <div class="component-demo">
+              <div class="demo-row">
+                <button class="btn btn-outline" data-tooltip="This is a tooltip">Hover me</button>
+                <button class="btn btn-outline" data-tooltip="Another helpful tip" data-tooltip-position="bottom">Bottom tip</button>
+                <span data-tooltip="Inline tooltip on text">Hover this text</span>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;button data-tooltip="Helpful info"&gt;Hover me&lt;/button&gt;
+&lt;button data-tooltip="Bottom" data-tooltip-position="bottom"&gt;Bottom&lt;/button&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Progress -->
+          <div class="component-block" id="component-progress">
+            <div class="component-header">
+              <h3>Progress Bar</h3>
+              <span class="component-tag">Feedback</span>
+            </div>
+            <p class="component-description">Progress bars visually indicate the completion status of a task or process.</p>
+            <div class="component-demo">
+              <div class="demo-progress">
+                <div class="progress"><div class="progress-bar" style="width: 25%"></div></div>
+                <div class="progress"><div class="progress-bar progress-bar-success" style="width: 50%"></div></div>
+                <div class="progress"><div class="progress-bar progress-bar-warning" style="width: 75%"></div></div>
+                <div class="progress"><div class="progress-bar progress-bar-indeterminate"></div></div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="progress"&gt;
+  &lt;div class="progress-bar" style="width: 60%"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="progress"&gt;
+  &lt;div class="progress-bar progress-bar-success" style="width: 80%"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Indeterminate --&gt;
+&lt;div class="progress"&gt;
+  &lt;div class="progress-bar progress-bar-indeterminate"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Toggle -->
+          <div class="component-block" id="component-toggles">
+            <div class="component-header">
+              <h3>Toggle Switch</h3>
+              <span class="component-tag">Form</span>
+            </div>
+            <p class="component-description">Toggle switches allow users to switch between two states — on and off.</p>
+            <div class="component-demo">
+              <div class="demo-row demo-toggles">
+                <label class="toggle">
+                  <input type="checkbox" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  <span class="toggle-label">Enabled</span>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  <span class="toggle-label">Disabled</span>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" disabled>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  <span class="toggle-label">Locked</span>
+                </label>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;label class="toggle"&gt;
+  &lt;input type="checkbox"&gt;
+  &lt;span class="toggle-track"&gt;&lt;span class="toggle-thumb"&gt;&lt;/span&gt;&lt;/span&gt;
+  &lt;span class="toggle-label"&gt;Option&lt;/span&gt;
+&lt;/label&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Breadcrumbs -->
+          <div class="component-block" id="component-breadcrumbs">
+            <div class="component-header">
+              <h3>Breadcrumbs</h3>
+              <span class="component-tag">Navigation</span>
+            </div>
+            <p class="component-description">Breadcrumbs show the current page location within the site hierarchy.</p>
+            <div class="component-demo">
+              <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <a href="#">Home</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="#">Components</a>
+                <span class="breadcrumb-separator">/</span>
+                <span aria-current="page">Breadcrumbs</span>
+              </nav>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;nav class="breadcrumbs" aria-label="Breadcrumb"&gt;
+  &lt;a href="#"&gt;Home&lt;/a&gt;
+  &lt;span class="breadcrumb-separator"&gt;/&lt;/span&gt;
+  &lt;a href="#"&gt;Components&lt;/a&gt;
+  &lt;span class="breadcrumb-separator"&gt;/&lt;/span&gt;
+  &lt;span aria-current="page"&gt;Breadcrumbs&lt;/span&gt;
+&lt;/nav&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Pagination -->
+          <div class="component-block" id="component-pagination">
+            <div class="component-header">
+              <h3>Pagination</h3>
+              <span class="component-tag">Navigation</span>
+            </div>
+            <p class="component-description">Pagination splits large datasets into manageable pages.</p>
+            <div class="component-demo">
+              <nav class="pagination" aria-label="Pagination">
+                <button class="page-btn" aria-label="Previous">‹</button>
+                <button class="page-btn active" aria-current="page">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span class="page-ellipsis">…</span>
+                <button class="page-btn">10</button>
+                <button class="page-btn" aria-label="Next">›</button>
+              </nav>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;nav class="pagination"&gt;
+  &lt;button class="page-btn"&gt;‹&lt;/button&gt;
+  &lt;button class="page-btn active"&gt;1&lt;/button&gt;
+  &lt;button class="page-btn"&gt;2&lt;/button&gt;
+  &lt;button class="page-btn"&gt;3&lt;/button&gt;
+  &lt;button class="page-btn"&gt;›&lt;/button&gt;
+&lt;/nav&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Table -->
+          <div class="component-block" id="component-tables">
+            <div class="component-header">
+              <h3>Data Table</h3>
+              <span class="component-tag">Display</span>
+            </div>
+            <p class="component-description">Tables display structured data in rows and columns with consistent styling.</p>
+            <div class="component-demo">
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Prem Kumar</strong></td>
+                      <td>Lead Engineer</td>
+                      <td><span class="badge badge-success">Active</span></td>
+                      <td><button class="btn btn-sm btn-ghost">Edit</button></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Jane Doe</strong></td>
+                      <td>Designer</td>
+                      <td><span class="badge badge-success">Active</span></td>
+                      <td><button class="btn btn-sm btn-ghost">Edit</button></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Bob Smith</strong></td>
+                      <td>Developer</td>
+                      <td><span class="badge badge-warning">Pending</span></td>
+                      <td><button class="btn btn-sm btn-ghost">Edit</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;table class="data-table"&gt;
+  &lt;thead&gt;&lt;tr&gt;&lt;th&gt;Name&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+  &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Prem&lt;/td&gt;&lt;td&gt;Engineer&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Skeleton -->
+          <div class="component-block" id="component-skeletons">
+            <div class="component-header">
+              <h3>Skeleton Loaders</h3>
+              <span class="component-tag">Feedback</span>
+            </div>
+            <p class="component-description">Skeletons provide a placeholder preview of content while loading to reduce perceived wait time.</p>
+            <div class="component-demo">
+              <div class="demo-skeletons">
+                <div class="skeleton skeleton-avatar"></div>
+                <div class="skeleton-content">
+                  <div class="skeleton skeleton-line" style="width: 60%"></div>
+                  <div class="skeleton skeleton-line" style="width: 80%"></div>
+                  <div class="skeleton skeleton-line" style="width: 40%"></div>
+                </div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="skeleton skeleton-avatar"&gt;&lt;/div&gt;
+&lt;div class="skeleton skeleton-line" style="width: 80%"&gt;&lt;/div&gt;
+&lt;div class="skeleton skeleton-line" style="width: 60%"&gt;&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Accordion -->
+          <div class="component-block" id="component-accordions">
+            <div class="component-header">
+              <h3>Accordion</h3>
+              <span class="component-tag">Layout</span>
+            </div>
+            <p class="component-description">Accordions display collapsible content panels for information hierarchy.</p>
+            <div class="component-demo">
+              <div class="accordion">
+                <div class="accordion-item">
+                  <button class="accordion-trigger" aria-expanded="false">
+                    <span>What is the Hermes Design System?</span>
+                    <svg class="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div class="accordion-content">
+                    <p>Hermes is a comprehensive design system that provides reusable components, design tokens, and guidelines to build consistent user interfaces across multiple platforms.</p>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <button class="accordion-trigger" aria-expanded="false">
+                    <span>How do I get started?</span>
+                    <svg class="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div class="accordion-content">
+                    <p>Start by exploring the design tokens, then browse the component library. Each component includes code examples and usage guidelines.</p>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <button class="accordion-trigger" aria-expanded="false">
+                    <span>Is it framework-agnostic?</span>
+                    <svg class="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div class="accordion-content">
+                    <p>Yes! The design tokens are platform-agnostic, and we provide integration guides for React, Vue, and vanilla JavaScript.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="accordion"&gt;
+  &lt;div class="accordion-item"&gt;
+    &lt;button class="accordion-trigger"&gt;Question?&lt;/button&gt;
+    &lt;div class="accordion-content"&gt;Answer&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+
+          <!-- Toast -->
+          <div class="component-block" id="component-toasts">
+            <div class="component-header">
+              <h3>Toast Notifications</h3>
+              <span class="component-tag">Feedback</span>
+            </div>
+            <p class="component-description">Toasts provide brief, non-intrusive feedback messages that auto-dismiss.</p>
+            <div class="component-demo">
+              <div class="demo-row">
+                <button class="btn btn-primary" onclick="showToast('success', 'Changes saved!')">Success Toast</button>
+                <button class="btn btn-outline" onclick="showToast('error', 'Something went wrong')">Error Toast</button>
+                <button class="btn btn-outline" onclick="showToast('info', 'New update available')">Info Toast</button>
+              </div>
+            </div>
+            <details class="code-toggle">
+              <summary>View Code</summary>
+              <pre class="code-block"><code>&lt;div class="toast toast-success"&gt;
+  &lt;svg&gt;...&lt;/svg&gt;
+  &lt;div&gt;Changes saved!&lt;/div&gt;
+  &lt;button class="toast-close"&gt;✕&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Integration Section -->
+    <section class="section" id="integration">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Framework Integration</h2>
+          <p class="section-subtitle">Get started with Hermes Design System in your preferred framework. Each guide covers installation, configuration, and usage patterns.</p>
+        </div>
+
+        <div class="integration-tabs">
+          <div class="tabs" role="tablist" id="integration-tab-list">
+            <button class="tab active" role="tab" data-tab="react" aria-selected="true">React</button>
+            <button class="tab" role="tab" data-tab="vue" aria-selected="false">Vue</button>
+            <button class="tab" role="tab" data-tab="vanilla" aria-selected="false">Vanilla JS</button>
+          </div>
+
+          <div class="tab-panels">
+            <!-- React Guide -->
+            <div class="tab-panel active" id="tab-react" role="tabpanel">
+              <h3>React Integration</h3>
+              <p>Hermes provides first-class React support with typed components and hooks.</p>
+              
+              <h4>Installation</h4>
+              <pre class="code-block"><code>npm install @hermes-design-system/core @hermes-design-system/react
+# or
+yarn add @hermes-design-system/core @hermes-design-system/react</code></pre>
+
+              <h4>Setup</h4>
+              <pre class="code-block"><code>// main.tsx or App.tsx
+import '@hermes-design-system/core/dist/tokens.css';
+import '@hermes-design-system/react/dist/components.css';
+
+import { HermesProvider, Button, Card } from '@hermes-design-system/react';
+
+function App() {
+  return (
+    &lt;HermesProvider theme="light"&gt;
+      &lt;Card&gt;
+        &lt;h2&gt;Welcome to Hermes&lt;/h2&gt;
+        &lt;Button variant="primary"&gt;Get Started&lt;/Button&gt;
+      &lt;/Card&gt;
+    &lt;/HermesProvider&gt;
+  );
+}</code></pre>
+
+              <h4>Using Design Tokens</h4>
+              <pre class="code-block"><code>import { tokens } from '@hermes-design-system/core';
+
+// Access tokens programmatically
+const primaryColor = tokens.color.brand.primary.value;
+const spacing = tokens.spacing[4].value;
+
+// Or use CSS custom properties directly
+// var(--color-primary), var(--spacing-4)</code></pre>
+
+              <h4>Dark Mode</h4>
+              <pre class="code-block"><code>import { useTheme } from '@hermes-design-system/react';
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    &lt;button onClick={toggleTheme}&gt;
+      {theme === 'light' ? '🌙' : '☀️'}
+    &lt;/button&gt;
+  );
+}</code></pre>
+
+              <h4>Customization</h4>
+              <pre class="code-block"><code>// Override tokens via CSS custom properties
+// or extend the theme
+import { createTheme } from '@hermes-design-system/react';
+
+const customTheme = createTheme({
+  color: {
+    brand: {
+      primary: '#FF6B35',
+    },
+  },
+});</code></pre>
+            </div>
+
+            <!-- Vue Guide -->
+            <div class="tab-panel" id="tab-vue" role="tabpanel">
+              <h3>Vue Integration</h3>
+              <p>Vue 3 composables and components for seamless integration.</p>
+              
+              <h4>Installation</h4>
+              <pre class="code-block"><code>npm install @hermes-design-system/core @hermes-design-system/vue
+# or
+yarn add @hermes-design-system/core @hermes-design-system/vue</code></pre>
+
+              <h4>Setup</h4>
+              <pre class="code-block"><code>// main.ts
+import { createApp } from 'vue';
+import Hermes from '@hermes-design-system/vue';
+import '@hermes-design-system/core/dist/tokens.css';
+import '@hermes-design-system/vue/dist/components.css';
+
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(Hermes);
+app.mount('#app');</code></pre>
+
+              <h4>Component Usage</h4>
+              <pre class="code-block"><code>&lt;template&gt;
+  &lt;HermesCard&gt;
+    &lt;h2&gt;Welcome to Hermes&lt;/h2&gt;
+    &lt;HermesButton variant="primary" @click="handleClick"&gt;
+      Get Started
+    &lt;/HermesButton&gt;
+  &lt;/HermesCard&gt;
+
+  &lt;HermesAlert type="success" :dismissible="true"&gt;
+    Changes saved successfully!
+  &lt;/HermesAlert&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { useTheme } from '@hermes-design-system/vue';
+
+const { theme, toggleTheme } = useTheme();
+&lt;/script&gt;</code></pre>
+
+              <h4>Composables</h4>
+              <pre class="code-block"><code>import { useTheme, useToast, useBreakpoint } from '@hermes-design-system/vue';
+
+// Theme
+const { theme, setTheme } = useTheme();
+
+// Toast notifications
+const toast = useToast();
+toast.success('Operation completed!');
+
+// Responsive breakpoints
+const { isMobile, isTablet, isDesktop } = useBreakpoint();</code></pre>
+            </div>
+
+            <!-- Vanilla JS Guide -->
+            <div class="tab-panel" id="tab-vanilla" role="tabpanel">
+              <h3>Vanilla JavaScript</h3>
+              <p>Use Hermes without any framework. Pure CSS and vanilla JS for maximum flexibility.</p>
+              
+              <h4>Installation</h4>
+              <pre class="code-block"><code>&lt;!-- Via CDN --&gt;
+&lt;link rel="stylesheet" href="https://cdn.hermes-ds.com/core/tokens.css"&gt;
+&lt;link rel="stylesheet" href="https://cdn.hermes-ds.com/core/components.css"&gt;
+&lt;script src="https://cdn.hermes-ds.com/core/hermes.js"&gt;&lt;/script&gt;
+
+&lt;!-- Or via npm --&gt;
+npm install @hermes-design-system/core</code></pre>
+
+              <h4>HTML Usage</h4>
+              <pre class="code-block"><code>&lt;!-- Buttons --&gt;
+&lt;button class="btn btn-primary"&gt;Primary&lt;/button&gt;
+&lt;button class="btn btn-secondary"&gt;Secondary&lt;/button&gt;
+
+&lt;!-- Cards --&gt;
+&lt;div class="card"&gt;
+  &lt;div class="card-header"&gt;&lt;h4&gt;Card Title&lt;/h4&gt;&lt;/div&gt;
+  &lt;div class="card-body"&gt;Content here&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Alerts --&gt;
+&lt;div class="alert alert-success" role="alert"&gt;
+  &lt;strong&gt;Success!&lt;/div&gt;</code></pre>
+
+              <h4>JavaScript API</h4>
+              <pre class="code-block"><code>// Initialize Hermes
+const hermes = Hermes.init({
+  theme: 'light',
+  prefix: 'hermes',
+});
+
+// Theme management
+hermes.theme.set('dark');
+hermes.theme.toggle();
+
+// Toast notifications
+hermes.toast.success('Changes saved!');
+hermes.toast.error('Something went wrong');
+hermes.toast.info('New update available', {
+  duration: 5000,
+  dismissible: true,
+});
+
+// Modal
+const modal = hermes.modal.open({
+  title: 'Confirm',
+  content: 'Are you sure?',
+  onConfirm: () => console.log('Confirmed'),
+});</code></pre>
+
+              <h4>Customizing Tokens</h4>
+              <pre class="code-block"><code>&lt;style&gt;
+  :root {
+    --color-primary: #FF6B35;
+    --color-primary-light: #FF8A5C;
+    --color-primary-dark: #E55A2B;
+    --font-family-sans: 'Custom Font', sans-serif;
+    --border-radius-md: 8px;
+  }
+&lt;/style&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Changelog Section -->
+    <section class="section section-alt" id="changelog">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Changelog & Releases</h2>
+          <p class="section-subtitle">Track all changes, improvements, and migration guides across versions.</p>
+        </div>
+
+        <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-header">
+              <span class="badge badge-primary">v1.0.0</span>
+              <span class="changelog-date">September 9, 2026</span>
+              <span class="badge badge-success">Latest</span>
+            </div>
+            <h3>Initial Release</h3>
+            <p>The first stable release of the Hermes Design System.</p>
+            <div class="changelog-section">
+              <h4>✨ New Features</h4>
+              <ul>
+                <li>Complete design token system with 85+ tokens</li>
+                <li>18 production-ready components</li>
+                <li>Documentation site with search and dark mode</li>
+                <li>Framework integration guides (React, Vue, Vanilla JS)</li>
+                <li>Responsive design with mobile-first approach</li>
+                <li>Accessibility (WCAG 2.1 AA) compliant components</li>
+              </ul>
+            </div>
+            <div class="changelog-section">
+              <h4>🎨 Components</h4>
+              <ul>
+                <li>Buttons, Cards, Badges, Inputs, Alerts</li>
+                <li>Modals, Avatars, Tabs, Tooltips, Progress</li>
+                <li>Toggles, Breadcrumbs, Pagination, Tables</li>
+                <li>Skeletons, Accordions, Toasts</li>
+              </ul>
+            </div>
+            <div class="changelog-section">
+              <h4>📦 Tokens</h4>
+              <ul>
+                <li>Color tokens (brand, neutral, semantic)</li>
+                <li>Typography tokens (font, size, weight, spacing)</li>
+                <li>Spacing, Elevation, Border Radius tokens</li>
+                <li>Breakpoints, Transitions, Z-Index tokens</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="changelog-item changelog-upcoming">
+            <div class="changelog-header">
+              <span class="badge badge-secondary">v1.1.0</span>
+              <span class="changelog-date">Planned — Q4 2026</span>
+            </div>
+            <h3>Planned Features</h3>
+            <div class="changelog-section">
+              <h4>🔮 Coming Soon</h4>
+              <ul>
+                <li>Date picker and time picker components</li>
+                <li>Multi-select and autocomplete inputs</li>
+                <li>Rich text editor component</li>
+                <li>Data grid with sorting and filtering</li>
+                <li>Figma design kit integration</li>
+                <li>Theme builder tool</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Migration Guide -->
+        <div class="migration-guide" id="migration">
+          <h3>Migration Guide</h3>
+          <p>Upgrading between versions? Follow these guides to ensure a smooth transition.</p>
+          <div class="migration-item">
+            <h4>v0.x → v1.0.0</h4>
+            <p>This is the first stable release. If you were using the beta version, here are the key changes:</p>
+            <ul>
+              <li>Token names have been standardized (e.g., <code>primary-color</code> → <code>color-primary</code>)</li>
+              <li>Component class names now use BEM convention</li>
+              <li>Removed deprecated <code>legacy-button</code> component</li>
+              <li>CSS custom properties now use <code>--hermes-</code> prefix by default</li>
+            </ul>
+            <details class="code-toggle">
+              <summary>Migration Script</summary>
+              <pre class="code-block"><code># Automated migration with codemod
+npx @hermes-design-system/codemod v1.0.0 ./src
+
+# Or manually replace:
+# .btn-primary → .btn.btn-primary
+# .card-shadow → .card.card-elevated
+# var(--primary) → var(--color-primary)</code></pre>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="var(--color-primary)"/>
+            <path d="M8 16L14 10L20 16L14 22L8 16Z" fill="white" opacity="0.9"/>
+            <path d="M14 10L20 16L26 10L20 4L14 10Z" fill="white" opacity="0.6"/>
+            <path d="M14 22L20 16L26 22L20 28L14 22Z" fill="white" opacity="0.6"/>
+          </svg>
+          <p>Hermes Design System — Build consistent, beautiful interfaces with a comprehensive token and component library.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Documentation</h4>
+          <ul>
+            <li><a href="#tokens">Design Tokens</a></li>
+            <li><a href="#components">Components</a></li>
+            <li><a href="#integration">Integration</a></li>
+            <li><a href="#changelog">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Figma Kit</a></li>
+            <li><a href="#">GitHub Repo</a></li>
+            <li><a href="#">npm Packages</a></li>
+            <li><a href="#">Contributing</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Community</h4>
+          <ul>
+            <li><a href="#">Discord</a></li>
+            <li><a href="#">Twitter</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Support</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Hermes Design System. Released under MIT License.</p>
+        <p>Built with care by the Hermes team.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script src="src/app.js"></script>
+</body>
+</html>
