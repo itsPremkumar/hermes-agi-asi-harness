@@ -125,7 +125,7 @@ from .hooks import (
 )
 from .persona import PersonaSystem, PersonaFile, PersonaSection, get_persona_system, inject_persona_into_prompt
 from .local_llm import LocalLLMRuntime, LlamaCppEngine, LLMConfig, GBNFCompiler, GBNFGrammar, create_local_llm, create_hermes_local_llm
-from .engines.avo import GitLineageDAG, LineageNode, LineageNodeType, ScoreVector, StagnationSupervisor, AVOEvolutionEngine
+from ..engines.avo import GitLineageDAG, LineageNode, LineageNodeType, ScoreVector, StagnationSupervisor, AVOEvolutionEngine
 from .invariants import INVARIANTS, verify_invariants
 from .kernel import HermesIntelligenceOS
 from .langsmith_exporter import (

@@ -7,3 +7,8 @@ dist/
 build/
 .DS_Store
 .env
+.hermes/
+.hermes.bak/
+workspaces/
+nul
+test_imports_tmp.py

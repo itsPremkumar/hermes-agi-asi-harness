@@ -19,6 +19,7 @@ dependencies = [
     "mcp>=2.0.0",
     "langgraph>=1.0.0",
     "langchain-core>=0.3.0",
+    "tenacity>=8.0.0",
 ]
 
 [project.optional-dependencies]

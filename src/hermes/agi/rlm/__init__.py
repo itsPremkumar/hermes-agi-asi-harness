@@ -17,9 +17,13 @@ from .environment import (
     RLMREPLExecutor,
 )
 
+# Alias for backward compatibility
+ExecutionResult = REPLExecutionResult
+
 __all__ = [
     "RLMREPLExecutor",
     "REPLExecutionResult",
+    "ExecutionResult",
     "RLMBridge",
     "RLMSpawnHandle",
 ]

@@ -1,24 +1,31 @@
 """
-Git-Backed Lineage DAG + Stagnation Supervisor — NVIDIA AVO Pattern
-====================================================================
+Hermes Engines — NVIDIA AVO (Agentic Variation Operators) Package.
+
+Implements autonomous evolutionary search where traditional fixed operators
+are replaced by self-directed AI agents with:
+- Lineage DAG Memory (ancestry, fitness deltas, compiler feedback)
+- Domain Knowledge Base (hardware bounds & algorithmic patterns)
+- Agentic Variation Operators (mutation & crossover with in-harness multi-turn repair)
+- AVOSupervisor (anti-stagnation monitoring & diversity entropy steering)
 """
 
-from .lineage import (
-    GitLineageDAG,
-    LineageNode,
-    LineageNodeType,
-    ScoreVector,
-    StagnationSupervisor,
-    AVOEvolutionEngine,
-    example_scoring_fn,
-)
+from .engine import AVOEvolutionEngine, AVOResult
+from .knowledge_base import DomainKnowledgeBase
+from .lineage import LineageDAG, LineageNode, LineageNodeType, ScoreVector
+from .operator import AgenticVariationOperator
+from .supervisor import AVOSupervisor, SupervisorIntervention, StagnationSupervisor
 
 __all__ = [
+    "AVOEvolutionEngine",
+    "AVOResult",
     "GitLineageDAG",
+    "LineageDAG",
     "LineageNode",
     "LineageNodeType",
-    "ScoreVector",
+    "DomainKnowledgeBase",
+    "AgenticVariationOperator",
+    "AVOSupervisor",
     "StagnationSupervisor",
-    "AVOEvolutionEngine",
-    "example_scoring_fn",
+    "SupervisorIntervention",
+    "ScoreVector",
 ]
