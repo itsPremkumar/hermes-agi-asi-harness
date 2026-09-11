@@ -1,14 +1,79 @@
+# Python
 __pycache__/
 *.py[cod]
-.pytest_cache/
-.venv/
-*.egg-info/
-dist/
+*$py.class
+*.so
+.Python
 build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Environment & secrets
 .env
 .hermes/
 .hermes.bak/
-workspaces/
 nul
-test_imports_tmp.py
+
+# Workspaces (ephemeral)
+workspaces/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Project specific
+config.local.yaml
+*.local.yaml
+.secrets/
+credentials/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
