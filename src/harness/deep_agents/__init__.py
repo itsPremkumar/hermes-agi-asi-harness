@@ -7,7 +7,7 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from ..errors import DeepAgentError
 
@@ -211,7 +211,7 @@ class CrewOrchestrator:
                 agent = available[0]
                 agent.status = AgentStatus.WORKING
                 task.assigned_to = agent.agent_id
-                
+
                 # Execute real action if tool_executor is present and action requested
                 action_result = "done"
                 if self.tool_executor and task.inputs.get("action"):

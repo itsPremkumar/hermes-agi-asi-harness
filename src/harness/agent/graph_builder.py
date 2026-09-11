@@ -10,7 +10,7 @@ Both return a compiled LangGraph graph ready for invoke/stream.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -33,7 +33,7 @@ def build_agent_graph(
     *,
     name: str = "hermes_agent_lifecycle",
     max_steps: int = 25,
-    checkpointer: Optional[Any] = None,
+    checkpointer: Any | None = None,
 ) -> Any:
     """Build the standard agent lifecycle graph.
 
@@ -104,7 +104,7 @@ def build_cyclic_agent_graph(
     *,
     name: str = "hermes_cyclic_agent",
     max_steps: int = 25,
-    checkpointer: Optional[Any] = None,
+    checkpointer: Any | None = None,
 ) -> Any:
     """Build a cyclic agent graph with full observe → reflect → verify loop.
 
@@ -159,10 +159,10 @@ def build_cyclic_agent_graph(
 def run_agent(
     goal: str,
     *,
-    graph: Optional[Any] = None,
+    graph: Any | None = None,
     max_steps: int = 25,
     run_id: str = "",
-    config: Optional[dict[str, Any]] = None,
+    config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Convenience function: build graph, run goal, return final state.
 

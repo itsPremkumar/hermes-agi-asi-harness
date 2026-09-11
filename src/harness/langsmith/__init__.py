@@ -6,9 +6,9 @@ import logging
 import os
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
-from ..errors import LangSmithError
+from ..errors import LangSmithError as LangSmithError
 
 logger = logging.getLogger(__name__)
 

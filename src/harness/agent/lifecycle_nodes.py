@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import re
-import uuid
 from typing import Any
 
 from .state import AgentState
@@ -170,7 +169,7 @@ def _heuristic_plan(goal: str) -> list[dict[str, Any]]:
 
 def act_node(state: AgentState) -> dict[str, Any]:
     """Execute the current plan step (dispatch to tool).
-    
+
     If the previous step was verified (verification_passed=True), advance
     to the next step first. If verification failed, retry the current step.
     """

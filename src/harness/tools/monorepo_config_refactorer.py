@@ -55,12 +55,9 @@ class MonorepoConfigRefactorer:
                     package = self._find_package(dirpath)
                     config_type = fname.split(".")[-1] if "." in fname else "json"
                     try:
-                        with open(full_path, "r") as f:
+                        with open(full_path) as f:
                             content = f.read()
-                        if config_type == "json":
-                            parsed = json.loads(content)
-                        else:
-                            parsed = {"raw": content}
+                        parsed = json.loads(content) if config_type == "json" else {"raw": content}
                         self._config_files.append(
                             ConfigFile(
                                 path=full_path,
@@ -84,7 +81,7 @@ class MonorepoConfigRefactorer:
             by_type.setdefault(cf.config_type, []).append(cf)
 
         duplications = []
-        for config_type, files in by_type.items():
+        for _config_type, files in by_type.items():
             if len(files) < 2:
                 continue
             # Find common keys
@@ -146,7 +143,7 @@ class MonorepoConfigRefactorer:
             pkg_json = parent / "package.json"
             if pkg_json.exists():
                 try:
-                    with open(pkg_json, "r") as f:
+                    with open(pkg_json) as f:
                         data = json.load(f)
                     return data.get("name", parent.name)
                 except (json.JSONDecodeError, OSError):

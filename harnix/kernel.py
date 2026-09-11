@@ -6,24 +6,23 @@ Graph: init → plan → dispatch → monitor → (dispatch | adjust | evolve | 
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from harnix.state import AgentState, AgentPhase
 from harnix.nodes import (
-    init_node,
-    plan_node,
-    dispatch_node,
-    monitor_node,
     adjust_node,
-    evolve_node,
     complete_node,
-    route_after_dispatch,
-    route_after_monitor,
+    dispatch_node,
+    evolve_node,
+    init_node,
+    monitor_node,
+    plan_node,
     route_after_adjust,
     route_after_evolve,
+    route_after_monitor,
 )
+from harnix.state import AgentState
 
 logger = logging.getLogger("hermes.runtime_kernel")
 
@@ -48,7 +47,7 @@ class HarnessRuntimeKernel:
         self._graph = None
         self._app = None
 
-    def build(self) -> "HarnessRuntimeKernel":
+    def build(self) -> HarnessRuntimeKernel:
         """Build the LangGraph StateGraph."""
         # Create the StateGraph
         builder = StateGraph(AgentState)

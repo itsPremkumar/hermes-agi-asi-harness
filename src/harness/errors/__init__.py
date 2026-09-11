@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class HarnessError(Exception):
@@ -115,8 +115,14 @@ class DeadLetterError(HarnessError):
 
 # Also expose resilience classes (deferred: resilience imports this package).
 from .resilience import (  # noqa: E402
-    CircuitBreaker,
-    CircuitState,
-    DeadLetterQueue,
-    make_retry_decorator,
+    CircuitBreaker as CircuitBreaker,
+)
+from .resilience import (  # noqa: E402
+    CircuitState as CircuitState,
+)
+from .resilience import (  # noqa: E402
+    DeadLetterQueue as DeadLetterQueue,
+)
+from .resilience import (  # noqa: E402
+    make_retry_decorator as make_retry_decorator,
 )

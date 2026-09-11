@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from tenacity import (
     retry,
@@ -46,8 +47,7 @@ class CircuitBreaker:
     @property
     def state(self) -> CircuitState:
         with self._lock:
-            if self._state == CircuitState.OPEN:
-                if time.time() - self._last_failure_time >= self.recovery_timeout:
+            if self._state == CircuitState.OPEN and time.time() - self._last_failure_time >= self.recovery_timeout:
                     self._state = CircuitState.HALF_OPEN
                     self._half_open_calls = 0
             return self._state

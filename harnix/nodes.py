@@ -9,8 +9,7 @@ import time
 import uuid
 from typing import Any
 
-from harnix.state import AgentState, AgentPhase
-
+from harnix.state import AgentPhase, AgentState
 
 # ---------------------------------------------------------------------------
 # Node: init
