@@ -1,0 +1,3 @@
+line1
+LINE2_EDITED
+line3
