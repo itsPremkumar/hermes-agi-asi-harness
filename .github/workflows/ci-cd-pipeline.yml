@@ -1,0 +1,434 @@
+name: CI/CD Pipeline Orchestration
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================
+  # STAGE 1: Test
+  # ============================================
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+      fail-fast: false
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: |
+          npm run lint
+          ruff check .
+
+      - name: Type check
+        run: |
+          npm run typecheck
+          mypy .
+
+      - name: Run ${{ matrix.test-type }} tests
+        run: |
+          if [ "${{ matrix.test-type }}" = "unit" ]; then
+            npm run test:unit -- --coverage
+            pytest tests/unit -v --cov=src --cov-report=xml
+          elif [ "${{ matrix.test-type }}" = "integration" ]; then
+            npm run test:integration
+            pytest tests/integration -v --cov=src --cov-report=xml
+          else
+            npm run test:e2e
+            pytest tests/e2e -v --cov=src --cov-report=xml
+          fi
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Upload coverage
+        if: matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            test-results/
+            coverage/
+            junit.xml
+
+  security-scan:
+    name: Security & Compliance
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+      - name: Run pip audit
+        run: pip-audit --strict
+
+      - name: SAST Scan
+        uses: github/codeql-action/analyze@v3
+        with:
+          language: python,javascript
+
+      - name: Upload security results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: trivy-results.sarif
+
+  # ============================================
+  # STAGE 2: Build
+  # ============================================
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build-push.outputs.digest }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r requirements.txt
+
+      - name: Build application
+        run: |
+          npm run build
+          python setup.py build
+
+      - name: Build documentation
+        run: npm run docs:build
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Sign container image
+        uses: sigstore/cosign-installer@v3
+      - run: |
+          cosign sign --yes \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            build/
+            sbom.spdx.json
+
+  # ============================================
+  # STAGE 3: Deploy
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging
+      url: https://staging.hermes-agi-asi-harness.dev
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -var="environment=staging" -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Deploy to Kubernetes
+        run: |
+          aws eks update-kubeconfig --name hermes-staging --region us-east-1
+          kubectl set image deployment/hermes-app \
+            app=${{ needs.build.outputs.image-tag }} \
+            -n staging
+          kubectl rollout status deployment/hermes-app -n staging --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          npm run test:smoke -- --env staging
+          pytest tests/smoke -v --env staging
+
+      - name: Notify deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Staging deployment ${{ job.status }}: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://hermes-agi-asi-harness.dev
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: terraform plan -var="environment=production" -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Deploy to Kubernetes (Canary)
+        run: |
+          aws eks update-kubeconfig --name hermes-production --region us-east-1
+          kubectl apply -f infrastructure/k8s/canary/
+          kubectl set image deployment/hermes-app-canary \
+            app=${{ needs.build.outputs.image-tag }} \
+            -n production
+          kubectl rollout status deployment/hermes-app-canary -n production --timeout=300s
+
+      - name: Canary analysis
+        run: |
+          echo "Running canary analysis..."
+          sleep 60
+          ERROR_RATE=$(curl -s "http://prometheus:9090/api/v1/query?query=rate(http_requests_total{status=~'5..'}[5m])" | jq '.data.result[0].value[1]')
+          if (( $(echo "$ERROR_RATE > 0.01" | bc -l) )); then
+            echo "Canary failed: error rate $ERROR_RATE exceeds threshold"
+            kubectl rollout undo deployment/hermes-app-canary -n production
+            exit 1
+          fi
+          echo "Canary passed: error rate $ERROR_RATE"
+
+      - name: Promote to full rollout
+        run: |
+          kubectl set image deployment/hermes-app \
+            app=${{ needs.build.outputs.image-tag }} \
+            -n production
+          kubectl rollout status deployment/hermes-app -n production --timeout=600s
+
+      - name: Notify deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Production deployment ${{ job.status }}: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ============================================
+  # STAGE 4: Monitoring & Alerting
+  # ============================================
+  pipeline-metrics:
+    name: Pipeline Metrics
+    runs-on: ubuntu-latest
+    needs: [test, build, deploy-staging]
+    if: always()
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect pipeline metrics
+        run: |
+          echo "Collecting pipeline metrics..."
+          cat > pipeline-metrics.json << 'EOF'
+          {
+            "run_id": "${{ github.run_id }}",
+            "sha": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "actor": "${{ github.actor }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "stages": {
+              "test": "${{ needs.test.result }}",
+              "build": "${{ needs.build.result }}",
+              "deploy_staging": "${{ needs.deploy-staging.result }}"
+            }
+          }
+          EOF
+
+      - name: Push metrics to monitoring
+        run: |
+          curl -X POST "${{ secrets.METRICS_ENDPOINT }}" \
+            -H "Content-Type: application/json" \
+            -d @pipeline-metrics.json || true
+
+      - name: Upload pipeline metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-metrics
+          path: pipeline-metrics.json

@@ -1,0 +1,227 @@
+# ============================================================
+# Prometheus ServiceMonitor for Pipeline Metrics
+# ============================================================
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hermes-pipeline-metrics
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: hermes-agi-asi-harness
+  namespaceSelector:
+    matchNames:
+      - hermes-staging
+      - hermes-production
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+---
+# ============================================================
+# Prometheus Rules - Pipeline Alerts
+# ============================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: hermes-pipeline-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: pipeline.rules
+      rules:
+        - alert: PipelineFailed
+          expr: |
+            sum by (environment) (pipeline_run_status{status="failure"}) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pipeline failed in {{ $labels.environment }}"
+            description: >
+              The CI/CD pipeline has failed for environment
+              {{ $labels.environment }}. Run ID: {{ $labels.run_id }}.
+
+        - alert: High5xxErrorRate
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (environment)
+            / sum(rate(http_requests_total[5m])) by (environment) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High 5xx error rate in {{ $labels.environment }}"
+            description: >
+              The 5xx error rate is {{ $value | humanizePercentage }}
+              in {{ $labels.environment }}.
+
+        - alert: HighDeploymentDuration
+          expr: |
+            pipeline_deploy_duration_seconds > 1800
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Deployment taking too long in {{ $labels.environment }}"
+            description: >
+              Deployment duration is {{ $value }}s
+              in {{ $labels.environment }}.
+
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 5
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod crash looping detected"
+            description: >
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping.
+
+        - alert: HighNodeCPU
+          expr: |
+            100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on node {{ $labels.instance }}"
+            description: >
+              CPU usage is {{ $value }}% on {{ $labels.instance }}.
+
+        - alert: DatabaseConnectionsHigh
+          expr: |
+            pg_stat_activity_count / pg_settings_max_connections > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Database connections running high"
+            description: >
+              DB connections are at {{ $value | humanizePercentage }} capacity.
+---
+# ============================================================
+# Grafana Dashboard ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-pipeline-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  pipeline-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Hermes CI/CD Pipeline",
+        "tags": ["ci-cd", "hermes", "devops"],
+        "timezone": "utc",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Pipeline Success Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "sum(pipeline_run_status{status=\"success\"}) / sum(pipeline_run_status)",
+                "legendFormat": "Success Rate"
+              }
+            ],
+            "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+          },
+          {
+            "id": 2,
+            "title": "Deployments per Day",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "sum(increase(pipeline_run_status{status=\"success\"}[24h]))",
+                "legendFormat": "Deployments"
+              }
+            ],
+            "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
+          },
+          {
+            "id": 3,
+            "title": "Avg Pipeline Duration",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "avg(pipeline_duration_seconds)",
+                "legendFormat": "Duration (s)"
+              }
+            ],
+            "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
+          },
+          {
+            "id": 4,
+            "title": "Pipeline Runs (Last 24h)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum by (status) (increase(pipeline_run_status[1h]))",
+                "legendFormat": "{{ status }}"
+              }
+            ],
+            "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+          },
+          {
+            "id": 5,
+            "title": "Deployment Duration Trend",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "pipeline_deploy_duration_seconds",
+                "legendFormat": "{{ environment }}"
+              }
+            ],
+            "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+          },
+          {
+            "id": 6,
+            "title": "Test Results",
+            "type": "bargauge",
+            "targets": [
+              {
+                "expr": "sum by (result) (test_run_results) / 100",
+                "legendFormat": "{{ result }}"
+              }
+            ],
+            "gridPos": { "x": 0, "y": 12, "w": 8, "h": 8 }
+          },
+          {
+            "id": 7,
+            "title": "Error Rate by Environment",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum by (environment) (rate(http_requests_total{status=~\"5..\"}[5m])) / sum by (environment) (rate(http_requests_total[5m]))",
+                "legendFormat": "{{ environment }}"
+              }
+            ],
+            "gridPos": { "x": 8, "y": 12, "w": 8, "h": 8 }
+          },
+          {
+            "id": 8,
+            "title": "Container Image Size",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "container_image_size_bytes",
+                "legendFormat": "{{ image }}"
+              }
+            ],
+            "gridPos": { "x": 16, "y": 12, "w": 8, "h": 8 }
+          }
+        ],
+        "time": { "from": "now-24h", "to": "now" },
+        "refresh": "30s"
+      }
+    }

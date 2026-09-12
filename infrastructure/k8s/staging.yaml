@@ -1,0 +1,235 @@
+# Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hermes-staging
+  labels:
+    app: hermes-agi-asi-harness
+    environment: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hermes-production
+  labels:
+    app: hermes-agi-asi-harness
+    environment: production
+---
+# ============================================================
+# Application Deployment (Staging)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-app
+  namespace: hermes-staging
+  labels:
+    app: hermes-agi-asi-harness
+    environment: staging
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: hermes-agi-asi-harness
+      environment: staging
+  template:
+    metadata:
+      labels:
+        app: hermes-agi-asi-harness
+        environment: staging
+    spec:
+      serviceAccountName: hermes-app
+      containers:
+        - name: app
+          image: ghcr.io/itsPremkumar/hermes-agi-asi-harness:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          env:
+            - name: NODE_ENV
+              value: "staging"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-db-secret
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-redis-secret
+                  key: url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: hermes-config
+---
+# ============================================================
+# Horizontal Pod Autoscaler
+# ============================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hermes-app-hpa
+  namespace: hermes-staging
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hermes-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+---
+# ============================================================
+# Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-app
+  namespace: hermes-staging
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: hermes-agi-asi-harness
+    environment: staging
+---
+# ============================================================
+# Ingress
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-app-ingress
+  namespace: hermes-staging
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  rules:
+    - host: staging.hermes-agi-asi-harness.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-app
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - staging.hermes-agi-asi-harness.dev
+      secretName: hermes-tls-staging
+---
+# ============================================================
+# Service Account
+# ============================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hermes-app
+  namespace: hermes-staging
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/hermes-app-staging
+---
+# ============================================================
+# ConfigMap
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+  namespace: hermes-staging
+data:
+  app.yaml: |
+    server:
+      port: 8080
+      host: 0.0.0.0
+    logging:
+      level: info
+      format: json
+    features:
+      enableCache: true
+      enableRateLimit: true
+      enableMetrics: true
+---
+# ============================================================
+# Secrets (placeholder - replaced by external-secrets operator)
+# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-db-secret
+  namespace: hermes-staging
+type: Opaque
+data:
+  url: cG9zdGdyZXM6Ly90ZXN0OnRlc3RAbG9jYWxob3N0OjU0MzIvdGVzdGRi  # base64 encoded
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-redis-secret
+  namespace: hermes-staging
+type: Opaque
+data:
+  url: cmVkaXM6Ly9sb2NhbGhvc3Q6NjM3OS8w  # base64 encoded

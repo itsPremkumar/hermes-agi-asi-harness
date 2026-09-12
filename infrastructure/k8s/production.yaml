@@ -1,0 +1,327 @@
+# ============================================================
+# Canary Deployment (Production)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-app-canary
+  namespace: hermes-production
+  labels:
+    app: hermes-agi-asi-harness
+    environment: production
+    track: canary
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: hermes-agi-asi-harness
+      environment: production
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: hermes-agi-asi-harness
+        environment: production
+        track: canary
+    spec:
+      serviceAccountName: hermes-app
+      containers:
+        - name: app
+          image: ghcr.io/itsPremkumar/hermes-agi-asi-harness:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-db-secret
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-redis-secret
+                  key: url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+# ============================================================
+# Production Main Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-app
+  namespace: hermes-production
+  labels:
+    app: hermes-agi-asi-harness
+    environment: production
+    track: stable
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: hermes-agi-asi-harness
+      environment: production
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: hermes-agi-asi-harness
+        environment: production
+        track: stable
+    spec:
+      serviceAccountName: hermes-app
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - hermes-agi-asi-harness
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: app
+          image: ghcr.io/itsPremkumar/hermes-agi-asi-harness:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-db-secret
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-redis-secret
+                  key: url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: hermes-config
+---
+# ============================================================
+# Production HPA
+# ============================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hermes-app-hpa
+  namespace: hermes-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hermes-app
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# ============================================================
+# Production Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-app
+  namespace: hermes-production
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: hermes-agi-asi-harness
+    environment: production
+    track: stable
+---
+# ============================================================
+# Canary Service (for traffic splitting)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: hermes-app-canary
+  namespace: hermes-production
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: hermes-agi-asi-harness
+    environment: production
+    track: canary
+---
+# ============================================================
+# Production Ingress with Canary Split
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hermes-app-ingress
+  namespace: hermes-production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/canary: "false"
+spec:
+  rules:
+    - host: hermes-agi-asi-harness.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hermes-app
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - hermes-agi-asi-harness.dev
+      secretName: hermes-tls-production
+---
+# ============================================================
+# Pod Disruption Budget
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: hermes-app-pdb
+  namespace: hermes-production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: hermes-agi-asi-harness
+      environment: production
+      track: stable
+---
+# ============================================================
+# Service Account (Production)
+# ============================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hermes-app
+  namespace: hermes-production
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/hermes-app-production
+---
+# ============================================================
+# ConfigMap (Production)
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+  namespace: hermes-production
+data:
+  app.yaml: |
+    server:
+      port: 8080
+      host: 0.0.0.0
+    logging:
+      level: warn
+      format: json
+    features:
+      enableCache: true
+      enableRateLimit: true
+      enableMetrics: true
+---
+# ============================================================
+# Secrets (Production - placeholder)
+# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-db-secret
+  namespace: hermes-production
+type: Opaque
+data:
+  url: cG9zdGdyZXM6Ly90ZXN0OnRlc3RAbG9jYWxob3N0OjU0MzIvdGVzdGRi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-redis-secret
+  namespace: hermes-production
+type: Opaque
+data:
+  url: cmVkaXM6Ly9sb2NhbGhvc3Q6NjM3OS8w
