@@ -8,7 +8,7 @@
 langgraph>=1.0.0
 langchain-core>=0.3.0
 pyyaml>=6.0.3
-psutil>=5.9.0
+psutil>=7.2.2
 aiofiles>=23.2.0
 mcp>=2.0.0
 
