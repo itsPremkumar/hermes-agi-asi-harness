@@ -1,0 +1,32 @@
+[project]
+name = "qualitywatch"
+version = "0.1.0"
+description = "Data Quality Monitoring & Validation System"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0",
+    "sqlalchemy>=2.0",
+    "rich>=13.0",
+    "click>=8.1",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+]
+airflow = [
+    "apache-airflow>=2.7",
+]
+dbt = [
+    "dbt-core>=1.8",
+]
+
+[project.scripts]
+qualitywatch = "qualitywatch.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

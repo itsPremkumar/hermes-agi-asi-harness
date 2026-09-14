@@ -1,0 +1,32 @@
+rules:
+  - name: "id_not_null"
+    rule_type: null_check
+    column: id
+    severity: error
+
+  - name: "email_unique"
+    rule_type: uniqueness
+    column: email
+    params:
+      threshold: 1.0
+    severity: error
+
+  - name: "age_range"
+    rule_type: range
+    column: age
+    params:
+      min: 0
+      max: 120
+    severity: warning
+
+  - name: "order_customer_ref"
+    rule_type: referential
+    column: customer_id
+    params:
+      reference_df: customers
+      reference_column: id
+    severity: error
+
+alerting:
+  threshold: 80.0
+  on_breach: email
