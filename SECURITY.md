@@ -132,3 +132,67 @@ We monitor our dependencies for security vulnerabilities using:
 | Date | CodeQL Alerts | Vulns | CI Status | Notes |
 |------|---------------|-------|-----------|-------|
 | 2026-09-07 | 100 open | 0 known | Failing | First weekly audit |
+
+### 2026-09-16 Weekly Security Audit
+
+**Audit Date:** 2026-09-16 (Sunday)
+**Auditor:** Automated Security Audit (Cron)
+**Scope:** CodeQL, dependencies (Trivy), branch protection, secrets, access controls, CI/CD
+
+#### Findings Summary
+
+| Category | Status | Details |
+|----------|--------|---------|
+| CodeQL Alerts | ⚠️ 100+ open | 3 errors, 1 warning, 96 notes |
+| Secret Scanning | ✅ Clean | 0 alerts |
+| Dependencies (Trivy) | ❌ FAILING | CRITICAL/HIGH vulnerabilities detected |
+| Branch Protection | ✅ Configured | Main branch protected, 5 required checks |
+| CI Pipeline | ❌ Failing | Security Scan + Nightly Build failing |
+| Dependabot Alerts | ❌ Disabled | Security alerts not enabled (carryover) |
+| Access Control | ✅ Minimal | 1 collaborator (admin) |
+| Actions Secrets | ✅ None | No secrets configured |
+
+#### Critical Findings
+
+1. **Trivy Vulnerability Scan Failure** — CRITICAL/HIGH severity CVEs detected
+   - First observed: 2026-09-14
+   - Status: Failing consistently
+   - Blocks: Security Scan workflow gate
+   - Issue: [#37](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/37)
+
+2. **CodeQL Error-Severity Alerts** — 3 error types detected
+   - Side effects in assert statements (CWE-703): 4 instances
+   - Unsafe cyclic imports (CWE-665): 3 instances
+   - Wrong named argument (CWE-628): 1 instance
+   - Issue: [#38](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/38)
+
+3. **Empty Exception Handlers (CWE-390)** — 18+ instances detected
+   - Affects: mcp/streaming.py, mcp/registry.py, mcp/bridge.py, mcp/auth.py, mcp/audit.py, runtime/message_bus.py, runtime/event_dispatcher.py, runtime/agent_manager.py, config.py, and others
+   - Can mask security-relevant failures
+   - Issue: [#27](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/27) (carryover)
+
+4. **CI Pipeline Still Failing** — Security Scan + Nightly Build failing
+   - Security Scan: Trivy step fails (CRITICAL/HIGH vulns)
+   - Nightly Build: Full test suite failing
+   - Blocks all merges to main
+   - Issue: [#29](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/29) (carryover)
+
+5. **Dependabot Security Alerts Still Disabled** — No automated CVE notifications
+   - Version updates active but security alerts disabled
+   - Issue: [#28](https://github.com/itsPremkumar/hermes-agi-asi-harness/issues/28) (carryover)
+
+#### Recommendations
+
+1. **Immediate:** Investigate and remediate Trivy CRITICAL/HIGH findings
+2. **Immediate:** Fix CodeQL error-severity alerts (assert side effects, cyclic imports, wrong args)
+3. **Immediate:** Enable Dependabot security alerts in repository settings
+4. **Immediate:** Fix CI pipeline failures (Security Scan + Nightly Build)
+5. **Short-term:** Address empty exception handlers with proper logging
+6. **Ongoing:** Review and dismiss false-positive CodeQL notes (unused-imports)
+
+#### Audit History
+
+| Date | CodeQL Alerts | Vulns | CI Status | Notes |
+|------|---------------|-------|-----------|-------|
+| 2026-09-16 | 100+ open | Trivy FAILING | Failing | Trivy CRITICAL/HIGH vulns detected |
+| 2026-09-07 | 100 open | 0 known | Failing | First weekly audit |
